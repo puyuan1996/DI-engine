@@ -1,0 +1,50 @@
+apiVersion: diengine.opendilab.org/v1alpha1
+kind: DIJob
+metadata:
+    name: cartpole-dqn-exp
+spec:
+  group: ding
+  priorityClassName: ""
+  cleanPodPolicy: "Running"
+  volumes:
+  - name: cache-volume
+    emptyDir:
+      medium: Memory
+      sizeLimit: 128Mi
+  - name: work-dir
+    hostPath:
+      path: /data/nfs/ding/cartpole
+  coordinator:
+    template:
+      spec:
+        containers:
+        - name: di-container
+          image: swainz/ding:edge
+          imagePullPolicy: IfNotPresent
+          volumeMounts:
+          - mountPath: /mnt/lustre/niuyazhe
+            name: volume-tmp
+          env:
+          - name: PYTHONUNBUFFERED
+            value: "1"
+          resources:
+            requests:
+              nvidia.com/gpu: 1
+              cpu: 8
+              memory: "10Gi"
+            limits:
+              nvidia.com/gpu: 1
+              cpu: 8
+              memory: "10Gi"
+          command: ["/bin/bash", "-c",]
+          args:
+          - |
+            cd /mnt/lustre/niuyazhe/
+            ding -m serial -c cartpole_dqn_config.py -s 0
+          ports:
+          - name: di-port
+            containerPort: 22270
+        volumes:
+        - name: volume-tmp
+          hostPath:
+            path: /mnt/lustre/niuyazhe
