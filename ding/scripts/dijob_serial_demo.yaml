@@ -11,15 +11,16 @@ spec:
     emptyDir:
       medium: Memory
       sizeLimit: 128Mi
-  - name: work-dir
+  volumes:
+  - name: volume-tmp
     hostPath:
-      path: /data/nfs/ding/cartpole
+      path: /mnt/lustre/niuyazhe
   coordinator:
     template:
       spec:
         containers:
         - name: di-container
-          image: swainz/ding:edge
+          image: opendilab/ding:2021-09-26
           imagePullPolicy: IfNotPresent
           volumeMounts:
           - mountPath: /mnt/lustre/niuyazhe
@@ -39,12 +40,8 @@ spec:
           command: ["/bin/bash", "-c",]
           args:
           - |
-            cd /mnt/lustre/niuyazhe/
+            cd /mnt/lustre/niuyazhe/DI-engine/dizoo/classic_control/cartpole/config
             ding -m serial -c cartpole_dqn_config.py -s 0
           ports:
           - name: di-port
             containerPort: 22270
-        volumes:
-        - name: volume-tmp
-          hostPath:
-            path: /mnt/lustre/niuyazhe
