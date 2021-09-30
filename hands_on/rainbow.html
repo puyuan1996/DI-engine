@@ -21,10 +21,11 @@
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
         <script src="../_static/jquery.js"></script>
         <script src="../_static/underscore.js"></script>
         <script src="../_static/doctools.js"></script>
-        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     
     <script type="text/javascript" src="../_static/js/theme.js"></script>
 
@@ -33,6 +34,8 @@
   
   <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="SQN" href="sqn.html" />
@@ -82,7 +85,7 @@
               
             
             
-              <p class="caption"><span class="caption-text">User Guide</span></p>
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../installation/index.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../quick_start/index.html">Quick Start</a></li>
@@ -103,11 +106,14 @@
 <li class="toctree-l3"><a class="reference internal" href="#noisy-net">Noisy Net</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#extensions">Extensions</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#implementation">Implementation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#experiments-on-rainbow-tricks">Experiments on Rainbow Tricks</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#references">References</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="sqn.html">SQN</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sqil.html">SQIL</a></li>
 <li class="toctree-l2"><a class="reference internal" href="a2c.html">A2C</a></li>
+<li class="toctree-l2"><a class="reference internal" href="acer.html">ACER</a></li>
 <li class="toctree-l2"><a class="reference internal" href="ppo.html">PPO</a></li>
 <li class="toctree-l2"><a class="reference internal" href="ppg.html">PPG</a></li>
 <li class="toctree-l2"><a class="reference internal" href="impala.html">IMPALA</a></li>
@@ -130,7 +136,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../faq/index_en.html">FAQ</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../feature/index.html">Feature</a></li>
 </ul>
-<p class="caption"><span class="caption-text">Developer Guide</span></p>
+<p class="caption" role="heading"><span class="caption-text">Developer Guide</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../guide/index.html">Developer Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorial_dev/index.html">Tutorial-Developer</a></li>
@@ -275,8 +281,8 @@ In our implementation, the noises are resampled before each forward both during 
 <h2>Implementation<a class="headerlink" href="#implementation" title="Permalink to this headline">¶</a></h2>
 <p>The default config is defined as follows:</p>
 <dl class="py class">
-<dt>
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">ding.policy.rainbow.</span></code><code class="sig-name descname"><span class="pre">RainbowDQNPolicy</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cfg</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">type</span><span class="p"><span class="pre">,</span> </span><span class="pre">torch.nn.modules.module.Module</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enable_field</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ding/policy/rainbow.html#RainbowDQNPolicy"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dt class="sig sig-object py">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">ding.policy.rainbow.</span></span><span class="sig-name descname"><span class="pre">RainbowDQNPolicy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cfg</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">type</span><span class="p"><span class="pre">,</span> </span><span class="pre">torch.nn.modules.module.Module</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enable_field</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ding/policy/rainbow.html#RainbowDQNPolicy"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><dl>
 <dt>Overview:</dt><dd><dl class="simple">
 <dt>Rainbow DQN contain several improvements upon DQN, including:</dt><dd><ul class="simple">
@@ -487,8 +493,8 @@ In our implementation, the noises are resampled before each forward both during 
 
 <p>The network interface Rainbow used is defined as follows:</p>
 <dl class="py class">
-<dt>
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">ding.model.template.q_learning.</span></code><code class="sig-name descname"><span class="pre">RainbowDQN</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obs_shape</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span> </span><span class="pre">SequenceType</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">action_shape</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span> </span><span class="pre">SequenceType</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">encoder_hidden_size_list</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">SequenceType</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">[128,</span> <span class="pre">128,</span> <span class="pre">64]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">head_hidden_size</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">head_layer_num</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">activation</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">torch.nn.modules.module.Module</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">ReLU()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">norm_type</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v_min</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">-</span> <span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v_max</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_atom</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">51</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ding/model/template/q_learning.html#RainbowDQN"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dt class="sig sig-object py">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">ding.model.template.q_learning.</span></span><span class="sig-name descname"><span class="pre">RainbowDQN</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obs_shape</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span> </span><span class="pre">ding.utils.type_helper.SequenceType</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">action_shape</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span> </span><span class="pre">ding.utils.type_helper.SequenceType</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">encoder_hidden_size_list</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">ding.utils.type_helper.SequenceType</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">[128,</span> <span class="pre">128,</span> <span class="pre">64]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">head_hidden_size</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">head_layer_num</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">activation</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">torch.nn.modules.module.Module</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">ReLU()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">norm_type</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v_min</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">-</span> <span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v_max</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_atom</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">51</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ding/model/template/q_learning.html#RainbowDQN"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><dl class="simple">
 <dt>Overview:</dt><dd><p>RainbowDQN network (C51 + Dueling + Noisy Block)</p>
 </dd>
@@ -498,8 +504,8 @@ In our implementation, the noises are resampled before each forward both during 
 <p>RainbowDQN contains dueling architecture by default</p>
 </div>
 <dl class="py method">
-<dt>
-<code class="sig-name descname"><span class="pre">__init__</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obs_shape</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span> </span><span class="pre">SequenceType</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">action_shape</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span> </span><span class="pre">SequenceType</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">encoder_hidden_size_list</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">SequenceType</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">[128,</span> <span class="pre">128,</span> <span class="pre">64]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">head_hidden_size</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">head_layer_num</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">activation</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">torch.nn.modules.module.Module</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">ReLU()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">norm_type</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v_min</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">-</span> <span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v_max</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_atom</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">51</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">None</span><a class="reference internal" href="../_modules/ding/model/template/q_learning.html#RainbowDQN.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obs_shape</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span> </span><span class="pre">ding.utils.type_helper.SequenceType</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">action_shape</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span> </span><span class="pre">ding.utils.type_helper.SequenceType</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">encoder_hidden_size_list</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">ding.utils.type_helper.SequenceType</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">[128,</span> <span class="pre">128,</span> <span class="pre">64]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">head_hidden_size</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">head_layer_num</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">activation</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">torch.nn.modules.module.Module</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">ReLU()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">norm_type</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v_min</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">-</span> <span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v_max</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_atom</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">51</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/ding/model/template/q_learning.html#RainbowDQN.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><dl class="simple">
 <dt>Overview:</dt><dd><p>Init the Rainbow Model according to arguments.</p>
 </dd>
@@ -518,8 +524,8 @@ In our implementation, the noises are resampled before each forward both during 
 </dd></dl>
 
 <dl class="py method">
-<dt>
-<code class="sig-name descname"><span class="pre">forward</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">torch.Tensor</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">Dict</span><a class="reference internal" href="../_modules/ding/model/template/q_learning.html#RainbowDQN.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">torch.Tensor</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span></span></span><a class="reference internal" href="../_modules/ding/model/template/q_learning.html#RainbowDQN.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><dl>
 <dt>Overview:</dt><dd><p>Use observation tensor to predict Rainbow output.
 Parameter updates with Rainbow’s MLPs forward setup.</p>
@@ -567,6 +573,74 @@ Parameter updates with Rainbow’s MLPs forward setup.</p>
 </dd></dl>
 
 <p>The Benchmark result of Rainbow implemented in DI-engine is shown in <a class="reference external" href="../feature/algorithm_overview_en.html">Benchmark</a></p>
+</div>
+<div class="section" id="experiments-on-rainbow-tricks">
+<h2>Experiments on Rainbow Tricks<a class="headerlink" href="#experiments-on-rainbow-tricks" title="Permalink to this headline">¶</a></h2>
+<p>We conduct experiments on lunarlander environment using rainbow(dqn) policy, comparing the performance of n-sdueling, priority, and priority_IS tricks with baseline. The code link for the experiments is <a class="reference external" href="https://github.com/opendilab/DI-engine/blob/main/dizoo/box2d/lunarlander/config/lunarlander_dqn_config.py">here</a>.
+Note that the config file is set for <code class="docutils literal notranslate"><span class="pre">dqn</span></code> by default. If we want to adopt <code class="docutils literal notranslate"><span class="pre">rainbow</span></code> policy, we need to change the
+type of policy as below.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">lunarlander_dqn_create_config</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+ <span class="n">env</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+     <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;lunarlander&#39;</span><span class="p">,</span>
+     <span class="n">import_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;dizoo.box2d.lunarlander.envs.lunarlander_env&#39;</span><span class="p">],</span>
+ <span class="p">),</span>
+ <span class="n">env_manager</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s1">&#39;subprocess&#39;</span><span class="p">),</span>
+<span class="hll"> <span class="n">policy</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s1">&#39;rainbow&#39;</span><span class="p">),</span>
+</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The detailed experiments setting is stated below.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 18%" />
+<col style="width: 83%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Experiments setting</p></th>
+<th class="head"><p>Remark</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>base</p></td>
+<td><p>one step DQN (n-step=1, dueling=False, priority=False, priority_IS=False)</p></td>
+</tr>
+<tr class="row-odd"><td><p>n-step</p></td>
+<td><p>n step DQN (n-step=3, dueling=False, priority=False, priority_IS=False)</p></td>
+</tr>
+<tr class="row-even"><td><p>dueling</p></td>
+<td><p>use dueling head trick (n-step=3, dueling=True, priority=False, priority_IS=False)</p></td>
+</tr>
+<tr class="row-odd"><td><p>priority</p></td>
+<td><p>use priority experience replay buffer (n-step=3, dueling=False, priority=True, priority_IS=False)</p></td>
+</tr>
+<tr class="row-even"><td><p>priority_IS</p></td>
+<td><p>use importance sampling tricks (n-step=3, dueling=False, priority=True, priority_IS=True)</p></td>
+</tr>
+</tbody>
+</table>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">reward_mean</span></code> over <code class="docutils literal notranslate"><span class="pre">training</span> <span class="pre">iteration</span></code> is used as an evaluation metric.</p></li>
+<li><p>Each experiment setting is done for three times with random seed 0, 1, 2 and average the results to insure stochasticity.</p></li>
+</ol>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+   <span class="n">serial_pipeline</span><span class="p">([</span><span class="n">main_config</span><span class="p">,</span> <span class="n">create_config</span><span class="p">],</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+</pre></div>
+</div>
+<ol class="arabic simple" start="3">
+<li><p>By setting the <code class="docutils literal notranslate"><span class="pre">exp_name</span></code> in config file, the experiement results can be saved in specified path. Otherwise, it will be saved in <code class="docutils literal notranslate"><span class="pre">‘./default_experiment’</span></code> directory.</p></li>
+</ol>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">easydict</span> <span class="kn">import</span> <span class="n">EasyDict</span>
+<span class="kn">from</span> <span class="nn">ding.entry</span> <span class="kn">import</span> <span class="n">serial_pipeline</span>
+
+<span class="n">nstep</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">lunarlander_dqn_default_config</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+<span class="hll"> <span class="n">exp_name</span><span class="o">=</span><span class="s1">&#39;lunarlander_exp/base-one-step2&#39;</span><span class="p">,</span>
+</span> <span class="n">env</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+    <span class="o">......</span>
+</pre></div>
+</div>
+<p>The result is shown in the figure below. As we can see, with tricks on, the speed of convergence is increased by a large amount. In this experiement setting, dueling trick contributes most to the performance.</p>
+<img alt="../_images/rainbow_exp.png" class="align-center" src="../_images/rainbow_exp.png" />
 </div>
 <div class="section" id="references">
 <h2>References<a class="headerlink" href="#references" title="Permalink to this headline">¶</a></h2>

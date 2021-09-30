@@ -21,6 +21,7 @@
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
         <script src="../../../_static/jquery.js"></script>
         <script src="../../../_static/underscore.js"></script>
         <script src="../../../_static/doctools.js"></script>
@@ -32,6 +33,8 @@
   
   <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
     <link href="../../../_static/css/style.css" rel="stylesheet" type="text/css">
@@ -79,7 +82,7 @@
               
             
             
-              <p class="caption"><span class="caption-text">User Guide</span></p>
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../installation/index.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../quick_start/index.html">Quick Start</a></li>
@@ -91,7 +94,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../faq/index_en.html">FAQ</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../feature/index.html">Feature</a></li>
 </ul>
-<p class="caption"><span class="caption-text">Developer Guide</span></p>
+<p class="caption" role="heading"><span class="caption-text">Developer Guide</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">Developer Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../tutorial_dev/index.html">Tutorial-Developer</a></li>
@@ -358,6 +361,7 @@
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cfg</span><span class="o">.</span><span class="n">learn</span><span class="o">.</span><span class="n">double_q</span><span class="p">:</span>
             <span class="n">next_inputs</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;obs&#39;</span><span class="p">:</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;next_obs&#39;</span><span class="p">]}</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_learn_model</span><span class="o">.</span><span class="n">reset</span><span class="p">(</span><span class="n">state</span><span class="o">=</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;prev_state&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span>
             <span class="n">logit_detach</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_learn_model</span><span class="o">.</span><span class="n">forward</span><span class="p">(</span><span class="n">next_inputs</span><span class="p">,</span> <span class="n">single_step</span><span class="o">=</span><span class="kc">False</span><span class="p">)[</span><span class="s1">&#39;logit&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
             <span class="n">next_inputs</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;obs&#39;</span><span class="p">:</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;next_obs&#39;</span><span class="p">],</span> <span class="s1">&#39;action&#39;</span><span class="p">:</span> <span class="n">logit_detach</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)}</span>
         <span class="k">else</span><span class="p">:</span>

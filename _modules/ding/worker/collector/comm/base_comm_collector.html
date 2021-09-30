@@ -21,6 +21,7 @@
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="../../../../../" src="../../../../../_static/documentation_options.js"></script>
+        <script data-url_root="../../../../../" id="documentation_options" src="../../../../../_static/documentation_options.js"></script>
         <script src="../../../../../_static/jquery.js"></script>
         <script src="../../../../../_static/underscore.js"></script>
         <script src="../../../../../_static/doctools.js"></script>
@@ -32,6 +33,8 @@
   
   <link rel="stylesheet" href="../../../../../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../../_static/css/theme.css" type="text/css" />
     <link rel="index" title="Index" href="../../../../../genindex.html" />
     <link rel="search" title="Search" href="../../../../../search.html" />
     <link href="../../../../../_static/css/style.css" rel="stylesheet" type="text/css">
@@ -79,7 +82,7 @@
               
             
             
-              <p class="caption"><span class="caption-text">User Guide</span></p>
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../installation/index.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../quick_start/index.html">Quick Start</a></li>
@@ -91,7 +94,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../../faq/index_en.html">FAQ</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../feature/index.html">Feature</a></li>
 </ul>
-<p class="caption"><span class="caption-text">Developer Guide</span></p>
+<p class="caption" role="heading"><span class="caption-text">Developer Guide</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../guide/index.html">Developer Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../tutorial_dev/index.html">Tutorial-Developer</a></li>
@@ -164,7 +167,7 @@
 <span class="kn">from</span> <span class="nn">easydict</span> <span class="kn">import</span> <span class="n">EasyDict</span>
 
 <span class="kn">from</span> <span class="nn">ding.utils</span> <span class="kn">import</span> <span class="n">get_task_uid</span><span class="p">,</span> <span class="n">import_module</span><span class="p">,</span> <span class="n">COMM_COLLECTOR_REGISTRY</span>
-<span class="kn">from</span> <span class="nn">..base_parallel_collector</span> <span class="kn">import</span> <span class="n">create_parallel_collector</span><span class="p">,</span> <span class="n">BaseCollector</span>
+<span class="kn">from</span> <span class="nn">..base_parallel_collector</span> <span class="kn">import</span> <span class="n">create_parallel_collector</span><span class="p">,</span> <span class="n">BaseParallelCollector</span>
 
 
 <div class="viewcode-block" id="BaseCommCollector"><a class="viewcode-back" href="../../../../../api_doc/worker/collector/comm.html#ding.worker.collector.comm.base_comm_collector.BaseCommCollector">[docs]</a><span class="k">class</span> <span class="nc">BaseCommCollector</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
@@ -241,14 +244,14 @@
     <span class="k">def</span> <span class="nf">collector_uid</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_collector_uid</span>
 
-<div class="viewcode-block" id="BaseCommCollector._create_collector"><a class="viewcode-back" href="../../../../../api_doc/worker/collector/comm.html#ding.worker.collector.comm.base_comm_collector.BaseCommCollector._create_collector">[docs]</a>    <span class="k">def</span> <span class="nf">_create_collector</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task_info</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BaseCollector</span><span class="p">:</span>
+<div class="viewcode-block" id="BaseCommCollector._create_collector"><a class="viewcode-back" href="../../../../../api_doc/worker/collector/comm.html#ding.worker.collector.comm.base_comm_collector.BaseCommCollector._create_collector">[docs]</a>    <span class="k">def</span> <span class="nf">_create_collector</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task_info</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BaseParallelCollector</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Overview:</span>
 <span class="sd">            Receive ``task_info`` passed from coordinator and create a collector.</span>
 <span class="sd">        Arguments:</span>
 <span class="sd">            - task_info (:obj:`dict`): Task info dict from coordinator. Should be like \</span>
 <span class="sd">        Returns:</span>
-<span class="sd">            - collector (:obj:`BaseCollector`): Created base collector.</span>
+<span class="sd">            - collector (:obj:`BaseParallelCollector`): Created base collector.</span>
 <span class="sd">        Note:</span>
 <span class="sd">            Four methods(&#39;send_metadata&#39;, &#39;send_stepdata&#39;, &#39;get_policy_update_info&#39;), and policy are set.</span>
 <span class="sd">            The reason why they are set here rather than base collector is, they highly depend on the specific task.</span>
