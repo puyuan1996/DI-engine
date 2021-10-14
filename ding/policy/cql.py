@@ -3,6 +3,7 @@ from collections import namedtuple
 import copy
 import numpy as np
 import torch
+#from torch.functional import Tensor
 import torch.nn.functional as F
 from torch.distributions import Normal, Independent
 
@@ -664,7 +665,7 @@ class CQLPolicy(Policy):
 
         return action, log_prob.squeeze(-1)
 
-    def _get_q_value(self, data: Dict, keep=True) -> torch.Tensor:
+    def _get_q_value(self, data: Dict, keep=True):
         new_q_value = self._learn_model.forward(data, mode='compute_critic')['q_value']
         if self._twin_critic and not keep:
             new_q_value = torch.min(new_q_value[0], new_q_value[1])

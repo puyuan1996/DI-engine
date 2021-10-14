@@ -26,7 +26,8 @@ from .qtran import QTRANPolicy
 from .sql import SQLPolicy
 from .d4pg import D4PGPolicy
 from .cql import CQLPolicy, CQLDiscretePolicy
-
+from .cql import CQLPolicy
+from .masac import MASACPolicy
 
 class EpsCommandModePolicy(CommandModePolicy):
 
@@ -201,6 +202,12 @@ class QTRANCommandModePolicy(QTRANPolicy, EpsCommandModePolicy):
     pass
 
 
+<<<<<<< HEAD
 @POLICY_REGISTRY.register('d4pg_command')
 class D4PGCommandModePolicy(D4PGPolicy, DummyCommandModePolicy):
     pass
+=======
+@POLICY_REGISTRY.register('masac_command')
+class MASACCommandModePolicy(MASACPolicy, DummyCommandModePolicy):
+    pass
+>>>>>>> bff4b5a7e24479155ad96381a1464dd277887a43
