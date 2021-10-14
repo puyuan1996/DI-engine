@@ -191,9 +191,7 @@ class MAQAC(nn.Module):
             >>> actor_outputs['logit'][1].shape # sigma
             >>> torch.Size([4, 64])
         """
-        #print(inputs)
         x = self.actor(inputs['obs'])
-        #print(x)
         return {'logit': x['logit']}
 
     def compute_critic(self, inputs: Dict) -> Dict:
@@ -223,8 +221,7 @@ class MAQAC(nn.Module):
         """
 
         if self.twin_critic:
-            x = [m(inputs)['logit'] for m in self.critic]
+            x = [m(inputs['obs'])['logit'] for m in self.critic]
         else:
-            x = self.critic(inputs)['logit']
-        #print(x)
+            x = self.critic(inputs['obs'])['logit']
         return {'q_value': x}
