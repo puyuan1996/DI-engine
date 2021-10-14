@@ -38,8 +38,13 @@ ant_sac_default_config = dict(
             unroll_len=1,
         ),
         command=dict(),
-        eval=dict(env_num=5),
-        other=dict(replay_buffer=dict(replay_buffer_size=1000000, ), ),
+        eval=dict(
+            evaluator=dict(
+                eval_freq=50,
+            ),
+            env_num=5,
+        ),
+        other=dict(replay_buffer=dict(replay_buffer_size=100000, ), ),
     ),
 )
 
