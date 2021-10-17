@@ -7,7 +7,7 @@ evaluator_env_num = 1  # TODO(pu) 8
 special_global_state = True
 
 MMM_masac_default_config = dict(
-    exp_name='smac_MMM_masac_debug',
+    exp_name='smac_MMM_masac_debug_alpha0.2',
     env=dict(
         map_name='MMM',
         difficulty=7,
@@ -16,7 +16,7 @@ MMM_masac_default_config = dict(
         agent_num=agent_num,
         collector_env_num=collector_env_num,
         evaluator_env_num=evaluator_env_num,
-        n_evaluator_episode=16,
+        n_evaluator_episode=8,  # TODO(pu) 16,
         stop_value=0.99,
         death_mask=True,  # TODO(pu) False
         special_global_state=special_global_state,
@@ -35,20 +35,20 @@ MMM_masac_default_config = dict(
             global_obs_shape=389,
             action_shape=16,
             twin_critic=True,
-            actor_head_hidden_size=128,
-            critic_head_hidden_size=128,
+            actor_head_hidden_size=256,
+            critic_head_hidden_size=256,
         ),
         learn=dict(
-            update_per_collect=5,
+            update_per_collect=50,  # TODO(pu) 5,
             batch_size=320,  # TODO(pu) 64,
-            learning_rate_q=5e-3,
-            learning_rate_policy=5e-3,
-            learning_rate_alpha=3e-4,
+            learning_rate_q=5e-4,
+            learning_rate_policy=5e-4,
+            learning_rate_alpha=5e-4,
             ignore_done=False,
-            target_theta=0.01,
+            target_theta=0.005,  # TODO(pu)
             discount_factor=0.99,
-            alpha=0.2,
-            auto_alpha=True,  # TODO(pu) False,
+            alpha=0.5,  # TODO(pu) 0.5,
+            auto_alpha=True,  # TODO(pu)True,
             log_space=True,
         ),
         collect=dict(
@@ -63,7 +63,7 @@ MMM_masac_default_config = dict(
             ),
             env_num=evaluator_env_num,
         ),
-        other=dict(replay_buffer=dict(replay_buffer_size=100000, ), ),
+        other=dict(replay_buffer=dict(replay_buffer_size=1000000, ), ),  # TODO(pu):100000
     ),
 )
 

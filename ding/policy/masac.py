@@ -333,7 +333,7 @@ class MASACPolicy(Policy):
             new_q_value = torch.min(new_q_value[0], new_q_value[1])  # (64,10,16)
 
         # 7. compute policy loss
-        policy_loss = (prob * (self._alpha * log_prob - new_q_value.squeeze(-1)).detach()).sum(dim=-1).mean()
+        policy_loss = (prob * (self._alpha * log_prob - new_q_value.squeeze(-1).detach())).sum(dim=-1).mean()
 
         loss_dict['policy_loss'] = policy_loss
 
