@@ -22,7 +22,7 @@ class MAQAC(nn.Module):
             agent_obs_shape: Union[int, SequenceType],
             global_obs_shape: Union[int, SequenceType],
             action_shape: Union[int, SequenceType],
-            #actor_head_type: str,
+            # actor_head_type: str,
             twin_critic: bool = False,
             actor_head_hidden_size: int = 64,
             actor_head_layer_num: int = 1,
@@ -191,9 +191,10 @@ class MAQAC(nn.Module):
             >>> actor_outputs['logit'][1].shape # sigma
             >>> torch.Size([4, 64])
         """
-        action_mask = inputs['obs']['action_mask']
-        x = self.actor(inputs['obs']['agent_state'])
-        x[action_mask == 0.0] = -99999999
+        action_mask = inputs['obs']['action_mask']  # (1,10,16)
+        x = self.actor(inputs['obs']['agent_state'])  # # (1,10,16)
+        x['logit'][action_mask == 0.0] = -99999999
+        # x['logit'] = x['logit'] * action_mask + (1 - action_mask) * (-99999999)  # Another way to implement
         return {'logit': x['logit']}
 
     def compute_critic(self, inputs: Dict) -> Dict:

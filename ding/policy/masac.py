@@ -274,12 +274,12 @@ class MASACPolicy(Policy):
 
         self._learn_model.train()
         self._target_model.train()
-        obs = data['obs']
+        obs = data['obs']  # 'agent_state': (B,A,186), 'global_state': (B,A,389), 'action_mask': (B,A,16)
         next_obs = data['next_obs']
-        reward = data['reward']
-        done = data['done']
-        logit = data['logit']
-        action = data['action']
+        reward = data['reward']  # (B,)
+        done = data['done']  # (B,)
+        logit = data['logit']  # (B,A,16)
+        action = data['action']  # (B,A)
 
         # 1. predict q value
         q_value = self._learn_model.forward({'obs': obs}, mode='compute_critic')['q_value']
@@ -298,13 +298,13 @@ class MASACPolicy(Policy):
             # the value of a policy according to the maximum entropy objective
             if self._twin_critic:
                 # find min one as target q value
-                target_q_value = (prob * (
-                            torch.min(target_q_value[0], target_q_value[1]) - self._alpha * log_prob.squeeze(
-                        -1))).sum(dim=-1)
-            else:
-                target_q_value = (prob * (target_q_value - self._alpha * log_prob.squeeze(-1))).sum(
+                target_value = (prob * (
+                            torch.min(target_q_value[0], target_q_value[1]) - self._alpha * log_prob.squeeze(-1))).sum(
                     dim=-1)
-        target_value = target_q_value
+            else:
+                target_value = (prob * (target_q_value - self._alpha * log_prob.squeeze(-1))).sum(
+                    dim=-1)
+        # target_value = target_q_value
 
         # 3. compute q loss
         if self._twin_critic:
@@ -330,23 +330,24 @@ class MASACPolicy(Policy):
 
         new_q_value = self._learn_model.forward({'obs': data['obs']}, mode='compute_critic')['q_value']
         if self._twin_critic:
-            new_q_value = torch.min(new_q_value[0], new_q_value[1])
+            new_q_value = torch.min(new_q_value[0], new_q_value[1])  # (64,10,16)
 
         # 7. compute policy loss
-        policy_loss = (prob * (self._alpha * log_prob - new_q_value.squeeze(-1))).sum(dim=-1).mean()
+        policy_loss = (prob * (self._alpha * log_prob - new_q_value.squeeze(-1)).detach()).sum(dim=-1).mean()
 
         loss_dict['policy_loss'] = policy_loss
 
         # 8. update policy network
         self._optimizer_policy.zero_grad()
         loss_dict['policy_loss'].backward()
+        grad_norm = torch.nn.utils.clip_grad_norm_(self._model.actor.parameters(), 10)  # TODO（pu）
         self._optimizer_policy.step()
 
         # 9. compute alpha loss
         if self._auto_alpha:
             if self._log_space:
                 log_prob = log_prob + self._target_entropy
-                loss_dict['alpha_loss'] = (-prob * (self._log_alpha * log_prob.detach())).sum(dim=-1).mean()
+                loss_dict['alpha_loss'] = (-prob.detach() * (self._log_alpha * log_prob.detach())).sum(dim=-1).mean()
 
                 self._alpha_optim.zero_grad()
                 loss_dict['alpha_loss'].backward()
@@ -354,7 +355,7 @@ class MASACPolicy(Policy):
                 self._alpha = self._log_alpha.detach().exp()
             else:
                 log_prob = log_prob + self._target_entropy
-                loss_dict['alpha_loss'] = (-prob * (self._alpha * log_prob.detach())).sum(dim=-1).mean()
+                loss_dict['alpha_loss'] = (-prob.detach() * (self._alpha * log_prob.detach())).sum(dim=-1).mean()
 
                 self._alpha_optim.zero_grad()
                 loss_dict['alpha_loss'].backward()
@@ -379,8 +380,14 @@ class MASACPolicy(Policy):
             # 'priority': td_error_per_sample.abs().tolist(),
             # 'td_error': td_error_per_sample.detach().mean().item(),
             'alpha': self._alpha.item(),
+            'target_value_1': target_q_value[0].detach().mean().item(),
+            'target_value_2': target_q_value[1].detach().mean().item(),
             'target_value': target_value.detach().mean().item(),
             'entropy': entropy.item(),
+
+            # 'policy_loss': loss_dict['policy_loss'].item(),
+            # 'critic_loss': loss_dict['critic_loss'].item(),
+            # 'twin_critic_loss': loss_dict['twin_critic_loss'].item(),
             **info_dict,
             **loss_dict
         }

@@ -7,6 +7,7 @@ import torch.nn.functional as F
 from ding.rl_utils.value_rescale import value_transform, value_inv_transform
 from ding.hpc_rl import hpc_wrapper
 import copy
+
 q_1step_td_data = namedtuple('q_1step_td_data', ['q', 'next_q', 'act', 'next_act', 'reward', 'done', 'weight'])
 
 
@@ -26,7 +27,9 @@ def q_1step_td_error(
     target_q_s_a = gamma * (1 - done) * target_q_s_a + reward
     return (criterion(q_s_a, target_q_s_a.detach()) * weight).mean()
 
+
 q_v_1step_td_data = namedtuple('q_v_1step_td_data', ['q', 'v', 'act', 'reward', 'done', 'weight'])
+
 
 def q_v_1step_td_error(
         data: namedtuple,
@@ -34,25 +37,26 @@ def q_v_1step_td_error(
         criterion: torch.nn.modules = nn.MSELoss(reduction='none')  # noqa
 ) -> torch.Tensor:
     q, v, act, reward, done, weight = data
-    #print('begin')
-    #print(q.shape)
-    #print(v.shape)
-    #print(act.shape)
-    #print('end')
-    #assert len(act.shape) == 1, act.shape
+    # print(q.shape) (64,10,16)
+    # print(v.shape) (64,10)
+    # print(act.shape) (64,10)
+    # print(reward.shape) (64,)
+    # print(done.shape) (64,)
+    # assert len(act.shape) == 1, act.shape
     assert len(reward.shape) == 1, reward.shape
     batch_range = torch.arange(act.shape[0])
     actor_range = torch.arange(act.shape[1])
-    batch_actor_range = torch.arange(act.shape[0]*act.shape[1])
+    batch_actor_range = torch.arange(act.shape[0] * act.shape[1])
     if weight is None:
         weight = torch.ones_like(act)
-    temp_q = q.reshape(act.shape[0]*act.shape[1], -1)
-    temp_act = act.reshape(act.shape[0]*act.shape[1])
+    temp_q = q.reshape(act.shape[0] * act.shape[1], -1)
+    temp_act = act.reshape(act.shape[0] * act.shape[1])
     q_s_a = temp_q[batch_actor_range, temp_act]
     q_s_a = q_s_a.reshape(act.shape[0], act.shape[1])
-    #print(q_s_a.shape, v.shape, reward.shape)
+    # print(q_s_a.shape, v.shape, reward.shape)
     target_q_s_a = gamma * (1 - done).unsqueeze(1) * v + reward.unsqueeze(1)
     return (criterion(q_s_a, target_q_s_a.detach()) * weight).mean()
+
 
 nstep_return_data = namedtuple('nstep_return_data', ['reward', 'next_value', 'done'])
 
@@ -376,13 +380,13 @@ def shape_fn_qntd_rescale(args, kwargs):
     shape_fn=shape_fn_qntd_rescale, namedtuple_data=True, include_args=[0, 1], include_kwargs=['data', 'gamma']
 )
 def q_nstep_td_error_with_rescale(
-    data: namedtuple,
-    gamma: float,
-    nstep: int = 1,
-    value_gamma: Optional[torch.Tensor] = None,
-    criterion: torch.nn.modules = nn.MSELoss(reduction='none'),
-    trans_fn: Callable = value_transform,
-    inv_trans_fn: Callable = value_inv_transform,
+        data: namedtuple,
+        gamma: float,
+        nstep: int = 1,
+        value_gamma: Optional[torch.Tensor] = None,
+        criterion: torch.nn.modules = nn.MSELoss(reduction='none'),
+        trans_fn: Callable = value_transform,
+        inv_trans_fn: Callable = value_inv_transform,
 ) -> torch.Tensor:
     """
     Overview:
@@ -548,7 +552,7 @@ def q_nstep_sql_td_error(
     # However, algorithms may face the danger of explosion for other alphas.
     # The hardcodes above are to prevent this situation from happening
     record_target_v = copy.deepcopy(target_v)
-    #print(target_v)
+    # print(target_v)
     if cum_reward:
         if value_gamma is None:
             target_v = reward + (gamma ** nstep) * target_v * (1 - done)
@@ -705,7 +709,7 @@ def td_lambda_error(data: namedtuple, gamma: float = 0.9, lambda_: float = 0.8) 
         return_ = generalized_lambda_returns(value, reward, gamma, lambda_)
     # discard the value at T as it should be considered in the next slice
     loss = 0.5 * \
-        (F.mse_loss(return_, value[:-1], reduction='none') * weight).mean()
+           (F.mse_loss(return_, value[:-1], reduction='none') * weight).mean()
     return loss
 
 
@@ -772,7 +776,7 @@ def multistep_forward_view(
     discounts = gammas * lambda_
     for t in reversed(range(rewards.size()[0] - 1)):
         result[t, :] = rewards[t, :] \
-            + discounts[t, :] * result[t + 1, :] \
-            + (gammas[t, :] - discounts[t, :]) * bootstrap_values[t, :]
+                       + discounts[t, :] * result[t + 1, :] \
+                       + (gammas[t, :] - discounts[t, :]) * bootstrap_values[t, :]
 
     return result

@@ -2,12 +2,12 @@ from easydict import EasyDict
 from ding.entry import serial_pipeline
 
 agent_num = 10
-collector_env_num = 8
-evaluator_env_num = 8
+collector_env_num = 1  # TODO(pu) 8
+evaluator_env_num = 1  # TODO(pu) 8
 special_global_state = True
 
-cartpole_sac_default_config = dict(
-    exp_name='smac_MMM_ppo',
+MMM_masac_default_config = dict(
+    exp_name='smac_MMM_masac_debug',
     env=dict(
         map_name='MMM',
         difficulty=7,
@@ -18,7 +18,7 @@ cartpole_sac_default_config = dict(
         evaluator_env_num=evaluator_env_num,
         n_evaluator_episode=16,
         stop_value=0.99,
-        death_mask=False,
+        death_mask=True,  # TODO(pu) False
         special_global_state=special_global_state,
         # save_replay_episodes = 1,
         manager=dict(
@@ -40,7 +40,7 @@ cartpole_sac_default_config = dict(
         ),
         learn=dict(
             update_per_collect=5,
-            batch_size=64,
+            batch_size=320,  # TODO(pu) 64,
             learning_rate_q=5e-3,
             learning_rate_policy=5e-3,
             learning_rate_alpha=3e-4,
@@ -48,11 +48,12 @@ cartpole_sac_default_config = dict(
             target_theta=0.01,
             discount_factor=0.99,
             alpha=0.2,
-            auto_alpha=False,
+            auto_alpha=True,  # TODO(pu) False,
+            log_space=True,
         ),
         collect=dict(
-            env_num=8,
-            n_sample=256,
+            env_num=collector_env_num,
+            n_sample=3200,  # TODO（pu）256,
             unroll_len=1,
         ),
         command=dict(),
@@ -60,16 +61,16 @@ cartpole_sac_default_config = dict(
             evaluator=dict(
                 eval_freq=50,
             ),
-            env_num=8,
+            env_num=evaluator_env_num,
         ),
         other=dict(replay_buffer=dict(replay_buffer_size=100000, ), ),
     ),
 )
 
-cartpole_sac_default_config = EasyDict(cartpole_sac_default_config)
-main_config = cartpole_sac_default_config
+MMM_masac_default_config = EasyDict(MMM_masac_default_config)
+main_config = MMM_masac_default_config
 
-cartpole_sac_default_create_config = dict(
+MMM_masac_default_create_config = dict(
     env=dict(
         type='smac',
         import_names=['dizoo.smac.envs.smac_env'],
@@ -80,8 +81,8 @@ cartpole_sac_default_create_config = dict(
     ),
     #replay_buffer=dict(type='naive', ),
 )
-cartpole_sac_default_create_config = EasyDict(cartpole_sac_default_create_config)
-create_config = cartpole_sac_default_create_config
+MMM_masac_default_create_config = EasyDict(MMM_masac_default_create_config)
+create_config = MMM_masac_default_create_config
 
 
 if __name__ == "__main__":
