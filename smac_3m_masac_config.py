@@ -6,10 +6,10 @@ collector_env_num = 1  # TODO(pu) 8
 evaluator_env_num = 1  # TODO(pu) 8
 special_global_state = True
 
-MMM_masac_default_config = dict(
-    exp_name='debug_smac_MMM_masac_alpha0.2_eps-sample-masac',
+SMAC_3m_masac_default_config = dict(
+    exp_name='debug_smac_3m_masac',
     env=dict(
-        map_name='MMM',
+        map_name='3m',
         difficulty=7,
         reward_only_positive=True,
         mirror_opponent=False,
@@ -29,11 +29,11 @@ MMM_masac_default_config = dict(
     policy=dict(
         cuda=True,
         on_policy=False,
-        random_collect_size=0,  # TODO 10000
+        random_collect_size=0,
         model=dict(
-            agent_obs_shape=186,
-            global_obs_shape=389,
-            action_shape=16,
+            agent_obs_shape=42,
+            global_obs_shape=77,
+            action_shape=9,
             twin_critic=True,
             actor_head_hidden_size=256,
             critic_head_hidden_size=256,
@@ -47,7 +47,7 @@ MMM_masac_default_config = dict(
             ignore_done=False,
             target_theta=0.005,  # TODO(pu)
             discount_factor=0.99,
-            alpha=0.2,  # TODO(pu) 0.5,
+            alpha=0.2,  # TODO(pu)
             auto_alpha=True,  # TODO(pu)True,
             log_space=True,
         ),
@@ -74,10 +74,10 @@ MMM_masac_default_config = dict(
     ),
 )
 
-MMM_masac_default_config = EasyDict(MMM_masac_default_config)
-main_config = MMM_masac_default_config
+SMAC_3m_masac_default_config = EasyDict(SMAC_3m_masac_default_config)
+main_config = SMAC_3m_masac_default_config
 
-MMM_masac_default_create_config = dict(
+SMAC_3m_masac_default_create_config = dict(
     env=dict(
         type='smac',
         import_names=['dizoo.smac.envs.smac_env'],
@@ -88,8 +88,8 @@ MMM_masac_default_create_config = dict(
     ),
     #replay_buffer=dict(type='naive', ),
 )
-MMM_masac_default_create_config = EasyDict(MMM_masac_default_create_config)
-create_config = MMM_masac_default_create_config
+SMAC_3m_masac_default_create_config = EasyDict(SMAC_3m_masac_default_create_config)
+create_config = SMAC_3m_masac_default_create_config
 
 
 if __name__ == "__main__":

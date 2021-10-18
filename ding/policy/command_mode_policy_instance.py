@@ -29,6 +29,7 @@ from .cql import CQLPolicy, CQLDiscretePolicy
 from .cql import CQLPolicy
 from .masac import MASACPolicy
 
+
 class EpsCommandModePolicy(CommandModePolicy):
 
     def _init_command(self) -> None:
@@ -207,6 +208,10 @@ class D4PGCommandModePolicy(D4PGPolicy, DummyCommandModePolicy):
     pass
 
 
+# @POLICY_REGISTRY.register('masac_command')
+# class MASACCommandModePolicy(MASACPolicy, DummyCommandModePolicy):
+#     pass
+
 @POLICY_REGISTRY.register('masac_command')
-class MASACCommandModePolicy(MASACPolicy, DummyCommandModePolicy):
+class MASACCommandModePolicy(MASACPolicy, EpsCommandModePolicy):
     pass

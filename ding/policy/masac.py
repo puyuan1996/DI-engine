@@ -191,20 +191,20 @@ class MASACPolicy(Policy):
         self._priority_IS_weight = self._cfg.priority_IS_weight
         # self._value_network = False  # TODO self._cfg.model.value_network
         self._twin_critic = self._cfg.model.twin_critic
-        '''
-        # Weight Init
-        init_w = self._cfg.learn.init_w
-        self._model.actor[2].weight.data.uniform_(-init_w, init_w)
-        self._model.actor[2].bias.data.uniform_(-init_w, init_w)
-        if self._twin_critic:
-            self._model.critic[0][2].last.weight.data.uniform_(-init_w, init_w)
-            self._model.critic[0][2].last.bias.data.uniform_(-init_w, init_w)
-            self._model.critic[1][2].last.weight.data.uniform_(-init_w, init_w)
-            self._model.critic[1][2].last.bias.data.uniform_(-init_w, init_w)
-        else:
-            self._model.critic[2].last.weight.data.uniform_(-init_w, init_w)
-            self._model.critic[2].last.bias.data.uniform_(-init_w, init_w)
-        '''
+
+        # # Weight Init
+        # init_w = self._cfg.learn.init_w
+        # self._model.actor[2].weight.data.uniform_(-init_w, init_w)
+        # self._model.actor[2].bias.data.uniform_(-init_w, init_w)
+        # if self._twin_critic:
+        #     self._model.critic[0][2].last.weight.data.uniform_(-init_w, init_w)
+        #     self._model.critic[0][2].last.bias.data.uniform_(-init_w, init_w)
+        #     self._model.critic[1][2].last.weight.data.uniform_(-init_w, init_w)
+        #     self._model.critic[1][2].last.bias.data.uniform_(-init_w, init_w)
+        # else:
+        #     self._model.critic[2].last.weight.data.uniform_(-init_w, init_w)
+        #     self._model.critic[2].last.bias.data.uniform_(-init_w, init_w)
+
         self._optimizer_q = Adam(
             self._model.critic.parameters(),
             lr=self._cfg.learn.learning_rate_q,
@@ -291,8 +291,9 @@ class MASACPolicy(Policy):
 
         # target q value. SARSA: first predict next action, then calculate next q value
         with torch.no_grad():
-            output = self._learn_model.forward({'obs': next_obs}, mode='compute_actor')
-            prob = F.softmax(output['logit'], dim=-1)
+            policy_output_next = self._learn_model.forward({'obs': next_obs}, mode='compute_actor')
+            policy_output_next['logit'][policy_output_next['action_mask'] == 0.0] = -1e8
+            prob = F.softmax(policy_output_next['logit'], dim=-1)
             log_prob = torch.log(prob + 1e-8)
             target_q_value = self._target_model.forward({'obs': next_obs}, mode='compute_critic')['q_value']
             # the value of a policy according to the maximum entropy objective
@@ -324,23 +325,26 @@ class MASACPolicy(Policy):
         self._optimizer_q.step()
 
         # 5. evaluate to get action distribution
-        logit = self._learn_model.forward({'obs': data['obs']}, mode='compute_actor')['logit']
+        policy_output = self._learn_model.forward({'obs': data['obs']}, mode='compute_actor')
+        policy_output['logit'][policy_output['action_mask'] == 0.0] = -1e8
+        logit = policy_output['logit']
         prob = F.softmax(logit, dim=-1)
         log_prob = torch.log(prob + 1e-8)
 
-        new_q_value = self._learn_model.forward({'obs': data['obs']}, mode='compute_critic')['q_value']
-        if self._twin_critic:
-            new_q_value = torch.min(new_q_value[0], new_q_value[1])  # (64,10,16)
+        with torch.no_grad():
+            new_q_value = self._learn_model.forward({'obs': data['obs']}, mode='compute_critic')['q_value']
+            if self._twin_critic:
+                new_q_value = torch.min(new_q_value[0], new_q_value[1])  # (64,10,16)
 
         # 7. compute policy loss
-        policy_loss = (prob * (self._alpha * log_prob - new_q_value.squeeze(-1).detach())).sum(dim=-1).mean()
+        policy_loss = (prob * (self._alpha * log_prob - new_q_value.squeeze(-1))).sum(dim=-1).mean()
 
         loss_dict['policy_loss'] = policy_loss
 
         # 8. update policy network
         self._optimizer_policy.zero_grad()
         loss_dict['policy_loss'].backward()
-        grad_norm = torch.nn.utils.clip_grad_norm_(self._model.actor.parameters(), 10)  # TODO（pu）
+        # grad_norm = torch.nn.utils.clip_grad_norm_(self._model.actor.parameters(), 10)  # TODO（pu）
         self._optimizer_policy.step()
 
         # 9. compute alpha loss
@@ -380,8 +384,8 @@ class MASACPolicy(Policy):
             # 'priority': td_error_per_sample.abs().tolist(),
             # 'td_error': td_error_per_sample.detach().mean().item(),
             'alpha': self._alpha.item(),
-            'target_value_1': target_q_value[0].detach().mean().item(),
-            'target_value_2': target_q_value[1].detach().mean().item(),
+            'q_value_1': target_q_value[0].detach().mean().item(),
+            'q_value_2': target_q_value[1].detach().mean().item(),
             'target_value': target_value.detach().mean().item(),
             'entropy': entropy.item(),
 
@@ -421,10 +425,36 @@ class MASACPolicy(Policy):
             Use action noise for exploration.
         """
         self._unroll_len = self._cfg.collect.unroll_len
-        self._collect_model = model_wrap(self._model, wrapper_name='multinomial_sample')
+        # self._collect_model = model_wrap(self._model, wrapper_name='multinomial_sample')  # TODO(pu)
+        # self._collect_model = model_wrap(self._model, wrapper_name='eps_greedy_sample')
+        self._collect_model = model_wrap(self._model, wrapper_name='eps_greedy_sample_masac')
+
         self._collect_model.reset()
 
-    def _forward_collect(self, data: dict) -> dict:
+    # def _forward_collect(self, data: dict) -> dict:
+    #     r"""
+    #     Overview:
+    #         Forward function of collect mode.
+    #     Arguments:
+    #         - data (:obj:`dict`): Dict type data, including at least ['obs'].
+    #     Returns:
+    #         - output (:obj:`dict`): Dict type data, including at least inferred action according to input obs.
+    #     """
+    #     data_id = list(data.keys())
+    #     data = default_collate(list(data.values()))
+    #     if self._cuda:
+    #         data = to_device(data, self._device)
+    #     self._collect_model.eval()
+    #     # print(data)
+    #     with torch.no_grad():
+    #         output = self._collect_model.forward({'obs': data}, mode='compute_actor')
+    #     if self._cuda:
+    #         output = to_device(output, 'cpu')
+    #     output = default_decollate(output)
+    #     # print(output)
+    #     return {i: d for i, d in zip(data_id, output)}
+
+    def _forward_collect(self, data: dict, eps: float) -> dict:
         r"""
         Overview:
             Forward function of collect mode.
@@ -438,14 +468,13 @@ class MASACPolicy(Policy):
         if self._cuda:
             data = to_device(data, self._device)
         self._collect_model.eval()
-        # print(data)
         with torch.no_grad():
-            output = self._collect_model.forward({'obs': data}, mode='compute_actor')
+            output = self._collect_model.forward({'obs': data}, mode='compute_actor', eps=eps)  # eps_greedy_sample  eps_greedy_sample_masac
         if self._cuda:
             output = to_device(output, 'cpu')
         output = default_decollate(output)
-        # print(output)
         return {i: d for i, d in zip(data_id, output)}
+
 
     def _process_transition(self, obs: Any, model_output: dict, timestep: namedtuple) -> dict:
         r"""
