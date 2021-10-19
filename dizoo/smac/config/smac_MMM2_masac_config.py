@@ -6,10 +6,10 @@ collector_env_num = 1  # TODO(pu) 8
 evaluator_env_num = 1  # TODO(pu) 8
 special_global_state = True
 
-SMAC_3m_masac_default_config = dict(
-    exp_name='debug_smac_3m_masac',
+SMAC_MMM2_masac_default_config = dict(
+    exp_name='debug_smac_MMM2_masac',
     env=dict(
-        map_name='3m',
+        map_name='MMM2',
         difficulty=7,
         reward_only_positive=True,
         mirror_opponent=False,
@@ -74,10 +74,10 @@ SMAC_3m_masac_default_config = dict(
     ),
 )
 
-SMAC_3m_masac_default_config = EasyDict(SMAC_3m_masac_default_config)
-main_config = SMAC_3m_masac_default_config
+SMAC_MMM2_masac_default_config = EasyDict(SMAC_MMM2_masac_default_config)
+main_config = SMAC_MMM2_masac_default_config
 
-SMAC_3m_masac_default_create_config = dict(
+SMAC_MMM2_masac_default_create_config = dict(
     env=dict(
         type='smac',
         import_names=['dizoo.smac.envs.smac_env'],
@@ -88,8 +88,8 @@ SMAC_3m_masac_default_create_config = dict(
     ),
     #replay_buffer=dict(type='naive', ),
 )
-SMAC_3m_masac_default_create_config = EasyDict(SMAC_3m_masac_default_create_config)
-create_config = SMAC_3m_masac_default_create_config
+SMAC_MMM2_masac_default_create_config = EasyDict(SMAC_MMM2_masac_default_create_config)
+create_config = SMAC_MMM2_masac_default_create_config
 
 
 if __name__ == "__main__":
