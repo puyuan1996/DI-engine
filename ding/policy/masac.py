@@ -366,6 +366,7 @@ class MASACPolicy(Policy):
                 loss_dict['alpha_loss'].backward()
                 self._alpha_optim.step()
                 self._alpha = max(0, self._alpha)
+                self._alpha.data = torch.where(self._alpha > 0, self._alpha, torch.zeros_like(self._alpha)).requires_grad_()
 
         loss_dict['total_loss'] = sum(loss_dict.values())
 
