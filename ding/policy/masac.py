@@ -310,12 +310,13 @@ class MASACPolicy(Policy):
         # 3. compute q loss
         if self._twin_critic:
             q_data0 = q_v_1step_td_data(q_value[0], target_value, action, reward, done, data['weight'])
-            loss_dict['critic_loss'] = q_v_1step_td_error(q_data0, self._gamma)
+            loss_dict['critic_loss'], td_error_per_sample0 = q_v_1step_td_error(q_data0, self._gamma)
             q_data1 = q_v_1step_td_data(q_value[1], target_value, action, reward, done, data['weight'])
-            loss_dict['twin_critic_loss'] = q_v_1step_td_error(q_data1, self._gamma)
+            loss_dict['twin_critic_loss'], td_error_per_sample1 = q_v_1step_td_error(q_data1, self._gamma)
+            td_error_per_sample = (td_error_per_sample0 + td_error_per_sample1) / 2
         else:
             q_data = q_v_1step_td_data(q_value, target_value, action, reward, done, data['weight'])
-            loss_dict['critic_loss'] = q_v_1step_td_error(q_data, self._gamma)
+            loss_dict['critic_loss'], td_error_per_sample = q_v_1step_td_error(q_data, self._gamma)
 
         # 4. update q network
         self._optimizer_q.zero_grad()
@@ -381,8 +382,8 @@ class MASACPolicy(Policy):
         return {
             'cur_lr_q': self._optimizer_q.defaults['lr'],
             'cur_lr_p': self._optimizer_policy.defaults['lr'],
-            # 'priority': td_error_per_sample.abs().tolist(),
-            # 'td_error': td_error_per_sample.detach().mean().item(),
+            'priority': td_error_per_sample.abs().tolist(),
+            'td_error': td_error_per_sample.detach().mean().item(),
             'alpha': self._alpha.item(),
             'q_value_1': target_q_value[0].detach().mean().item(),
             'q_value_2': target_q_value[1].detach().mean().item(),
