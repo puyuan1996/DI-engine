@@ -55,7 +55,8 @@ def q_v_1step_td_error(
     q_s_a = q_s_a.reshape(act.shape[0], act.shape[1])
     # print(q_s_a.shape, v.shape, reward.shape)
     target_q_s_a = gamma * (1 - done).unsqueeze(1) * v + reward.unsqueeze(1)
-    return (criterion(q_s_a, target_q_s_a.detach()) * weight).mean()
+    td_error_per_sample = criterion(q_s_a, target_q_s_a.detach())
+    return (td_error_per_sample * weight).mean(), td_error_per_sample
 
 
 nstep_return_data = namedtuple('nstep_return_data', ['reward', 'next_value', 'done'])
