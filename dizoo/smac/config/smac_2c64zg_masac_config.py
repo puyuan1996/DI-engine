@@ -1,6 +1,7 @@
 from easydict import EasyDict
 from ding.entry import serial_pipeline
 
+
 agent_num = 2
 collector_env_num = 8
 evaluator_env_num = 8
@@ -32,7 +33,7 @@ SMAC_2c64zg_masac_default_config = dict(
         random_collect_size=0,
         model=dict(
             agent_obs_shape=404,
-            global_obs_shape=431,
+            global_obs_shape=671,
             action_shape=70,
             twin_critic=True,
             actor_head_hidden_size=256,
