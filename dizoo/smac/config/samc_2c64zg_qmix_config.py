@@ -2,14 +2,14 @@ from copy import deepcopy
 from ding.entry import serial_pipeline
 from easydict import EasyDict
 
-agent_num = 8
+agent_num = 10
 collector_env_num = 16
 evaluator_env_num = 8
 
 main_config = dict(
-    exp_name='debug_smac_3s5z_qmix',
+    exp_name='debug_smac_2c64zg_qmix',
     env=dict(
-        map_name='3s5z',
+        map_name='2c_vs_64zg',
         difficulty=7,
         reward_only_positive=True,
         mirror_opponent=False,
@@ -23,9 +23,9 @@ main_config = dict(
     policy=dict(
         model=dict(
             agent_num=agent_num,
-            obs_shape=150,
-            global_obs_shape=216,
-            action_shape=14,
+            obs_shape=404,
+            global_obs_shape=431,
+            action_shape=15,
             hidden_size_list=[32],
             mixer=True,
             lstm_type='gru',

@@ -1,15 +1,15 @@
 from easydict import EasyDict
 from ding.entry import serial_pipeline
 
-agent_num = 10
+agent_num = 8
 collector_env_num = 8
 evaluator_env_num = 8
 special_global_state = True
 
-MMM_masac_default_config = dict(
-    exp_name='debug_smac_MMM_masac',
+SMAC_3s5z3s6z_masac_default_config = dict(
+    exp_name='debug_smac_3s5z3s6z_masac',
     env=dict(
-        map_name='MMM',
+        map_name='3s5z_vs_3s6z',
         difficulty=7,
         reward_only_positive=True,
         mirror_opponent=False,
@@ -31,9 +31,9 @@ MMM_masac_default_config = dict(
         on_policy=False,
         random_collect_size=0,
         model=dict(
-            agent_obs_shape=186,
-            global_obs_shape=389,
-            action_shape=16,
+            agent_obs_shape=159,
+            global_obs_shape=314,
+            action_shape=15,
             twin_critic=True,
             actor_head_hidden_size=256,
             critic_head_hidden_size=256,
@@ -43,7 +43,7 @@ MMM_masac_default_config = dict(
             batch_size=320,
             learning_rate_q=5e-4,
             learning_rate_policy=5e-4,
-            learning_rate_alpha=5e-4,  # TODO(pu)
+            learning_rate_alpha=5e-5,  # TODO(pu)
             ignore_done=False,
             target_theta=0.005,
             discount_factor=0.99,
@@ -53,7 +53,7 @@ MMM_masac_default_config = dict(
         ),
         collect=dict(
             env_num=collector_env_num,
-            n_sample=3200,  # TODO（pu）1600
+            n_sample=1600,  # TODO(pu)
             unroll_len=1,
         ),
         command=dict(),
@@ -74,10 +74,10 @@ MMM_masac_default_config = dict(
     ),
 )
 
-MMM_masac_default_config = EasyDict(MMM_masac_default_config)
-main_config = MMM_masac_default_config
+SMAC_3s5z3s6z_masac_default_config = EasyDict(SMAC_3s5z3s6z_masac_default_config)
+main_config = SMAC_3s5z3s6z_masac_default_config
 
-MMM_masac_default_create_config = dict(
+SMAC_3s5z3s6z_masac_default_create_config = dict(
     env=dict(
         type='smac',
         import_names=['dizoo.smac.envs.smac_env'],
@@ -87,8 +87,8 @@ MMM_masac_default_create_config = dict(
         type='masac',
     ),
 )
-MMM_masac_default_create_config = EasyDict(MMM_masac_default_create_config)
-create_config = MMM_masac_default_create_config
+SMAC_3s5z3s6z_masac_default_create_config = EasyDict(SMAC_3s5z3s6z_masac_default_create_config)
+create_config = SMAC_3s5z3s6z_masac_default_create_config
 
 
 if __name__ == "__main__":

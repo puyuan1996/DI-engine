@@ -19,7 +19,7 @@ from .common_utils import default_preprocess_learn
 class MASACPolicy(Policy):
     r"""
        Overview:
-           Policy class of SAC algorithm.
+           Policy class of multi-agent SAC algorithm.
 
        Config:
            == ====================  ========    =============  ================================= =======================
@@ -471,12 +471,12 @@ class MASACPolicy(Policy):
             data = to_device(data, self._device)
         self._collect_model.eval()
         with torch.no_grad():
-            output = self._collect_model.forward({'obs': data}, mode='compute_actor', eps=eps)  # eps_greedy_sample  eps_greedy_sample_masac
+            # TODO(pu): eps_greedy_sample  eps_greedy_sample_masac
+            output = self._collect_model.forward({'obs': data}, mode='compute_actor', eps=eps)
         if self._cuda:
             output = to_device(output, 'cpu')
         output = default_decollate(output)
         return {i: d for i, d in zip(data_id, output)}
-
 
     def _process_transition(self, obs: Any, model_output: dict, timestep: namedtuple) -> dict:
         r"""
@@ -490,7 +490,6 @@ class MASACPolicy(Policy):
         Return:
             - transition (:obj:`Dict[str, Any]`): Dict type transition data.
         """
-        # print(model_output)
         transition = {
             'obs': obs,
             'next_obs': timestep.obs,
