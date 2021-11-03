@@ -43,7 +43,7 @@ smac_3s5z_masac_default_config = dict(
             batch_size=320,  # TODO(pu) 64,
             learning_rate_q=5e-4,
             learning_rate_policy=5e-4,
-            learning_rate_alpha=5e-4,
+            learning_rate_alpha=5e-5,
             ignore_done=False,
             target_theta=0.005,  # TODO(pu)
             discount_factor=0.99,
@@ -53,7 +53,7 @@ smac_3s5z_masac_default_config = dict(
         ),
         collect=dict(
             env_num=collector_env_num,
-            n_sample=3200,  # TODO（pu）256,
+            n_sample=1600,  # TODO（pu）256,
             unroll_len=1,
         ),
         command=dict(),
