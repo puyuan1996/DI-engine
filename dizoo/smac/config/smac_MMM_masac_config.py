@@ -7,7 +7,7 @@ evaluator_env_num = 8
 special_global_state = True
 
 MMM_masac_default_config = dict(
-    exp_name='debug_smac_MMM_masac',
+    exp_name='debug_smac_MMM_masac_seed2',
     env=dict(
         map_name='MMM',
         difficulty=7,
@@ -92,4 +92,4 @@ create_config = MMM_masac_default_create_config
 
 
 if __name__ == "__main__":
-    serial_pipeline([main_config, create_config], seed=0)
+    serial_pipeline([main_config, create_config], seed=2)

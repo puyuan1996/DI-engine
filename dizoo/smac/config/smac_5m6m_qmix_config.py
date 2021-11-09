@@ -76,16 +76,19 @@ create_config = dict(
 create_config = EasyDict(create_config)
 
 
+# if __name__ == "__main__":
+#     serial_pipeline([main_config, create_config], seed=0)
+
 def train(args):
-    config = [main_config, create_config]
-    serial_pipeline(config, seed=args.seed)
+    main_config.exp_name='debug_smac_5m6m_qmix'+'_seed'+f'{args.seed}'
+    serial_pipeline([main_config, create_config], seed=args.seed)
 
 
 if __name__ == "__main__":
     import argparse
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--seed', '-s', type=int, default=0)
-    args = parser.parse_args()
-
-    train(args)
+    for seed in [0,1,2]:     
+        parser = argparse.ArgumentParser()
+        parser.add_argument('--seed', '-s', type=int, default=seed)
+        args = parser.parse_args()
+        
+        train(args)
