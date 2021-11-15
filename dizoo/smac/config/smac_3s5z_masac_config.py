@@ -101,7 +101,7 @@ def train(args):
 
 if __name__ == "__main__":
     import argparse
-    for seed in [0,2]:     
+    for seed in [0,2,1]:     
         parser = argparse.ArgumentParser()
         parser.add_argument('--seed', '-s', type=int, default=seed)
         args = parser.parse_args()

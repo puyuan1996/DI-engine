@@ -7,7 +7,7 @@ evaluator_env_num = 8
 special_global_state = True
 
 SMAC_5m6m_masac_default_config = dict(
-    exp_name='debug_smac_5m6m_masac',
+    exp_name='debug_smac_5m6m_masac_d5e4',
     env=dict(
         map_name='5m_vs_6m',
         difficulty=7,
@@ -68,7 +68,7 @@ SMAC_5m6m_masac_default_config = dict(
                 type='linear',
                 start=1,
                 end=0.05,
-                decay=int(1e5),
+                decay=int(5e4),
             ),
             replay_buffer=dict(replay_buffer_size=int(1e6), ), ),
     ),
