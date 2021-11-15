@@ -8,11 +8,11 @@ evaluator_env_num = 8
 special_global_state = True
 
 SMAC_2c64zg_masac_default_config = dict(
-    exp_name='debug_smac_2c64zg_masac_seed2',
+    exp_name='debug_smac_2c64zg_masac',
     env=dict(
         map_name='2c_vs_64zg',
         difficulty=7,
-        reward_only_positive=True,
+        reward_only_positive=False,#True,
         mirror_opponent=False,
         agent_num=agent_num,
         collector_env_num=collector_env_num,
@@ -92,5 +92,20 @@ SMAC_2c64zg_masac_default_create_config = EasyDict(SMAC_2c64zg_masac_default_cre
 create_config = SMAC_2c64zg_masac_default_create_config
 
 
+
+# if __name__ == "__main__":
+#     serial_pipeline([main_config, create_config], seed=0)
+
+def train(args):
+    main_config.exp_name='debug_smac_2c64zg_masac_rop-false'+'_seed'+f'{args.seed}'
+    serial_pipeline([main_config, create_config], seed=args.seed)
+
+
 if __name__ == "__main__":
-    serial_pipeline([main_config, create_config], seed=2)
+    import argparse
+    for seed in [0,1,2]:     
+        parser = argparse.ArgumentParser()
+        parser.add_argument('--seed', '-s', type=int, default=seed)
+        args = parser.parse_args()
+        
+        train(args)
