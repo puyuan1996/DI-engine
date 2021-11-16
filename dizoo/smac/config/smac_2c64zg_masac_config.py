@@ -98,7 +98,8 @@ create_config = SMAC_2c64zg_masac_default_create_config
 
 def train(args):
     main_config.exp_name='debug_smac_2c64zg_masac_rop-false'+'_seed'+f'{args.seed}'
-    serial_pipeline([main_config, create_config], seed=args.seed)
+    import copy
+    serial_pipeline([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed)
 
 
 if __name__ == "__main__":

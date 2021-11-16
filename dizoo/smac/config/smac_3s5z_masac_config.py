@@ -4,6 +4,7 @@ from ding.entry import serial_pipeline
 agent_num = 10
 collector_env_num = 8
 evaluator_env_num = 8
+
 special_global_state = True
 
 smac_3s5z_masac_default_config = dict(
@@ -17,6 +18,7 @@ smac_3s5z_masac_default_config = dict(
         collector_env_num=collector_env_num,
         evaluator_env_num=evaluator_env_num,
         n_evaluator_episode=16,
+
         stop_value=0.99,
         death_mask=True,  # TODO(pu) False
         special_global_state=special_global_state,
@@ -54,6 +56,7 @@ smac_3s5z_masac_default_config = dict(
         collect=dict(
             env_num=collector_env_num,
             n_sample=1600,  # TODO(pu)
+
             unroll_len=1,
         ),
         command=dict(),
@@ -96,7 +99,9 @@ create_config = smac_3s5z_masac_default_create_config
 
 def train(args):
     main_config.exp_name='debug_smac_3s5z_masac'+'_seed'+f'{args.seed}'
-    serial_pipeline([main_config, create_config], seed=args.seed)
+    # create_config.policy.type = 'masac'
+    import copy
+    serial_pipeline([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed)
 
 
 if __name__ == "__main__":
