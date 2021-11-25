@@ -4,7 +4,7 @@ from easydict import EasyDict
 from ding.entry import serial_pipeline_reward_model_ngu
 
 print(torch.cuda.is_available(), torch.__version__)
-collector_env_num = 32  # TODO 32 5
+collector_env_num = 32  #TODO
 evaluator_env_num = 5
 nstep = 5
 minigrid_ppo_rnd_config = dict(
@@ -32,7 +32,6 @@ minigrid_ppo_rnd_config = dict(
         nstep=nstep,
         hidden_size_list=[128, 128, 64],
         type='rnd-ngu',
-
     ),
     episodic_reward_model=dict(
         intrinsic_reward_type='add',

@@ -8,7 +8,6 @@ minigrid_ppo_config = dict(
     # exp_name="minigrid_doorkey88_onppo_maxlen300_seed0",
 
     # exp_name="minigrid_doorkey_onppo",
-
     env=dict(
         collector_env_num=8,
         evaluator_env_num=5,
@@ -38,14 +37,13 @@ minigrid_ppo_config = dict(
             entropy_weight=0.001,
             clip_ratio=0.2,
             adv_norm=True,
-            value_norm=True, 
+            value_norm=True,
         ),
         collect=dict(
             collector_env_num=collector_env_num,
-            # n_sample=int(64 * collector_env_num),
-            n_sample=int(3200), 
-
-            #  self._traj_len  = max(1,64*8//8)=64
+            n_sample=int(3200),
+            # here self.traj_length = 3200//8 = 400, because in minigrid env the max_length is 300.
+            # in ding/worker/collector/sample_serial_collector.py
             #    self._traj_len = max(
             #      self._unroll_len,
             #     self._default_n_sample // self._env_num + int(self._default_n_sample % self._env_num != 0)
