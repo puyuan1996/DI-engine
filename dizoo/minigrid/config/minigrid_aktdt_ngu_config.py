@@ -7,7 +7,7 @@ print(torch.cuda.is_available(), torch.__version__)
 collector_env_num = 32  # TODO 32 5
 evaluator_env_num = 5
 nstep = 5
-minigrid_ppo_rnd_config = dict(
+minigrid_ngu_config = dict(
     exp_name='debug_minigrid_aktdt771_ngu_ul298_er01_n32_rbs3e4_ee0.1_ed1e7_upc16_seed0',
     env=dict(
         collector_env_num=collector_env_num,
@@ -18,7 +18,7 @@ minigrid_ppo_rnd_config = dict(
         # env_id='MiniGrid-DoorKey-16x16-v0',
         env_id='MiniGrid-AKTDT-7x7-1-v0',
         stop_value=0.96,
-        replay_path='replay/replay_aktdt771',
+        replay_path='./replay/replay_aktdt771_ngu',
     ),
     rnd_reward_model=dict(
         intrinsic_reward_type='add',  # 'assign'
@@ -91,9 +91,9 @@ minigrid_ppo_rnd_config = dict(
         ),
     ),
 )
-minigrid_ppo_rnd_config = EasyDict(minigrid_ppo_rnd_config)
-main_config = minigrid_ppo_rnd_config
-minigrid_ppo_rnd_create_config = dict(
+minigrid_ngu_config = EasyDict(minigrid_ngu_config)
+main_config = minigrid_ngu_config
+minigrid_ngu_create_config = dict(
     env=dict(
         type='minigrid',
         import_names=['dizoo.minigrid.envs.minigrid_env'],
@@ -105,8 +105,8 @@ minigrid_ppo_rnd_create_config = dict(
     episodic_reward_model=dict(type='episodic'),
     collector=dict(type='sample_ngu', )
 )
-minigrid_ppo_rnd_create_config = EasyDict(minigrid_ppo_rnd_create_config)
-create_config = minigrid_ppo_rnd_create_config
+minigrid_ngu_create_config = EasyDict(minigrid_ngu_create_config)
+create_config = minigrid_ngu_create_config
 
 if __name__ == "__main__":
     serial_pipeline_reward_model_ngu([main_config, create_config], seed=0)
