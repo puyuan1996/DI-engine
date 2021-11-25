@@ -76,18 +76,13 @@ class RndRewardModel(BaseRewardModel):
         assert self.intrinsic_reward_type in ['add', 'new', 'assign']
         self.train_obs = []
         self.opt = optim.Adam(self.reward_model.predictor.parameters(), config.learning_rate)
-<<<<<<< HEAD
         self._running_mean_std_rnd = RunningMeanStd(epsilon=1e-4)
-=======
-        self._running_mean_std_rnd_reward = RunningMeanStd(epsilon=1e-4)
->>>>>>> 65c10d8927ed44d5be10d5654ee62adc44f03f8c
         self.estimate_cnt_rnd = 0
         self._running_mean_std_rnd_obs = RunningMeanStd(epsilon=1e-4)  # TODO(pu)
 
     def _train(self) -> None:
         train_data: list = random.sample(self.train_obs, self.cfg.batch_size)
         train_data: torch.Tensor = torch.stack(train_data).to(self.device)
-<<<<<<< HEAD
 
         # TODO(pu): observation normalization:  transform to mean 0, std 1
         self._running_mean_std_rnd_obs.update(train_data.cpu().numpy())
@@ -95,15 +90,6 @@ class RndRewardModel(BaseRewardModel):
             self._running_mean_std_rnd_obs.std
         ).to(self.device)
         train_data = torch.clamp(train_data, min=-5, max=5)
-=======
-        if self.cfg.obs_norm:
-            # TODO(pu): observation normalization:  transform to mean 0, std 1
-            self._running_mean_std_rnd_obs.update(train_data.cpu().numpy())
-            train_data = (train_data - to_tensor(self._running_mean_std_rnd_obs.mean).to(self.device)) / to_tensor(
-                self._running_mean_std_rnd_obs.std
-            ).to(self.device)
-            train_data = torch.clamp(train_data, min=self.cfg.obs_norm_clamp_min, max=self.cfg.obs_norm_clamp_max)
->>>>>>> 65c10d8927ed44d5be10d5654ee62adc44f03f8c
 
         predict_feature, target_feature = self.reward_model(train_data)
         loss = F.mse_loss(predict_feature, target_feature.detach())
@@ -122,18 +108,10 @@ class RndRewardModel(BaseRewardModel):
         """
         obs = collect_states(data)
         obs = torch.stack(obs).to(self.device)
-<<<<<<< HEAD
         # TODO(pu): observation normalization:  transform to mean 0, std 1
         obs = (obs - to_tensor(self._running_mean_std_rnd_obs.mean
                                ).to(self.device)) / to_tensor(self._running_mean_std_rnd_obs.std).to(self.device)
         obs = torch.clamp(obs, min=-5, max=5)
-=======
-        if self.cfg.obs_norm:
-            # TODO(pu): observation normalization:  transform to mean 0, std 1
-            obs = (obs - to_tensor(self._running_mean_std_rnd_obs.mean
-                                   ).to(self.device)) / to_tensor(self._running_mean_std_rnd_obs.std).to(self.device)
-            obs = torch.clamp(obs, min=self.cfg.obs_norm_clamp_min, max=self.cfg.obs_norm_clamp_max)
->>>>>>> 65c10d8927ed44d5be10d5654ee62adc44f03f8c
 
         with torch.no_grad():
             predict_feature, target_feature = self.reward_model(obs)
@@ -141,21 +119,11 @@ class RndRewardModel(BaseRewardModel):
             # TODO(pu): transform to [0,1], for episodic reward normalization in NGU
             # reward = (reward - reward.min()) / (reward.max() - reward.min() + 1e-11)
 
-<<<<<<< HEAD
             self._running_mean_std_rnd.update(reward.cpu().numpy())
             # TODO(pu): reward normalization: transform to (mean 0, std 1), lm0std1
             # empirically we found this normalization way works well
             # than only dividing the self._running_mean_std_rnd.std
             # reward = (reward - self._running_mean_std_rnd.mean) / (self._running_mean_std_rnd.std + 1e-11)
-=======
-            self._running_mean_std_rnd_reward.update(reward.cpu().numpy())
-
-            # TODO(pu): reward normalization: transform to (mean 0, std 1), lm0std1
-            # empirically we found this normalization way works well
-            # than only dividing the self._running_mean_std_rnd_reward.std
-            # reward = (reward - self._running_mean_std_rnd_reward.mean)
-            # / (self._running_mean_std_rnd_reward.std + 1e-11)
->>>>>>> 65c10d8927ed44d5be10d5654ee62adc44f03f8c
 
             # TODO(pu): transform to [0,1]: b01
             rnd_reward = (reward - reward.min()) / (reward.max() - reward.min() + 1e-11)
@@ -169,16 +137,9 @@ class RndRewardModel(BaseRewardModel):
             rnd_reward = torch.chunk(rnd_reward, rnd_reward.shape[0], dim=0)
         for item, rnd_rew in zip(data, rnd_reward):
             if self.intrinsic_reward_type == 'add':
-<<<<<<< HEAD
                 if item['reward'] > 0 and item['reward'] <= 1:
                     item['reward'] = 1000 * item['reward'] + rnd_rew  # TODO(pu) avarage episode length
                     # item['reward'] = item['reward'] + rnd_rew # TODO(pu) avarage episode length
-=======
-                if item['reward'] > 0 and item['reward'] <= self.cfg.extrinsic_reward_scale:
-                    item['reward'] = self.cfg.extrinsic_reward_weight * item[
-                        'reward'] + rnd_rew  # TODO(pu) avarage episode length
-                    # item['reward'] = item['reward'] + rnd_rew
->>>>>>> 65c10d8927ed44d5be10d5654ee62adc44f03f8c
                 else:
                     item['reward'] += rnd_rew
             elif self.intrinsic_reward_type == 'new':

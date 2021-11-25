@@ -1,5 +1,6 @@
 from easydict import EasyDict
 from ding.entry import serial_pipeline_onpolicy
+collector_env_num=8
 minigrid_ppo_config = dict(
     # exp_name="minigrid_empty8_onppo",
     exp_name="minigrid_fourrooms_onppo_maxlen300_seed0",
