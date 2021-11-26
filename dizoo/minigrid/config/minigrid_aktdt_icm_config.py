@@ -2,13 +2,14 @@ from easydict import EasyDict
 from ding.entry import serial_pipeline_reward_model
 
 minigrid_ppo_icm_config = dict(
-    exp_name='aktdt771_ppo_icm',
+    exp_name='debug_minigrid_aktdt771_ppo_icm_seed1',
     env=dict(
         collector_env_num=8,
         evaluator_env_num=5,
         n_evaluator_episode=5,
         env_id='MiniGrid-AKTDT-7x7-1-v0',
-        stop_value=0.96,
+        stop_value=10,
+        replay_path='/mnt/lustre/puyuan/DI-engine/dizoo/minigrid/config/replay/replay_aktdt771_icm',
     ),
     reward_model=dict(
         intrinsic_reward_type='add',
@@ -56,4 +57,4 @@ minigrid_ppo_icm_create_config = EasyDict(minigrid_ppo_icm_create_config)
 create_config = minigrid_ppo_icm_create_config
 
 if __name__ == "__main__":
-    serial_pipeline_reward_model([main_config, create_config], seed=0)
+    serial_pipeline_reward_model([main_config, create_config], seed=1)
