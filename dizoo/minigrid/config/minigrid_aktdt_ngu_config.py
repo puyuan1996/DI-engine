@@ -17,8 +17,8 @@ minigrid_ngu_config = dict(
         # env_id='MiniGrid-FourRooms-v0',
         # env_id='MiniGrid-DoorKey-16x16-v0',
         env_id='MiniGrid-AKTDT-7x7-1-v0',
-        stop_value=0.96,
-        replay_path='./replay/replay_aktdt771_ngu',
+        stop_value=10,
+        replay_path='/mnt/lustre/puyuan/DI-engine/dizoo/minigrid/config/replay/replay_aktdt771_ngu',
     ),
     rnd_reward_model=dict(
         intrinsic_reward_type='add',  # 'assign'
