@@ -13,6 +13,8 @@ from .sqn import SQN
 from .acer import ACER
 from .qtran import QTran
 from .mappo import MAPPO
+from .matd3 import MATD3
+
 from .ngu import NGU
 from .qac_dist import QACDIST
 from .model_based import EnsembleDynamicsModel

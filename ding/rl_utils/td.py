@@ -10,6 +10,38 @@ from ding.hpc_rl import hpc_wrapper
 from ding.rl_utils.value_rescale import value_transform, value_inv_transform
 from ding.torch_utils import to_tensor
 
+
+q_v_1step_td_data = namedtuple('q_v_1step_td_data', ['q', 'v', 'act', 'reward', 'done', 'weight'])
+
+
+def q_v_1step_td_error(
+        data: namedtuple,
+        gamma: float,
+        criterion: torch.nn.modules = nn.MSELoss(reduction='none')  # noqa
+) -> torch.Tensor:
+    q, v, act, reward, done, weight = data
+    # print(q.shape) (64,10,16)
+    # print(v.shape) (64,10)
+    # print(act.shape) (64,10)
+    # print(reward.shape) (64,)
+    # print(done.shape) (64,)
+    # assert len(act.shape) == 1, act.shape
+    assert len(reward.shape) == 1, reward.shape
+    batch_range = torch.arange(act.shape[0])
+    actor_range = torch.arange(act.shape[1])
+    batch_actor_range = torch.arange(act.shape[0] * act.shape[1])
+    if weight is None:
+        weight = torch.ones_like(act)
+    temp_q = q.reshape(act.shape[0] * act.shape[1], -1)
+    temp_act = act.reshape(act.shape[0] * act.shape[1])
+    q_s_a = temp_q[batch_actor_range, temp_act]
+    q_s_a = q_s_a.reshape(act.shape[0], act.shape[1])
+    # print(q_s_a.shape, v.shape, reward.shape)
+    target_q_s_a = gamma * (1 - done).unsqueeze(1) * v + reward.unsqueeze(1)
+    td_error_per_sample = criterion(q_s_a, target_q_s_a.detach())
+    return (td_error_per_sample * weight).mean(), td_error_per_sample
+
+
 q_1step_td_data = namedtuple('q_1step_td_data', ['q', 'next_q', 'act', 'next_act', 'reward', 'done', 'weight'])
 
 
