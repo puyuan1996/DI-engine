@@ -30,7 +30,10 @@ SMAC_3m_matd3_default_config = dict(
     policy=dict(
         cuda=True,
         on_policy=False,
-        random_collect_size=0,
+        # random_collect_size=0,
+        # (int) Number of training samples(randomly collected) in replay buffer when training starts.
+        # Default 25000 in DDPG/TD3.
+        random_collect_size=25000,
         model=dict(
             agent_obs_shape=42,
             global_obs_shape=77,
@@ -51,6 +54,7 @@ SMAC_3m_matd3_default_config = dict(
             alpha=0.2,  # TODO(pu)
             auto_alpha=True,  # TODO(pu)True,
             log_space=True,
+            actor_update_freq=2,  # TODO(pu)
         ),
         collect=dict(
             env_num=collector_env_num,

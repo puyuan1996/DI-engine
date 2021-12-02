@@ -322,7 +322,7 @@ class MATD3Policy(Policy):
             'cur_lr_critic': self._optimizer_critic.defaults['lr'],
             # 'q_value': np.array(q_value).mean(),
             # 'action': action_log_value,
-            'priority': td_error_per_sample.abs().tolist(),
+            # 'priority': td_error_per_sample.abs().tolist(),
             'td_error': td_error_per_sample.abs().mean(),
             **loss_dict,
             **q_value_dict,
