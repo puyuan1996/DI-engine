@@ -247,6 +247,7 @@ class MATD3Policy(Policy):
             q_value_dict['q_value'] = q_value.mean()
         # target q value.
         with torch.no_grad():
+            # TODO(pu): What will be the impact if not use target actor
             policy_output_next = self._target_model.forward({'obs': next_obs}, mode='compute_actor')
             policy_output_next['logit'][policy_output_next['action_mask'] == 0.0] = -1e8
             prob = F.softmax(policy_output_next['logit'], dim=-1)
@@ -271,7 +272,7 @@ class MATD3Policy(Policy):
 
             target_value = (prob * (torch.min(target_q_value[0], target_q_value[1]))).sum(dim=-1)
 
-            q_data0 = q_v_1step_td_data(q_value[0], target_q_value, action, reward, data['done'], data['weight'])
+            q_data0 = q_v_1step_td_data(q_value[0], target_value, action, reward, data['done'], data['weight'])
             loss_dict['critic_loss'], td_error_per_sample0 = q_v_1step_td_error(q_data0, self._gamma)
 
             q_data1 = q_v_1step_td_data(q_value[1], target_value, action, reward, data['done'], data['weight'])
@@ -298,8 +299,8 @@ class MATD3Policy(Policy):
             # actor_data['obs'] = data['obs']
 
             if self._twin_critic:
-                current_q_value = self._learn_model.forward({'obs': data['obs'], }, mode='compute_critic')
-                actor_loss = - (prob * current_q_value[0]).sum(dim=-1)
+                current_q_value = self._learn_model.forward({'obs': data['obs']}, mode='compute_critic')['q_value']
+                actor_loss = - (prob * current_q_value[0]).sum(dim=-1).mean()
 
             loss_dict['actor_loss'] = actor_loss
             # actor update
