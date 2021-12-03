@@ -26,7 +26,7 @@ main_config = dict(
             obs_shape=72,
             global_obs_shape=98,
             action_shape=12,
-            hidden_size_list=[32],
+            hidden_size_list=[64],
             mixer=True,
             lstm_type='gru',
             dueling=False,
@@ -38,8 +38,8 @@ main_config = dict(
             learning_rate=0.0005,
             clip_value=50,
             double_q=False,
-            target_update_theta=0.005,
-            discount_factor=0.99,
+            target_update_theta=0.008,
+            discount_factor=0.95,
         ),
         collect=dict(
             n_episode=32,
@@ -82,14 +82,14 @@ create_config = EasyDict(create_config)
 #     serial_pipeline([main_config, create_config], seed=0)
 
 def train(args):
-    main_config.exp_name='debug_smac_5m6m_qmix'+'_seed'+f'{args.seed}'
+    main_config.exp_name='debug_smac_5m6m_qmix_newpara1'+'_seed'+f'{args.seed}'
     # serial_pipeline([main_config, create_config], seed=args.seed)
     import copy
     serial_pipeline([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed)
 
 if __name__ == "__main__":
     import argparse
-    for seed in [1,2]:     
+    for seed in [0,1,2]:     
         parser = argparse.ArgumentParser()
         parser.add_argument('--seed', '-s', type=int, default=seed)
         args = parser.parse_args()
