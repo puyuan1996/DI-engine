@@ -1,7 +1,7 @@
 from easydict import EasyDict
 from ding.entry import serial_pipeline
 
-agent_num = 10
+agent_num = 3
 collector_env_num = 1  # TODO(pu) 8
 evaluator_env_num = 1  # TODO(pu) 8
 special_global_state = True
@@ -70,7 +70,8 @@ SMAC_3m_masac_default_config = dict(
                 end=0.05,
                 decay=100000,
             ),  # TODO(pu)
-            replay_buffer=dict(replay_buffer_size=1000000, ), ),
+            replay_buffer=dict(replay_buffer_size=1000000, ), 
+        ),
     ),
 )
 
