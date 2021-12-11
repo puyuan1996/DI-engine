@@ -1053,12 +1053,7 @@ def td_lambda_error(data: namedtuple, gamma: float = 0.9, lambda_: float = 0.8) 
     with torch.no_grad():
         return_ = generalized_lambda_returns(value, reward, gamma, lambda_)
     # discard the value at T as it should be considered in the next slice
-<<<<<<< HEAD
-    loss = 0.5 * \
-           (F.mse_loss(return_, value[:-1], reduction='none') * weight).mean()
-=======
     loss = 0.5 * (F.mse_loss(return_, value[:-1], reduction='none') * weight).mean()
->>>>>>> 147d56f31418481e5f53f5ce92c70280a17dc58a
     return loss
 
 

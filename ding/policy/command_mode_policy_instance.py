@@ -279,14 +279,6 @@ class D4PGCommandModePolicy(D4PGPolicy, DummyCommandModePolicy):
     pass
 
 
-<<<<<<< HEAD
-# @POLICY_REGISTRY.register('masac_command')
-# class MASACCommandModePolicy(MASACPolicy, DummyCommandModePolicy):
-#     pass
-
-@POLICY_REGISTRY.register('masac_command')
-class MASACCommandModePolicy(MASACPolicy, EpsCommandModePolicy):
-=======
 @POLICY_REGISTRY.register('pdqn_command')
 class PDQNCommandModePolicy(PDQNPolicy, EpsCommandModePolicy):
     pass
@@ -294,5 +286,4 @@ class PDQNCommandModePolicy(PDQNPolicy, EpsCommandModePolicy):
 
 @POLICY_REGISTRY.register('sac_discrete_command')
 class SACDiscreteCommandModePolicy(SACDiscretePolicy, EpsCommandModePolicy):
->>>>>>> 147d56f31418481e5f53f5ce92c70280a17dc58a
     pass
