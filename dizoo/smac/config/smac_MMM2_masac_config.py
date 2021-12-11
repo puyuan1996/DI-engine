@@ -18,9 +18,8 @@ SMAC_MMM2_masac_default_config = dict(
         evaluator_env_num=evaluator_env_num,
         n_evaluator_episode=16,
         stop_value=0.99,
-        death_mask=True,  # TODO(pu) False
+        death_mask=True,
         special_global_state=special_global_state,
-        # save_replay_episodes = 1,
         manager=dict(
             shared_memory=False,
             reset_timeout=6000,
@@ -28,7 +27,6 @@ SMAC_MMM2_masac_default_config = dict(
     ),
     policy=dict(
         cuda=True,
-        on_policy=False,
         random_collect_size=0,
         model=dict(
             agent_obs_shape=204,
@@ -43,24 +41,21 @@ SMAC_MMM2_masac_default_config = dict(
             batch_size=320,
             learning_rate_q=5e-4,
             learning_rate_policy=5e-4,
-            learning_rate_alpha=5e-5,  # TODO(pu)
+            learning_rate_alpha=5e-5,
             ignore_done=False,
             target_theta=0.005,
             discount_factor=0.99,
-            alpha=0.2,  # TODO(pu)
+            alpha=0.2,
             auto_alpha=True,
             log_space=True,
         ),
         collect=dict(
             env_num=collector_env_num,
-            n_sample=1600,  # TODO（pu)
+            n_sample=1600,
             unroll_len=1,
         ),
-        command=dict(),
         eval=dict(
-            evaluator=dict(
-                eval_freq=50,
-            ),
+            evaluator=dict(eval_freq=50, ),
             env_num=evaluator_env_num,
         ),
         other=dict(
@@ -83,9 +78,7 @@ SMAC_MMM2_masac_default_create_config = dict(
         import_names=['dizoo.smac.envs.smac_env'],
     ),
     env_manager=dict(type='base'),
-    policy=dict(
-        type='masac',
-    ),
+    policy=dict(type='sac_discrete', ),
 )
 SMAC_MMM2_masac_default_create_config = EasyDict(SMAC_MMM2_masac_default_create_config)
 create_config = SMAC_MMM2_masac_default_create_config
