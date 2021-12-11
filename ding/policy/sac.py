@@ -426,7 +426,9 @@ class SACDiscretePolicy(Policy):
             data = to_device(data, self._device)
         self._collect_model.eval()
         with torch.no_grad():
-            output = self._collect_model.forward({'obs': data}, mode='compute_actor', eps=eps)
+            # output = self._collect_model.forward({'obs': data}, mode='compute_actor', eps=eps)  # eps_greedy_sample
+            output = self._collect_model.forward({'obs': data}, mode='compute_actor', eps=eps, alpha=self._alpha) # eps_greedy_multinomial_sample
+
         if self._cuda:
             output = to_device(output, 'cpu')
         output = default_decollate(output)
