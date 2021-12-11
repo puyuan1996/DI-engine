@@ -1,11 +1,13 @@
 import sys
 from copy import deepcopy
-from ding.entry import serial_pipeline
+from ding.entry import serial_pipeline_onpolicy
 from easydict import EasyDict
 
 agent_num = 5
-collector_env_num = 8
-evaluator_env_num = 8
+# collector_env_num = 8
+# evaluator_env_num = 8
+collector_env_num = 1
+evaluator_env_num = 1
 special_global_state = True,
 
 main_config = dict(
@@ -18,7 +20,8 @@ main_config = dict(
         agent_num=agent_num,
         collector_env_num=collector_env_num,
         evaluator_env_num=evaluator_env_num,
-        n_evaluator_episode=16,
+        # n_evaluator_episode=16,
+        n_evaluator_episode=2,
         stop_value=0.99,
         death_mask=True,
         special_global_state=special_global_state,
@@ -87,3 +90,7 @@ create_config = dict(
     policy=dict(type='ppo'),
 )
 create_config = EasyDict(create_config)
+
+
+if __name__ == "__main__":
+    serial_pipeline_onpolicy([main_config, create_config], seed=0)
