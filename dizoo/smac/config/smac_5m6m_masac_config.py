@@ -88,7 +88,7 @@ create_config = SMAC_5m6m_masac_default_create_config
 #     serial_pipeline([main_config, create_config], seed=0)
 
 def train(args):
-    main_config.exp_name='debug_smac_5m6m_masac'+'_seed'+f'{args.seed}'
+    main_config.exp_name='debug_smac_5m6m_masac_egms'+'_seed'+f'{args.seed}'
     # serial_pipeline([main_config, create_config], seed=args.seed)
     import copy
     serial_pipeline([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed)
@@ -96,7 +96,7 @@ def train(args):
 
 if __name__ == "__main__":
     import argparse
-    for seed in [1, 2]:
+    for seed in [0, 1, 2]:
         parser = argparse.ArgumentParser()
         parser.add_argument('--seed', '-s', type=int, default=seed)
         args = parser.parse_args()

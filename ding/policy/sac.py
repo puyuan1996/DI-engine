@@ -407,7 +407,8 @@ class SACDiscretePolicy(Policy):
         """
         self._unroll_len = self._cfg.collect.unroll_len
         self._multi_agent = self._cfg.multi_agent
-        self._collect_model = model_wrap(self._model, wrapper_name='eps_greedy_sample')
+        # self._collect_model = model_wrap(self._model, wrapper_name='eps_greedy_sample')
+        self._collect_model = model_wrap(self._model, wrapper_name='eps_greedy_multinomial_sample')
         self._collect_model.reset()
 
     def _forward_collect(self, data: dict, eps: float) -> dict:
