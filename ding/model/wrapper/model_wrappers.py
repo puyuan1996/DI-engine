@@ -375,12 +375,9 @@ class EpsGreedyMultinomialSampleWrapper(IModelWrapper):
         action = []
         for i, l in enumerate(logit):
             if np.random.random() > eps:
-                prob = torch.softmax(output['logit'] / alpha, dim=-1)
-                prob = prob / torch.sum(prob, 1, keepdim=True)
-                pi_action = torch.zeros(prob.shape)
-                pi_action = Categorical(prob)
-                pi_action = pi_action.sample()
-                action.append(pi_action)
+                prob = torch.softmax(l / alpha, dim=-1)
+                prob = prob / torch.sum(prob, -1, keepdim=True)
+                action.append(Categorical(prob).sample())
             else:
                 if mask:
                     action.append(sample_action(prob=mask[i].float()))
