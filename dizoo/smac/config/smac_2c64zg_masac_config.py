@@ -12,7 +12,8 @@ SMAC_2c64zg_masac_default_config = dict(
     env=dict(
         map_name='2c_vs_64zg',
         difficulty=7,
-        reward_only_positive=False,#True,
+        # reward_only_positive=False,
+        reward_only_positive=True,
         mirror_opponent=False,
         agent_num=agent_num,
         collector_env_num=collector_env_num,
@@ -97,14 +98,14 @@ create_config = SMAC_2c64zg_masac_default_create_config
 #     serial_pipeline([main_config, create_config], seed=0)
 
 def train(args):
-    main_config.exp_name='debug_smac_2c64zg_masac_rop-false'+'_seed'+f'{args.seed}'
+    main_config.exp_name='debug_smac_2c64zg_masac_ropf'+'_seed'+f'{args.seed}'
     import copy
     serial_pipeline([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed)
 
 
 if __name__ == "__main__":
     import argparse
-    for seed in [0,1,2]:     
+    for seed in [1,2]:     
         parser = argparse.ArgumentParser()
         parser.add_argument('--seed', '-s', type=int, default=seed)
         args = parser.parse_args()
