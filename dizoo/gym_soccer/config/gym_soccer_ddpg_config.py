@@ -21,7 +21,7 @@ gym_soccer_ddpg_config = dict(
             obs_shape=59,
             action_shape=dict(
                 action_type_shape=3,
-                action_args_shape=2,
+                action_args_shape=5,
             ),
             twin_critic=False,
             actor_head_type='hybrid',
@@ -47,9 +47,9 @@ gym_soccer_ddpg_config = dict(
                 type='exp',
                 start=1.,
                 end=0.1,
-                decay=100000,  # [50000, 100000]
+                decay=int(1e5),  # [50000, 100000]
             ),
-            replay_buffer=dict(replay_buffer_size=100000, ),
+            replay_buffer=dict(replay_buffer_size=int(1e5), ),
         ),
     ),
 )

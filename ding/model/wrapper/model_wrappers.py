@@ -308,7 +308,7 @@ class EpsGreedySampleWrapperMASAC(IModelWrapper):
         return output
 
 
-class HybridEpsGreedySampleWrapper(IModelWrapper):
+class EpsGreedySampleWrapperSql(IModelWrapper):
     r"""
     Overview:
         Epsilon greedy sampler used in collector_model to help balance exploration and exploitation.
@@ -375,12 +375,9 @@ class EpsGreedyMultinomialSampleWrapper(IModelWrapper):
         action = []
         for i, l in enumerate(logit):
             if np.random.random() > eps:
-                prob = torch.softmax(output['logit'] / alpha, dim=-1)
-                prob = prob / torch.sum(prob, 1, keepdims=True)
-                pi_action = torch.zeros(prob.shape)
-                pi_action = Categorical(prob)
-                pi_action = pi_action.sample()
-                action.append(pi_action)
+                prob = torch.softmax(l / alpha, dim=-1)
+                prob = prob / torch.sum(prob, -1, keepdim=True)
+                action.append(Categorical(prob).sample())
             else:
                 if mask:
                     action.append(sample_action(prob=mask[i].float()))
@@ -390,6 +387,45 @@ class EpsGreedyMultinomialSampleWrapper(IModelWrapper):
             action, logit = action[0], logit[0]
         output['action'] = action
         return output
+
+
+class HybridEpsGreedySampleWrapper(IModelWrapper):
+    r"""
+    Overview:
+        Epsilon greedy sampler used in collector_model to help balance exploration and exploitation.
+        In hybrid action space, i.e.{'action_type': discrete, 'action_args', continuous}
+    Interfaces:
+        register, forward
+    """
+
+    def forward(self, *args, **kwargs):
+        eps = kwargs.pop('eps')
+        output = self._model.forward(*args, **kwargs)
+        assert isinstance(output, dict), "model output must be dict, but find {}".format(type(output))
+        logit = output['logit']
+        assert isinstance(logit, torch.Tensor) or isinstance(logit, list)
+        if isinstance(logit, torch.Tensor):
+            logit = [logit]
+        if 'action_mask' in output:
+            mask = output['action_mask']
+            if isinstance(mask, torch.Tensor):
+                mask = [mask]
+            logit = [l.sub_(1e8 * (1 - m)) for l, m in zip(logit, mask)]
+        else:
+            mask = None
+        action = []
+        for i, l in enumerate(logit):
+            if np.random.random() > eps:
+                action.append(l.argmax(dim=-1))
+            else:
+                if mask:
+                    action.append(sample_action(prob=mask[i].float()))
+                else:
+                    action.append(torch.randint(0, l.shape[-1], size=l.shape[:-1]))
+        if len(action) == 1:
+            action, logit = action[0], logit[0]
+        output = {'action': {'action_type': action, 'action_args': output['action_args']}, 'logit': logit}
+        return
 
 
 class HybridEpsGreedyMultinomialSampleWrapper(IModelWrapper):
@@ -424,7 +460,7 @@ class HybridEpsGreedyMultinomialSampleWrapper(IModelWrapper):
         for i, l in enumerate(logit):
             if np.random.random() > eps:
                 prob = torch.softmax(l, dim=-1)
-                prob = prob / torch.sum(prob, 1, keepdims=True)
+                prob = prob / torch.sum(prob, 1, keepdim=True)
                 pi_action = Categorical(prob)
                 pi_action = pi_action.sample()
                 action.append(pi_action)
@@ -468,51 +504,6 @@ class EpsGreedySampleNGUWrapper(IModelWrapper):
         for i, l in enumerate(logit):
             if np.random.random() > eps[i]:
                 action.append(l.argmax(dim=-1))
-            else:
-                if mask:
-                    action.append(sample_action(prob=mask[i].float()))
-                else:
-                    action.append(torch.randint(0, l.shape[-1], size=l.shape[:-1]))
-        if len(action) == 1:
-            action, logit = action[0], logit[0]
-        output['action'] = action
-        return output
-
-
-class EpsGreedySampleWrapperSql(IModelWrapper):
-    r"""
-    Overview:
-        Epsilon greedy sampler coupled with multinomial sample used in collector_model
-        to help balance exploration and exploitation.
-    Interfaces:
-        register
-    """
-
-    def forward(self, *args, **kwargs):
-        eps = kwargs.pop('eps')
-        alpha = kwargs.pop('alpha')
-        output = self._model.forward(*args, **kwargs)
-        assert isinstance(output, dict), "model output must be dict, but find {}".format(type(output))
-        logit = output['logit']
-        assert isinstance(logit, torch.Tensor) or isinstance(logit, list)
-        if isinstance(logit, torch.Tensor):
-            logit = [logit]
-        if 'action_mask' in output:
-            mask = output['action_mask']
-            if isinstance(mask, torch.Tensor):
-                mask = [mask]
-            logit = [l.sub_(1e8 * (1 - m)) for l, m in zip(logit, mask)]
-        else:
-            mask = None
-        action = []
-        for i, l in enumerate(logit):
-            if np.random.random() > eps:
-                prob = torch.softmax(output['logit'] / alpha, dim=-1)
-                prob = prob / torch.sum(prob, 1, keepdims=True)
-                pi_action = torch.zeros(prob.shape)
-                pi_action = Categorical(prob)
-                pi_action = pi_action.sample()
-                action.append(pi_action)
             else:
                 if mask:
                     action.append(sample_action(prob=mask[i].float()))
@@ -667,8 +658,8 @@ wrapper_name_map = {
     'hybrid_argmax_sample': HybridArgmaxSampleWrapper,
     'eps_greedy_sample': EpsGreedySampleWrapper,
     'eps_greedy_sample_masac': EpsGreedySampleWrapperMASAC,
-    'eps_greedy_sample_ngu': EpsGreedySampleNGUWrapper,
     'eps_greedy_sample_sql': EpsGreedySampleWrapperSql,
+    'eps_greedy_sample_ngu': EpsGreedySampleNGUWrapper,
     'eps_greedy_multinomial_sample': EpsGreedyMultinomialSampleWrapper,
     'hybrid_eps_greedy_sample': HybridEpsGreedySampleWrapper,
     'hybrid_eps_greedy_multinomial_sample': HybridEpsGreedyMultinomialSampleWrapper,

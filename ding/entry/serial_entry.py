@@ -92,6 +92,7 @@ def serial_pipeline(
         collector.reset_policy(policy.collect_mode)
     for _ in range(max_iterations):
         collect_kwargs = commander.step()
+        # collect_kwargs = {'eps': 0.1}
         # Evaluate policy performance
         if evaluator.should_eval(learner.train_iter):
             stop, reward = evaluator.eval(learner.save_checkpoint, learner.train_iter, collector.envstep)
