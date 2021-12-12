@@ -7,7 +7,7 @@ evaluator_env_num = 8
 special_global_state = True
 
 MMM_masac_default_config = dict(
-    exp_name='debug_smac_MMM_masac_seed0',
+    exp_name='debug_smac_MMM_matd3_seed0',
     env=dict(
         map_name='MMM',
         difficulty=7,
@@ -52,6 +52,8 @@ MMM_masac_default_config = dict(
             alpha=0.,  # TODO(pu)
             auto_alpha=False,
             log_space=True,
+            # (float) The loss weight of entropy regularization, policy network weight is set to 1
+            entropy_weight=0.01, # TODO(pu)
         ),
         collect=dict(
             env_num=collector_env_num,
@@ -97,7 +99,7 @@ create_config = MMM_masac_default_create_config
 #     serial_pipeline([main_config, create_config], seed=0)
 
 def train(args):
-    main_config.exp_name='debug_smac_MMM_masac_nologpi'+'_seed'+f'{args.seed}'
+    main_config.exp_name='debug_smac_MMM_matd3'+'_seed'+f'{args.seed}'+'_ew0.01'
     # serial_pipeline([main_config, create_config], seed=args.seed)
     import copy
     serial_pipeline([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed)

@@ -7,7 +7,7 @@ evaluator_env_num = 1  # TODO(pu) 8
 special_global_state = True
 
 SMAC_3m_matd3_default_config = dict(
-    exp_name='debug_smac_3m_masac_nologpi',
+    exp_name='debug_smac_3m_matd3_ew0',
     env=dict(
         map_name='3m',
         difficulty=7,
@@ -54,7 +54,8 @@ SMAC_3m_matd3_default_config = dict(
             alpha=0.,  # TODO(pu)
             auto_alpha=False,  # TODO(pu)
             log_space=True,
-            actor_update_freq=1,  # TODO(pu)
+            # (float) The loss weight of entropy regularization, policy network weight is set to 1
+            entropy_weight=0.0, # TODO(pu)
         ),
         collect=dict(
             env_num=collector_env_num,

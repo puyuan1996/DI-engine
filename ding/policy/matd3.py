@@ -154,6 +154,8 @@ class MATD3Policy(Policy):
             ignore_done=False,
             # (float) Weight uniform initialization range in the last output layer
             init_w=3e-3,
+            # (float) The loss weight of entropy regularization, policy network weight is set to 1
+            entropy_weight=0.0,
         ),
         collect=dict(
             # You can use either "n_sample" or "n_episode" in actor.collect.
@@ -216,6 +218,7 @@ class MATD3Policy(Policy):
 
         # Algorithm config
         self._gamma = self._cfg.learn.discount_factor
+        self._entropy_weight = self._cfg.learn.entropy_weight
         # Init auto alpha
         if self._cfg.learn.auto_alpha:
             self._target_entropy = self._cfg.learn.get('target_entropy', -np.prod(self._cfg.model.action_shape))
@@ -285,7 +288,7 @@ class MATD3Policy(Policy):
         q_value = self._learn_model.forward({'obs': obs}, mode='compute_critic')['q_value']
         dist = torch.distributions.categorical.Categorical(logits=logit)
         dist_entropy = dist.entropy()
-        entropy = dist_entropy.mean()
+        entropy_q = dist_entropy.mean()
 
         # 2. predict target value depend self._value_network.
 
@@ -332,6 +335,11 @@ class MATD3Policy(Policy):
         prob = F.softmax(logit, dim=-1)
         log_prob = torch.log(prob + 1e-8)
 
+        # TODO(pu): entropy loss
+        policy_dist = torch.distributions.categorical.Categorical(logits=logit)
+        policy_dist_entropy = policy_dist.entropy()
+        entropy_policy = policy_dist_entropy.mean()
+
         with torch.no_grad():
             new_q_value = self._learn_model.forward({'obs': data['obs']}, mode='compute_critic')['q_value']
             if self._twin_critic:
@@ -340,7 +348,8 @@ class MATD3Policy(Policy):
         # 7. compute policy loss
         policy_loss = (prob * (self._alpha * log_prob - new_q_value.squeeze(-1))).sum(dim=-1).mean()
 
-        loss_dict['policy_loss'] = policy_loss
+        # TODO(pu): entropy loss
+        loss_dict['policy_loss'] = policy_loss - self._entropy_weight * entropy_policy
 
         # 8. update policy network
         self._optimizer_policy.zero_grad()
@@ -389,7 +398,9 @@ class MATD3Policy(Policy):
             'q_value_1': target_q_value[0].detach().mean().item(),
             'q_value_2': target_q_value[1].detach().mean().item(),
             'target_value': target_value.detach().mean().item(),
-            'entropy': entropy.item(),
+            'entropy_q': entropy_q.item(),
+            'entropy_policy': entropy_policy.item(),
+
 
             # 'policy_loss': loss_dict['policy_loss'].item(),
             # 'critic_loss': loss_dict['critic_loss'].item(),
@@ -524,10 +535,10 @@ class MATD3Policy(Policy):
         if self._auto_alpha:
             return super()._monitor_vars_learn() + [
                 'alpha_loss', 'policy_loss', 'critic_loss', 'cur_lr_q', 'cur_lr_p', 'target_q_value', 'q_value_1',
-                'q_value_2', 'alpha', 'td_error', 'target_value', 'entropy'
+                'q_value_2', 'alpha', 'td_error', 'target_value', 'entropy_q','entropy_policy'
             ] + twin_critic
         else:
             return super()._monitor_vars_learn() + [
                 'policy_loss', 'critic_loss', 'cur_lr_q', 'cur_lr_p', 'target_q_value', 'q_value_1', 'q_value_2',
-                'alpha', 'td_error', 'target_value', 'entropy'
+                'alpha', 'td_error', 'target_value', 'entropy_q','entropy_policy'
             ] + twin_critic
