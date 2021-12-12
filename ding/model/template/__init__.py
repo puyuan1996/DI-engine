@@ -1,7 +1,7 @@
 # general
 from .q_learning import DQN, RainbowDQN, QRDQN, IQN, DRQN, C51DQN
+from .qac import QAC, DiscreteQAC
 from .pdqn import PDQN
-from .qac import QAC
 from .vac import VAC
 # algorithm-specific
 from .ppg import PPG
@@ -15,6 +15,8 @@ from .qtran import QTran
 from .mappo import MAPPO
 from .matd3 import MATD3
 
+from .mavac import MAVAC
 from .ngu import NGU
 from .qac_dist import QACDIST
+from .maqac import MAQAC
 from .model_based import EnsembleDynamicsModel

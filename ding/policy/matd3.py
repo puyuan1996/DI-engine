@@ -431,33 +431,7 @@ class MATD3Policy(Policy):
         # self._collect_model = model_wrap(self._model, wrapper_name='eps_greedy_multinomial_sample')  # TODO(pu)
         self._collect_model = model_wrap(self._model, wrapper_name='eps_greedy_sample_masac')
 
-        # self._collect_model = model_wrap(self._model, wrapper_name='eps_greedy_sample_masac')
-       
-
         self._collect_model.reset()
-
-    # def _forward_collect(self, data: dict) -> dict:
-    #     r"""
-    #     Overview:
-    #         Forward function of collect mode.
-    #     Arguments:
-    #         - data (:obj:`dict`): Dict type data, including at least ['obs'].
-    #     Returns:
-    #         - output (:obj:`dict`): Dict type data, including at least inferred action according to input obs.
-    #     """
-    #     data_id = list(data.keys())
-    #     data = default_collate(list(data.values()))
-    #     if self._cuda:
-    #         data = to_device(data, self._device)
-    #     self._collect_model.eval()
-    #     # print(data)
-    #     with torch.no_grad():
-    #         output = self._collect_model.forward({'obs': data}, mode='compute_actor')
-    #     if self._cuda:
-    #         output = to_device(output, 'cpu')
-    #     output = default_decollate(output)
-    #     # print(output)
-    #     return {i: d for i, d in zip(data_id, output)}
 
     def _forward_collect(self, data: dict, eps: float) -> dict:
         r"""

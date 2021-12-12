@@ -7,6 +7,7 @@ collector_env_num = 16
 evaluator_env_num = 8
 
 main_config = dict(
+    exp_name='debug_smac_MMM_qmix',
     env=dict(
         map_name='MMM',
         difficulty=7,
@@ -37,8 +38,8 @@ main_config = dict(
             learning_rate=0.0005,
             clip_value=5,
             double_q=False,
-            target_update_theta=0.008,
-            discount_factor=0.95,
+            target_update_theta=0.005,
+            discount_factor=0.99,
         ),
         collect=dict(
             n_episode=32,
@@ -69,6 +70,8 @@ create_config = dict(
         import_names=['dizoo.smac.envs.smac_env'],
     ),
     env_manager=dict(type='subprocess'),
+    # env_manager=dict(type='base'),
+
     policy=dict(type='qmix'),
     collector=dict(type='episode', get_train_sample=True),
 )

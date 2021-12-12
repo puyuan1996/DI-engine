@@ -7,7 +7,7 @@ evaluator_env_num = 8
 special_global_state = True
 
 SMAC_5m6m_matd3_default_config = dict(
-    exp_name='debug_smac_5m6m_masac_nologpi_d5e4',
+    exp_name='debug_smac_5m6m_matd3_d5e4',
     env=dict(
         map_name='5m_vs_6m',
         difficulty=7,
