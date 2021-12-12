@@ -408,7 +408,8 @@ class SACDiscretePolicy(Policy):
         self._unroll_len = self._cfg.collect.unroll_len
         self._multi_agent = self._cfg.multi_agent
         # self._collect_model = model_wrap(self._model, wrapper_name='eps_greedy_sample')
-        self._collect_model = model_wrap(self._model, wrapper_name='eps_greedy_multinomial_sample')
+        self._collect_model = model_wrap(self._model, wrapper_name='eps_greedy_sample_masac')
+        # self._collect_model = model_wrap(self._model, wrapper_name='eps_greedy_multinomial_sample')
         self._collect_model.reset()
 
     def _forward_collect(self, data: dict, eps: float) -> dict:
@@ -426,8 +427,8 @@ class SACDiscretePolicy(Policy):
             data = to_device(data, self._device)
         self._collect_model.eval()
         with torch.no_grad():
-            # output = self._collect_model.forward({'obs': data}, mode='compute_actor', eps=eps)  # eps_greedy_sample
-            output = self._collect_model.forward({'obs': data}, mode='compute_actor', eps=eps, alpha=self._alpha) # eps_greedy_multinomial_sample
+            output = self._collect_model.forward({'obs': data}, mode='compute_actor', eps=eps)  # eps_greedy_sample, eps_greedy_sample_masac
+            # output = self._collect_model.forward({'obs': data}, mode='compute_actor', eps=eps, alpha=self._alpha) # eps_greedy_multinomial_sample
 
         if self._cuda:
             output = to_device(output, 'cpu')
