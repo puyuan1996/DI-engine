@@ -1,7 +1,7 @@
 from easydict import EasyDict
 from ding.entry import serial_pipeline
 
-agent_num = 10
+agent_num = 8
 collector_env_num = 8
 evaluator_env_num = 8
 special_global_state = True

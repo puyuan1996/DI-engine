@@ -26,8 +26,8 @@ main_config = dict(
             obs_shape=72,
             global_obs_shape=98,
             action_shape=12,
-            # hidden_size_list=[64],
-            hidden_size_list=[128],
+            hidden_size_list=[64],
+            # hidden_size_list=[128],
             mixer=True,
             lstm_type='gru',
             dueling=False,
@@ -35,8 +35,8 @@ main_config = dict(
         learn=dict(
             multi_gpu=False,
             update_per_collect=20,
-            # batch_size=32,
-            batch_size=128,
+            batch_size=32,
+            # batch_size=128,
             learning_rate=0.0005,
             clip_value=5,
             double_q=False,
@@ -84,7 +84,7 @@ create_config = EasyDict(create_config)
 #     serial_pipeline([main_config, create_config], seed=0)
 
 def train(args):
-    main_config.exp_name='debug_smac_5m6m_qmix_para2'+'_seed'+f'{args.seed}'
+    main_config.exp_name='debug_smac_5m6m_qmix_para8'+'_seed'+f'{args.seed}'
     # serial_pipeline([main_config, create_config], seed=args.seed)
     import copy
     serial_pipeline([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed)
