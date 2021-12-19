@@ -84,8 +84,14 @@ def serial_pipeline(
         if cfg.policy.get('transition_with_policy_data', False):
             collector.reset_policy(policy.collect_mode)
         else:
-            action_space = collector_env.env_info().act_space
+            try:
+                action_space = collector_env.env_info().act_space
+            except:
+                # for smac
+                action_space = collector_env.action_helper[0].info()
+                action_space.value.update({'dtype': 'np.int64'})
             random_policy = PolicyFactory.get_random_policy(policy.collect_mode, action_space=action_space)
+
             collector.reset_policy(random_policy)
         collect_kwargs = commander.step()
         new_data = collector.collect(n_sample=cfg.policy.random_collect_size, policy_kwargs=collect_kwargs)
