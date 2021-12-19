@@ -1,13 +1,13 @@
 from easydict import EasyDict
 from ding.entry import serial_pipeline
 
-agent_num = 10
+agent_num = 3
 collector_env_num = 1  # TODO(pu) 8
 evaluator_env_num = 1  # TODO(pu) 8
 special_global_state = True
 
 SMAC_3m_matd3_default_config = dict(
-    exp_name='debug_smac_3m_matd3',
+    exp_name='debug_smac_3m_matd3_ew0',
     env=dict(
         map_name='3m',
         difficulty=7,
@@ -16,8 +16,8 @@ SMAC_3m_matd3_default_config = dict(
         agent_num=agent_num,
         collector_env_num=collector_env_num,
         evaluator_env_num=evaluator_env_num,
-        # n_evaluator_episode=8,  # TODO(pu) 16,
-        n_evaluator_episode=1,  # TODO(pu) 16,
+        n_evaluator_episode=8,  # TODO(pu) 16,
+        # n_evaluator_episode=1,  # TODO(pu) 16,
         stop_value=0.99,
         death_mask=True,  # TODO(pu) False
         special_global_state=special_global_state,
@@ -30,10 +30,10 @@ SMAC_3m_matd3_default_config = dict(
     policy=dict(
         cuda=True,
         on_policy=False,
-        # random_collect_size=0,
+        random_collect_size=0,
         # (int) Number of training samples(randomly collected) in replay buffer when training starts.
         # Default 25000 in DDPG/TD3.
-        random_collect_size=25000,
+        # random_collect_size=25000,
         model=dict(
             agent_obs_shape=42,
             global_obs_shape=77,
@@ -51,10 +51,11 @@ SMAC_3m_matd3_default_config = dict(
             ignore_done=False,
             target_theta=0.005,  # TODO(pu)
             discount_factor=0.99,
-            alpha=0.2,  # TODO(pu)
-            auto_alpha=True,  # TODO(pu)True,
+            alpha=0.,  # TODO(pu)
+            auto_alpha=False,  # TODO(pu)
             log_space=True,
-            actor_update_freq=2,  # TODO(pu)
+            # (float) The loss weight of entropy regularization, policy network weight is set to 1
+            entropy_weight=0.0, # TODO(pu)
         ),
         collect=dict(
             env_num=collector_env_num,
@@ -73,11 +74,13 @@ SMAC_3m_matd3_default_config = dict(
                 type='linear',
                 start=1,
                 end=0.05,
-                decay=100000,
+                decay=int(1e5),
             ),  # TODO(pu)
-            replay_buffer=dict(replay_buffer_size=1000000, ), ),
+            replay_buffer=dict(replay_buffer_size=int(1e6), ), 
+        ),
     ),
 )
+
 
 SMAC_3m_matd3_default_config = EasyDict(SMAC_3m_matd3_default_config)
 main_config = SMAC_3m_matd3_default_config

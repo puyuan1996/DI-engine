@@ -62,6 +62,37 @@ def q_1step_td_error(
     return (criterion(q_s_a, target_q_s_a.detach()) * weight).mean()
 
 
+q_v_1step_td_data = namedtuple('q_v_1step_td_data', ['q', 'v', 'act', 'reward', 'done', 'weight'])
+
+
+def q_v_1step_td_error(
+        data: namedtuple, gamma: float, criterion: torch.nn.modules = nn.MSELoss(reduction='none')
+) -> torch.Tensor:
+    # we will use this function in discrete sac algorithm to calculate td error between q and v value.
+    q, v, act, reward, done, weight = data
+    if len(act.shape) == 1:
+        assert len(reward.shape) == 1, reward.shape
+        batch_range = torch.arange(act.shape[0])
+        if weight is None:
+            weight = torch.ones_like(reward)
+        q_s_a = q[batch_range, act]
+        target_q_s_a = gamma * (1 - done) * v + reward
+    else:
+        assert len(reward.shape) == 1, reward.shape
+        batch_range = torch.arange(act.shape[0])
+        actor_range = torch.arange(act.shape[1])
+        batch_actor_range = torch.arange(act.shape[0] * act.shape[1])
+        if weight is None:
+            weight = torch.ones_like(act)
+        temp_q = q.reshape(act.shape[0] * act.shape[1], -1)
+        temp_act = act.reshape(act.shape[0] * act.shape[1])
+        q_s_a = temp_q[batch_actor_range, temp_act]
+        q_s_a = q_s_a.reshape(act.shape[0], act.shape[1])
+        target_q_s_a = gamma * (1 - done).unsqueeze(1) * v + reward.unsqueeze(1)
+    td_error_per_sample = criterion(q_s_a, target_q_s_a.detach())
+    return (td_error_per_sample * weight).mean(), td_error_per_sample
+
+
 def view_similar(x: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
     size = list(x.shape) + [1 for _ in range(len(target.shape) - len(x.shape))]
     return x.view(*size)
@@ -472,13 +503,13 @@ def shape_fn_qntd_rescale(args, kwargs):
     shape_fn=shape_fn_qntd_rescale, namedtuple_data=True, include_args=[0, 1], include_kwargs=['data', 'gamma']
 )
 def q_nstep_td_error_with_rescale(
-    data: namedtuple,
-    gamma: float,
-    nstep: int = 1,
-    value_gamma: Optional[torch.Tensor] = None,
-    criterion: torch.nn.modules = nn.MSELoss(reduction='none'),
-    trans_fn: Callable = value_transform,
-    inv_trans_fn: Callable = value_inv_transform,
+        data: namedtuple,
+        gamma: float,
+        nstep: int = 1,
+        value_gamma: Optional[torch.Tensor] = None,
+        criterion: torch.nn.modules = nn.MSELoss(reduction='none'),
+        trans_fn: Callable = value_transform,
+        inv_trans_fn: Callable = value_inv_transform,
 ) -> torch.Tensor:
     """
     Overview:

@@ -3,6 +3,7 @@ from collections import namedtuple
 import copy
 import numpy as np
 import torch
+#from torch.functional import Tensor
 import torch.nn.functional as F
 from torch.distributions import Normal, Independent
 
@@ -525,7 +526,7 @@ class CQLPolicy(SACPolicy):
 
         return action, log_prob.view(-1, num_actions, 1)
 
-    def _get_q_value(self, data: Dict, keep=True) -> torch.Tensor:
+    def _get_q_value(self, data: Dict, keep=True):
         new_q_value = self._learn_model.forward(data, mode='compute_critic')['q_value']
         if self._twin_critic:
             new_q_value = [value.view(-1, self._num_actions, 1) for value in new_q_value]

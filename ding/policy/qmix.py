@@ -3,7 +3,7 @@ from collections import namedtuple
 import torch
 import copy
 
-from ding.torch_utils import RMSprop, to_device
+from ding.torch_utils import RMSprop, Adam, to_device
 from ding.rl_utils import v_1step_td_data, v_1step_td_error, get_train_sample
 from ding.model import model_wrap
 from ding.utils import POLICY_REGISTRY
@@ -121,9 +121,19 @@ class QMIXPolicy(Policy):
         self._priority = self._cfg.priority
         self._priority_IS_weight = self._cfg.priority_IS_weight
         assert not self._priority and not self._priority_IS_weight, "Priority is not implemented in QMIX"
-        self._optimizer = RMSprop(
-            params=self._model.parameters(), lr=self._cfg.learn.learning_rate, alpha=0.99, eps=0.00001
+        # self._optimizer = RMSprop(
+        #     params=self._model.parameters(), lr=self._cfg.learn.learning_rate, alpha=0.99, eps=0.00001, weight_decay=1e-5
+        # )
+        # self._optimizer = RMSprop(
+        #     params=self._model.parameters(), lr=self._cfg.learn.learning_rate, alpha=0.99, eps=1e-8
+        # )
+        # self._optimizer = Adam(
+        #     params=self._model.parameters(), lr=self._cfg.learn.learning_rate
+        # )
+        self._optimizer = Adam(
+            params=self._model.parameters(), lr=self._cfg.learn.learning_rate, weight_decay=1e-5, optim_type='adamw'
         )
+        
         self._gamma = self._cfg.learn.discount_factor
 
         self._target_model = copy.deepcopy(self._model)
