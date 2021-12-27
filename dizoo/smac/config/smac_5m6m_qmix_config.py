@@ -84,14 +84,15 @@ create_config = EasyDict(create_config)
 #     serial_pipeline([main_config, create_config], seed=0)
 
 def train(args):
-    main_config.exp_name='debug_smac_5m6m_qmix_para8'+'_seed'+f'{args.seed}'
+    # main_config.exp_name='debug_smac_5m6m_qmix_para9'+'_seed'+f'{args.seed}'
+    main_config.exp_name='debug_smac_5m6m_qmix_para9'+'_seed12'
     # serial_pipeline([main_config, create_config], seed=args.seed)
     import copy
     serial_pipeline([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed)
 
 if __name__ == "__main__":
     import argparse
-    for seed in [0,1,2]:     
+    for seed in [1,2]:     
         parser = argparse.ArgumentParser()
         parser.add_argument('--seed', '-s', type=int, default=seed)
         args = parser.parse_args()

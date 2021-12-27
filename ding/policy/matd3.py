@@ -345,11 +345,14 @@ class MATD3Policy(Policy):
             if self._twin_critic:
                 new_q_value = torch.min(new_q_value[0], new_q_value[1])  # (64,10,16)
 
-        # 7. compute policy loss
-        policy_loss = (prob * (self._alpha * log_prob - new_q_value.squeeze(-1))).sum(dim=-1).mean()
+        # # 7. compute policy loss
+        # policy_loss = (prob * (self._alpha * log_prob - new_q_value.squeeze(-1))).sum(dim=-1).mean()
+        # # TODO(pu): entropy loss
+        # loss_dict['policy_loss'] = policy_loss - self._entropy_weight * entropy_policy
 
-        # TODO(pu): entropy loss
-        loss_dict['policy_loss'] = policy_loss - self._entropy_weight * entropy_policy
+        # TODO(pu): test masac q alpha, pi no alpha
+        policy_loss = (prob * ( - new_q_value.squeeze(-1))).sum(dim=-1).mean()
+        loss_dict['policy_loss'] = policy_loss
 
         # 8. update policy network
         self._optimizer_policy.zero_grad()

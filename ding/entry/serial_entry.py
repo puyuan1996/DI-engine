@@ -98,6 +98,7 @@ def serial_pipeline(
         replay_buffer.push(new_data, cur_collector_envstep=0)
         collector.reset_policy(policy.collect_mode)
     for _ in range(max_iterations):
+    # for _ in range(int(250000)):
         collect_kwargs = commander.step()
         # collect_kwargs = {'eps': 0.1}
         # Evaluate policy performance

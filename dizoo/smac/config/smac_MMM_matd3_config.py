@@ -47,10 +47,10 @@ MMM_masac_default_config = dict(
             ignore_done=False,
             target_theta=0.005,
             discount_factor=0.99,
-             # alpha=0.2,  # TODO(pu)
-            # auto_alpha=True,
-            alpha=0.,  # TODO(pu)
-            auto_alpha=False,
+            alpha=0.2,  # TODO(pu)
+            auto_alpha=True,
+            # alpha=0.,  # TODO(pu)
+            # auto_alpha=False,
             log_space=True,
             # (float) The loss weight of entropy regularization, policy network weight is set to 1
             entropy_weight=0.01, # TODO(pu)
@@ -99,7 +99,9 @@ create_config = MMM_masac_default_create_config
 #     serial_pipeline([main_config, create_config], seed=0)
 
 def train(args):
-    main_config.exp_name='debug_smac_MMM_matd3'+'_seed'+f'{args.seed}'+'_ew0.01'
+    # main_config.exp_name='debug_smac_MMM_matd3'+'_seed'+f'{args.seed}'+'_ew0.01'
+    main_config.exp_name='debug_smac_MMM_matd3'+'_seed'+f'{args.seed}'+'_q-alpha-pi-noalpha'
+
     # serial_pipeline([main_config, create_config], seed=args.seed)
     import copy
     serial_pipeline([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed)

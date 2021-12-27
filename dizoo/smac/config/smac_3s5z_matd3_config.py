@@ -53,7 +53,7 @@ SMAC_3s5z_matd3_default_config = dict(
             auto_alpha=False,
             log_space=True,
             # (float) The loss weight of entropy regularization, policy network weight is set to 1
-            entropy_weight=0.05 # TODO(pu)
+            entropy_weight=0.02 # TODO(pu)
         ),
         collect=dict(
             env_num=collector_env_num,
@@ -100,7 +100,7 @@ create_config = SMAC_3s5z_matd3_default_create_config
 #     serial_pipeline([main_config, create_config], seed=0)
 
 def train(args):
-    main_config.exp_name='debug_smac_3s5z_matd3'+'_seed'+f'{args.seed}'+'_ew0.05'
+    main_config.exp_name='debug_smac_3s5z_matd3'+'_seed'+f'{args.seed}'+'_ew0.02'
     # serial_pipeline([main_config, create_config], seed=args.seed)
     import copy
     serial_pipeline([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed)
