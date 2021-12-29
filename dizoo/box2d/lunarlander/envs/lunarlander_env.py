@@ -52,7 +52,7 @@ class LunarLanderEnv(BaseEnv):
         assert isinstance(action, np.ndarray), type(action)
         if action.shape == (1, ):
             action = action.squeeze()  # 0-dim array
-        if self._act_scale:
+        if self._act_scale:  # for continuous action
             action = affine_transform(action, min_val=-1, max_val=1)
         obs, rew, done, info = self._env.step(action)
         # self._env.render()
