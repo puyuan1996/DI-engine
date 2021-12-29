@@ -38,8 +38,9 @@ lunarlander_dqn_default_config = dict(
             update_per_collect_rl=256,
             update_per_collect_vae=10,
             batch_size=128,
-            learning_rate_actor=3e-4,
-            learning_rate_critic=3e-4,
+            # learning_rate_actor=3e-4,
+            # learning_rate_critic=3e-4,
+            learning_rate=0.001,
             learning_rate_vae=1e-4,
             # Frequency of target network update.
             target_update_freq=100,
