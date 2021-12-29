@@ -3,6 +3,7 @@ from ding.rl_utils import get_epsilon_greedy_fn
 from .base_policy import CommandModePolicy
 
 from .dqn import DQNPolicy
+from .dqn_vqvae import DQNVQVAEPolicy
 from .c51 import C51Policy
 from .qrdqn import QRDQNPolicy
 from .iqn import IQNPolicy
@@ -219,6 +220,10 @@ class TD3CommandModePolicy(TD3Policy, DummyCommandModePolicy):
 class TD3VAECommandModePolicy(TD3VAEPolicy, DummyCommandModePolicy):
     pass
 
+
+@POLICY_REGISTRY.register('dqn_vqvae_command')
+class DQNVQVAECommandModePolicy(DQNVQVAEPolicy, EpsCommandModePolicy):
+    pass
 
 @POLICY_REGISTRY.register('td3_bc_command')
 class TD3BCCommandModePolicy(TD3BCPolicy, DummyCommandModePolicy):

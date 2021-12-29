@@ -577,7 +577,7 @@ class TD3VAEPolicy(DDPGPolicy):
                 'obs': obs,
                 'next_obs': timestep.obs,
                 'action': model_output['action'],
-                'latent_action': 999,
+                'latent_action': False,
                 'reward': timestep.reward,
                 'done': timestep.done,
             }

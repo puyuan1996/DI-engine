@@ -18,3 +18,4 @@ from .qac_dist import QACDIST
 from .maqac import MAQAC
 from .model_based import EnsembleDynamicsModel
 from .vae import VanillaVAE
+from .vqvae import VQVAE
