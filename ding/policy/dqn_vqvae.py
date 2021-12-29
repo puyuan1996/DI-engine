@@ -219,7 +219,7 @@ class DQNVQVAEPolicy(Policy):
             vqvae_loss['loss'].backward()
             self._optimizer_vqvae.step()
             # For compatibility
-            loss_dict['actor_loss'] = torch.Tensor([0]).item()
+            # loss_dict['actor_loss'] = torch.Tensor([0]).item()
             loss_dict['critic_loss'] = torch.Tensor([0]).item()
             # loss_dict['critic_twin_loss'] = torch.Tensor([0]).item()
             loss_dict['total_loss'] = torch.Tensor([0]).item()
@@ -263,13 +263,15 @@ class DQNVQVAEPolicy(Policy):
                 loss_dict['reconstruction_loss'] = vqvae_loss['reconstruction_loss']
                 # loss_dict['predict_loss'] = vqvae_loss['predict_loss']
                 loss_dict['vq_loss'] = vqvae_loss['vq_loss'].item()
-                td_error_per_sample = torch.Tensor([0]).item()
 
                 # vae update
                 self._optimizer_vqvae.zero_grad()
                 vqvae_loss['loss'].backward()
                 self._optimizer_vqvae.step()
 
+                q_value_dict = {}
+                q_value_dict['q_value'] = torch.Tensor([0]).item()
+                td_error_per_sample = torch.Tensor([0]).item()
                 return {
                     'cur_lr': self._optimizer.defaults['lr'],
                     'td_error': td_error_per_sample,
@@ -335,6 +337,10 @@ class DQNVQVAEPolicy(Policy):
                 # after update
                 # =============
                 self._target_model.update(self._learn_model.state_dict())
+                loss_dict['critic_loss'] = loss.item()
+
+                q_value_dict = {}
+                q_value_dict['q_value'] = q_value.mean().item()
                 return {
                     'cur_lr': self._optimizer.defaults['lr'],
                     'td_error': td_error_per_sample.abs().mean(),
@@ -344,7 +350,7 @@ class DQNVQVAEPolicy(Policy):
 
     def _monitor_vars_learn(self) -> List[str]:
         ret = [
-            'cur_lr', 'critic_loss', 'actor_loss', 'total_loss', 'q_value',
+            'cur_lr', 'critic_loss',   'q_value',
             'td_error', 'vae_loss', 'reconstruction_loss', 'vq_loss',  # 'predict_loss'
         ]
         return ret
@@ -415,7 +421,7 @@ class DQNVQVAEPolicy(Policy):
             output = self._collect_model.forward(data, eps=eps)
             output['latent_action'] = output['action']
 
-            # TODO(pu): action 2dim, 8*8->[8,8]
+            # TODO(pu): action 2 dim, 8*8->[8,8]
             # output['latent_action'] = output['action'] + 1 # [0,63]->[1,64]
             # k=8
             # output['action'] = torch.stack([torch.tensor([i // k -1 , k-1]) if i %k==0 else torch.tensor([i // k , (i % k)-1]) for i in output['latent_action']])
