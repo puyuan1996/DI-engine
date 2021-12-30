@@ -23,10 +23,10 @@ hopper_dqn_default_config = dict(
         priority=False,
         random_collect_size=int(1e4),
         original_action_shape=3,
-        vqvae_embedding_dim=64,
+        vqvae_embedding_dim=64,   # D
         model=dict(
             obs_shape=11,
-            action_shape=int(8*8),  # num oof num_embeddings
+            action_shape=int(8*8),  # num oof num_embeddings, K
             encoder_hidden_size_list=[512, 64],
             # Whether to use dueling head.
             dueling=True,
