@@ -3,7 +3,7 @@ from ding.entry import serial_pipeline_dqn_vqvae
 
 nstep = 3
 lunarlander_dqn_default_config = dict(
-    exp_name='debug_lunarlander_cont_dqn_vqvae',
+    exp_name='lunarlander_cont_dqn_vqvae_ed64_k4',
     env=dict(
         env_id='LunarLanderContinuous-v2',
         # (bool) Scale output action into legal range.
@@ -20,10 +20,10 @@ lunarlander_dqn_default_config = dict(
         priority=False,
         random_collect_size=10000,
         original_action_shape=2,
-        vqvae_embedding_dim=64,
+        vqvae_embedding_dim=64,  # D
         model=dict(
             obs_shape=8,
-            action_shape=int(8*8),
+            action_shape=int(4),  # num oof num_embeddings, K
             encoder_hidden_size_list=[512, 64],
             # Whether to use dueling head.
             dueling=True,
