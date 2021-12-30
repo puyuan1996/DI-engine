@@ -20,6 +20,7 @@ lunarlander_dqn_default_config = dict(
         priority=False,
         random_collect_size=10000,
         original_action_shape=2,
+        vqvae_embedding_dim=64,
         model=dict(
             obs_shape=8,
             action_shape=int(8*8),

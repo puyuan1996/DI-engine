@@ -149,14 +149,8 @@ class DQNVQVAEPolicy(Policy):
         self._target_model.reset()
 
         self._forward_learn_cnt = 0  # count iterations
-        # action_dim: int,
-        # embedding_dim: int,
-        # num_embeddings: int,
-        # hidden_dims: List = None,
-        # beta: float = 0.25,
-        # img_size: int = 64,
-        # self._vqvae_model = VQVAE(2,64,8)
-        self._vqvae_model = VQVAE(2, 64, 64)
+        # self._vqvae_model = VQVAE(2, 64, 64) #   action_dim: int, embedding_dim: int, num_embeddings: int,
+        self._vqvae_model = VQVAE(self._cfg.original_action_shape, self._cfg.vqvae_embedding_dim, self._cfg.model.action_shape)
 
         self._optimizer_vqvae = Adam(
             self._vqvae_model.parameters(),

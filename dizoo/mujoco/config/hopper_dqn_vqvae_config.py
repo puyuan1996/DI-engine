@@ -3,7 +3,7 @@ from ding.entry import serial_pipeline_dqn_vqvae
 
 nstep = 3
 hopper_dqn_default_config = dict(
-    exp_name='debug_hopper_cont_dqn_vqvae',
+    exp_name='debug_hopper_dqn_vqvae',
     env=dict(
         env_id='Hopper-v3',
         norm_obs=dict(use_norm=False, ),
@@ -15,7 +15,7 @@ hopper_dqn_default_config = dict(
         collector_env_num=8,
         evaluator_env_num=5,
         n_evaluator_episode=5,
-        stop_value=6000,
+        stop_value=3000,
     ),
     policy=dict(
         # Whether to use cuda for network.
@@ -23,9 +23,10 @@ hopper_dqn_default_config = dict(
         priority=False,
         random_collect_size=int(1e4),
         original_action_shape=3,
+        vqvae_embedding_dim=64,
         model=dict(
             obs_shape=11,
-            action_shape=int(8*8),
+            action_shape=int(8*8),  # num oof num_embeddings
             encoder_hidden_size_list=[512, 64],
             # Whether to use dueling head.
             dueling=True,
