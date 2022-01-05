@@ -6,8 +6,8 @@ collector_env_num = 8
 evaluator_env_num = 8
 special_global_state = True
 
-MMM_masac_default_config = dict(
-    exp_name='debug_smac_MMM_matd3_seed0',
+MMM_matd3_default_config = dict(
+    # exp_name='debug_smac_MMM_matd3_seed0',
     env=dict(
         map_name='MMM',
         difficulty=7,
@@ -47,13 +47,15 @@ MMM_masac_default_config = dict(
             ignore_done=False,
             target_theta=0.005,
             discount_factor=0.99,
-            alpha=0.2,  # TODO(pu)
+            # TODO(pu)
+            alpha=0.2,  
             auto_alpha=True,
-            # alpha=0.,  # TODO(pu)
-            # auto_alpha=False,
+            entropy_weight=0.01, 
             log_space=True,
-            # (float) The loss weight of entropy regularization, policy network weight is set to 1
-            entropy_weight=0.01, # TODO(pu)
+            # TODO(pu)
+            # alpha=0.,
+            # auto_alpha=False,
+            # entropy_weight=0.01, 
         ),
         collect=dict(
             env_num=collector_env_num,
@@ -78,10 +80,10 @@ MMM_masac_default_config = dict(
     ),
 )
 
-MMM_masac_default_config = EasyDict(MMM_masac_default_config)
-main_config = MMM_masac_default_config
+MMM_matd3_default_config = EasyDict(MMM_matd3_default_config)
+main_config = MMM_matd3_default_config
 
-MMM_masac_default_create_config = dict(
+MMM_matd3_default_create_config = dict(
     env=dict(
         type='smac',
         import_names=['dizoo.smac.envs.smac_env'],
@@ -91,20 +93,17 @@ MMM_masac_default_create_config = dict(
         type='matd3',
     ),
 )
-MMM_masac_default_create_config = EasyDict(MMM_masac_default_create_config)
-create_config = MMM_masac_default_create_config
+MMM_matd3_default_create_config = EasyDict(MMM_matd3_default_create_config)
+create_config = MMM_matd3_default_create_config
 
-
-# if __name__ == "__main__":
-#     serial_pipeline([main_config, create_config], seed=0)
 
 def train(args):
-    # main_config.exp_name='debug_smac_MMM_matd3'+'_seed'+f'{args.seed}'+'_ew0.01'
-    main_config.exp_name='debug_smac_MMM_matd3'+'_seed'+f'{args.seed}'+'_q-alpha-pi-noalpha'
-
-    # serial_pipeline([main_config, create_config], seed=args.seed)
+    # main_config.exp_name='debug_smac_MMM_matd3'+'_seed'+f'{args.seed}'+'_ew0'
+    main_config.exp_name='debug_smac_MMM_matd3'+'_seed'+f'{args.seed}'+'_clogpi_ew0.01'
     import copy
-    serial_pipeline([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed)
+    # 250000 iterations= 10M env steps mmm2 5m6m
+    # 125000 iterations= 5M env steps mmm 3s5z
+    serial_pipeline([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,  max_iterations= int(125000),)
 
 if __name__ == "__main__":
     import argparse

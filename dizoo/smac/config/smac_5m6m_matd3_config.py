@@ -47,13 +47,15 @@ SMAC_5m6m_matd3_default_config = dict(
             ignore_done=False,
             target_theta=0.005,
             discount_factor=0.99,
-            # alpha=0.2,  # TODO(pu)
-            # auto_alpha=True,
-            alpha=0.,  # TODO(pu)
-            auto_alpha=False,
+            # TODO(pu)
+            alpha=0.2,  
+            auto_alpha=True,
+            entropy_weight=0.01, 
             log_space=True,
-            # (float) The loss weight of entropy regularization, policy network weight is set to 1
-            entropy_weight=0.0, # TODO(pu)
+            # TODO(pu)
+            # alpha=0.,
+            # auto_alpha=False,
+            # entropy_weight=0.01, 
         ),
         collect=dict(
             env_num=collector_env_num,
@@ -96,18 +98,20 @@ SMAC_5m6m_matd3_default_create_config = EasyDict(SMAC_5m6m_matd3_default_create_
 create_config = SMAC_5m6m_matd3_default_create_config
 
 
-# if __name__ == "__main__":
-#     serial_pipeline([main_config, create_config], seed=0)
+
 
 def train(args):
-    main_config.exp_name='debug_smac_5m6m_matd3_d5e4'+'_seed'+f'{args.seed}'+'_ew0'
-    # serial_pipeline([main_config, create_config], seed=args.seed)
+    # main_config.exp_name='debug_smac_5m6m_matd3_d5e4'+'_seed'+f'{args.seed}'+'_ew0.01'
+    main_config.exp_name='debug_smac_5m6m_matd3_d5e4'+'_seed'+f'{args.seed}'+'_clogpi_ew0.01'
+
     import copy
-    serial_pipeline([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed)
+    # 250000 iterations= 10M env steps mmm2 5m6m
+    # 125000 iterations= 5M env steps mmm 3s5z
+    serial_pipeline([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_iterations= int(250000),)
 
 if __name__ == "__main__":
     import argparse
-    for seed in [2,1,0]:     
+    for seed in [0,1,2]:     
         parser = argparse.ArgumentParser()
         parser.add_argument('--seed', '-s', type=int, default=seed)
         args = parser.parse_args()

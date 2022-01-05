@@ -350,9 +350,9 @@ class MATD3Policy(Policy):
         # # TODO(pu): entropy loss
         # loss_dict['policy_loss'] = policy_loss - self._entropy_weight * entropy_policy
 
-        # TODO(pu): test masac q alpha, pi no alpha
+        # TODO(pu): test masac critic loss logpi, actor loss no logpi
         policy_loss = (prob * ( - new_q_value.squeeze(-1))).sum(dim=-1).mean()
-        loss_dict['policy_loss'] = policy_loss
+        loss_dict['policy_loss'] = policy_loss - self._entropy_weight * entropy_policy
 
         # 8. update policy network
         self._optimizer_policy.zero_grad()
@@ -403,8 +403,6 @@ class MATD3Policy(Policy):
             'target_value': target_value.detach().mean().item(),
             'entropy_q': entropy_q.item(),
             'entropy_policy': entropy_policy.item(),
-
-
             # 'policy_loss': loss_dict['policy_loss'].item(),
             # 'critic_loss': loss_dict['critic_loss'].item(),
             # 'twin_critic_loss': loss_dict['twin_critic_loss'].item(),
@@ -442,9 +440,7 @@ class MATD3Policy(Policy):
         """
         self._unroll_len = self._cfg.collect.unroll_len
         # self._collect_model = model_wrap(self._model, wrapper_name='multinomial_sample')  # TODO(pu)
-        # self._collect_model = model_wrap(self._model, wrapper_name='eps_greedy_multinomial_sample')  # TODO(pu)
-        self._collect_model = model_wrap(self._model, wrapper_name='eps_greedy_sample_masac')
-
+        self._collect_model = model_wrap(self._model, wrapper_name='eps_greedy_multinomial_sample')  # TODO(pu)
         self._collect_model.reset()
 
     def _forward_collect(self, data: dict, eps: float) -> dict:
