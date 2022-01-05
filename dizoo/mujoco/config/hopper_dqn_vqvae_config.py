@@ -3,7 +3,7 @@ from ding.entry import serial_pipeline_dqn_vqvae
 
 nstep = 3
 hopper_dqn_default_config = dict(
-    exp_name='debug_hopper_dqn_vqvae',
+    exp_name='debug_hopper_dqn_vqvae_ved64_k256_ed1e5_rbs1e6',
     env=dict(
         env_id='Hopper-v3',
         norm_obs=dict(use_norm=False, ),
@@ -23,10 +23,11 @@ hopper_dqn_default_config = dict(
         priority=False,
         random_collect_size=int(1e4),
         original_action_shape=3,
-        vqvae_embedding_dim=64,   # D
+        vqvae_embedding_dim=64,
+        # vqvae_embedding_dim=128,
         model=dict(
             obs_shape=11,
-            action_shape=int(8*8),  # num oof num_embeddings, K
+            action_shape=int(256),  # num oof num_embeddings
             encoder_hidden_size_list=[512, 64],
             # Whether to use dueling head.
             dueling=True,
@@ -65,9 +66,12 @@ hopper_dqn_default_config = dict(
                 type='exp',
                 start=0.95,
                 end=0.1,
-                decay=50000,
+                # decay=50000,
+                decay=int(1e5),
             ),
-            replay_buffer=dict(replay_buffer_size=int(1e5), )
+            # replay_buffer=dict(replay_buffer_size=int(1e5), )
+            replay_buffer=dict(replay_buffer_size=int(1e6), )
+
         ),
     ),
 )
