@@ -5,8 +5,10 @@ nstep = 3
 lunarlander_dqn_default_config = dict(
     exp_name='lunarlander_dqn',
     env=dict(
+        env_id='LunarLander-v2',
         # Whether to use shared memory. Only effective if "env_manager_type" is 'subprocess'
         manager=dict(shared_memory=True, ),
+        act_scale=False,
         # Env number respectively for collector and evaluator.
         collector_env_num=8,
         evaluator_env_num=5,
@@ -65,7 +67,8 @@ lunarlander_dqn_create_config = dict(
         type='lunarlander',
         import_names=['dizoo.box2d.lunarlander.envs.lunarlander_env'],
     ),
-    env_manager=dict(type='subprocess'),
+    # env_manager=dict(type='subprocess'),
+    env_manager=dict(type='base'),
     policy=dict(type='dqn'),
 )
 lunarlander_dqn_create_config = EasyDict(lunarlander_dqn_create_config)

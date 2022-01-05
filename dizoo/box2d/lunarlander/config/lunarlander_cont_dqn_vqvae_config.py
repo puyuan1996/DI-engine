@@ -1,9 +1,11 @@
 from easydict import EasyDict
 from ding.entry import serial_pipeline_dqn_vqvae
+import os
+module_path = os.path.dirname(__file__)
 
 nstep = 3
 lunarlander_dqn_default_config = dict(
-    exp_name='lunarlander_cont_dqn_vqvae_ed64_k4',
+    exp_name='debug_lunarlander_cont_dqn_vqvae_ved64_k4',
     env=dict(
         env_id='LunarLanderContinuous-v2',
         # (bool) Scale output action into legal range.
@@ -27,6 +29,7 @@ lunarlander_dqn_default_config = dict(
             encoder_hidden_size_list=[512, 64],
             # Whether to use dueling head.
             dueling=True,
+            # learned_model_path=module_path + '/learned_model_path/dqn_vqvae_best.pth.tar',  # TODO(pu)
         ),
         # Reward's future discount factor, aka. gamma.
         discount_factor=0.99,
