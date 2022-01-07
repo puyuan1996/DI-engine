@@ -225,6 +225,7 @@ class TD3VAECommandModePolicy(TD3VAEPolicy, DummyCommandModePolicy):
 class DQNVQVAECommandModePolicy(DQNVQVAEPolicy, EpsCommandModePolicy):
     pass
 
+
 @POLICY_REGISTRY.register('td3_bc_command')
 class TD3BCCommandModePolicy(TD3BCPolicy, DummyCommandModePolicy):
     pass

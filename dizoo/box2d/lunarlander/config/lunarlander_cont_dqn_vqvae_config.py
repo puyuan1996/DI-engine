@@ -18,11 +18,11 @@ lunarlander_dqn_default_config = dict(
     ),
     policy=dict(
         # Whether to use cuda for network.
-        cuda=False,
+        cuda=True,
         priority=False,
         random_collect_size=10000,
         original_action_shape=2,
-        vqvae_embedding_dim=64,  # D
+        vqvae_embedding_dim=64,  # ved
         model=dict(
             obs_shape=8,
             action_shape=int(4),  # num oof num_embeddings, K
@@ -42,8 +42,6 @@ lunarlander_dqn_default_config = dict(
             update_per_collect_rl=256,
             update_per_collect_vae=10,
             batch_size=128,
-            # learning_rate_actor=3e-4,
-            # learning_rate_critic=3e-4,
             learning_rate=0.001,
             learning_rate_vae=1e-4,
             # Frequency of target network update.

@@ -3,13 +3,12 @@ from ding.entry import serial_pipeline_dqn_vqvae
 
 nstep = 3
 hopper_dqn_default_config = dict(
-    exp_name='debug_hopper_dqn_vqvae_ved64_k256_ed1e5_rbs1e6',
+    exp_name='debug_hopper_dqn_vqvae_ved64_k512_ed1e5_rbs1e6',
     env=dict(
         env_id='Hopper-v3',
         norm_obs=dict(use_norm=False, ),
         norm_reward=dict(use_norm=False, ),
         # (bool) Scale output action into legal range.
-        # act_scale=True,
         use_act_scale=True,
         # Env number respectively for collector and evaluator.
         collector_env_num=8,
@@ -19,15 +18,15 @@ hopper_dqn_default_config = dict(
     ),
     policy=dict(
         # Whether to use cuda for network.
-        cuda=False,
+        cuda=True,
         priority=False,
         random_collect_size=int(1e4),
+        # random_collect_size=int(1),
         original_action_shape=3,
-        vqvae_embedding_dim=64,
-        # vqvae_embedding_dim=128,
+        vqvae_embedding_dim=64,  # ved
         model=dict(
             obs_shape=11,
-            action_shape=int(256),  # num oof num_embeddings
+            action_shape=int(512),  # num oof num_embeddings
             encoder_hidden_size_list=[512, 64],
             # Whether to use dueling head.
             dueling=True,
@@ -39,12 +38,11 @@ hopper_dqn_default_config = dict(
         # learn_mode config
         learn=dict(
             warm_up_update=int(1e4),
+            # warm_up_update=int(1),
             rl_vae_update_circle=1,  # train rl 1 iter, vae 1 iter
             update_per_collect_rl=256,
             update_per_collect_vae=10,
             batch_size=128,
-            # learning_rate_actor=3e-4,
-            # learning_rate_critic=3e-4,
             learning_rate=0.001,
             learning_rate_vae=1e-4,
             # Frequency of target network update.
@@ -66,10 +64,8 @@ hopper_dqn_default_config = dict(
                 type='exp',
                 start=0.95,
                 end=0.1,
-                # decay=50000,
                 decay=int(1e5),
             ),
-            # replay_buffer=dict(replay_buffer_size=int(1e5), )
             replay_buffer=dict(replay_buffer_size=int(1e6), )
 
         ),

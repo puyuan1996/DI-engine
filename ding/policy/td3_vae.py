@@ -20,7 +20,7 @@ from torch.nn import functional as F
 class TD3VAEPolicy(DDPGPolicy):
     r"""
     Overview:
-        Policy class of TD3 algorithm.
+        Policy class of TD3-VAE algorithm.
 
         Since DDPG and TD3 share many common things, we can easily derive this TD3
         class from DDPG class by changing ``_actor_update_freq``, ``_twin_critic`` and noise in model wrapper.

@@ -42,10 +42,7 @@ class VectorQuantizer(nn.Module):
     [1] https://github.com/deepmind/sonnet/blob/v2/sonnet/src/nets/vqvae.py
     """
 
-    def __init__(self,
-                 num_embeddings: int,
-                 embedding_dim: int,
-                 beta: float = 0.25):
+    def __init__(self, num_embeddings: int, embedding_dim: int, beta: float = 0.25):
         super(VectorQuantizer, self).__init__()
         self.K = num_embeddings
         self.D = embedding_dim
@@ -93,15 +90,12 @@ class VectorQuantizer(nn.Module):
 
 class ResidualLayer(nn.Module):
 
-    def __init__(self,
-                 in_channels: int,
-                 out_channels: int):
+    def __init__(self, in_channels: int, out_channels: int):
         super(ResidualLayer, self).__init__()
-        self.resblock = nn.Sequential(nn.Conv2d(in_channels, out_channels,
-                                                kernel_size=3, padding=1, bias=False),
-                                      nn.ReLU(True),
-                                      nn.Conv2d(out_channels, out_channels,
-                                                kernel_size=1, bias=False))
+        self.resblock = nn.Sequential(
+            nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1, bias=False), nn.ReLU(True),
+            nn.Conv2d(out_channels, out_channels, kernel_size=1, bias=False)
+        )
 
     def forward(self, input: Tensor) -> Tensor:
         return input + self.resblock(input)
@@ -109,14 +103,16 @@ class ResidualLayer(nn.Module):
 
 class VQVAE(BaseVAE):
 
-    def __init__(self,
-                 action_dim: int,
-                 embedding_dim: int,
-                 num_embeddings: int,
-                 hidden_dims: List = None,
-                 beta: float = 0.25,
-                 img_size: int = 64,
-                 **kwargs) -> None:
+    def __init__(
+            self,
+            action_dim: int,
+            embedding_dim: int,
+            num_embeddings: int,
+            hidden_dims: List = None,
+            beta: float = 0.25,
+            img_size: int = 64,
+            **kwargs
+    ) -> None:
         super(VQVAE, self).__init__()
 
         self.action_dim = action_dim
@@ -172,9 +168,7 @@ class VQVAE(BaseVAE):
         modules = [self.encode_action_head, self.encode_common, self.encode_mu_head]
         self.encoder = nn.Sequential(*modules)
 
-        self.vq_layer = VectorQuantizer(num_embeddings,
-                                        embedding_dim,
-                                        self.beta)
+        self.vq_layer = VectorQuantizer(num_embeddings, embedding_dim, self.beta)
 
         # Build Decoder: for image
         # modules = []
@@ -262,8 +256,8 @@ class VQVAE(BaseVAE):
         """
 
         # Convert to one-hot encodings
-        # device = latents.device
-        device = torch.device('cpu')
+        device = encoding_inds.device
+        # device = torch.device('cpu')
         encoding_inds_shape = encoding_inds.shape  # 5,2
 
         encoding_inds = encoding_inds.view(-1, 1)
@@ -281,12 +275,14 @@ class VQVAE(BaseVAE):
         encoding = self.encode(input['action'])[0]
         encoding_inds, quantized_inputs, vq_loss = self.vq_layer(encoding)
         # quantized_inputs=quantized_inputs.view(-1,64*2)
-        return {'encoding_inds': encoding_inds,
-                'quantized_inputs': quantized_inputs,
-                'recons_action': self.decode(quantized_inputs),
-                # 'prediction_residual': self.decode(z)[1],
-                'input': input['action'],
-                'vqloss': vq_loss}
+        return {
+            'encoding_inds': encoding_inds,
+            'quantized_inputs': quantized_inputs,
+            'recons_action': self.decode(quantized_inputs),
+            # 'prediction_residual': self.decode(z)[1],
+            'input': input['action'],
+            'vqloss': vq_loss
+        }
 
         # import matplotlib.pyplot as plt
         # xx, yy = np.meshgrid(np.arange(-1, 1, 0.01), np.arange(-1, 1, 0.01))
@@ -303,10 +299,7 @@ class VQVAE(BaseVAE):
         # fig.colorbar(sc)
         # plt.show()
 
-
-    def loss_function(self,
-                      args,
-                      **kwargs) -> dict:
+    def loss_function(self, args, **kwargs) -> dict:
         """
         :param args:
         :param kwargs:
@@ -326,9 +319,7 @@ class VQVAE(BaseVAE):
         # return {'loss': loss, 'reconstruction_loss': recons_loss, 'vq_loss': vq_loss, 'predict_loss': predict_loss}
         return {'loss': loss, 'reconstruction_loss': recons_loss, 'vq_loss': vq_loss}
 
-    def sample(self,
-               num_samples: int,
-               current_device: Union[int, str], **kwargs) -> Tensor:
+    def sample(self, num_samples: int, current_device: Union[int, str], **kwargs) -> Tensor:
         raise Warning('VQVAE sampler is not implemented.')
 
     def generate(self, x: Tensor, **kwargs) -> Tensor:

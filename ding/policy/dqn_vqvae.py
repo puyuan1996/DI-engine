@@ -150,8 +150,10 @@ class DQNVQVAEPolicy(Policy):
 
         self._forward_learn_cnt = 0  # count iterations
         # self._vqvae_model = VQVAE(2, 64, 64) #   action_dim: int, embedding_dim: int, num_embeddings: int,
-        self._vqvae_model = VQVAE(self._cfg.original_action_shape, self._cfg.vqvae_embedding_dim, self._cfg.model.action_shape)
-
+        self._vqvae_model = VQVAE(
+            self._cfg.original_action_shape, self._cfg.vqvae_embedding_dim, self._cfg.model.action_shape
+        )
+        self._vqvae_model = to_device(self._vqvae_model, self._device)
         self._optimizer_vqvae = Adam(
             self._vqvae_model.parameters(),
             lr=self._cfg.learn.learning_rate_vae,
@@ -310,13 +312,13 @@ class DQNVQVAEPolicy(Policy):
                 # TODO(pu)
                 data_n = q_nstep_td_data(
                     q_value, target_q_value, data['latent_action'].squeeze(-1), target_q_action, data['reward'],
-                    data['done'],
-                    data['weight']
+                    data['done'], data['weight']
                 )
 
                 value_gamma = data.get('value_gamma')
-                loss, td_error_per_sample = q_nstep_td_error(data_n, self._gamma, nstep=self._nstep,
-                                                             value_gamma=value_gamma)
+                loss, td_error_per_sample = q_nstep_td_error(
+                    data_n, self._gamma, nstep=self._nstep, value_gamma=value_gamma
+                )
 
                 # ====================
                 # Q-learning update
@@ -344,8 +346,13 @@ class DQNVQVAEPolicy(Policy):
 
     def _monitor_vars_learn(self) -> List[str]:
         ret = [
-            'cur_lr', 'critic_loss',   'q_value',
-            'td_error', 'vae_loss', 'reconstruction_loss', 'vq_loss',  # 'predict_loss'
+            'cur_lr',
+            'critic_loss',
+            'q_value',
+            'td_error',
+            'vae_loss',
+            'reconstruction_loss',
+            'vq_loss',  # 'predict_loss'
         ]
         return ret
 
@@ -416,6 +423,8 @@ class DQNVQVAEPolicy(Policy):
         with torch.no_grad():
             output = self._collect_model.forward(data, eps=eps)
             output['latent_action'] = output['action']
+            if self._cuda:
+                output = to_device(output, self._device)
 
             # TODO(pu): action 2 dim, 8*8->[8,8]
             # output['latent_action'] = output['action'] + 1 # [0,63]->[1,64]
