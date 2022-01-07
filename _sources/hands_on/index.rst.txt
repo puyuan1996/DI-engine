@@ -1,5 +1,5 @@
-Hands on RL
-~~~~~~~~~~~~~~~~~~~~~~~
+RL Algorithm Cheat Sheet
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 .. toctree::
@@ -25,6 +25,8 @@ Hands on RL
     coma
     atoc
     collaq
+
+    rnd
 
     gail
 

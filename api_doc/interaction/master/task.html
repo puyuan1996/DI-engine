@@ -90,8 +90,9 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../quick_start/index.html">Quick Start</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../key_concept/index.html">Key Concept</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../intro_rl/index.html">Introduction to RL</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../env_tutorial/index.html">RL Environment Tutorial</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../hands_on/index.html">Hands on RL</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../hands_on/index.html">RL Algorithm Cheat Sheet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../env_tutorial/index.html">RL Environments Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../distributed/index.html">Distributed</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../best_practice/index.html">Best Practice</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="../../index.html">API Doc</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="../../config/index.html">Config</a></li>
@@ -100,10 +101,12 @@
 <li class="toctree-l2"><a class="reference internal" href="../../model/index.html">Model</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../reward_model/index.html">Reward Model</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../league/index.html">League</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../framework/index.html">Framework</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../worker/learner/index.html">Learner</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../worker/collector/index.html">Collector</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../worker/replay_buffer/index.html">Buffer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../worker/replay_buffer/index.html">Replay Buffer</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../worker/coordinator/index.html">Coordinator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../worker/buffer/index.html">Buffer</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../rl_utils/index.html">RL Utils</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../torch_utils/index.html">Torch Utils</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../utils/index.html">Utils</a></li>
@@ -121,7 +124,7 @@
 </li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="../../../faq/index_en.html">FAQ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../faq/index.html">FAQ</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../feature/index.html">Feature</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Developer Guide</span></p>
@@ -218,13 +221,13 @@
 <p>Valid values are as follows:</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="ding.interaction.master.task.TaskResultType.COMPLETED">
-<span class="sig-name descname"><span class="pre">COMPLETED</span></span><a class="headerlink" href="#ding.interaction.master.task.TaskResultType.COMPLETED" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">COMPLETED</span></span><em class="property"> <span class="pre">=</span> <span class="pre">&lt;TaskResultType.COMPLETED:</span> <span class="pre">1&gt;</span></em><a class="headerlink" href="#ding.interaction.master.task.TaskResultType.COMPLETED" title="Permalink to this definition">¶</a></dt>
 <dd><p>Task complete without error</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="ding.interaction.master.task.TaskResultType.FAILED">
-<span class="sig-name descname"><span class="pre">FAILED</span></span><a class="headerlink" href="#ding.interaction.master.task.TaskResultType.FAILED" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">FAILED</span></span><em class="property"> <span class="pre">=</span> <span class="pre">&lt;TaskResultType.FAILED:</span> <span class="pre">2&gt;</span></em><a class="headerlink" href="#ding.interaction.master.task.TaskResultType.FAILED" title="Permalink to this definition">¶</a></dt>
 <dd><p>Task end with error</p>
 </dd></dl>
 
@@ -248,37 +251,37 @@
 <p>Valid values are as follows:</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="ding.interaction.master.task.TaskStatus.IDLE">
-<span class="sig-name descname"><span class="pre">IDLE</span></span><a class="headerlink" href="#ding.interaction.master.task.TaskStatus.IDLE" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">IDLE</span></span><em class="property"> <span class="pre">=</span> <span class="pre">&lt;TaskStatus.IDLE:</span> <span class="pre">0&gt;</span></em><a class="headerlink" href="#ding.interaction.master.task.TaskStatus.IDLE" title="Permalink to this definition">¶</a></dt>
 <dd><p>Task not started, waiting for awake</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="ding.interaction.master.task.TaskStatus.STARTING">
-<span class="sig-name descname"><span class="pre">STARTING</span></span><a class="headerlink" href="#ding.interaction.master.task.TaskStatus.STARTING" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">STARTING</span></span><em class="property"> <span class="pre">=</span> <span class="pre">&lt;TaskStatus.STARTING:</span> <span class="pre">17&gt;</span></em><a class="headerlink" href="#ding.interaction.master.task.TaskStatus.STARTING" title="Permalink to this definition">¶</a></dt>
 <dd><p>Task is starting, but initialization is not completed.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="ding.interaction.master.task.TaskStatus.STARTED">
-<span class="sig-name descname"><span class="pre">STARTED</span></span><a class="headerlink" href="#ding.interaction.master.task.TaskStatus.STARTED" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">STARTED</span></span><em class="property"> <span class="pre">=</span> <span class="pre">&lt;TaskStatus.STARTED:</span> <span class="pre">18&gt;</span></em><a class="headerlink" href="#ding.interaction.master.task.TaskStatus.STARTED" title="Permalink to this definition">¶</a></dt>
 <dd><p>Task started, initialization is completed.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="ding.interaction.master.task.TaskStatus.START_FAILED">
-<span class="sig-name descname"><span class="pre">START_FAILED</span></span><a class="headerlink" href="#ding.interaction.master.task.TaskStatus.START_FAILED" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">START_FAILED</span></span><em class="property"> <span class="pre">=</span> <span class="pre">&lt;TaskStatus.START_FAILED:</span> <span class="pre">19&gt;</span></em><a class="headerlink" href="#ding.interaction.master.task.TaskStatus.START_FAILED" title="Permalink to this definition">¶</a></dt>
 <dd><p>Task start failed, error occurred when initializing.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="ding.interaction.master.task.TaskStatus.COMPLETED">
-<span class="sig-name descname"><span class="pre">COMPLETED</span></span><a class="headerlink" href="#ding.interaction.master.task.TaskStatus.COMPLETED" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">COMPLETED</span></span><em class="property"> <span class="pre">=</span> <span class="pre">&lt;TaskStatus.COMPLETED:</span> <span class="pre">33&gt;</span></em><a class="headerlink" href="#ding.interaction.master.task.TaskStatus.COMPLETED" title="Permalink to this definition">¶</a></dt>
 <dd><p>Task completed without error</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="ding.interaction.master.task.TaskStatus.FAILED">
-<span class="sig-name descname"><span class="pre">FAILED</span></span><a class="headerlink" href="#ding.interaction.master.task.TaskStatus.FAILED" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">FAILED</span></span><em class="property"> <span class="pre">=</span> <span class="pre">&lt;TaskStatus.FAILED:</span> <span class="pre">34&gt;</span></em><a class="headerlink" href="#ding.interaction.master.task.TaskStatus.FAILED" title="Permalink to this definition">¶</a></dt>
 <dd><p>Task ended with error</p>
 </dd></dl>
 
@@ -294,10 +297,7 @@
 <dt>Overview:</dt><dd><p>Task object of the connections.
 Linking call is fully supported.</p>
 </dd>
-<dt>Example:</dt><dd><ul class="simple">
-<li><p>A simple and common usage</p></li>
-</ul>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">master</span><span class="o">.</span><span class="n">new_connection</span><span class="p">(</span><span class="s1">&#39;cnn1,&#39;</span><span class="p">,</span> <span class="s1">&#39;127.0.0.1&#39;</span><span class="p">,</span> <span class="mi">2333</span><span class="p">)</span> <span class="k">as</span> <span class="n">connection</span><span class="p">:</span>
+<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">master</span><span class="o">.</span><span class="n">new_connection</span><span class="p">(</span><span class="s1">&#39;cnn1,&#39;</span><span class="p">,</span> <span class="s1">&#39;127.0.0.1&#39;</span><span class="p">,</span> <span class="mi">2333</span><span class="p">)</span> <span class="k">as</span> <span class="n">connection</span><span class="p">:</span>
 <span class="gp">&gt;&gt;&gt; </span>    <span class="n">task</span> <span class="o">=</span> <span class="n">connection</span><span class="o">.</span><span class="n">new_task</span><span class="p">({</span><span class="s1">&#39;data&#39;</span><span class="p">:</span> <span class="mi">233</span><span class="p">})</span>
 <span class="gp">&gt;&gt;&gt; </span>    <span class="c1"># task is not sent yet</span>
 <span class="go">&gt;&gt;&gt;</span>

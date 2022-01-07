@@ -86,50 +86,17 @@
             
             
               <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
-<ul class="current">
+<ul>
 <li class="toctree-l1"><a class="reference internal" href="../installation/index.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../quick_start/index.html">Quick Start</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../key_concept/index.html">Key Concept</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../intro_rl/index.html">Introduction to RL</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../env_tutorial/index.html">RL Environment Tutorial</a></li>
-<li class="toctree-l1 current"><a class="reference internal" href="index.html">Hands on RL</a><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="dqn.html">DQN</a></li>
-<li class="toctree-l2"><a class="reference internal" href="c51_qrdqn_iqn.html">C51</a></li>
-<li class="toctree-l2"><a class="reference internal" href="c51_qrdqn_iqn.html#qrdqn">QRDQN</a></li>
-<li class="toctree-l2"><a class="reference internal" href="c51_qrdqn_iqn.html#iqn">IQN</a></li>
-<li class="toctree-l2"><a class="reference internal" href="rainbow.html">Rainbow</a></li>
-<li class="toctree-l2"><a class="reference internal" href="sqn.html">SQN</a></li>
-<li class="toctree-l2"><a class="reference internal" href="sqil.html">SQIL</a></li>
-<li class="toctree-l2"><a class="reference internal" href="a2c.html">A2C</a></li>
-<li class="toctree-l2"><a class="reference internal" href="acer.html">ACER</a></li>
-<li class="toctree-l2"><a class="reference internal" href="ppo.html">PPO</a></li>
-<li class="toctree-l2"><a class="reference internal" href="ppg.html">PPG</a></li>
-<li class="toctree-l2"><a class="reference internal" href="impala.html">IMPALA</a></li>
-<li class="toctree-l2"><a class="reference internal" href="ddpg.html">DDPG</a></li>
-<li class="toctree-l2"><a class="reference internal" href="td3.html">TD3</a></li>
-<li class="toctree-l2"><a class="reference internal" href="sac.html">SAC</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">QMIX</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#overview">Overview</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#quick-facts">Quick Facts</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#key-equations-or-key-graphs">Key Equations or Key Graphs</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#extensions">Extensions</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#implementations">Implementations</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#references">References</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="coma.html">COMA</a></li>
-<li class="toctree-l2"><a class="reference internal" href="atoc.html">ATOC</a></li>
-<li class="toctree-l2"><a class="reference internal" href="collaq.html">CollaQ</a></li>
-<li class="toctree-l2"><a class="reference internal" href="gail.html">GAIL</a></li>
-<li class="toctree-l2"><a class="reference internal" href="vpn.html">VPN</a></li>
-<li class="toctree-l2"><a class="reference internal" href="mcts.html">MCTS</a></li>
-<li class="toctree-l2"><a class="reference internal" href="alphago.html">AlphaGo</a></li>
-<li class="toctree-l2"><a class="reference internal" href="alphago.html#alphagozero">AlphaGoZero</a></li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="index.html">RL Algorithm Cheat Sheet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../env_tutorial/index.html">RL Environments Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../distributed/index.html">Distributed</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../best_practice/index.html">Best Practice</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api_doc/index.html">API Doc</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../faq/index_en.html">FAQ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../faq/index.html">FAQ</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../feature/index.html">Feature</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Developer Guide</span></p>
@@ -182,7 +149,7 @@
     
       <li><a href="../index.html">Docs</a> &raquo;</li>
         
-          <li><a href="index.html">Hands on RL</a> &raquo;</li>
+          <li><a href="index.html">RL Algorithm Cheat Sheet</a> &raquo;</li>
         
       <li>QMIX</li>
     
@@ -267,15 +234,9 @@
 <dt class="sig sig-object py">
 <em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">ding.policy.qmix.</span></span><span class="sig-name descname"><span class="pre">QMIXPolicy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cfg</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">type</span><span class="p"><span class="pre">,</span> </span><span class="pre">torch.nn.modules.module.Module</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enable_field</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ding/policy/qmix.html#QMIXPolicy"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><dl>
-<dt>Overview:</dt><dd><dl class="simple">
-<dt>Policy class of QMIX algorithm. QMIX is a multi model reinforcement learning algorithm, </dt><dd><p>you can view the paper in the following link <a class="reference external" href="https://arxiv.org/abs/1803.11485">https://arxiv.org/abs/1803.11485</a></p>
+<dt>Overview:</dt><dd><p>Policy class of QMIX algorithm. QMIX is a multi model reinforcement learning algorithm,             you can view the paper in the following link <a class="reference external" href="https://arxiv.org/abs/1803.11485">https://arxiv.org/abs/1803.11485</a></p>
 </dd>
-</dl>
-</dd>
-<dt>Interface:</dt><dd><dl class="simple">
-<dt>_init_learn, _data_preprocess_learn, _forward_learn, _reset_learn, _state_dict_learn, _load_state_dict_learn</dt><dd><p>_init_collect, _forward_collect, _reset_collect, _process_transition, _init_eval, _forward_eval_reset_eval, _get_train_sample, default_model</p>
-</dd>
-</dl>
+<dt>Interface:</dt><dd><p>_init_learn, _data_preprocess_learn, _forward_learn, _reset_learn, _state_dict_learn, _load_state_dict_learn             _init_collect, _forward_collect, _reset_collect, _process_transition, _init_eval, _forward_eval             _reset_eval, _get_train_sample, default_model</p>
 </dd>
 <dt>Config:</dt><dd><table class="docutils align-default">
 <colgroup>
@@ -446,26 +407,6 @@
 <dt>Interface:</dt><dd><p>__init__, forward, _setup_global_encoder</p>
 </dd>
 </dl>
-<dl class="py method">
-<dt class="sig sig-object py">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">agent_num</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obs_shape</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">global_obs_shape</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">action_shape</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hidden_size_list</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mixer</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">bool</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lstm_type</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">'gru'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dueling</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">bool</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/ding/model/template/qmix.html#QMix.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><dl class="simple">
-<dt>Overview:</dt><dd><p>initialize Qmix network</p>
-</dd>
-<dt>Arguments:</dt><dd><ul class="simple">
-<li><p>agent_num (<code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code>): the number of agent</p></li>
-<li><p>obs_shape (<code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code>): the dimension of each agent’s observation state</p></li>
-<li><p>global_obs_shape (<code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code>): the dimension of global observation state</p></li>
-<li><p>action_shape (<code class="xref py py-obj docutils literal notranslate"><span class="pre">int</span></code>): the dimension of action shape</p></li>
-<li><p>hidden_size_list (<code class="xref py py-obj docutils literal notranslate"><span class="pre">list</span></code>): the list of hidden size</p></li>
-<li><p>mixer (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>): use mixer net or not, default to True</p></li>
-<li><p>lstm_type (<code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code>): use lstm or gru, default to gru</p></li>
-<li><p>dueling (<code class="xref py py-obj docutils literal notranslate"><span class="pre">bool</span></code>): use dueling head or not, default to False.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
 <dl class="py method">
 <dt class="sig sig-object py">
 <span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">single_step</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">bool</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="../_modules/ding/model/template/qmix.html#QMix.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
