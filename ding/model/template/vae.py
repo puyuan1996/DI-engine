@@ -113,7 +113,7 @@ class VanillaVAE(BaseVAE):
         # action_obs_decoding = action_decoding * self.obs_encoding
         action_obs_decoding_tmp = self.decode_common(action_obs_decoding)
 
-        reconstruction_action = self.decode_reconst_action_head (action_obs_decoding_tmp)
+        reconstruction_action = self.decode_reconst_action_head(action_obs_decoding_tmp)
         predition_residual_tmp = self.decode_prediction_head_layer1(action_obs_decoding_tmp)
         predition_residual = self.decode_prediction_head_layer2(predition_residual_tmp)
 
@@ -132,7 +132,7 @@ class VanillaVAE(BaseVAE):
         # action_obs_decoding = action_decoding + self.obs_encoding  # TODO(pu): what about add, cat?
         action_obs_decoding = action_decoding * self.obs_encoding
         action_obs_decoding_tmp = self.decode_common(action_obs_decoding)
-        reconstruction_action = self.decode_reconst_action_head (action_obs_decoding_tmp)
+        reconstruction_action = self.decode_reconst_action_head(action_obs_decoding_tmp)
         predition_residual_tmp = self.decode_prediction_head_layer1(action_obs_decoding_tmp)
         predition_residual = self.decode_prediction_head_layer2(predition_residual_tmp)
 
