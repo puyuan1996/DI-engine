@@ -3,7 +3,7 @@ from ding.entry import serial_pipeline_dqn_vqvae
 
 nstep = 3
 hopper_dqn_default_config = dict(
-    exp_name='debug_hopper_dqn_vqvae_ved64_k512_ed1e5_rbs1e6',
+    exp_name='debug_hopper_dqn_vqvae_ved128_k64_ed1e5_rbs1e6',
     env=dict(
         env_id='Hopper-v3',
         norm_obs=dict(use_norm=False, ),
@@ -23,10 +23,10 @@ hopper_dqn_default_config = dict(
         random_collect_size=int(1e4),
         # random_collect_size=int(1),
         original_action_shape=3,
-        vqvae_embedding_dim=64,  # ved
+        vqvae_embedding_dim=128,  # ved
         model=dict(
             obs_shape=11,
-            action_shape=int(512),  # num oof num_embeddings
+            action_shape=int(64),  # num oof num_embeddings
             encoder_hidden_size_list=[512, 64],
             # Whether to use dueling head.
             dueling=True,
@@ -62,8 +62,10 @@ hopper_dqn_default_config = dict(
             eps=dict(
                 # Decay type. Support ['exp', 'linear'].
                 type='exp',
-                start=0.95,
-                end=0.1,
+                # start=0.95,
+                # end=0.1,
+                start=1,
+                end=0.05,
                 decay=int(1e5),
             ),
             replay_buffer=dict(replay_buffer_size=int(1e6), )
@@ -86,4 +88,5 @@ hopper_dqn_create_config = EasyDict(hopper_dqn_create_config)
 create_config = hopper_dqn_create_config
 
 if __name__ == "__main__":
-    serial_pipeline_dqn_vqvae([main_config, create_config], seed=0)
+    # 19531.25 iterations= 5M env steps / 256 
+    serial_pipeline_dqn_vqvae([main_config, create_config], seed=0, max_iterations=int(19532))
