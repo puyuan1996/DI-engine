@@ -5,7 +5,7 @@ module_path = os.path.dirname(__file__)
 
 nstep = 3
 lunarlander_dqn_default_config = dict(
-    exp_name='debug_lunarlander_cont_dqn_vqvae_ved64_k4',
+    exp_name='debug_lunarlander_cont_dqn_vqvae_ved64_k64',
     env=dict(
         env_id='LunarLanderContinuous-v2',
         # (bool) Scale output action into legal range.
@@ -17,6 +17,7 @@ lunarlander_dqn_default_config = dict(
         stop_value=200,
     ),
     policy=dict(
+        learned_model_path=module_path + '/learned_model_path/dqn_vqvae_k64_ckpt_best.pth.tar',  # TODO(pu)
         # Whether to use cuda for network.
         cuda=True,
         priority=False,
@@ -25,11 +26,10 @@ lunarlander_dqn_default_config = dict(
         vqvae_embedding_dim=64,  # ved
         model=dict(
             obs_shape=8,
-            action_shape=int(4),  # num oof num_embeddings, K
+            action_shape=int(64),  # num oof num_embeddings, K
             encoder_hidden_size_list=[512, 64],
             # Whether to use dueling head.
             dueling=True,
-            # learned_model_path=module_path + '/learned_model_path/dqn_vqvae_best.pth.tar',  # TODO(pu)
         ),
         # Reward's future discount factor, aka. gamma.
         discount_factor=0.99,
