@@ -18,7 +18,4 @@ from .qac_dist import QACDIST
 from .maqac import MAQAC, ContinuousMAQAC
 from .model_based import EnsembleDynamicsModel
 from .vae import VanillaVAE
-<<<<<<< HEAD
 from .vqvae import VQVAE
-=======
->>>>>>> 73b115c2aaaacb8879be98ff871cd36e4faee1ce
