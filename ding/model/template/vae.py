@@ -1,13 +1,11 @@
-"""Note the following vae model is borrowed from https://github.com/AntixK/PyTorch-VAE"""
+"""Credit: Note the following vae model is modified from https://github.com/AntixK/PyTorch-VAE"""
 
 import torch
 from torch.nn import functional as F
 from torch import nn
 from abc import abstractmethod
-from typing import List, Callable, Union, Any, TypeVar, Tuple
-
-# from torch import tensor as Tensor
-Tensor = TypeVar('torch.tensor')
+from typing import List, Dict, Callable, Union, Any, TypeVar, Tuple, Optional
+from ding.utils.type_helper import Tensor
 
 
 class BaseVAE(nn.Module):
@@ -18,7 +16,7 @@ class BaseVAE(nn.Module):
     def encode(self, input: Tensor) -> List[Tensor]:
         raise NotImplementedError
 
-    def decode(self, input: Tensor) -> Any:
+    def decode(self, input: Tensor, obs_encoding: Optional[Tensor]) -> Any:
         raise NotImplementedError
 
     def sample(self, batch_size: int, current_device: int, **kwargs) -> Tensor:
@@ -38,127 +36,145 @@ class BaseVAE(nn.Module):
 
 class VanillaVAE(BaseVAE):
 
-    def __init__(self, action_dim: int, obs_dim: int, latent_dim: int, hidden_dims: List = None, **kwargs) -> None:
+    def __init__(
+            self,
+            action_shape: int,
+            obs_shape: int,
+            latent_size: int,
+            hidden_dims: List = [256, 256],
+            **kwargs
+    ) -> None:
         super(VanillaVAE, self).__init__()
-
-        self.action_dim = action_dim
-        self.obs_dim = obs_dim
-        self.latent_dim = latent_dim
+        self.action_shape = action_shape
+        self.obs_shape = obs_shape
+        self.latent_size = latent_size
         self.hidden_dims = hidden_dims
 
-        modules = []
-        if hidden_dims is None:
-            hidden_dims = [256]
-
         # Build Encoder
-        # action
-        self.encode_action_head = nn.Sequential(nn.Linear(self.action_dim, hidden_dims[0]), nn.ReLU())
-        # obs
-        self.encode_obs_head = nn.Sequential(nn.Linear(self.obs_dim, hidden_dims[0]), nn.ReLU())
+        self.encode_action_head = nn.Sequential(nn.Linear(self.action_shape, hidden_dims[0]), nn.ReLU())
+        self.encode_obs_head = nn.Sequential(nn.Linear(self.obs_shape, hidden_dims[0]), nn.ReLU())
 
-        self.encode_common = nn.Sequential(nn.Linear(hidden_dims[0], hidden_dims[0]), nn.ReLU())
-        self.encode_mu_head = nn.Linear(hidden_dims[0], latent_dim)
-        self.encode_logvar_head = nn.Linear(hidden_dims[0], latent_dim)
+        self.encode_common = nn.Sequential(nn.Linear(hidden_dims[0], hidden_dims[1]), nn.ReLU())
+        self.encode_mu_head = nn.Linear(hidden_dims[1], latent_size)
+        self.encode_logvar_head = nn.Linear(hidden_dims[1], latent_size)
 
         # Build Decoder
-        self.condition_obs = nn.Sequential(nn.Linear(self.obs_dim, hidden_dims[0]), nn.ReLU())
-        self.decode_action_head = nn.Sequential(nn.Linear(latent_dim, hidden_dims[0]), nn.ReLU())
-        self.decode_common = nn.Sequential(nn.Linear(hidden_dims[0], hidden_dims[0]), nn.ReLU())
+        # self.condition_obs = nn.Sequential(nn.Linear(self.obs_shape, hidden_dims[-1]), nn.ReLU())
+        self.decode_action_head = nn.Sequential(nn.Linear(latent_size, hidden_dims[-1]), nn.ReLU())
+        self.decode_common = nn.Sequential(nn.Linear(hidden_dims[-1], hidden_dims[-2]), nn.ReLU())
         # TODO(pu): tanh
-        self.decode_reconst_action_head = nn.Sequential(nn.Linear(hidden_dims[0], self.action_dim), nn.Tanh())
-        # self.decode_reconst_action_head = nn.Linear(hidden_dims[0], self.action_dim)
+        self.decode_reconst_action_head = nn.Sequential(nn.Linear(hidden_dims[-2], self.action_shape), nn.Tanh())
+        # self.decode_reconst_action_head = nn.Linear(hidden_dims[0], self.action_shape)
 
         # residual prediction
-        self.decode_prediction_head_layer1 = nn.Sequential(nn.Linear(hidden_dims[0], hidden_dims[0]), nn.ReLU())
-        self.decode_prediction_head_layer2 = nn.Linear(hidden_dims[0], self.obs_dim)
+        self.decode_prediction_head_layer1 = nn.Sequential(nn.Linear(hidden_dims[-2], hidden_dims[-2]), nn.ReLU())
+        self.decode_prediction_head_layer2 = nn.Linear(hidden_dims[-2], self.obs_shape)
 
         self.obs_encoding = None
 
-    def encode(self, input) -> List[Tensor]:
+    def encode(self, input) -> Dict[str, Any]:
         """
         Encodes the input by passing through the encoder network
         and returns the latent codes.
-        :param input: (Tensor) Input tensor to encoder [N x C x H x W]
+        :param input: (Tensor) Input tensor to encoder
         :return: (Tensor) List of latent codes
         """
         action_encoding = self.encode_action_head(input['action'])
         obs_encoding = self.encode_obs_head(input['obs'])
         # obs_encoding = self.condition_obs(input['obs'])  #  TODO(pu): using a different network
-
-        self.obs_encoding = obs_encoding
         # input = torch.cat([obs_encoding, action_encoding], dim=-1)
         # input = obs_encoding + action_encoding  # TODO(pu): what about add, cat?
         input = obs_encoding * action_encoding
-
         result = self.encode_common(input)
-        result = torch.flatten(result, start_dim=1)
 
         # Split the result into mu and var components
         # of the latent Gaussian distribution
         mu = self.encode_mu_head(result)
         log_var = self.encode_logvar_head(result)
 
-        return [mu, log_var]
+        return {'mu': mu, 'log_var': log_var, 'obs_encoding': obs_encoding}
 
-    def decode(self, z: Tensor) -> Tensor:
-        """
-        Maps the given latent codes
-        onto the image space.
-        :param z: (Tensor) [B x D]
-        :return: (Tensor) [B x C x H x W]
+    def decode(self, z: Tensor, obs_encoding: Tensor) -> Dict[str, Any]:
+        r"""
+         Overview:
+               Maps the given latent action and obs_encoding onto the original action space.
+         Arguments:
+             - z (:obj:`torch.Tensor`): the sampled latent action
+             - obs_encoding (:obj:`torch.Tensor`): observation encoding
+         Returns:
+             - outputs (:obj:`Dict`): DQN forward outputs, such as q_value.
+         ReturnsKeys:
+             - reconstruction_action (:obj:`torch.Tensor`): reconstruction_action.
+             - predition_residual (:obj:`torch.Tensor`): predition_residual.
+         Shapes:
+             - z (:obj:`torch.Tensor`): :math:`(B, L)`, where B is batch size and L is ``latent_size``
+             - obs_encoding (:obj:`torch.Tensor`): :math:`(B, H)`, where B is batch size and H is ``hidden dim``
         """
         action_decoding = self.decode_action_head(torch.tanh(z))  # NOTE: tanh, here z is not bounded
         # action_decoding = self.decode_action_head(z)  # NOTE: tanh, here z is not bounded
-        action_obs_decoding = action_decoding + self.obs_encoding  # TODO(pu): what about add, cat?
-        # action_obs_decoding = action_decoding * self.obs_encoding
+        # action_obs_decoding = action_decoding + obs_encoding  # TODO(pu): what about add, cat?
+        action_obs_decoding = action_decoding * obs_encoding
         action_obs_decoding_tmp = self.decode_common(action_obs_decoding)
 
         reconstruction_action = self.decode_reconst_action_head(action_obs_decoding_tmp)
         predition_residual_tmp = self.decode_prediction_head_layer1(action_obs_decoding_tmp)
         predition_residual = self.decode_prediction_head_layer2(predition_residual_tmp)
+        return {'reconstruction_action': reconstruction_action, 'predition_residual': predition_residual}
 
-        return [reconstruction_action, predition_residual]
-
-    def decode_with_obs(self, z: Tensor, obs) -> Tensor:
+    def decode_with_obs(self, z: Tensor, obs: Tensor) -> Dict[str, Any]:
+        r"""
+          Overview:
+                Maps the given latent action and obs onto the original action space.
+                Using the method self.encode_obs_head(obs) to get the obs_encoding.
+          Arguments:
+              - z (:obj:`torch.Tensor`): the sampled latent action
+              - obs (:obj:`torch.Tensor`): observation
+          Returns:
+              - outputs (:obj:`Dict`): DQN forward outputs, such as q_value.
+          ReturnsKeys:
+              - reconstruction_action (:obj:`torch.Tensor`): reconstruction_action.
+              - predition_residual (:obj:`torch.Tensor`): predition_residual.
+          Shapes:
+              - z (:obj:`torch.Tensor`): :math:`(B, L)`, where B is batch size and L is ``latent_size``
+              - obs (:obj:`torch.Tensor`): :math:`(B, O)`, where B is batch size and O is ``obs_shape``
         """
-        Maps the given latent codes
-        onto the image space.
-        :param z: (Tensor) [B x D]
-        :return: (Tensor) [B x C x H x W]
-        """
-        self.obs_encoding = self.encode_obs_head(obs)
+        obs_encoding = self.encode_obs_head(obs)
         # TODO(pu): here z is already bounded, z is produced by td3 policy, it has been operated by tanh
         action_decoding = self.decode_action_head(z)
-        # action_obs_decoding = action_decoding + self.obs_encoding  # TODO(pu): what about add, cat?
-        action_obs_decoding = action_decoding * self.obs_encoding
+        # action_obs_decoding = action_decoding + obs_encoding  # TODO(pu): what about add, cat?
+        action_obs_decoding = action_decoding * obs_encoding
         action_obs_decoding_tmp = self.decode_common(action_obs_decoding)
         reconstruction_action = self.decode_reconst_action_head(action_obs_decoding_tmp)
         predition_residual_tmp = self.decode_prediction_head_layer1(action_obs_decoding_tmp)
         predition_residual = self.decode_prediction_head_layer2(predition_residual_tmp)
 
-        return [reconstruction_action, predition_residual]
+        return {'reconstruction_action': reconstruction_action, 'predition_residual': predition_residual}
 
     def reparameterize(self, mu: Tensor, logvar: Tensor) -> Tensor:
-        """
-        Reparameterization trick to sample from N(mu, var) from
-        N(0,1).
-        :param mu: (Tensor) Mean of the latent Gaussian [B x D]
-        :param logvar: (Tensor) Standard deviation of the latent Gaussian [B x D]
-        :return: (Tensor) [B x D]
-        """
+        r"""
+         Overview:
+              Reparameterization trick to sample from N(mu, var) from N(0,1).
+         Arguments:
+             - mu (:obj:`torch.Tensor`): Mean of the latent Gaussian
+             - logvar (:obj:`torch.Tensor`): Standard deviation of the latent Gaussian
+         Shapes:
+             - mu (:obj:`torch.Tensor`): :math:`(B, L)`, where B is batch size and L is ``latnet_size``
+             - logvar (:obj:`torch.Tensor`): :math:`(B, L)`, where B is batch size and L is ``latnet_size``
+         """
         std = torch.exp(0.5 * logvar)
         eps = torch.randn_like(std)
         return eps * std + mu
 
     def forward(self, input: Tensor, **kwargs) -> dict:
-        mu, log_var = self.encode(input)
-        z = self.reparameterize(mu, log_var)
+        encode_output = self.encode(input)
+        z = self.reparameterize(encode_output['mu'], encode_output['log_var'])
+        decode_output = self.decode(z, encode_output['obs_encoding'])
         return {
-            'recons_action': self.decode(z)[0],
-            'prediction_residual': self.decode(z)[1],
+            'recons_action': decode_output['reconstruction_action'],
+            'prediction_residual': decode_output['predition_residual'],
             'input': input,
-            'mu': mu,
-            'log_var': log_var,
+            'mu': encode_output['mu'],
+            'log_var': encode_output['log_var'],
             'z': z
         }
 
@@ -186,25 +202,3 @@ class VanillaVAE(BaseVAE):
 
         loss = recons_loss + kld_weight * kld_loss + predict_weight * predict_loss
         return {'loss': loss, 'reconstruction_loss': recons_loss, 'kld_loss': kld_loss, 'predict_loss': predict_loss}
-
-    def sample(self, num_samples: int, current_device: int, **kwargs) -> Tensor:
-        """
-        Samples from the latent space and return the corresponding
-        image space map.
-        :param num_samples: (Int) Number of samples
-        :param current_device: (Int) Device to run the model
-        :return: (Tensor)
-        """
-        z = torch.randn(num_samples, self.latent_dim)
-        z = z.to(current_device)
-        samples = self.decode(z)
-        return samples
-
-    def generate(self, x: Tensor, **kwargs) -> Tensor:
-        """
-        Given an input image x, returns the reconstructed image
-        :param x: (Tensor) [B x C x H x W]
-        :return: (Tensor) [B x C x H x W]
-        """
-
-        return self.forward(x)[0]

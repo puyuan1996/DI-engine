@@ -20,7 +20,11 @@ from torch.nn import functional as F
 class TD3VAEPolicy(DDPGPolicy):
     r"""
     Overview:
+<<<<<<< HEAD
         Policy class of TD3-VAE algorithm.
+=======
+        Policy class of TD3 algorithm.
+>>>>>>> 73b115c2aaaacb8879be98ff871cd36e4faee1ce
 
         Since DDPG and TD3 share many common things, we can easily derive this TD3
         class from DDPG class by changing ``_actor_update_freq``, ``_twin_critic`` and noise in model wrapper.
@@ -221,9 +225,15 @@ class TD3VAEPolicy(DDPGPolicy):
         self._forward_learn_cnt = 0  # count iterations
         # action_shape, obs_shape, latent_action_dim, hidden_size_list
         self._vae_model = VanillaVAE(
+<<<<<<< HEAD
             self._cfg.original_action_shape, self._cfg.model.obs_shape, self._cfg.model.action_shape, [256]
         )
         # self._vae_model = VanillaVAE(2, 8, 6, [256, 256, 256])
+=======
+            self._cfg.original_action_shape, self._cfg.model.obs_shape, self._cfg.model.action_shape, [256, 256]
+        )
+        # self._vae_model = VanillaVAE(2, 8, 6, [256, 256])
+>>>>>>> 73b115c2aaaacb8879be98ff871cd36e4faee1ce
 
         self._optimizer_vae = Adam(
             self._vae_model.parameters(),
@@ -471,6 +481,10 @@ class TD3VAEPolicy(DDPGPolicy):
             'target_model': self._target_model.state_dict(),
             'optimizer_actor': self._optimizer_actor.state_dict(),
             'optimizer_critic': self._optimizer_critic.state_dict(),
+<<<<<<< HEAD
+=======
+            'vae_model': self._vae_model.state_dict(),
+>>>>>>> 73b115c2aaaacb8879be98ff871cd36e4faee1ce
         }
 
     def _load_state_dict_learn(self, state_dict: Dict[str, Any]) -> None:
@@ -478,6 +492,10 @@ class TD3VAEPolicy(DDPGPolicy):
         self._target_model.load_state_dict(state_dict['target_model'])
         self._optimizer_actor.load_state_dict(state_dict['optimizer_actor'])
         self._optimizer_critic.load_state_dict(state_dict['optimizer_critic'])
+<<<<<<< HEAD
+=======
+        self._vae_model.load_state_dict(state_dict['vae_model'])
+>>>>>>> 73b115c2aaaacb8879be98ff871cd36e4faee1ce
 
     def _init_collect(self) -> None:
         r"""
@@ -531,7 +549,11 @@ class TD3VAEPolicy(DDPGPolicy):
 
             # TODO(pu): decode into original hybrid actions, here data is obs
             # this is very important to generate self.obs_encoding using in decode phase
+<<<<<<< HEAD
             output['action'] = self._vae_model.decode_with_obs(output['action'], data)[0]
+=======
+            output['action'] = self._vae_model.decode_with_obs(output['action'], data)['reconstruction_action']
+>>>>>>> 73b115c2aaaacb8879be98ff871cd36e4faee1ce
 
         # NOTE: add noise in the original actions
         from ding.rl_utils.exploration import GaussianNoise
@@ -577,7 +599,11 @@ class TD3VAEPolicy(DDPGPolicy):
                 'obs': obs,
                 'next_obs': timestep.obs,
                 'action': model_output['action'],
+<<<<<<< HEAD
                 'latent_action': False,
+=======
+                'latent_action': 999,
+>>>>>>> 73b115c2aaaacb8879be98ff871cd36e4faee1ce
                 'reward': timestep.reward,
                 'done': timestep.done,
             }
@@ -629,7 +655,11 @@ class TD3VAEPolicy(DDPGPolicy):
 
             # TODO(pu): decode into original hybrid actions, here data is obs
             # this is very important to generate self.obs_encoding using in decode phase
+<<<<<<< HEAD
             output['action'] = self._vae_model.decode_with_obs(output['action'], data)[0]
+=======
+            output['action'] = self._vae_model.decode_with_obs(output['action'], data)['reconstruction_action']
+>>>>>>> 73b115c2aaaacb8879be98ff871cd36e4faee1ce
         if self._cuda:
             output = to_device(output, 'cpu')
         output = default_decollate(output)

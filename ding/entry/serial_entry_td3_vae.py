@@ -113,9 +113,10 @@ def serial_pipeline_td3_vae(
                 replay_buffer.update(learner.priority_info)
         replay_buffer.clear()  # TODO(pu): NOTE
 
-    # NOTE: for the case collector_env_num>1, because after the random collect phase,  self._traj_buffer[env_id] may be not empty. Only
-    # if the condition "timestep.done or len(self._traj_buffer[env_id]) == self._traj_len" is satisfied, the self._traj_buffer will be clear.
-    # For our alg., the data in self._traj_buffer[env_id], latent_action=False, cannot be used in rl_vae phase.
+    # NOTE: for the case collector_env_num>1, because after the random collect phase,  self._traj_buffer[env_id] may
+    # be not empty. Only if the condition "timestep.done or len(self._traj_buffer[env_id]) == self._traj_len" is
+    # satisfied, the self._traj_buffer will be clear. For our alg., the data in self._traj_buffer[env_id],
+    # latent_action=False, cannot be used in rl_vae phase.
     collector.reset(policy.collect_mode)
 
     for iter in range(max_iterations):
@@ -165,13 +166,18 @@ def serial_pipeline_td3_vae(
                                                                  cfg.policy.learn.rl_vae_update_circle):
             for i in range(cfg.policy.learn.update_per_collect_vae):
                 # Learner will train ``update_per_collect`` times in one iteration.
+                # TODO(pu):
                 train_data_history = replay_buffer.sample(
                     int(learner.policy.get_attribute('batch_size') / 2), learner.train_iter
                 )
                 train_data_recent = replay_buffer_recent.sample(
                     int(learner.policy.get_attribute('batch_size') / 2), learner.train_iter
                 )
-                train_data = train_data_history + train_data_recent  # TODO(pu):
+                train_data = train_data_history + train_data_recent
+
+                # train_data = replay_buffer.sample(  # TODO(pu): sample from all history data
+                #     int(learner.policy.get_attribute('batch_size')), learner.train_iter
+                # )
 
                 if train_data is not None:
                     for item in train_data:

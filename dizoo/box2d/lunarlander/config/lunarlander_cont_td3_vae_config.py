@@ -2,7 +2,8 @@ from easydict import EasyDict
 from ding.entry import serial_pipeline_td3_vae
 
 lunarlander_td3vae_config = dict(
-    exp_name='lunarlander_cont_td3_vae_lad6_rcs1e4_wu1e4_ns256_bs128_auf2_targetnoise_collectoriginalnoise_rbs1e5_rsc_lsc_rvuc1_upcr256_upcv10_kw0.01_pw0.01_dot_tanh',
+    exp_name=
+    'lunarlander_cont_td3_vae_lad6_rcs1e4_wu1e4_ns256_bs128_auf2_targetnoise_collectoriginalnoise_rbs1e5_rsc_lsc_rvuc1_upcr256_upcv10_kw0.01_pw0.01_dot_tanh',
     env=dict(
         env_id='LunarLanderContinuous-v2',
         collector_env_num=8,
@@ -21,7 +22,7 @@ lunarlander_td3vae_config = dict(
             obs_shape=8,
             action_shape=6,  # latent_action_dim
             twin_critic=True,
-            actor_head_type='regression',
+            action_space='regression',
         ),
         learn=dict(
             warm_up_update=int(1e4),
@@ -45,7 +46,7 @@ lunarlander_td3vae_config = dict(
         collect=dict(
             n_sample=256,
             unroll_len=1,
-            noise_sigma=0,   # NOTE: add noise in original action in _forward_collect method of td3_vae policy
+            noise_sigma=0,  # NOTE: add noise in original action in _forward_collect method of td3_vae policy
             collector=dict(collect_print_freq=1000, ),
         ),
         eval=dict(evaluator=dict(eval_freq=100, ), ),

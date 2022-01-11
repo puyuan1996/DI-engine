@@ -8,10 +8,14 @@ from ding.model import model_wrap
 from ding.utils import POLICY_REGISTRY
 from ding.utils.data import default_collate, default_decollate
 from .base_policy import Policy
+<<<<<<< HEAD
 # try:
 #     from dizoo.gfootball.model.bots import FootballKaggle5thPlaceModel
 # except ImportError:
 #     FootballKaggle5thPlaceModel = None
+=======
+FootballKaggle5thPlaceModel = None
+>>>>>>> 73b115c2aaaacb8879be98ff871cd36e4faee1ce
 
 
 @POLICY_REGISTRY.register('IL')
