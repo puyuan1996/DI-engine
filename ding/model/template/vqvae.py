@@ -275,6 +275,7 @@ class VQVAE(BaseVAE):
         encoding = self.encode(input['action'])[0]
         encoding_inds, quantized_inputs, vq_loss = self.vq_layer(encoding)
         # quantized_inputs=quantized_inputs.view(-1,64*2)
+
         return {
             'encoding_inds': encoding_inds,
             'quantized_inputs': quantized_inputs,
@@ -283,21 +284,6 @@ class VQVAE(BaseVAE):
             'input': input['action'],
             'vqloss': vq_loss
         }
-
-        # import matplotlib.pyplot as plt
-        # xx, yy = np.meshgrid(np.arange(-1, 1, 0.01), np.arange(-1, 1, 0.01))
-        # action_samples= np.array([xx.ravel(), yy.ravel()]).reshape(40000,2)
-        # encoding = policy._vqvae_model.encode(torch.Tensor(action_samples))[0]
-        # encoding_inds, quantized_inputs, vq_loss = policy._vqvae_model.vq_layer(encoding)
-        # x = xx
-        # y = yy
-        # c = encoding_inds
-        # fig = plt.figure()
-        # ax = fig.add_subplot(111)
-        # sc = ax.scatter(x, y, c=c, marker='o')
-        # ax.set_title('K=4 latent action')
-        # fig.colorbar(sc)
-        # plt.show()
 
     def loss_function(self, args, **kwargs) -> dict:
         """

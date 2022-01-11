@@ -56,10 +56,10 @@ def serial_pipeline_dqn_vqvae(
     set_pkg_seed(cfg.seed, use_cuda=cfg.policy.cuda)
     policy = create_policy(cfg.policy, model=model, enable_field=['learn', 'collect', 'eval', 'command'])
 
-    # load model
-    # policy.collect_mode.load_state_dict(
-    #     torch.load(cfg.policy.model.leaned_model_path, map_location='cpu')
-    # )
+    # TODO(pu):load model
+    policy.collect_mode.load_state_dict(
+        torch.load(cfg.policy.learned_model_path, map_location='cpu')
+    )
 
     # Create worker components: learner, collector, evaluator, replay buffer, commander.
     tb_logger = SummaryWriter(os.path.join('./{}/log/'.format(cfg.exp_name), 'serial'))
@@ -80,6 +80,25 @@ def serial_pipeline_dqn_vqvae(
     commander = BaseSerialCommander(
         cfg.policy.other.commander, learner, collector, evaluator, replay_buffer, policy.command_mode
     )
+
+    # TODO(pu): plot latent action
+    # import matplotlib.pyplot as plt
+    # import numpy as np
+    # xx, yy = np.meshgrid(np.arange(-1, 1, 0.01), np.arange(-1, 1, 0.01))
+    # action_samples = np.array([xx.ravel(), yy.ravel()]).reshape(40000, 2)
+    # encoding = policy._vqvae_model.encode(torch.Tensor(action_samples))[0]
+    # encoding_inds, quantized_inputs, vq_loss = policy._vqvae_model.vq_layer(encoding)
+    # x = xx
+    # y = yy
+    # c = encoding_inds
+    # fig = plt.figure()
+    # ax = fig.add_subplot(111)
+    # sc = ax.scatter(x, y, c=c, marker='o')
+    # ax.set_title('K=4 latent action')
+    # fig.colorbar(sc)
+    # plt.show()
+    ####
+
     # ==========
     # Main loop
     # ==========
