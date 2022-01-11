@@ -20,7 +20,7 @@ lunarlander_td3_config = dict(
             obs_shape=8,
             action_shape=2,
             twin_critic=True,
-            actor_head_type='regression',
+            action_space='regression',
         ),
         learn=dict(
             update_per_collect=256,
@@ -43,7 +43,6 @@ lunarlander_td3_config = dict(
         ),
         eval=dict(evaluator=dict(eval_freq=100, ), ),
         other=dict(replay_buffer=dict(replay_buffer_size=int(1e5), ), ),
-
     ),
 )
 lunarlander_td3_config = EasyDict(lunarlander_td3_config)

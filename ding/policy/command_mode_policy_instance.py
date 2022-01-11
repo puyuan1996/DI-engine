@@ -221,11 +221,14 @@ class TD3VAECommandModePolicy(TD3VAEPolicy, DummyCommandModePolicy):
     pass
 
 
+<<<<<<< HEAD
 @POLICY_REGISTRY.register('dqn_vqvae_command')
 class DQNVQVAECommandModePolicy(DQNVQVAEPolicy, EpsCommandModePolicy):
     pass
 
 
+=======
+>>>>>>> 73b115c2aaaacb8879be98ff871cd36e4faee1ce
 @POLICY_REGISTRY.register('td3_bc_command')
 class TD3BCCommandModePolicy(TD3BCPolicy, DummyCommandModePolicy):
     pass
