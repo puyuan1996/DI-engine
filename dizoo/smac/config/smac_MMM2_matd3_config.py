@@ -101,15 +101,16 @@ def train(args):
     main_config.exp_name='debug_smac_MMM2_matd3'+'_seed'+f'{args.seed}'+'_ew0.01'
     # main_config.exp_name='debug_smac_MMM2_matd3'+'_seed'+f'{args.seed}'+'_clogpi_ew0'
 
-    
     import copy
-    # 3125 iterations= 10M/3200 env steps mmm2 5m6m
-    # 1562.5 iterations= 5M/3200 env steps mmm 3s5z
+    # 3125 iterations= 10M/3200 env steps mmm2
+    # 6250 iterations= 10M/1600 env steps 5m6m
+    # 1562.5 iterations= 5M/3200 env steps mmm
+    # 3125 iterations= 5M/1600 env steps 3s5z
     serial_pipeline([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,  max_iterations=3125)
 
 if __name__ == "__main__":
     import argparse
-    for seed in [1,2]:     
+    for seed in [0,1,2]:     
         parser = argparse.ArgumentParser()
         parser.add_argument('--seed', '-s', type=int, default=seed)
         args = parser.parse_args()

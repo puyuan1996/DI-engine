@@ -48,14 +48,14 @@ MMM_matd3_default_config = dict(
             target_theta=0.005,
             discount_factor=0.99,
             # TODO(pu)
-            alpha=0.2,  
-            auto_alpha=True,
-            entropy_weight=0.01, 
-            log_space=True,
-            # TODO(pu)
-            # alpha=0.,
-            # auto_alpha=False,
+            # alpha=0.2,  
+            # auto_alpha=True,
             # entropy_weight=0.01, 
+            # log_space=True,
+            # TODO(pu)
+            alpha=0.,
+            auto_alpha=False,
+            entropy_weight=0.01, 
         ),
         collect=dict(
             env_num=collector_env_num,
@@ -98,12 +98,14 @@ create_config = MMM_matd3_default_create_config
 
 
 def train(args):
-    # main_config.exp_name='debug_smac_MMM_matd3'+'_seed'+f'{args.seed}'+'_ew0'
-    main_config.exp_name='debug_smac_MMM_matd3'+'_seed'+f'{args.seed}'+'_clogpi_ew0.01'
+    main_config.exp_name='debug_smac_MMM_matd3'+'_seed'+f'{args.seed}'+'_ew0.01'
+    # main_config.exp_name='debug_smac_MMM_matd3'+'_seed'+f'{args.seed}'+'_clogpi_ew0.01'
     import copy
-    # 250000 iterations= 10M env steps mmm2 5m6m
-    # 125000 iterations= 5M env steps mmm 3s5z
-    serial_pipeline([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,  max_iterations= int(125000),)
+    # 3125 iterations= 10M/3200 env steps mmm2
+    # 6250 iterations= 10M/1600 env steps 5m6m
+    # 1562.5 iterations= 5M/3200 env steps mmm
+    # 3125 iterations= 5M/1600 env steps 3s5z
+    serial_pipeline([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_iterations=1563)
 
 if __name__ == "__main__":
     import argparse

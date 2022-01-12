@@ -48,14 +48,14 @@ SMAC_5m6m_matd3_default_config = dict(
             target_theta=0.005,
             discount_factor=0.99,
             # TODO(pu)
-            alpha=0.2,  
-            auto_alpha=True,
-            entropy_weight=0.01, 
-            log_space=True,
-            # TODO(pu)
-            # alpha=0.,
-            # auto_alpha=False,
+            # alpha=0.2,  
+            # auto_alpha=True,
             # entropy_weight=0.01, 
+            # log_space=True,
+            # TODO(pu)
+            alpha=0.,
+            auto_alpha=False,
+            entropy_weight=0.01, 
         ),
         collect=dict(
             env_num=collector_env_num,
@@ -92,24 +92,25 @@ SMAC_5m6m_matd3_default_create_config = dict(
     policy=dict(
         type='matd3',
     ),
-    #replay_buffer=dict(type='naive', ),
 )
 SMAC_5m6m_matd3_default_create_config = EasyDict(SMAC_5m6m_matd3_default_create_config)
 create_config = SMAC_5m6m_matd3_default_create_config
 
 
 def train(args):
-    # main_config.exp_name='debug_smac_5m6m_matd3_d5e4'+'_seed'+f'{args.seed}'+'_ew0.01'
-    main_config.exp_name='debug_smac_5m6m_matd3_d5e4'+'_seed'+f'{args.seed}'+'_clogpi_ew0.01'
+    main_config.exp_name='debug_smac_5m6m_matd3_d5e4'+'_seed'+f'{args.seed}'+'_ew0.01'
+    # main_config.exp_name='debug_smac_5m6m_matd3_d5e4'+'_seed'+f'{args.seed}'+'_clogpi_ew0.01'
 
     import copy
-    # 3125 iterations= 10M/3200 env steps mmm2 5m6m
-    # 1562.5 iterations= 5M/3200 env steps mmm 3s5z
-    serial_pipeline([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,  max_iterations=3125)
+    # 3125 iterations= 10M/3200 env steps mmm2
+    # 6250 iterations= 10M/1600 env steps 5m6m
+    # 1562.5 iterations= 5M/3200 env steps mmm
+    # 3125 iterations= 5M/1600 env steps 3s5z
+    serial_pipeline([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,  max_iterations=6250)
 
 if __name__ == "__main__":
     import argparse
-    for seed in [1,2]:     
+    for seed in [0,1,2]:     
         parser = argparse.ArgumentParser()
         parser.add_argument('--seed', '-s', type=int, default=seed)
         args = parser.parse_args()
