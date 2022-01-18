@@ -45,6 +45,8 @@ class PPOPolicy(Policy):
         multi_agent=False,
         # (bool) Whether to need policy data in process transition
         transition_with_policy_data=True,
+        share_weight=True,
+        agent_num=1,
         learn=dict(
             # (bool) Whether to use multi gpu
             multi_gpu=False,
@@ -446,7 +448,10 @@ class PPOPolicy(Policy):
 
     def default_model(self) -> Tuple[str, List[str]]:
         if self._cfg.multi_agent:
-            return 'mavac', ['ding.model.template.mavac']
+            if not self._cfg.share_weight:
+                return 'mavac_nsw', ['ding.model.template.mavac_nsw']
+            else:
+                return 'mavac', ['ding.model.template.mavac']
         else:
             return 'vac', ['ding.model.template.vac']
 

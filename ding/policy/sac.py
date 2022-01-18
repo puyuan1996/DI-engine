@@ -85,7 +85,10 @@ class SACDiscretePolicy(Policy):
         # (int) Number of training samples(randomly collected) in replay buffer when training starts.
         # Default 10000 in SAC.
         random_collect_size=10000,
+        share_weight=True,
+        agent_num=1,
         model=dict(
+            agent_num=1,
             # (bool type) twin_critic: Determine whether to use double-soft-q-net for target q computation.
             # Please refer to TD3 about Clipped Double-Q Learning trick, which learns two Q-functions instead of one .
             # Default to True.
@@ -176,10 +179,6 @@ class SACDiscretePolicy(Policy):
             ),
         ),
     )
-    r"""
-    Overview:
-        Policy class of SAC algorithm.
-    """
 
     def _init_learn(self) -> None:
         r"""
@@ -325,6 +324,7 @@ class SACDiscretePolicy(Policy):
             new_q_value = self._learn_model.forward({'obs': data['obs']}, mode='compute_critic')['q_value']
             if self._twin_critic:
                 new_q_value = torch.min(new_q_value[0], new_q_value[1])
+
         # 7. compute policy loss
         # we need to sum different actions' policy loss and calculate the average value of a batch
         policy_loss = (prob * (self._alpha * log_prob - new_q_value)).sum(dim=-1).mean()
@@ -491,7 +491,11 @@ class SACDiscretePolicy(Policy):
 
     def default_model(self) -> Tuple[str, List[str]]:
         if self._cfg.multi_agent:
-            return 'maqac', ['ding.model.template.maqac']
+            if not self._cfg.share_weight:
+                return 'maqac_nsw', ['ding.model.template.maqac_nsw']
+            else:
+                return 'maqac', ['ding.model.template.maqac']
+
         else:
             return 'discrete_qac', ['ding.model.template.qac']
 
@@ -587,6 +591,7 @@ class SACPolicy(Policy):
         # Default 10000 in SAC.
         random_collect_size=10000,
         multi_agent=False,
+        share_weight=True,
         model=dict(
             # (bool type) twin_critic: Determine whether to use double-soft-q-net for target q computation.
             # Please refer to TD3 about Clipped Double-Q Learning trick, which learns two Q-functions instead of one .

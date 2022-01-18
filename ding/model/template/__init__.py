@@ -13,8 +13,10 @@ from .sqn import SQN
 from .acer import ACER
 from .qtran import QTran
 from .mavac import MAVAC
+from .mavac_nsw import MAVACNSW
 from .ngu import NGU
 from .qac_dist import QACDIST
 from .maqac import MAQAC, ContinuousMAQAC
+from .maqac_nsw import MAQACNSW
 from .model_based import EnsembleDynamicsModel
 from .vae import VanillaVAE

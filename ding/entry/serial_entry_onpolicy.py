@@ -92,6 +92,10 @@ def serial_pipeline_onpolicy(
         # Learn policy from collected data
         learner.train(new_data, collector.envstep)
 
+        # TODO(pu): set total env steps
+        if collector.envstep >= int(1e7):
+            break
+
     # Learner's after_run hook.
     learner.call_hook('after_run')
     return policy
