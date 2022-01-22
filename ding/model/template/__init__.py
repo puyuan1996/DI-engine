@@ -12,6 +12,9 @@ from .atoc import ATOC
 from .sqn import SQN
 from .acer import ACER
 from .qtran import QTran
+
+from .matd3 import MATD3
+
 from .mavac import MAVAC
 from .mavac_nsw import MAVACNSW
 from .ngu import NGU

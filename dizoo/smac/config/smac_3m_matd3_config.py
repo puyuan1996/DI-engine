@@ -1,0 +1,104 @@
+from easydict import EasyDict
+from ding.entry import serial_pipeline
+
+agent_num = 3
+collector_env_num = 1  # TODO(pu) 8
+evaluator_env_num = 1  # TODO(pu) 8
+special_global_state = True
+
+SMAC_3m_matd3_default_config = dict(
+    exp_name='debug_smac_3m_matd3_ew0',
+    env=dict(
+        map_name='3m',
+        difficulty=7,
+        reward_only_positive=True,
+        mirror_opponent=False,
+        agent_num=agent_num,
+        collector_env_num=collector_env_num,
+        evaluator_env_num=evaluator_env_num,
+        n_evaluator_episode=8,  # TODO(pu) 16,
+        # n_evaluator_episode=1,  # TODO(pu) 16,
+        stop_value=0.99,
+        death_mask=True,  # TODO(pu) False
+        special_global_state=special_global_state,
+        # save_replay_episodes = 1,
+        manager=dict(
+            shared_memory=False,
+            reset_timeout=6000,
+        ),
+    ),
+    policy=dict(
+        cuda=True,
+        on_policy=False,
+        random_collect_size=0,
+        # (int) Number of training samples(randomly collected) in replay buffer when training starts.
+        # Default 25000 in DDPG/TD3.
+        # random_collect_size=25000,
+        model=dict(
+            agent_obs_shape=42,
+            global_obs_shape=77,
+            action_shape=9,
+            twin_critic=True,
+            actor_head_hidden_size=256,
+            critic_head_hidden_size=256,
+        ),
+        learn=dict(
+            update_per_collect=50,  # TODO(pu) 5,
+            batch_size=320,  # TODO(pu) 64,
+            learning_rate_q=5e-4,
+            learning_rate_policy=5e-4,
+            learning_rate_alpha=5e-4,
+            ignore_done=False,
+            target_theta=0.005,  # TODO(pu)
+            discount_factor=0.99,
+            alpha=0.,  # TODO(pu)
+            auto_alpha=False,  # TODO(pu)
+            log_space=True,
+            # (float) The loss weight of entropy regularization, policy network weight is set to 1
+            entropy_weight=0.0, # TODO(pu)
+        ),
+        collect=dict(
+            env_num=collector_env_num,
+            n_sample=3200,  # TODO（pu）256,
+            unroll_len=1,
+        ),
+        # command=dict(),
+        eval=dict(
+            evaluator=dict(
+                eval_freq=50,
+            ),
+            env_num=evaluator_env_num,
+        ),
+        other=dict(
+            eps=dict(
+                type='linear',
+                start=1,
+                end=0.05,
+                decay=int(1e5),
+            ),  # TODO(pu)
+            replay_buffer=dict(replay_buffer_size=int(1e6), ), 
+        ),
+    ),
+)
+
+
+SMAC_3m_matd3_default_config = EasyDict(SMAC_3m_matd3_default_config)
+main_config = SMAC_3m_matd3_default_config
+
+SMAC_3m_matd3_default_create_config = dict(
+    env=dict(
+        type='smac',
+        import_names=['dizoo.smac.envs.smac_env'],
+    ),
+    env_manager=dict(type='base'),
+    policy=dict(
+        type='matd3',
+    ),
+    #replay_buffer=dict(type='naive', ),
+)
+SMAC_3m_matd3_default_create_config = EasyDict(SMAC_3m_matd3_default_create_config)
+create_config = SMAC_3m_matd3_default_create_config
+
+
+if __name__ == "__main__":
+    serial_pipeline([main_config, create_config], seed=0)

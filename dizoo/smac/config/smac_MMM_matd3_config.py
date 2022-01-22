@@ -6,10 +6,10 @@ collector_env_num = 8
 evaluator_env_num = 8
 special_global_state = True
 
-SMAC_MMM2_masac_default_config = dict(
-    # exp_name='debug_smac_MMM2_masac',
+MMM_matd3_default_config = dict(
+    # exp_name='debug_smac_MMM_matd3_seed0',
     env=dict(
-        map_name='MMM2',
+        map_name='MMM',
         difficulty=7,
         reward_only_positive=True,
         mirror_opponent=False,
@@ -18,8 +18,9 @@ SMAC_MMM2_masac_default_config = dict(
         evaluator_env_num=evaluator_env_num,
         n_evaluator_episode=16,
         stop_value=0.99,
-        death_mask=True,
+        death_mask=True,  # TODO(pu) False
         special_global_state=special_global_state,
+        # save_replay_episodes = 1,
         manager=dict(
             shared_memory=False,
             reset_timeout=6000,
@@ -27,11 +28,12 @@ SMAC_MMM2_masac_default_config = dict(
     ),
     policy=dict(
         cuda=True,
+        on_policy=False,
         random_collect_size=0,
         model=dict(
-            agent_obs_shape=204,
-            global_obs_shape=431,
-            action_shape=18,
+            agent_obs_shape=186,
+            global_obs_shape=389,
+            action_shape=16,
             twin_critic=True,
             actor_head_hidden_size=256,
             critic_head_hidden_size=256,
@@ -41,21 +43,30 @@ SMAC_MMM2_masac_default_config = dict(
             batch_size=320,
             learning_rate_q=5e-4,
             learning_rate_policy=5e-4,
-            learning_rate_alpha=5e-5,
+            learning_rate_alpha=5e-4,  # TODO(pu)
             ignore_done=False,
             target_theta=0.005,
             discount_factor=0.99,
-            alpha=0.2,
-            auto_alpha=True,
-            log_space=True,
+            # TODO(pu)
+            # alpha=0.2,  
+            # auto_alpha=True,
+            # entropy_weight=0.01, 
+            # log_space=True,
+            # TODO(pu)
+            alpha=0.,
+            auto_alpha=False,
+            entropy_weight=0.01, 
         ),
         collect=dict(
             env_num=collector_env_num,
-            n_sample=1600,
+            n_sample=3200,  # TODO（pu）1600
             unroll_len=1,
         ),
+        command=dict(),
         eval=dict(
-            evaluator=dict(eval_freq=50, ),
+            evaluator=dict(
+                eval_freq=50,
+            ),
             env_num=evaluator_env_num,
         ),
         other=dict(
@@ -69,25 +80,32 @@ SMAC_MMM2_masac_default_config = dict(
     ),
 )
 
-SMAC_MMM2_masac_default_config = EasyDict(SMAC_MMM2_masac_default_config)
-main_config = SMAC_MMM2_masac_default_config
+MMM_matd3_default_config = EasyDict(MMM_matd3_default_config)
+main_config = MMM_matd3_default_config
 
-SMAC_MMM2_masac_default_create_config = dict(
+MMM_matd3_default_create_config = dict(
     env=dict(
         type='smac',
         import_names=['dizoo.smac.envs.smac_env'],
     ),
     env_manager=dict(type='base'),
-    policy=dict(type='sac_discrete', ),
+    policy=dict(
+        type='matd3',
+    ),
 )
-SMAC_MMM2_masac_default_create_config = EasyDict(SMAC_MMM2_masac_default_create_config)
-create_config = SMAC_MMM2_masac_default_create_config
+MMM_matd3_default_create_config = EasyDict(MMM_matd3_default_create_config)
+create_config = MMM_matd3_default_create_config
 
 
 def train(args):
-    main_config.exp_name='debug_smac_MMM2_masac'+'_seed'+f'{args.seed}'
+    main_config.exp_name='debug_smac_MMM_matd3'+'_seed'+f'{args.seed}'+'_ew0.01'
+    # main_config.exp_name='debug_smac_MMM_matd3'+'_seed'+f'{args.seed}'+'_clogpi_ew0.01'
     import copy
-    serial_pipeline([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed)
+    # 3125 iterations= 10M/3200 env steps mmm2
+    # 6250 iterations= 10M/1600 env steps 5m6m
+    # 1562.5 iterations= 5M/3200 env steps mmm
+    # 3125 iterations= 5M/1600 env steps 3s5z
+    serial_pipeline([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_iterations=1563)
 
 if __name__ == "__main__":
     import argparse

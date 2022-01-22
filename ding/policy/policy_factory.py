@@ -63,6 +63,16 @@ class PolicyFactory:
                     'action': discrete_random_action(min, max, shape)
                     if discrete else continuous_random_action(-1, 1, shape)
                 }
+                if 'global_state' in data[env_id].keys():
+                    # for smac
+                    logit = np.ones_like(data[env_id]['action_mask'])
+                    logit[data[env_id]['action_mask'] == 0.0] = -1e8
+                    import torch
+                    dist = torch.distributions.categorical.Categorical(logits=torch.Tensor(logit))
+                    actions[env_id] = {
+                        'action': np.array(dist.sample()), 'logit': np.array(logit)
+                    }
+
             return actions
 
         def reset(*args, **kwargs) -> None:

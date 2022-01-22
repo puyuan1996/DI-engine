@@ -1,14 +1,15 @@
+from copy import deepcopy
 from ding.entry import serial_pipeline
 from easydict import EasyDict
 
-agent_num = 10
+agent_num = 8
 collector_env_num = 16
 evaluator_env_num = 8
 
 main_config = dict(
-    exp_name='smac_MMM2_qmix',
+    exp_name='debug_smac_3s5z3s6z_qmix',
     env=dict(
-        map_name='MMM2',
+        map_name='3s5z_vs_3s6z',
         difficulty=7,
         reward_only_positive=True,
         mirror_opponent=False,
@@ -22,9 +23,9 @@ main_config = dict(
     policy=dict(
         model=dict(
             agent_num=agent_num,
-            obs_shape=204,
-            global_obs_shape=322,
-            action_shape=18,
+            obs_shape=159,
+            global_obs_shape=230,
+            action_shape=15,
             hidden_size_list=[64],
             mixer=True,
             lstm_type='gru',
@@ -70,25 +71,26 @@ create_config = dict(
     ),
     # env_manager=dict(type='subprocess'),
     env_manager=dict(type='base'),
-
     policy=dict(type='qmix'),
     collector=dict(type='episode', get_train_sample=True),
 )
 create_config = EasyDict(create_config)
 
 
+
 # if __name__ == "__main__":
 #     serial_pipeline([main_config, create_config], seed=0)
 
 def train(args):
-    main_config.exp_name='debug_smac_MMM2_qmix'+'_seed'+f'{args.seed}'
+    main_config.exp_name='debug_smac_3s5z3s6z_qmix'+'_seed'+f'{args.seed}'
     # serial_pipeline([main_config, create_config], seed=args.seed)
     import copy
     serial_pipeline([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed)
 
+
 if __name__ == "__main__":
     import argparse
-    for seed in [2]:     
+    for seed in [0,1,2]:     
         parser = argparse.ArgumentParser()
         parser.add_argument('--seed', '-s', type=int, default=seed)
         args = parser.parse_args()

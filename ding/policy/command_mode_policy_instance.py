@@ -21,6 +21,7 @@ from .td3 import TD3Policy
 from .td3_vae import TD3VAEPolicy
 from .td3_bc import TD3BCPolicy
 from .sac import SACPolicy, SACDiscretePolicy
+from .matd3 import MATD3Policy
 from .qmix import QMIXPolicy
 from .wqmix import WQMIXPolicy
 from .collaq import CollaQPolicy
@@ -217,6 +218,10 @@ class TD3CommandModePolicy(TD3Policy, DummyCommandModePolicy):
 
 @POLICY_REGISTRY.register('td3_vae_command')
 class TD3VAECommandModePolicy(TD3VAEPolicy, DummyCommandModePolicy):
+
+
+@POLICY_REGISTRY.register('matd3_command')
+class MATD3CommandModePolicy(MATD3Policy, EpsCommandModePolicy):
     pass
 
 

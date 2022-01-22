@@ -13,6 +13,7 @@ from .td3_bc import TD3BCPolicy
 from .a2c import A2CPolicy
 from .ppo import PPOPolicy
 from .sac import SACPolicy, SACDiscretePolicy
+from .matd3 import MATD3Policy
 from .cql import CQLPolicy, CQLDiscretePolicy
 from .impala import IMPALAPolicy
 from .ngu import NGUPolicy

@@ -68,23 +68,29 @@ create_config = dict(
         type='smac',
         import_names=['dizoo.smac.envs.smac_env'],
     ),
-    env_manager=dict(type='subprocess'),
+    # env_manager=dict(type='subprocess'),
+    env_manager=dict(type='base'),
+
     policy=dict(type='qmix'),
     collector=dict(type='episode', get_train_sample=True),
 )
 create_config = EasyDict(create_config)
 
 
-def train(args):
-    config = [main_config, create_config]
-    serial_pipeline(config, seed=args.seed)
+# if __name__ == "__main__":
+#     serial_pipeline([main_config, create_config], seed=0)
 
+def train(args):
+    main_config.exp_name='debug_smac_3s5z_qmix_newpara'+'_seed'+f'{args.seed}'
+    # serial_pipeline([main_config, create_config], seed=args.seed)
+    import copy
+    serial_pipeline([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed)
 
 if __name__ == "__main__":
     import argparse
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--seed', '-s', type=int, default=0)
-    args = parser.parse_args()
-
-    train(args)
+    for seed in [0,1,2]:     
+        parser = argparse.ArgumentParser()
+        parser.add_argument('--seed', '-s', type=int, default=seed)
+        args = parser.parse_args()
+        
+        train(args)

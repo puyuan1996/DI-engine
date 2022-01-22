@@ -63,7 +63,9 @@ def eval(
 
 
 if __name__ == "__main__":
-    path = '../exp/MMM/qmix/1/ckpt_BaseLearner_Wed_Jul_14_22_16_56_2021/iteration_9900.pth.tar'
-    cfg = '../config/smac_MMM_qmix_config.py'
+    # path = '../exp/MMM/qmix/1/ckpt_BaseLearner_Wed_Jul_14_22_16_56_2021/iteration_9900.pth.tar'
+    # cfg = '../config/smac_MMM_qmix_config.py'
+    path = '/Users/puyuan/code/DI-engine/dizoo/smac/utils/debug_smac_2c64zg_masac_ropt_seed0/ckpt/ckpt_best.pth.tar'
+    cfg = '../config/smac_2c64zg_masac_config.py'
     state_dict = torch.load(path, map_location='cpu')
     eval(cfg, seed=0, state_dict=state_dict)

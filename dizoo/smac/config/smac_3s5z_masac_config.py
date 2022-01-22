@@ -1,7 +1,7 @@
 from easydict import EasyDict
 from ding.entry import serial_pipeline
 
-agent_num = 10
+agent_num = 8
 collector_env_num = 8
 evaluator_env_num = 8
 special_global_state = True
@@ -85,4 +85,10 @@ smac_3s5z_masac_default_create_config = EasyDict(smac_3s5z_masac_default_create_
 create_config = smac_3s5z_masac_default_create_config
 
 if __name__ == "__main__":
-    serial_pipeline([main_config, create_config], seed=0)
+    import argparse
+    for seed in [3,0]:     
+        parser = argparse.ArgumentParser()
+        parser.add_argument('--seed', '-s', type=int, default=seed)
+        args = parser.parse_args()
+        
+        train(args)

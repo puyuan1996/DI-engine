@@ -1,15 +1,15 @@
 from easydict import EasyDict
 from ding.entry import serial_pipeline
 
-agent_num = 10
+agent_num = 8
 collector_env_num = 8
 evaluator_env_num = 8
 special_global_state = True
 
-SMAC_MMM2_masac_default_config = dict(
-    # exp_name='debug_smac_MMM2_masac',
+SMAC_3s5z3s6z_matd3_default_config = dict(
+    exp_name='debug_smac_3s5z3s6z_matd3',
     env=dict(
-        map_name='MMM2',
+        map_name='3s5z_vs_3s6z',
         difficulty=7,
         reward_only_positive=True,
         mirror_opponent=False,
@@ -18,8 +18,9 @@ SMAC_MMM2_masac_default_config = dict(
         evaluator_env_num=evaluator_env_num,
         n_evaluator_episode=16,
         stop_value=0.99,
-        death_mask=True,
+        death_mask=True,  # TODO(pu) False
         special_global_state=special_global_state,
+        # save_replay_episodes = 1,
         manager=dict(
             shared_memory=False,
             reset_timeout=6000,
@@ -27,11 +28,12 @@ SMAC_MMM2_masac_default_config = dict(
     ),
     policy=dict(
         cuda=True,
+        on_policy=False,
         random_collect_size=0,
         model=dict(
-            agent_obs_shape=204,
-            global_obs_shape=431,
-            action_shape=18,
+            agent_obs_shape=159,
+            global_obs_shape=314,
+            action_shape=15,
             twin_critic=True,
             actor_head_hidden_size=256,
             critic_head_hidden_size=256,
@@ -41,21 +43,28 @@ SMAC_MMM2_masac_default_config = dict(
             batch_size=320,
             learning_rate_q=5e-4,
             learning_rate_policy=5e-4,
-            learning_rate_alpha=5e-5,
+            learning_rate_alpha=5e-5,  # TODO(pu)
             ignore_done=False,
             target_theta=0.005,
             discount_factor=0.99,
-            alpha=0.2,
-            auto_alpha=True,
+            # alpha=0.2,  # TODO(pu)
+            # auto_alpha=True,
+            alpha=0.,  # TODO(pu)
+            auto_alpha=False,
             log_space=True,
+            # (float) The loss weight of entropy regularization, policy network weight is set to 1
+            entropy_weight=0.01, # TODO(pu)
         ),
         collect=dict(
             env_num=collector_env_num,
-            n_sample=1600,
+            n_sample=1600,  # TODO(pu)
             unroll_len=1,
         ),
+        command=dict(),
         eval=dict(
-            evaluator=dict(eval_freq=50, ),
+            evaluator=dict(
+                eval_freq=50,
+            ),
             env_num=evaluator_env_num,
         ),
         other=dict(
@@ -69,23 +78,30 @@ SMAC_MMM2_masac_default_config = dict(
     ),
 )
 
-SMAC_MMM2_masac_default_config = EasyDict(SMAC_MMM2_masac_default_config)
-main_config = SMAC_MMM2_masac_default_config
+SMAC_3s5z3s6z_matd3_default_config = EasyDict(SMAC_3s5z3s6z_matd3_default_config)
+main_config = SMAC_3s5z3s6z_matd3_default_config
 
-SMAC_MMM2_masac_default_create_config = dict(
+SMAC_3s5z3s6z_matd3_default_create_config = dict(
     env=dict(
         type='smac',
         import_names=['dizoo.smac.envs.smac_env'],
     ),
     env_manager=dict(type='base'),
-    policy=dict(type='sac_discrete', ),
+    policy=dict(
+        type='matd3',
+    ),
 )
-SMAC_MMM2_masac_default_create_config = EasyDict(SMAC_MMM2_masac_default_create_config)
-create_config = SMAC_MMM2_masac_default_create_config
+SMAC_3s5z3s6z_matd3_default_create_config = EasyDict(SMAC_3s5z3s6z_matd3_default_create_config)
+create_config = SMAC_3s5z3s6z_matd3_default_create_config
 
+
+
+# if __name__ == "__main__":
+#     serial_pipeline([main_config, create_config], seed=0)
 
 def train(args):
-    main_config.exp_name='debug_smac_MMM2_masac'+'_seed'+f'{args.seed}'
+    main_config.exp_name='debug_smac_3s5z3s6z_matd3'+'_seed'+f'{args.seed}'+'_ew0.01'
+    # serial_pipeline([main_config, create_config], seed=args.seed)
     import copy
     serial_pipeline([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed)
 
