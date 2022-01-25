@@ -86,9 +86,9 @@ class SACDiscretePolicy(Policy):
         # Default 10000 in SAC.
         random_collect_size=10000,
         share_weight=True,
-        agent_num=1,
+        # agent_num=1,
         model=dict(
-            agent_num=1,
+            # agent_num=1,
             # (bool type) twin_critic: Determine whether to use double-soft-q-net for target q computation.
             # Please refer to TD3 about Clipped Double-Q Learning trick, which learns two Q-functions instead of one .
             # Default to True.

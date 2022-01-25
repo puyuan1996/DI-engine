@@ -49,14 +49,14 @@ SMAC_MMM2_masac_default_config = dict(
             # discount_factor=0.99,
             discount_factor=0.97,
             # TODO(pu)
-            # alpha=0.2,  
-            # auto_alpha=True,
-            # entropy_weight=0., 
-            # log_space=True,
+            alpha=0.2,  
+            auto_alpha=True,
+            entropy_weight=0.,
+            log_space=True,
             # TODO(pu)
-            alpha=0.,
-            auto_alpha=False,
-            entropy_weight=0., 
+            # alpha=0.,
+            # auto_alpha=False,
+            # entropy_weight=0.01, 
         ),
         collect=dict(
             env_num=collector_env_num,
@@ -99,9 +99,9 @@ create_config = SMAC_MMM2_masac_default_create_config
 #     serial_pipeline([main_config, create_config], seed=0)
 
 def train(args):
-    main_config.exp_name='debug_smac_MMM2_matd3'+'_seed'+f'{args.seed}'+'_ew0'
-    # main_config.exp_name='debug_smac_MMM2_matd3'+'_seed'+f'{args.seed}'+'_clogpi_ew0'
-    # main_config.exp_name='debug_smac_MMM2_matd3'+'_seed'+f'{args.seed}'+'_alogpi'
+    # main_config.exp_name='debug_smac_MMM2_cfg2_matd3_'+'_seed'+f'{args.seed}'+'_ew0'
+    # main_config.exp_name='debug_smac_MMM2_cfg2_matd3'+'_seed'+f'{args.seed}'+'_clogpi_ew0.01'
+    main_config.exp_name='debug_smac_MMM2_cfg2_matd3'+'_seed'+f'{args.seed}'+'_alogpi'
 
     import copy
     serial_pipeline([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed)

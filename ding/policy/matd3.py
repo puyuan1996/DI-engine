@@ -302,14 +302,14 @@ class MATD3Policy(Policy):
             # the value of a policy according to the maximum entropy objective
             if self._twin_critic:
                 # find min one as target q value
-                # clogpi
-                target_value = (prob * (
-                            torch.min(target_q_value[0], target_q_value[1]) - self._alpha * log_prob.squeeze(-1))).sum(
-                    dim=-1)
-                # alogpi
+                # # clogpi-ew0, clogpi-ew0.01, ew0, ew0.01
                 # target_value = (prob * (
-                #             torch.min(target_q_value[0], target_q_value[1]))).sum(
+                #             torch.min(target_q_value[0], target_q_value[1]) - self._alpha * log_prob.squeeze(-1))).sum(
                 #     dim=-1)
+                # alogpi
+                target_value = (prob * (
+                            torch.min(target_q_value[0], target_q_value[1]))).sum(
+                    dim=-1)
             else:
                 target_value = (prob * (target_q_value - self._alpha * log_prob.squeeze(-1))).sum(
                     dim=-1)
@@ -351,10 +351,14 @@ class MATD3Policy(Policy):
                 new_q_value = torch.min(new_q_value[0], new_q_value[1])  # (64,10,16)
 
         # # 7. compute policy loss: 
-        # matd3
+        # matd3: alpha=0, ew0, ew0.01
+        # matd3: alogpi
         policy_loss = (prob * (self._alpha * log_prob - new_q_value.squeeze(-1))).sum(dim=-1).mean()
-        # TODO(pu): entropy loss
         loss_dict['policy_loss'] = policy_loss - self._entropy_weight * entropy_policy
+
+        # matd3: clogpi-ew0,  clogpi-ew0.01
+        # policy_loss = (prob * (self._alpha * log_prob - new_q_value.squeeze(-1))).sum(dim=-1).mean()
+        # loss_dict['policy_loss'] = policy_loss - self._entropy_weight * entropy_policy
 
         # 8. update policy network
         self._optimizer_policy.zero_grad()

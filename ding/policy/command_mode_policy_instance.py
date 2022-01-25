@@ -218,6 +218,7 @@ class TD3CommandModePolicy(TD3Policy, DummyCommandModePolicy):
 
 @POLICY_REGISTRY.register('td3_vae_command')
 class TD3VAECommandModePolicy(TD3VAEPolicy, DummyCommandModePolicy):
+    pass
 
 
 @POLICY_REGISTRY.register('matd3_command')

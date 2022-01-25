@@ -30,12 +30,11 @@ SMAC_2c64zg_masac_default_config = dict(
     ),
     policy=dict(
         cuda=True,
-        on_policy=False,
         random_collect_size=0,
         share_weight=True,
-        agent_num=agent_num,
+        # agent_num=agent_num,
         model=dict(
-            agent_num=agent_num,
+            # agent_num=agent_num,
             agent_obs_shape=404,
             global_obs_shape=671,
             action_shape=70,
