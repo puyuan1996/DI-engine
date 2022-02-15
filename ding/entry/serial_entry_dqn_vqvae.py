@@ -56,10 +56,10 @@ def serial_pipeline_dqn_vqvae(
     set_pkg_seed(cfg.seed, use_cuda=cfg.policy.cuda)
     policy = create_policy(cfg.policy, model=model, enable_field=['learn', 'collect', 'eval', 'command'])
 
-    # TODO(pu):load model
-    policy.collect_mode.load_state_dict(
-        torch.load(cfg.policy.learned_model_path, map_location='cpu')
-    )
+    # # TODO(pu):load model
+    # policy.collect_mode.load_state_dict(
+    #     torch.load(cfg.policy.learned_model_path, map_location='cpu')
+    # )
 
     # Create worker components: learner, collector, evaluator, replay buffer, commander.
     tb_logger = SummaryWriter(os.path.join('./{}/log/'.format(cfg.exp_name), 'serial'))
