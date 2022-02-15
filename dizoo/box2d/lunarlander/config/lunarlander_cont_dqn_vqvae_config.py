@@ -17,7 +17,7 @@ lunarlander_dqn_default_config = dict(
         stop_value=200,
     ),
     policy=dict(
-        learned_model_path=module_path + '/learned_model_path/dqn_vqvae_k64_ckpt_best.pth.tar',  # TODO(pu)
+        # learned_model_path=module_path + '/learned_model_path/dqn_vqvae_k64_ckpt_best.pth.tar',  # TODO(pu)
         # Whether to use cuda for network.
         cuda=True,
         priority=False,
