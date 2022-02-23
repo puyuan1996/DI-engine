@@ -56,10 +56,8 @@ def serial_pipeline_dqn_vqvae(
     set_pkg_seed(cfg.seed, use_cuda=cfg.policy.cuda)
     policy = create_policy(cfg.policy, model=model, enable_field=['learn', 'collect', 'eval', 'command'])
 
-    # # TODO(pu):load model
-    # policy.collect_mode.load_state_dict(
-    #     torch.load(cfg.policy.learned_model_path, map_location='cpu')
-    # )
+    # TODO(pu):load model
+    # policy.collect_mode.load_state_dict(torch.load(cfg.policy.learned_model_path, map_location='cpu'))
 
     # Create worker components: learner, collector, evaluator, replay buffer, commander.
     tb_logger = SummaryWriter(os.path.join('./{}/log/'.format(cfg.exp_name), 'serial'))
@@ -80,7 +78,7 @@ def serial_pipeline_dqn_vqvae(
     commander = BaseSerialCommander(
         cfg.policy.other.commander, learner, collector, evaluator, replay_buffer, policy.command_mode
     )
-
+    ###
     # TODO(pu): plot latent action
     # import matplotlib.pyplot as plt
     # import numpy as np
@@ -94,10 +92,12 @@ def serial_pipeline_dqn_vqvae(
     # fig = plt.figure()
     # ax = fig.add_subplot(111)
     # sc = ax.scatter(x, y, c=c, marker='o')
-    # ax.set_title('K=4 latent action')
+    # ax.set_title('K=64 latent action')
     # fig.colorbar(sc)
     # plt.show()
-    ####
+    # # plt.savefig('lunarlander_cont_dqn_vqvae_ved64_k64_seed1_iter38728.png')
+    # plt.savefig('lunarlander_cont_dqn_vqvae_ved64_k64_largenet_seed0_iter0.png')
+    ###
 
     # ==========
     # Main loop
@@ -212,6 +212,9 @@ def serial_pipeline_dqn_vqvae(
                 # if learner.policy.get_attribute('priority'):
                 #     replay_buffer.update(learner.priority_info)
             replay_buffer_recent.clear()  # TODO(pu)
+
+        if collector.envstep > 3e6:
+            break
 
     # Learner's after_run hook.
     learner.call_hook('after_run')
