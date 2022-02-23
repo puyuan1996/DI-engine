@@ -1,6 +1,8 @@
 from easydict import EasyDict
+from ding.entry import serial_pipeline
 
 bipedalwalker_td3_config = dict(
+    exp_name='bipedalwalker_td3_hhs128_seed0',
     env=dict(
         collector_env_num=1,
         evaluator_env_num=5,
@@ -18,16 +20,20 @@ bipedalwalker_td3_config = dict(
             obs_shape=24,
             action_shape=4,
             twin_critic=True,
-            actor_head_hidden_size=400,
-            critic_head_hidden_size=400,
+            # actor_head_hidden_size=256,
+            # critic_head_hidden_size=256,
+            actor_head_hidden_size=128,
+            critic_head_hidden_size=128,
             action_space='regression',
         ),
         learn=dict(
-            update_per_collect=4,
+            # update_per_collect=4,
+            # batch_size=128,
+            update_per_collect=20,
+            batch_size=512,
             discount_factor=0.99,
-            batch_size=128,
-            learning_rate_actor=0.001,
-            learning_rate_critic=0.001,
+            learning_rate_actor=3e-4,
+            learning_rate_critic=3e-4,
             target_theta=0.005,
             ignore_done=False,
             actor_update_freq=2,
@@ -44,7 +50,9 @@ bipedalwalker_td3_config = dict(
             collector=dict(collect_print_freq=1000, ),
         ),
         eval=dict(evaluator=dict(eval_freq=100, ), ),
-        other=dict(replay_buffer=dict(replay_buffer_size=50000, ), ),
+        # other=dict(replay_buffer=dict(replay_buffer_size=50000, ), ),
+        other=dict(replay_buffer=dict(replay_buffer_size=int(1e6), ), ),
+
     ),
 )
 bipedalwalker_td3_config = EasyDict(bipedalwalker_td3_config)
@@ -60,3 +68,6 @@ bipedalwalker_td3_create_config = dict(
 )
 bipedalwalker_td3_create_config = EasyDict(bipedalwalker_td3_create_config)
 create_config = bipedalwalker_td3_create_config
+
+if __name__ == "__main__":
+    serial_pipeline([main_config, create_config], seed=0)
