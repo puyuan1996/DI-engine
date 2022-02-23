@@ -3,9 +3,7 @@ from ding.entry import serial_pipeline_dqn_vqvae
 
 nstep = 3
 hopper_dqn_default_config = dict(
-    # exp_name='debug_hopper_dqn_vqvae_ved128_k128_ehsl256256128_upcr20_bs512_ed1e5_rbs1e6_seed0_3M',
-    exp_name='debug_hopper_dqn_vqvae_ved128_k128_ehsl512512256_upcr20_bs512_ed1e5_rbs1e6_seed0_3M',
-
+    exp_name='debug_hopper_dqn_vqvae_ved128_k128_ehsl256256128_upcr20_bs512_ed1e5_rbs1e6_seed0_3M',
 
     env=dict(
         env_id='Hopper-v3',
@@ -18,23 +16,22 @@ hopper_dqn_default_config = dict(
         collector_env_num=8,
         evaluator_env_num=5,
         n_evaluator_episode=5,
-        # stop_value=3000,
-        stop_value=int(1e6),
+        stop_value=3000,
+        # stop_value=int(1e6),
     ),
     policy=dict(
         # Whether to use cuda for network.
         cuda=True,
         priority=False,
         random_collect_size=int(1e4),
-        # random_collect_size=int(1),
         original_action_shape=3,
         vqvae_embedding_dim=128,  # ved
         model=dict(
             obs_shape=11,
             action_shape=int(128),  # num oof num_embeddings
             # encoder_hidden_size_list=[128, 128, 64],  # small net
-            # encoder_hidden_size_list=[256, 256, 128],  # middle net
-            encoder_hidden_size_list=[512, 512, 256],  # large net
+            encoder_hidden_size_list=[256, 256, 128],  # middle net
+            # encoder_hidden_size_list=[512, 512, 256],  # large net
 
             # Whether to use dueling head.
             dueling=True,
@@ -46,19 +43,10 @@ hopper_dqn_default_config = dict(
         # learn_mode config
         learn=dict(
             warm_up_update=int(1e4),
-            # warm_up_update=int(1),
             rl_vae_update_circle=1,  # train rl 1 iter, vae 1 iter
-            # update_per_collect_rl=256,
-            update_per_collect_rl=20, #左边
-            # update_per_collect_rl=100, #边
+            update_per_collect_rl=20, 
             update_per_collect_vae=10,
-
-            # rl_vae_update_circle=5,  # train rl 1 iter, vae 1 iter
-            # update_per_collect_rl=256,
-            # update_per_collect_vae=50,
-            
-            # batch_size=128,
-            batch_size=512,  # large bs512
+            batch_size=512,
             learning_rate=3e-4,
             learning_rate_vae=1e-4,
             # Frequency of target network update.
@@ -78,8 +66,6 @@ hopper_dqn_default_config = dict(
             eps=dict(
                 # Decay type. Support ['exp', 'linear'].
                 type='exp',
-                # start=0.95,
-                # end=0.1,
                 start=1,
                 end=0.05,
                 decay=int(1e5),
@@ -104,6 +90,4 @@ hopper_dqn_create_config = EasyDict(hopper_dqn_create_config)
 create_config = hopper_dqn_create_config
 
 if __name__ == "__main__":
-    # 19531.25 iterations= 5M env steps / 256 
-    # serial_pipeline_dqn_vqvae([main_config, create_config], seed=0, max_iterations=int(19532))
     serial_pipeline_dqn_vqvae([main_config, create_config], seed=0)

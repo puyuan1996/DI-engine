@@ -84,7 +84,6 @@ class VectorQuantizer(nn.Module):
         quantized_latents = latents + (quantized_latents - latents).detach()
 
         # return quantized_latents.permute(0, 3, 1, 2).contiguous(), vq_loss  # [B x D x H x W]
-
         return encoding_inds, quantized_latents, vq_loss  # [B x D x H x W]
 
 
@@ -274,7 +273,6 @@ class VQVAE(BaseVAE):
     def forward(self, input, **kwargs) -> dict:
         encoding = self.encode(input['action'])[0]
         encoding_inds, quantized_inputs, vq_loss = self.vq_layer(encoding)
-        # quantized_inputs=quantized_inputs.view(-1,64*2)
 
         return {
             'encoding_inds': encoding_inds,

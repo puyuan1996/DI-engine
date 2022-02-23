@@ -19,7 +19,7 @@ from torch.nn import functional as F
 class DQNVQVAEPolicy(Policy):
     r"""
     Overview:
-        Policy class of DQN algorithm, extended by Double DQN/Dueling DQN/PER/multi-step TD.
+        Policy class of DQN-VQVAE algorithm, extended by Double DQN/Dueling DQN/PER/multi-step TD.
 
     Config:
         == ==================== ======== ============== ======================================== =======================
@@ -422,14 +422,10 @@ class DQNVQVAEPolicy(Policy):
         self._collect_model.eval()
         with torch.no_grad():
             output = self._collect_model.forward(data, eps=eps)
-            output['latent_action'] = output['action']
+            import copy
+            output['latent_action'] = copy.deepcopy(output['action'])
             if self._cuda:
                 output = to_device(output, self._device)
-
-            # TODO(pu): action 2 dim, 8*8->[8,8]
-            # output['latent_action'] = output['action'] + 1 # [0,63]->[1,64]
-            # k=8
-            # output['action'] = torch.stack([torch.tensor([i // k -1 , k-1]) if i %k==0 else torch.tensor([i // k , (i % k)-1]) for i in output['latent_action']])
 
             # TODO(pu): decode into original hybrid actions, here data is obs
             # this is very important to generate self.obs_encoding using in decode phase
@@ -523,14 +519,10 @@ class DQNVQVAEPolicy(Policy):
             data = to_device(data, self._device)
         self._eval_model.eval()
         with torch.no_grad():
-            output = self._eval_model.forward(data)  # action: 8*8=64
-
-            output['latent_action'] = output['action']
-
-            # TODO(pu): action 2dim, 8*8->[8,8]
-            # output['latent_action'] = output['action'] + 1 # [0,63]->[1,64]
-            # k=8
-            # output['action'] = torch.stack([torch.tensor([i // k -1 , k-1]) if i %k==0 else torch.tensor([i // k , (i % k)-1]) for i in output['latent_action']])
+            output = self._eval_model.forward(data) 
+            # output['latent_action'] = output['action']
+            import copy
+            output['latent_action'] = copy.deepcopy(output['action'])
 
             # TODO(pu): decode into original hybrid actions, here data is obs
             # this is very important to generate self.obs_encoding using in decode phase
