@@ -119,7 +119,10 @@ def serial_pipeline_dqn_vqvae(
             item['warm_up'] = True
         replay_buffer.push(new_data, cur_collector_envstep=0)
         collector.reset_policy(policy.collect_mode)
-        # warm_up
+
+        # ====================
+        # warm_up phase: train VAE
+        # ====================
         # Learn policy from collected data
         for i in range(cfg.policy.learn.warm_up_update):
             # Learner will train ``update_per_collect`` times in one iteration.
@@ -163,7 +166,9 @@ def serial_pipeline_dqn_vqvae(
         replay_buffer.push(new_data, cur_collector_envstep=collector.envstep)
         replay_buffer_recent.push(copy.deepcopy(new_data), cur_collector_envstep=collector.envstep)
 
-        #  rl phase
+        # ====================
+        # RL phase
+        # ====================
         if iter % cfg.policy.learn.rl_vae_update_circle in range(0, cfg.policy.learn.rl_vae_update_circle):
             # Learn policy from collected data
             for i in range(cfg.policy.learn.update_per_collect_rl):
@@ -183,8 +188,9 @@ def serial_pipeline_dqn_vqvae(
                 learner.train(train_data, collector.envstep)
                 if learner.policy.get_attribute('priority'):
                     replay_buffer.update(learner.priority_info)
-
-        #  vae phase
+            # ====================
+            # VAE phase
+            # ====================
         if iter % cfg.policy.learn.rl_vae_update_circle in range(cfg.policy.learn.rl_vae_update_circle - 1,
                                                                  cfg.policy.learn.rl_vae_update_circle):
             for i in range(cfg.policy.learn.update_per_collect_vae):
