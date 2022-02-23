@@ -5,7 +5,9 @@ module_path = os.path.dirname(__file__)
 
 nstep = 3
 lunarlander_dqn_default_config = dict(
-    exp_name='debug_lunarlander_cont_dqn_vqvae_ved64_k64',
+    # exp_name='debug_lunarlander_cont_dqn_vqvae_ved64_k64_seed0',
+    exp_name='debug',
+
     env=dict(
         env_id='LunarLanderContinuous-v2',
         # (bool) Scale output action into legal range.
@@ -18,16 +20,22 @@ lunarlander_dqn_default_config = dict(
     ),
     policy=dict(
         # learned_model_path=module_path + '/learned_model_path/dqn_vqvae_k64_ckpt_best.pth.tar',  # TODO(pu)
+        # learned_model_path='/home/puyuan/DI-engine/debug_lunarlander_cont_dqn_vqvae_ved64_k64_seed1/ckpt/iteration_38728.pth.tar',
+        learned_model_path='/home/puyuan/DI-engine/debug_lunarlander_cont_dqn_vqvae_ved64_k64_largenet_seed0/ckpt/iteration_0.pth.tar',
+
         # Whether to use cuda for network.
-        cuda=True,
+        # cuda=True,
+        cuda=False,
         priority=False,
-        random_collect_size=10000,
+        random_collect_size=int(1e4),
         original_action_shape=2,
         vqvae_embedding_dim=64,  # ved
         model=dict(
             obs_shape=8,
             action_shape=int(64),  # num oof num_embeddings, K
-            encoder_hidden_size_list=[512, 64],
+            # encoder_hidden_size_list=[512, 64],
+            encoder_hidden_size_list=[512, 256, 128, 64],  # large net
+
             # Whether to use dueling head.
             dueling=True,
         ),

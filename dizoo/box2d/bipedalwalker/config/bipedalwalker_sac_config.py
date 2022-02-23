@@ -2,7 +2,7 @@ from easydict import EasyDict
 from ding.entry import serial_pipeline
 
 bipedalwalker_sac_config = dict(
-    exp_name='bipedalwalker_sac',
+    exp_name='bipedalwalker_sac_seed0',
     env=dict(
         collector_env_num=8,
         evaluator_env_num=5,
@@ -22,15 +22,20 @@ bipedalwalker_sac_config = dict(
             action_shape=4,
             twin_critic=True,
             action_space='reparameterization',
-            actor_head_hidden_size=128,
-            critic_head_hidden_size=128,
+            # actor_head_hidden_size=128,
+            # critic_head_hidden_size=128,
+            actor_head_hidden_size=256,
+            critic_head_hidden_size=256,
         ),
         learn=dict(
-            update_per_collect=1,
-            batch_size=128,
-            learning_rate_q=0.001,
-            learning_rate_policy=0.001,
-            learning_rate_alpha=0.0003,
+            # update_per_collect=1,
+            # batch_size=128,
+            update_per_collect=20,
+            batch_size=512,
+
+            learning_rate_q=3e-4,
+            learning_rate_policy=3e-4,
+            learning_rate_alpha=3e-4,
             ignore_done=True,
             target_theta=0.005,
             discount_factor=0.99,
@@ -38,10 +43,13 @@ bipedalwalker_sac_config = dict(
             value_network=False,
         ),
         collect=dict(
-            n_sample=128,
+            # n_sample=128,
+            n_sample=256,
             unroll_len=1,
         ),
-        other=dict(replay_buffer=dict(replay_buffer_size=100000, ), ),
+        # other=dict(replay_buffer=dict(replay_buffer_size=100000, ), ),
+        other=dict(replay_buffer=dict(replay_buffer_size=int(1e6), ), ),
+
     ),
 )
 bipedalwalker_sac_config = EasyDict(bipedalwalker_sac_config)
