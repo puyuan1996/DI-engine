@@ -179,7 +179,7 @@ class DQNVQVAEPolicy(Policy):
             - necessary: ``cur_lr``, ``total_loss``, ``priority``
             - optional: ``action_distribution``
         """
-        # warmup phase
+        ### warmup phase: train VAE ###
         if 'warm_up' in data[0].keys() and data[0]['warm_up'] is True:
             loss_dict = {}
             data = default_preprocess_learn(
@@ -228,6 +228,7 @@ class DQNVQVAEPolicy(Policy):
                 **loss_dict,
                 **q_value_dict,
             }
+        ### VAE+RL phase ###
         else:
             self._forward_learn_cnt += 1
             loss_dict = {}
@@ -239,13 +240,14 @@ class DQNVQVAEPolicy(Policy):
                 ignore_done=self._cfg.learn.ignore_done,
                 use_nstep=True
             )
+            # ====================
+            # train vae
+            # ====================
             if data['vae_phase'][0].item() is True:
                 if self._cuda:
                     data = to_device(data, self._device)
 
-                # ====================
-                # train vae
-                # ====================
+
                 # result = self._vqvae_model({'action': data['action'], 'obs': data['obs']})
                 result = self._vqvae_model({'action': data['action']})
 
@@ -274,7 +276,9 @@ class DQNVQVAEPolicy(Policy):
                     **loss_dict,
                     **q_value_dict,
                 }
-
+            # ====================
+            # train RL
+            # ====================
             else:
                 # ====================
                 # critic learn forward
