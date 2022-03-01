@@ -16,8 +16,8 @@ hopper_dqn_default_config = dict(
         collector_env_num=8,
         evaluator_env_num=5,
         n_evaluator_episode=5,
-        stop_value=3000,
-        # stop_value=int(1e6),
+        # stop_value=3000,
+        stop_value=int(1e6),  # max env steps 
     ),
     policy=dict(
         # Whether to use cuda for network.
@@ -45,6 +45,7 @@ hopper_dqn_default_config = dict(
             warm_up_update=int(1e4),
             rl_vae_update_circle=1,  # train rl 1 iter, vae 1 iter
             update_per_collect_rl=20, 
+            # update_per_collect_rl=256, 
             update_per_collect_vae=10,
             batch_size=512,
             learning_rate=3e-4,

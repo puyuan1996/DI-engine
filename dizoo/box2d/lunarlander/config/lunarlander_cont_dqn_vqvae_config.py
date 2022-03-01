@@ -5,7 +5,7 @@ module_path = os.path.dirname(__file__)
 
 nstep = 3
 lunarlander_dqn_default_config = dict(
-    exp_name='debug_lunarlander_cont_dqn_vqvae_ved64_k64_seed0',
+    exp_name='debug_lunarlander_cont_dqn_vqvae_ved64_k64_ehsl12812864_upcr256_bs512_ed1e5_rbs1e6_seed0_3M',
 
     env=dict(
         env_id='LunarLanderContinuous-v2',
@@ -43,7 +43,8 @@ lunarlander_dqn_default_config = dict(
         learn=dict(
             warm_up_update=int(1e4),
             rl_vae_update_circle=1,  # train rl 1 iter, vae 1 iter
-            update_per_collect_rl=20,
+            # update_per_collect_rl=20,
+            update_per_collect_rl=256,
             update_per_collect_vae=10,
             batch_size=512,
             learning_rate=3e-4,

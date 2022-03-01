@@ -3,9 +3,7 @@ from ding.entry import serial_pipeline_dqn_vqvae
 
 nstep = 3
 bipedalwalker_dqn_default_config = dict(
-    # exp_name='debug_bipedalwalker_dqn_vqvae_ved64_k128_upcr20_bs512_ed1e5_rbs1e6',
-    # exp_name='debug_bipedalwalker_dqn_vqvae_ved128_k128_ehsl256256128_upcr20_bs512_ed1e5_rbs1e6_seed0',
-    exp_name='debug_bipedalwalker_dqn_vqvae_ved64_k64_ehsl12812864_upcr256_bs512_ed1e5_rbs1e6_seed0',
+    exp_name='debug_bipedalwalker_dqn_vqvae_ved64_k64_ehsl12812864_upcr256_bs512_ed1e5_rbs1e6_seed0_3M',
 
     env=dict(
         env_id='BipedalWalker-v3',
@@ -19,7 +17,6 @@ bipedalwalker_dqn_default_config = dict(
         n_evaluator_episode=5,
         stop_value=300,
         # stop_value=int(1e6),
-
         rew_clip=True,
         replay_path=None,
     ),
@@ -34,8 +31,6 @@ bipedalwalker_dqn_default_config = dict(
             obs_shape=24,
             action_shape=int(64),  # num oof num_embeddings
             encoder_hidden_size_list=[128, 128, 64],
-            # encoder_hidden_size_list=[256, 256, 128],  # middle net
-            # encoder_hidden_size_list=[512, 512, 256],  # large net
             # Whether to use dueling head.
             dueling=True,
         ),
@@ -47,11 +42,8 @@ bipedalwalker_dqn_default_config = dict(
         learn=dict(
             warm_up_update=int(1e4),
             rl_vae_update_circle=1,  # train rl 1 iter, vae 1 iter
-            # update_per_collect_rl=20,
             update_per_collect_rl=256,
             update_per_collect_vae=10,
-            
-            # batch_size=128,
             batch_size=512,
             learning_rate=3e-4,
             learning_rate_vae=1e-4,

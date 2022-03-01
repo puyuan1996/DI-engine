@@ -313,7 +313,7 @@ class DQNVQVAEPolicy(Policy):
                     # Max q value action (main model)
                     target_q_action = self._learn_model.forward(data['next_obs'])['action']
 
-                # TODO(pu)
+                # NOTE: RL learn policy in latent action space, so here using data['latent_action']
                 data_n = q_nstep_td_data(
                     q_value, target_q_value, data['latent_action'].squeeze(-1), target_q_action, data['reward'],
                     data['done'], data['weight']
