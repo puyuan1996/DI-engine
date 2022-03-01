@@ -188,9 +188,9 @@ def serial_pipeline_dqn_vqvae(
                 learner.train(train_data, collector.envstep)
                 if learner.policy.get_attribute('priority'):
                     replay_buffer.update(learner.priority_info)
-            # ====================
-            # VAE phase
-            # ====================
+        # ====================
+        # VAE phase
+        # ====================
         if iter % cfg.policy.learn.rl_vae_update_circle in range(cfg.policy.learn.rl_vae_update_circle - 1,
                                                                  cfg.policy.learn.rl_vae_update_circle):
             for i in range(cfg.policy.learn.update_per_collect_vae):
