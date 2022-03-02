@@ -195,29 +195,17 @@ class DQNVQVAEPolicy(Policy):
             # ====================
             # train vae
             # ====================
-            # result = self._vqvae_model({'action': data['action'], 'obs': data['obs']})
-            result = self._vqvae_model({'action': data['action']})
+            result = self._vqvae_model.train_without_obs(data)
 
-            result['original_action'] = data['action']
-            # result['true_residual'] = data['next_obs'] - data['obs']
-
-            # vqvae_loss = self._vqvae_model.loss_function(result, kld_weight=0.01, predict_weight=0.01)  # TODO(pu): weight
-            vqvae_loss = self._vqvae_model.loss_function(result)  # TODO(pu): weight
-
-            loss_dict['vae_loss'] = vqvae_loss['loss'].item()
-            loss_dict['reconstruction_loss'] = vqvae_loss['reconstruction_loss'].item()
-            # loss_dict['predict_loss'] = vqvae_loss['predict_loss'].item()
-            loss_dict['vq_loss'] = vqvae_loss['vq_loss'].item()
-            # self._running_mean_std_predict_loss.update(vae_loss['predict_loss'].unsqueeze(-1).cpu().detach().numpy())
+            loss_dict['total_vqvae_loss'] =  result['total_vqvae_loss'].item()
+            loss_dict['reconstruction_loss'] =  result['recons_loss'].item()
+            loss_dict['vq_loss'] =  result['vq_loss'].item()
 
             # vae update
             self._optimizer_vqvae.zero_grad()
-            vqvae_loss['loss'].backward()
+            result['total_vqvae_loss'].backward()
             self._optimizer_vqvae.step()
-            # For compatibility
-            # loss_dict['actor_loss'] = torch.Tensor([0]).item()
             loss_dict['critic_loss'] = torch.Tensor([0]).item()
-            # loss_dict['critic_twin_loss'] = torch.Tensor([0]).item()
             loss_dict['total_loss'] = torch.Tensor([0]).item()
             q_value_dict = {}
             q_value_dict['q_value'] = torch.Tensor([0]).item()
@@ -247,24 +235,15 @@ class DQNVQVAEPolicy(Policy):
                 if self._cuda:
                     data = to_device(data, self._device)
 
+                result = self._vqvae_model.train_without_obs(data)
 
-                # result = self._vqvae_model({'action': data['action'], 'obs': data['obs']})
-                result = self._vqvae_model({'action': data['action']})
-
-                result['original_action'] = data['action']
-                result['true_residual'] = data['next_obs'] - data['obs']
-
-                # vqvae_loss = self._vqvae_model.loss_function(result, kld_weight=0.01, predict_weight=0.01)  # TODO(pu): weight
-                vqvae_loss = self._vqvae_model.loss_function(result)  # TODO(pu): weight
-
-                loss_dict['vae_loss'] = vqvae_loss['loss']
-                loss_dict['reconstruction_loss'] = vqvae_loss['reconstruction_loss']
-                # loss_dict['predict_loss'] = vqvae_loss['predict_loss']
-                loss_dict['vq_loss'] = vqvae_loss['vq_loss'].item()
+                loss_dict['total_vqvae_loss'] = result['total_vqvae_loss'].item()
+                loss_dict['reconstruction_loss'] = result['recons_loss'].item()
+                loss_dict['vq_loss'] = result['vq_loss'].item()
 
                 # vae update
                 self._optimizer_vqvae.zero_grad()
-                vqvae_loss['loss'].backward()
+                result['total_vqvae_loss'].backward()
                 self._optimizer_vqvae.step()
 
                 q_value_dict = {}
@@ -291,12 +270,12 @@ class DQNVQVAEPolicy(Policy):
                 # ====================
                 if self._cuda:
                     data = to_device(data, self._device)
-                result = self._vqvae_model({'action': data['action'], 'obs': data['obs']})
-                # true_residual = data['next_obs'] - data['obs']
+                    
+                result = self._vqvae_model.inference_without_obs({'action': data['action']})
 
                 # Representation shift correction (RSC)
                 # update all latent action
-                data['latent_action'] = result['encoding_inds'].clone().detach()
+                data['latent_action'] = result['quantized_index'].clone().detach()
 
                 if self._cuda:
                     data = to_device(data, self._device)
@@ -434,7 +413,7 @@ class DQNVQVAEPolicy(Policy):
             # TODO(pu): decode into original hybrid actions, here data is obs
             # this is very important to generate self.obs_encoding using in decode phase
             # output['action'] = self._vqvae_model.decode_with_obs(output['action'], data)[0]
-            output['action'] = self._vqvae_model.decode_with_obs(output['action'])
+            output['action'] = self._vqvae_model.decode_without_obs(output['action'])['recons_action']
 
         if self._cuda:
             output = to_device(output, 'cpu')
@@ -531,7 +510,7 @@ class DQNVQVAEPolicy(Policy):
             # TODO(pu): decode into original hybrid actions, here data is obs
             # this is very important to generate self.obs_encoding using in decode phase
             # output['action'] = self._vqvae_model.decode_with_obs(output['action'], data)[0]
-            output['action'] = self._vqvae_model.decode_with_obs(output['action'])
+            output['action'] = self._vqvae_model.decode_without_obs(output['action'])['recons_action']
 
         if self._cuda:
             output = to_device(output, 'cpu')

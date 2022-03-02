@@ -6,6 +6,7 @@ module_path = os.path.dirname(__file__)
 nstep = 3
 lunarlander_dqn_default_config = dict(
     exp_name='debug_lunarlander_cont_dqn_vqvae_ved64_k64_ehsl12812864_upcr256_bs512_ed1e5_rbs1e6_seed0_3M',
+    # exp_name='debug_lunarlander_cont_dqn_vqvae_ved64_k64_ehsl12812864_upcr64_bs32_tuf1e4_ed1e5_rbs1e6_seed0_3M',
 
     env=dict(
         env_id='LunarLanderContinuous-v2',
@@ -18,14 +19,15 @@ lunarlander_dqn_default_config = dict(
         stop_value=200,
     ),
     policy=dict(
-        # learned_model_path=module_path + '/learned_model_path/dqn_vqvae_k64_ckpt_best.pth.tar',  # TODO(pu)
-        # learned_model_path='/home/puyuan/DI-engine/debug_lunarlander_cont_dqn_vqvae_ved64_k64_seed1/ckpt/iteration_38728.pth.tar',
+        # learned_model_path=module_path + '/learned_model_path/iteration_173866.pth.tar',  # TODO(pu)
 
         # Whether to use cuda for network.
         cuda=True,
         # cuda=False,
         priority=False,
-        random_collect_size=int(1e4),
+        # random_collect_size=int(1e4),
+        random_collect_size=int(1),  # debug
+
         original_action_shape=2,
         vqvae_embedding_dim=64,  # ved
         model=dict(
@@ -41,12 +43,17 @@ lunarlander_dqn_default_config = dict(
         nstep=nstep,
         # learn_mode config
         learn=dict(
-            warm_up_update=int(1e4),
+            # warm_up_update=int(1e4),
+            warm_up_update=int(1),  # debug
             rl_vae_update_circle=1,  # train rl 1 iter, vae 1 iter
             # update_per_collect_rl=20,
             update_per_collect_rl=256,
+            # update_per_collect_rl=64, # nature dqn
+
             update_per_collect_vae=10,
             batch_size=512,
+            # batch_size=32, # nature dqn
+
             learning_rate=3e-4,
             learning_rate_vae=1e-4,
             # Frequency of target network update.
