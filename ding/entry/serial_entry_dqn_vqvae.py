@@ -57,7 +57,7 @@ def serial_pipeline_dqn_vqvae(
     policy = create_policy(cfg.policy, model=model, enable_field=['learn', 'collect', 'eval', 'command'])
 
     # TODO(pu):load model
-    # policy.collect_mode.load_state_dict(torch.load(cfg.policy.learned_model_path, map_location='cpu'))
+    # policy.collect_mode.load_state_dict(torch.load(cfg.policy.learned_model_path, map_location='cuda'))
 
     # Create worker components: learner, collector, evaluator, replay buffer, commander.
     tb_logger = SummaryWriter(os.path.join('./{}/log/'.format(cfg.exp_name), 'serial'))
@@ -84,19 +84,21 @@ def serial_pipeline_dqn_vqvae(
     # import numpy as np
     # xx, yy = np.meshgrid(np.arange(-1, 1, 0.01), np.arange(-1, 1, 0.01))
     # action_samples = np.array([xx.ravel(), yy.ravel()]).reshape(40000, 2)
-    # encoding = policy._vqvae_model.encode(torch.Tensor(action_samples))[0]
+    # encoding = policy._vqvae_model.encode(torch.Tensor(action_samples).to(torch.device('cuda')))[0]
+    # # encoding = policy._vqvae_model.encode(torch.Tensor(action_samples))[0]
     # encoding_inds, quantized_inputs, vq_loss = policy._vqvae_model.vq_layer(encoding)
     # x = xx
     # y = yy
-    # c = encoding_inds
+    # # c = encoding_inds
+    # c = encoding_inds.cpu().numpy()
     # fig = plt.figure()
     # ax = fig.add_subplot(111)
     # sc = ax.scatter(x, y, c=c, marker='o')
     # ax.set_title('K=64 latent action')
     # fig.colorbar(sc)
     # plt.show()
-    # # plt.savefig('lunarlander_cont_dqn_vqvae_ved64_k64_seed1_iter38728.png')
-    # plt.savefig('lunarlander_cont_dqn_vqvae_ved64_k64_largenet_seed0_iter0.png')
+    # # plt.savefig('lunarlander_cont_dqn_vqvae_ved64_k64_noema_seed0_iter173866.png')
+    # plt.savefig('lunarlander_cont_dqn_vqvae_ved64_k64_noema_seed0_iter10000.png')
     ###
 
     # ==========
