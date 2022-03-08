@@ -26,14 +26,16 @@ class VectorQuantizer(nn.Module):
         encoding_shape = encoding.shape  # [A x D]
         flat_encoding = encoding.view(-1, self.D) 
 
-        # Compute L2 distance between encoding and embedding weights
-        dist = torch.sum(flat_encoding ** 2, dim=1, keepdim=True) + \
-               torch.sum(self.embedding.weight ** 2, dim=1) - \
-               2 * torch.matmul(flat_encoding, self.embedding.weight.t())
+        # # Compute L2 distance between encoding and embedding weights
+        # dist = torch.sum(flat_encoding ** 2, dim=1, keepdim=True) + \
+        #        torch.sum(self.embedding.weight ** 2, dim=1) - \
+        #        2 * torch.matmul(flat_encoding, self.embedding.weight.t())
+        # # Get the encoding that has the min distance
+        # quantized_index = torch.argmin(dist, dim=1).unsqueeze(1)
 
-        # Get the encoding that has the min distance
-        quantized_index = torch.argmin(dist, dim=1).unsqueeze(1)
-
+        quantized_index = torch.cdist(flat_encoding, self.embedding.weight, p=2).sort()[1][:,0]
+        quantized_index = quantized_index.unsqueeze(1)
+        
         # Convert to one-hot encodings
         device = encoding.device
         encoding_one_hot = torch.zeros(quantized_index.size(0), self.K, device=device)
@@ -99,7 +101,7 @@ class VQVAE(nn.Module):
         self.decoder = nn.Sequential(*modules)
 
     def train_without_obs(self, data):
-        encoding = self.encoder(data['action'])[0]
+        encoding = self.encoder(data['action'])
         quantized_index, quantized_embedding, vq_loss = self.vq_layer(encoding)
         recons_action = self.decoder(quantized_embedding)
         recons_loss = F.mse_loss(recons_action, data['action'])
@@ -108,7 +110,7 @@ class VQVAE(nn.Module):
         return {'total_vqvae_loss': total_vqvae_loss, 'recons_loss': recons_loss, 'vq_loss': vq_loss}
 
     def inference_without_obs(self, data):
-        encoding = self.encoder(data['action'])[0]
+        encoding = self.encoder(data['action'])
         quantized_index, quantized_embedding, vq_loss = self.vq_layer(encoding)
         return {'quantized_index': quantized_index}
 
