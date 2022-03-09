@@ -64,3 +64,19 @@ hopper_td3_default_create_config = dict(
 )
 hopper_td3_default_create_config = EasyDict(hopper_td3_default_create_config)
 create_config = hopper_td3_default_create_config
+
+
+import copy
+from ding.entry import serial_pipeline
+def train(args):
+    main_config.exp_name='hopper_td3_vgpu_'+'seed_'+f'{args.seed}'
+    serial_pipeline([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_envsteps=int(3e3))
+
+if __name__ == "__main__":
+    import argparse
+    for seed in [0,1,2,3,4]:     
+        parser = argparse.ArgumentParser()
+        parser.add_argument('--seed', '-s', type=int, default=seed)
+        args = parser.parse_args()
+        
+        train(args)
