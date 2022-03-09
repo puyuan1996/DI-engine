@@ -4,7 +4,6 @@ from ding.entry import serial_pipeline_dqn_vqvae
 nstep = 3
 halfcheetah_dqn_default_config = dict(
     exp_name='debug_halfcheetah_dqn_vqvae_ved128_k128_ehsl256256128_upcr20_bs512_ed1e5_rbs1e6_seed0_3M',
-
     env=dict(
         env_id='HalfCheetah-v3',
         norm_obs=dict(use_norm=False, ),
@@ -41,9 +40,8 @@ halfcheetah_dqn_default_config = dict(
             ignore_done=True,
             warm_up_update=int(1e4),
             rl_vae_update_circle=1,  # train rl 1 iter, vae 1 iter
-            update_per_collect_rl=20, 
+            update_per_collect_rl=20,
             update_per_collect_vae=10,
-
             batch_size=512,  # large batch size
             learning_rate=3e-4,
             learning_rate_vae=1e-4,

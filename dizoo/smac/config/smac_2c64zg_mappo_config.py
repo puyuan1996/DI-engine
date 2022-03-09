@@ -88,4 +88,3 @@ create_config = dict(
     policy=dict(type='ppo'),
 )
 create_config = EasyDict(create_config)
-
