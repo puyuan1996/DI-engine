@@ -151,7 +151,7 @@ class DQNVQVAEPolicy(Policy):
         self._forward_learn_cnt = 0  # count iterations
         # self._vqvae_model = VQVAE(2, 64, 64) #   action_dim: int, embedding_dim: int, num_embeddings: int,
         self._vqvae_model = VQVAE(
-            self._cfg.original_action_shape, self._cfg.vqvae_embedding_dim, self._cfg.model.action_shape
+            self._cfg.original_action_shape, self._cfg.vqvae_embedding_dim, self._cfg.model.action_shape, is_ema=self._cfg.is_ema,
         )
         self._vqvae_model = to_device(self._vqvae_model, self._device)
         self._optimizer_vqvae = Adam(

@@ -79,12 +79,12 @@ def serial_pipeline_dqn_vqvae(
         cfg.policy.other.commander, learner, collector, evaluator, replay_buffer, policy.command_mode
     )
     ###
-    # TODO(pu): plot latent action
+    # # TODO(pu): plot latent action
     # import matplotlib.pyplot as plt
     # import numpy as np
     # xx, yy = np.meshgrid(np.arange(-1, 1, 0.01), np.arange(-1, 1, 0.01))
     # action_samples = np.array([xx.ravel(), yy.ravel()]).reshape(40000, 2)
-    # encoding = policy._vqvae_model.encode(torch.Tensor(action_samples).to(torch.device('cuda')))[0]
+    # encoding = policy._vqvae_model.encoder(torch.Tensor(action_samples).to(torch.device('cuda')))
     # # encoding = policy._vqvae_model.encode(torch.Tensor(action_samples))[0]
     # encoding_inds, quantized_inputs, vq_loss = policy._vqvae_model.vq_layer(encoding)
     # x = xx
@@ -97,8 +97,8 @@ def serial_pipeline_dqn_vqvae(
     # ax.set_title('K=64 latent action')
     # fig.colorbar(sc)
     # plt.show()
-    # # plt.savefig('lunarlander_cont_dqn_vqvae_ved64_k64_noema_seed0_iter173866.png')
-    # plt.savefig('lunarlander_cont_dqn_vqvae_ved64_k64_noema_seed0_iter10000.png')
+    # # plt.savefig('lunarlander_cont_dqn_vqvae_ved64_k64_noema_seed0.png')
+    # plt.savefig('lunarlander_cont_dqn_vqvae_ved64_k64_noema_seed0_iter0.png')
     ###
 
     # ==========
