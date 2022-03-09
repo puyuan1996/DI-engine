@@ -4,7 +4,6 @@ from ding.entry import serial_pipeline_dqn_vqvae
 nstep = 3
 bipedalwalker_dqn_default_config = dict(
     exp_name='debug_bipedalwalker_dqn_vqvae_ved64_k64_ehsl12812864_upcr256_bs512_ed1e5_rbs1e6_seed0_3M',
-
     env=dict(
         env_id='BipedalWalker-v3',
         norm_obs=dict(use_norm=False, ),
@@ -69,7 +68,6 @@ bipedalwalker_dqn_default_config = dict(
                 decay=int(1e5),
             ),
             replay_buffer=dict(replay_buffer_size=int(1e6), )
-
         ),
     ),
 )
@@ -88,7 +86,6 @@ bipedalwalker_dqn_create_config = EasyDict(bipedalwalker_dqn_create_config)
 create_config = bipedalwalker_dqn_create_config
 
 if __name__ == "__main__":
-    # 19531.25 iterations= 5M env steps / 256 
+    # 19531.25 iterations= 5M env steps / 256
     # serial_pipeline_dqn_vqvae([main_config, create_config], seed=0, max_iterations=int(19532))
     serial_pipeline_dqn_vqvae([main_config, create_config], seed=0)
-

@@ -5,23 +5,28 @@ from torch.nn import functional as F
 from torch import nn
 from abc import abstractmethod
 from typing import List, Callable, Union, Any, TypeVar, Tuple
+import collections, numpy
 Tensor = TypeVar('torch.tensor')
 
+
 class EMA():
+
     def __init__(self, decay):
         self.decay = decay
-        self.shadow = {}
+        self.variables = {}
 
     def register(self, name, val):
-        self.shadow[name] = val.clone()
+        # self.variables[name] = val.clone()
+        self.variables[name] = val.clone().detach()  # NOTE
 
     def get(self, name):
-        return self.shadow[name]
+        return self.variables[name]
 
+    @torch.no_grad()
     def update(self, name, x):
-        assert name in self.shadow
-        new_average = (1.0 - self.decay) * x + self.decay * self.shadow[name]
-        self.shadow[name] = new_average.clone()
+        assert name in self.variables
+        self.variables[name] = (1.0 - self.decay) * x + self.decay * self.variables[name]
+
 
 class VectorQuantizer(nn.Module):
     """
@@ -29,7 +34,7 @@ class VectorQuantizer(nn.Module):
     [1] https://github.com/deepmind/sonnet/blob/v2/sonnet/src/nets/vqvae.py
     """
 
-    def __init__(self, num_embeddings: int, embedding_dim: int, beta: float = 0.25, is_ema = False):
+    def __init__(self, num_embeddings: int, embedding_dim: int, beta: float = 0.25, is_ema=False):
         super(VectorQuantizer, self).__init__()
         self.K = num_embeddings
         self.D = embedding_dim
@@ -43,28 +48,26 @@ class VectorQuantizer(nn.Module):
             self.ema_N = EMA(0.99)
             self.ema_m = EMA(0.99)
             for i in range(self.K):
-                self.ema_N.register('N'+f'{i}', torch.zeros(1, device=torch.device('cuda'))) # TODO(pu)
-                self.ema_m.register('m'+f'{i}', torch.zeros(self.K, device=torch.device('cuda')))
-                # self.ema_N.register('N'+f'{i}', torch.zeros(1, device=torch.device('cpu'))) 
+                self.ema_N.register('N' + f'{i}', torch.zeros(1, device=torch.device('cuda')))  # TODO(pu)
+                self.ema_m.register('m' + f'{i}', torch.zeros(self.K, device=torch.device('cuda')))
+                # self.ema_N.register('N'+f'{i}', torch.zeros(1, device=torch.device('cpu')))
                 # self.ema_m.register('m'+f'{i}', torch.zeros(self.K, device=torch.device('cpu')))
-
 
     def forward(self, encoding: Tensor) -> Tensor:
         encoding_shape = encoding.shape  # [A x D]
-        flat_encoding = encoding.view(-1, self.D) 
+        flat_encoding = encoding.view(-1, self.D)
 
-        # # Compute L2 distance between encoding and embedding weights
-        dist = torch.sum(flat_encoding ** 2, dim=1, keepdim=True) + \
-               torch.sum(self.embedding.weight ** 2, dim=1) - \
-               2 * torch.matmul(flat_encoding, self.embedding.weight.t())
-        # Get the encoding that has the min distance
-        quantized_index = torch.argmin(dist, dim=1).unsqueeze(1)
+        # # Method 2: Compute L2 distance between encoding and embedding weights
+        # dist = torch.sum(flat_encoding ** 2, dim=1, keepdim=True) + \
+        #        torch.sum(self.embedding.weight ** 2, dim=1) - \
+        #        2 * torch.matmul(flat_encoding, self.embedding.weight.t())
+        # # Get the encoding that has the min distance
+        # quantized_index = torch.argmin(dist, dim=1).unsqueeze(1)
 
-        quantized_index = torch.cdist(flat_encoding, self.embedding.weight, p=2).sort()[1][:,0]
+        quantized_index = torch.cdist(flat_encoding, self.embedding.weight, p=2).sort()[1][:, 0]
         # .sort()[1] take the index after sorted, [:,0] take the nearest index
         quantized_index = quantized_index.unsqueeze(1)
 
-        # import collections, numpy
         # print(collections.Counter(quantized_index.squeeze().cpu().numpy()).items())
 
         # Convert to one-hot encodings
@@ -81,40 +84,32 @@ class VectorQuantizer(nn.Module):
 
         if self.is_ema:
             #  VQ-VAE dictionary updates with Exponential Moving Averages
-            import collections, numpy
             for i, N_i in collections.Counter(quantized_index.squeeze().cpu().numpy()).items():
                 N_i_index_list = numpy.where(quantized_index.squeeze().cpu().numpy() == i)[0]
-                self.ema_m.update('m'+f'{i}', encoding[N_i_index_list].sum(dim=0))  # m_i
-                self.ema_N.update('N'+f'{i}', N_i)  #   # N_i
-                self.embedding.weight.data[i] = self.ema_m.get('m'+f'{i}')/ self.ema_N.get('N'+f'{i}')  # TODO(pu)
+                self.ema_m.update('m' + f'{i}', encoding[N_i_index_list].sum(dim=0))  # m_i
+                self.ema_N.update('N' + f'{i}', N_i)  #   # N_i
+                self.embedding.weight.data[i] = self.ema_m.get('m' + f'{i}') / self.ema_N.get('N' + f'{i}')  # TODO(pu)
             vq_loss = commitment_loss * self.beta
 
         else:
             embedding_loss = F.mse_loss(quantized_embedding, encoding.detach())
             vq_loss = commitment_loss * self.beta + embedding_loss
 
-        # Add the residue back to the encoding, straight-through estimator
+        # straight-through estimator
+        # Add the residue back to the encoding
         quantized_embedding = encoding + (quantized_embedding - encoding).detach()
 
         return quantized_index, quantized_embedding, vq_loss
 
     def inference(self, encoding: Tensor) -> Tensor:
         encoding_shape = encoding.shape  # [A x D]
-        flat_encoding = encoding.view(-1, self.D) 
+        flat_encoding = encoding.view(-1, self.D)
 
-        # # Compute L2 distance between encoding and embedding weights
-        dist = torch.sum(flat_encoding ** 2, dim=1, keepdim=True) + \
-               torch.sum(self.embedding.weight ** 2, dim=1) - \
-               2 * torch.matmul(flat_encoding, self.embedding.weight.t())
-        # Get the encoding that has the min distance
-        quantized_index = torch.argmin(dist, dim=1).unsqueeze(1)
-
-        quantized_index = torch.cdist(flat_encoding, self.embedding.weight, p=2).sort()[1][:,0]
+        quantized_index = torch.cdist(flat_encoding, self.embedding.weight, p=2).sort()[1][:, 0]
         # .sort()[1] take the index after sorted, [:,0] take the nearest index
         quantized_index = quantized_index.unsqueeze(1)
 
         return quantized_index
-
 
 
 class VQVAE(nn.Module):
@@ -190,9 +185,9 @@ class VQVAE(nn.Module):
         device = quantized_index.device
         quantized_index = quantized_index.view(-1, 1)
         encoding_one_hot = torch.zeros(quantized_index.size(0), self.vq_layer.K, device=device)
-        encoding_one_hot.scatter_(1, quantized_index, 1) 
+        encoding_one_hot.scatter_(1, quantized_index, 1)
         # Quantize the encoding
         quantized_embedding = torch.matmul(encoding_one_hot, self.vq_layer.embedding.weight)
         recons_action = self.decoder(quantized_embedding)
 
-        return {'recons_action':recons_action}
+        return {'recons_action': recons_action}

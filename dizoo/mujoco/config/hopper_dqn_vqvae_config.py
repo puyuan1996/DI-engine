@@ -4,7 +4,6 @@ from ding.entry import serial_pipeline_dqn_vqvae
 nstep = 3
 hopper_dqn_default_config = dict(
     exp_name='debug_hopper_dqn_vqvae_ved128_k128_ehsl256256128_upcr20_bs512_ed1e5_rbs1e6_seed0_3M',
-
     env=dict(
         env_id='Hopper-v3',
         norm_obs=dict(use_norm=False, ),
@@ -44,8 +43,8 @@ hopper_dqn_default_config = dict(
         learn=dict(
             warm_up_update=int(1e4),
             rl_vae_update_circle=1,  # train rl 1 iter, vae 1 iter
-            update_per_collect_rl=20, 
-            # update_per_collect_rl=256, 
+            update_per_collect_rl=20,
+            # update_per_collect_rl=256,
             update_per_collect_vae=10,
             batch_size=512,
             learning_rate=3e-4,
@@ -72,7 +71,6 @@ hopper_dqn_default_config = dict(
                 decay=int(1e5),
             ),
             replay_buffer=dict(replay_buffer_size=int(1e6), )
-
         ),
     ),
 )

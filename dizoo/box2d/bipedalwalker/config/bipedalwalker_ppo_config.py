@@ -45,7 +45,6 @@ bipedalwalker_ppo_create_config = dict(
         type='bipedalwalker',
         import_names=['dizoo.box2d.bipedalwalker.envs.bipedalwalker_env'],
     ),
-
     env_manager=dict(type='base'),
     policy=dict(type='ppo'),
 )

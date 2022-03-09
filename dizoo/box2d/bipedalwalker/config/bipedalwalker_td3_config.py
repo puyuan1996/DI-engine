@@ -52,7 +52,6 @@ bipedalwalker_td3_config = dict(
         eval=dict(evaluator=dict(eval_freq=100, ), ),
         # other=dict(replay_buffer=dict(replay_buffer_size=50000, ), ),
         other=dict(replay_buffer=dict(replay_buffer_size=int(1e6), ), ),
-
     ),
 )
 bipedalwalker_td3_config = EasyDict(bipedalwalker_td3_config)

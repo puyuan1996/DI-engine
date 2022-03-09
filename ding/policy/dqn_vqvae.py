@@ -151,7 +151,10 @@ class DQNVQVAEPolicy(Policy):
         self._forward_learn_cnt = 0  # count iterations
         # self._vqvae_model = VQVAE(2, 64, 64) #   action_dim: int, embedding_dim: int, num_embeddings: int,
         self._vqvae_model = VQVAE(
-            self._cfg.original_action_shape, self._cfg.vqvae_embedding_dim, self._cfg.model.action_shape, is_ema=self._cfg.is_ema,
+            self._cfg.original_action_shape,
+            self._cfg.vqvae_embedding_dim,
+            self._cfg.model.action_shape,
+            is_ema=self._cfg.is_ema,
         )
         self._vqvae_model = to_device(self._vqvae_model, self._device)
         self._optimizer_vqvae = Adam(
@@ -197,9 +200,9 @@ class DQNVQVAEPolicy(Policy):
             # ====================
             result = self._vqvae_model.train_without_obs(data)
 
-            loss_dict['total_vqvae_loss'] =  result['total_vqvae_loss'].item()
-            loss_dict['reconstruction_loss'] =  result['recons_loss'].item()
-            loss_dict['vq_loss'] =  result['vq_loss'].item()
+            loss_dict['total_vqvae_loss'] = result['total_vqvae_loss'].item()
+            loss_dict['reconstruction_loss'] = result['recons_loss'].item()
+            loss_dict['vq_loss'] = result['vq_loss'].item()
 
             # vae update
             self._optimizer_vqvae.zero_grad()
@@ -270,11 +273,10 @@ class DQNVQVAEPolicy(Policy):
                 # ====================
                 if self._cuda:
                     data = to_device(data, self._device)
-                    
-                result = self._vqvae_model.inference_without_obs({'action': data['action']})
 
                 # Representation shift correction (RSC)
                 # update all latent action
+                result = self._vqvae_model.inference_without_obs({'action': data['action']})
                 data['latent_action'] = result['quantized_index'].clone().detach()
 
                 if self._cuda:
@@ -405,6 +407,7 @@ class DQNVQVAEPolicy(Policy):
         self._collect_model.eval()
         with torch.no_grad():
             output = self._collect_model.forward(data, eps=eps)
+            # here output['action'] is the out of DQN, is discrete action
             import copy
             output['latent_action'] = copy.deepcopy(output['action'])
             if self._cuda:
@@ -412,7 +415,8 @@ class DQNVQVAEPolicy(Policy):
 
             # TODO(pu): decode into original hybrid actions, here data is obs
             # this is very important to generate self.obs_encoding using in decode phase
-            # output['action'] = self._vqvae_model.decode_with_obs(output['action'], data)[0]
+            # output['action'] = self._vqvae_model.decode_with_obs(output['action'], data})['recons_action']
+            
             output['action'] = self._vqvae_model.decode_without_obs(output['action'])['recons_action']
 
         if self._cuda:
@@ -502,14 +506,16 @@ class DQNVQVAEPolicy(Policy):
             data = to_device(data, self._device)
         self._eval_model.eval()
         with torch.no_grad():
-            output = self._eval_model.forward(data) 
-            # output['latent_action'] = output['action']
+            output = self._eval_model.forward(data)
+            # here output['action'] is the out of DQN, is discrete action
+            # output['latent_action'] = output['action']  # TODO(pu)
             import copy
             output['latent_action'] = copy.deepcopy(output['action'])
 
             # TODO(pu): decode into original hybrid actions, here data is obs
             # this is very important to generate self.obs_encoding using in decode phase
-            # output['action'] = self._vqvae_model.decode_with_obs(output['action'], data)[0]
+            # output['action'] = self._vqvae_model.decode_with_obs(output['action'], data})['recons_action']
+
             output['action'] = self._vqvae_model.decode_without_obs(output['action'])['recons_action']
 
         if self._cuda:

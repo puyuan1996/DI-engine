@@ -32,7 +32,6 @@ bipedalwalker_sac_config = dict(
             # batch_size=128,
             update_per_collect=20,
             batch_size=512,
-
             learning_rate_q=3e-4,
             learning_rate_policy=3e-4,
             learning_rate_alpha=3e-4,
@@ -49,7 +48,6 @@ bipedalwalker_sac_config = dict(
         ),
         # other=dict(replay_buffer=dict(replay_buffer_size=100000, ), ),
         other=dict(replay_buffer=dict(replay_buffer_size=int(1e6), ), ),
-
     ),
 )
 bipedalwalker_sac_config = EasyDict(bipedalwalker_sac_config)
@@ -59,7 +57,6 @@ bipedalwalker_sac_create_config = dict(
         type='bipedalwalker',
         import_names=['dizoo.box2d.bipedalwalker.envs.bipedalwalker_env'],
     ),
-
     env_manager=dict(type='base'),
     policy=dict(
         type='sac',
