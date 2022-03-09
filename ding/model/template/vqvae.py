@@ -7,35 +7,66 @@ from abc import abstractmethod
 from typing import List, Callable, Union, Any, TypeVar, Tuple
 Tensor = TypeVar('torch.tensor')
 
+class EMA():
+    def __init__(self, decay):
+        self.decay = decay
+        self.shadow = {}
+
+    def register(self, name, val):
+        self.shadow[name] = val.clone()
+
+    def get(self, name):
+        return self.shadow[name]
+
+    def update(self, name, x):
+        assert name in self.shadow
+        new_average = (1.0 - self.decay) * x + self.decay * self.shadow[name]
+        self.shadow[name] = new_average.clone()
+
 class VectorQuantizer(nn.Module):
     """
     Reference:
     [1] https://github.com/deepmind/sonnet/blob/v2/sonnet/src/nets/vqvae.py
     """
 
-    def __init__(self, num_embeddings: int, embedding_dim: int, beta: float = 0.25):
+    def __init__(self, num_embeddings: int, embedding_dim: int, beta: float = 0.25, is_ema = False):
         super(VectorQuantizer, self).__init__()
         self.K = num_embeddings
         self.D = embedding_dim
         self.beta = beta
+        self.is_ema = is_ema
 
         self.embedding = nn.Embedding(self.K, self.D)
         self.embedding.weight.data.uniform_(-1 / self.K, 1 / self.K)
+
+        if self.is_ema:
+            self.ema_N = EMA(0.99)
+            self.ema_m = EMA(0.99)
+            for i in range(self.K):
+                self.ema_N.register('N'+f'{i}', torch.zeros(1, device=torch.device('cuda'))) # TODO(pu)
+                self.ema_m.register('m'+f'{i}', torch.zeros(self.K, device=torch.device('cuda')))
+                # self.ema_N.register('N'+f'{i}', torch.zeros(1, device=torch.device('cpu'))) 
+                # self.ema_m.register('m'+f'{i}', torch.zeros(self.K, device=torch.device('cpu')))
+
 
     def forward(self, encoding: Tensor) -> Tensor:
         encoding_shape = encoding.shape  # [A x D]
         flat_encoding = encoding.view(-1, self.D) 
 
         # # Compute L2 distance between encoding and embedding weights
-        # dist = torch.sum(flat_encoding ** 2, dim=1, keepdim=True) + \
-        #        torch.sum(self.embedding.weight ** 2, dim=1) - \
-        #        2 * torch.matmul(flat_encoding, self.embedding.weight.t())
-        # # Get the encoding that has the min distance
-        # quantized_index = torch.argmin(dist, dim=1).unsqueeze(1)
+        dist = torch.sum(flat_encoding ** 2, dim=1, keepdim=True) + \
+               torch.sum(self.embedding.weight ** 2, dim=1) - \
+               2 * torch.matmul(flat_encoding, self.embedding.weight.t())
+        # Get the encoding that has the min distance
+        quantized_index = torch.argmin(dist, dim=1).unsqueeze(1)
 
         quantized_index = torch.cdist(flat_encoding, self.embedding.weight, p=2).sort()[1][:,0]
+        # .sort()[1] take the index after sorted, [:,0] take the nearest index
         quantized_index = quantized_index.unsqueeze(1)
-        
+
+        # import collections, numpy
+        # print(collections.Counter(quantized_index.squeeze().cpu().numpy()).items())
+
         # Convert to one-hot encodings
         device = encoding.device
         encoding_one_hot = torch.zeros(quantized_index.size(0), self.K, device=device)
@@ -47,14 +78,43 @@ class VectorQuantizer(nn.Module):
 
         # Compute the VQ Losses
         commitment_loss = F.mse_loss(quantized_embedding.detach(), encoding)
-        embedding_loss = F.mse_loss(quantized_embedding, encoding.detach())
 
-        vq_loss = commitment_loss * self.beta + embedding_loss
+        if self.is_ema:
+            #  VQ-VAE dictionary updates with Exponential Moving Averages
+            import collections, numpy
+            for i, N_i in collections.Counter(quantized_index.squeeze().cpu().numpy()).items():
+                N_i_index_list = numpy.where(quantized_index.squeeze().cpu().numpy() == i)[0]
+                self.ema_m.update('m'+f'{i}', encoding[N_i_index_list].sum(dim=0))  # m_i
+                self.ema_N.update('N'+f'{i}', N_i)  #   # N_i
+                self.embedding.weight.data[i] = self.ema_m.get('m'+f'{i}')/ self.ema_N.get('N'+f'{i}')  # TODO(pu)
+            vq_loss = commitment_loss * self.beta
+
+        else:
+            embedding_loss = F.mse_loss(quantized_embedding, encoding.detach())
+            vq_loss = commitment_loss * self.beta + embedding_loss
 
         # Add the residue back to the encoding, straight-through estimator
         quantized_embedding = encoding + (quantized_embedding - encoding).detach()
 
         return quantized_index, quantized_embedding, vq_loss
+
+    def inference(self, encoding: Tensor) -> Tensor:
+        encoding_shape = encoding.shape  # [A x D]
+        flat_encoding = encoding.view(-1, self.D) 
+
+        # # Compute L2 distance between encoding and embedding weights
+        dist = torch.sum(flat_encoding ** 2, dim=1, keepdim=True) + \
+               torch.sum(self.embedding.weight ** 2, dim=1) - \
+               2 * torch.matmul(flat_encoding, self.embedding.weight.t())
+        # Get the encoding that has the min distance
+        quantized_index = torch.argmin(dist, dim=1).unsqueeze(1)
+
+        quantized_index = torch.cdist(flat_encoding, self.embedding.weight, p=2).sort()[1][:,0]
+        # .sort()[1] take the index after sorted, [:,0] take the nearest index
+        quantized_index = quantized_index.unsqueeze(1)
+
+        return quantized_index
+
 
 
 class VQVAE(nn.Module):
@@ -66,6 +126,7 @@ class VQVAE(nn.Module):
             num_embeddings: int,
             hidden_dims: List = None,
             beta: float = 0.25,
+            is_ema: bool = False,
             img_size: int = 64,
             **kwargs
     ) -> None:
@@ -78,6 +139,7 @@ class VQVAE(nn.Module):
         self.num_embeddings = num_embeddings
         self.img_size = img_size
         self.beta = beta
+        self.is_ema = is_ema
 
         if hidden_dims is None:
             hidden_dims = [256, 256, 256]
@@ -90,7 +152,7 @@ class VQVAE(nn.Module):
         self.encoder = nn.Sequential(*modules)
 
         ### VQ layer
-        self.vq_layer = VectorQuantizer(num_embeddings, embedding_dim, self.beta)
+        self.vq_layer = VectorQuantizer(num_embeddings, embedding_dim, self.beta, self.is_ema)
 
         ### Decoder
         self.decode_action_head = nn.Sequential(nn.Linear(self.embedding_dim, hidden_dims[0]), nn.ReLU())
@@ -103,6 +165,7 @@ class VQVAE(nn.Module):
     def train_without_obs(self, data):
         encoding = self.encoder(data['action'])
         quantized_index, quantized_embedding, vq_loss = self.vq_layer(encoding)
+
         recons_action = self.decoder(quantized_embedding)
         recons_loss = F.mse_loss(recons_action, data['action'])
         total_vqvae_loss = recons_loss + vq_loss
@@ -111,7 +174,8 @@ class VQVAE(nn.Module):
 
     def inference_without_obs(self, data):
         encoding = self.encoder(data['action'])
-        quantized_index, quantized_embedding, vq_loss = self.vq_layer(encoding)
+        quantized_index = self.vq_layer.inference(encoding)
+
         return {'quantized_index': quantized_index}
 
     def decode_without_obs(self, quantized_index: Tensor) -> Tensor:
