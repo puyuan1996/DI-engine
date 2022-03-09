@@ -12,15 +12,14 @@ SMAC_2c64zg_masac_default_config = dict(
     env=dict(
         map_name='2c_vs_64zg',
         difficulty=7,
-        # reward_only_positive=False,
         reward_only_positive=True,
         mirror_opponent=False,
         agent_num=agent_num,
         collector_env_num=collector_env_num,
         evaluator_env_num=evaluator_env_num,
-        n_evaluator_episode=16,
+        n_evaluator_episode=32,
         stop_value=0.99,
-        death_mask=True,  # TODO(pu) False
+        death_mask=True,
         special_global_state=special_global_state,
         # save_replay_episodes = 1,
         manager=dict(
@@ -57,7 +56,7 @@ SMAC_2c64zg_masac_default_config = dict(
         ),
         collect=dict(
             env_num=collector_env_num,
-            n_sample=1600,  # TODO(pu)
+            n_sample=1600,
             unroll_len=1,
         ),
         command=dict(),
@@ -87,15 +86,12 @@ SMAC_2c64zg_masac_default_create_config = dict(
         import_names=['dizoo.smac.envs.smac_env'],
     ),
     env_manager=dict(type='base'),
-    policy=dict(type='sac_discrete', ),
+    policy=dict(
+        type='sac_discrete',
+    ),
 )
 SMAC_2c64zg_masac_default_create_config = EasyDict(SMAC_2c64zg_masac_default_create_config)
 create_config = SMAC_2c64zg_masac_default_create_config
-
-
-
-# if __name__ == "__main__":
-#     serial_pipeline([main_config, create_config], seed=0)
 
 def train(args):
     main_config.exp_name='debug_smac_2c64zg_masac_ropt'+'_seed'+f'{args.seed}'

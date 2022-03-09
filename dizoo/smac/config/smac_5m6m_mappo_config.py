@@ -20,8 +20,7 @@ main_config = dict(
         agent_num=agent_num,
         collector_env_num=collector_env_num,
         evaluator_env_num=evaluator_env_num,
-        # n_evaluator_episode=16,
-        n_evaluator_episode=2,
+        n_evaluator_episode=32,
         stop_value=0.99,
         death_mask=True,
         special_global_state=special_global_state,
@@ -78,7 +77,7 @@ main_config = dict(
             ignore_done=False,
         ),
         collect=dict(env_num=collector_env_num, n_sample=3200),
-        eval=dict(env_num=evaluator_env_num),
+        eval=dict(env_num=evaluator_env_num, evaluator=dict(eval_freq=50, )),
     ),
 )
 main_config = EasyDict(main_config)

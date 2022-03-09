@@ -69,8 +69,8 @@ create_config = hopper_td3_default_create_config
 import copy
 from ding.entry import serial_pipeline
 def train(args):
-    main_config.exp_name='hopper_td3_vgpu_'+'seed_'+f'{args.seed}'
-    serial_pipeline([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_envsteps=int(3e3))
+    main_config.exp_name='result_mujoco/hopper_td3_gpu_'+'seed_'+f'{args.seed}'
+    serial_pipeline([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed)#, max_env_step=int(3e3))
 
 if __name__ == "__main__":
     import argparse
