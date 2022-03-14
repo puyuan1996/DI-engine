@@ -32,9 +32,10 @@ class PolicyFactory:
             actions = {}
             for env_id in data:
                 # for gym_hybrid
-                if isinstance(action_space[0],gym.spaces.Discrete) and isinstance(action_space[1],gym.spaces.Box):
-                    action_sample = {'action_type':  action_space[0].sample(), 'action_args':  action_space[1].sample()}
-                    actions[env_id] = {'action': action_sample}
+                if isinstance(action_space, list):
+                    if isinstance(action_space[0],gym.spaces.Discrete) and isinstance(action_space[1],gym.spaces.Box):
+                        action_sample = {'action_type':  action_space[0].sample(), 'action_args':  action_space[1].sample()}
+                        actions[env_id] = {'action': action_sample}
                 else:
                     actions[env_id] = {'action': action_space.sample()}
 

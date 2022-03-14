@@ -27,6 +27,7 @@ hopper_dqn_default_config = dict(
         vqvae_embedding_dim=128,  # ved
         is_ema=True,  # use EMA
         # is_ema=False,  # no EMA
+        action_space='continuous',  # 'hybrid',
         model=dict(
             obs_shape=11,
             action_shape=int(128),  # num oof num_embeddings
@@ -49,7 +50,9 @@ hopper_dqn_default_config = dict(
             # update_per_collect_rl=256,
             update_per_collect_vae=10,
             # batch_size=512,  # TODO(pu)
-            batch_size=32,  # nature dqn
+            # batch_size=32,  # nature dqn
+            rl_batch_size=512,
+            vqvae_batch_size=512,
             learning_rate=3e-4,
             learning_rate_vae=1e-4,
             # Frequency of target network update.
@@ -97,7 +100,7 @@ create_config = hopper_dqn_create_config
 import copy
 
 def train(args):
-    main_config.exp_name = 'data_hopper/hopper_ema_upcr20_bs32_' + 'seed_' + f'{args.seed}'
+    main_config.exp_name = 'data_hopper/hopper_ema_upcr20_bs512_' + 'seed_' + f'{args.seed}'
     # main_config.exp_name = 'hopper_noema_upcr20_bs32_' + 'seed_' + f'{args.seed}'
 
     serial_pipeline_dqn_vqvae(
