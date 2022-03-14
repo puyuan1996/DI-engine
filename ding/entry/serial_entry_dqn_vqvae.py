@@ -79,7 +79,7 @@ def serial_pipeline_dqn_vqvae(
         cfg.policy.other.commander, learner, collector, evaluator, replay_buffer, policy.command_mode
     )
     ###
-    # # TODO(pu): plot latent action
+    # TODO(pu): plot latent action
     # import matplotlib.pyplot as plt
     # import numpy as np
     # xx, yy = np.meshgrid(np.arange(-1, 1, 0.01), np.arange(-1, 1, 0.01))
@@ -112,9 +112,16 @@ def serial_pipeline_dqn_vqvae(
         if cfg.policy.get('transition_with_policy_data', False):
             collector.reset_policy(policy.collect_mode)
         else:
-            action_space = collector_env.env_info().act_space
-            random_policy = PolicyFactory.get_random_policy(policy.collect_mode, action_space=action_space)
+            # action_space = collector_env.env_info().act_space
+            # random_policy = PolicyFactory.get_random_policy(policy.collect_mode, action_space=action_space)
+            # collector.reset_policy(random_policy)
+
+            # action_space = collector_env.env_info().act_space
+            # random_policy = PolicyFactory.get_random_policy(policy.collect_mode, action_space=action_space)
+            random_policy = PolicyFactory.get_random_policy(policy.collect_mode, action_space=collector_env.action_space)
             collector.reset_policy(random_policy)
+
+
         collect_kwargs = commander.step()
         new_data = collector.collect(n_sample=cfg.policy.random_collect_size, policy_kwargs=collect_kwargs)
         for item in new_data:
@@ -128,7 +135,7 @@ def serial_pipeline_dqn_vqvae(
         # Learn policy from collected data
         for i in range(cfg.policy.learn.warm_up_update):
             # Learner will train ``update_per_collect`` times in one iteration.
-            train_data = replay_buffer.sample(learner.policy.get_attribute('batch_size'), learner.train_iter)
+            train_data = replay_buffer.sample(learner.policy.get_attribute('vqvae_batch_size'), learner.train_iter)
             if train_data is None:
                 # It is possible that replay buffer's data count is too few to train ``update_per_collect`` times
                 logging.warning(
@@ -175,7 +182,7 @@ def serial_pipeline_dqn_vqvae(
             # Learn policy from collected data
             for i in range(cfg.policy.learn.update_per_collect_rl):
                 # Learner will train ``update_per_collect`` times in one iteration.
-                train_data = replay_buffer.sample(learner.policy.get_attribute('batch_size'), learner.train_iter)
+                train_data = replay_buffer.sample(learner.policy.get_attribute('rl_batch_size'), learner.train_iter)
                 if train_data is not None:
                     for item in train_data:
                         item['rl_phase'] = True
@@ -198,10 +205,10 @@ def serial_pipeline_dqn_vqvae(
             for i in range(cfg.policy.learn.update_per_collect_vae):
                 # Learner will train ``update_per_collect`` times in one iteration.
                 train_data_history = replay_buffer.sample(
-                    int(learner.policy.get_attribute('batch_size') / 2), learner.train_iter
+                    int(learner.policy.get_attribute('vqvae_batch_size') / 2), learner.train_iter
                 )
                 train_data_recent = replay_buffer_recent.sample(
-                    int(learner.policy.get_attribute('batch_size') / 2), learner.train_iter
+                    int(learner.policy.get_attribute('vqvae_batch_size') / 2), learner.train_iter
                 )
                 train_data = train_data_history + train_data_recent  # TODO(pu):
 

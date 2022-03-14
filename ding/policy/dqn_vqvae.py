@@ -82,6 +82,8 @@ class DQNVQVAEPolicy(Policy):
         discount_factor=0.97,
         nstep=1,
         original_action_shape=2,
+        # (str) Action space type
+        action_space='hybrid',  # ['continuous', 'hybrid']
         learn=dict(
             # (bool) Whether to use multi gpu
             multi_gpu=False,
@@ -417,7 +419,14 @@ class DQNVQVAEPolicy(Policy):
             # this is very important to generate self.obs_encoding using in decode phase
             # output['action'] = self._vqvae_model.decode_with_obs(output['action'], data})['recons_action']
             
-            output['action'] = self._vqvae_model.decode_without_obs(output['action'])['recons_action']
+            if self._cfg.action_space == 'hybrid':
+                recons_action = self._vqvae_model.decode_without_obs(output['action'])
+                output['action'] =  {'action_type':recons_action['recons_action']['disc'],'action_args':recons_action['recons_action']['cont']}
+            else:
+                # output['action']  = self._vqvae_model.decode_with_obs(output['action'])
+                output['action'] = self._vqvae_model.decode_without_obs(output['action'])['recons_action']
+
+
 
         if self._cuda:
             output = to_device(output, 'cpu')
@@ -516,7 +525,12 @@ class DQNVQVAEPolicy(Policy):
             # this is very important to generate self.obs_encoding using in decode phase
             # output['action'] = self._vqvae_model.decode_with_obs(output['action'], data})['recons_action']
 
-            output['action'] = self._vqvae_model.decode_without_obs(output['action'])['recons_action']
+            if self._cfg.action_space == 'hybrid':
+                recons_action = self._vqvae_model.decode_without_obs(output['action'])
+                output['action'] =  {'action_type':recons_action['recons_action']['disc'],'action_args':recons_action['recons_action']['cont']}
+            else:
+                # output['action']  = self._vqvae_model.decode_with_obs(output['action'])
+                output['action'] = self._vqvae_model.decode_without_obs(output['action'])['recons_action']
 
         if self._cuda:
             output = to_device(output, 'cpu')

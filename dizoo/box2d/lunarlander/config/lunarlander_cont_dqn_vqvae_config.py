@@ -47,8 +47,8 @@ lunarlander_dqn_default_config = dict(
             rl_vae_update_circle=1,  # train rl 1 iter, vae 1 iter
             update_per_collect_rl=256,
             update_per_collect_vae=10,
-            batch_size=512,  # TODO(pu)
-            # batch_size=32,  # nature dqn
+            # batch_size=512,  # TODO(pu)
+            batch_size=32,  # nature dqn
             learning_rate=3e-4,
             learning_rate_vae=1e-4,
             # Frequency of target network update.
@@ -90,23 +90,23 @@ lunarlander_dqn_create_config = dict(
 lunarlander_dqn_create_config = EasyDict(lunarlander_dqn_create_config)
 create_config = lunarlander_dqn_create_config
 
-if __name__ == "__main__":
-    serial_pipeline_dqn_vqvae([main_config, create_config], seed=0)
-
-# import copy
-
-# def train(args):
-#     main_config.exp_name = 'lunarlander_ema_upcr256_bs32_' + 'seed_' + f'{args.seed}'
-#     serial_pipeline_dqn_vqvae(
-#         [copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed
-#     )  #, max_env_step=int(3e3))
-
-
 # if __name__ == "__main__":
-#     import argparse
-#     for seed in [0, 1, 2, 3, 4]:
-#         parser = argparse.ArgumentParser()
-#         parser.add_argument('--seed', '-s', type=int, default=seed)
-#         args = parser.parse_args()
+#     serial_pipeline_dqn_vqvae([main_config, create_config], seed=0)
 
-#         train(args)
+import copy
+
+def train(args):
+    main_config.exp_name = 'lunarlander_noema_upcr256_bs32_' + 'seed_' + f'{args.seed}'
+    serial_pipeline_dqn_vqvae(
+        [copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed
+    )  #, max_env_step=int(3e3))
+
+
+if __name__ == "__main__":
+    import argparse
+    for seed in [0, 1, 2, 3, 4]:
+        parser = argparse.ArgumentParser()
+        parser.add_argument('--seed', '-s', type=int, default=seed)
+        args = parser.parse_args()
+
+        train(args)
