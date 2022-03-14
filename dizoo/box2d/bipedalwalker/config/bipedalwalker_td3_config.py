@@ -4,6 +4,7 @@ from ding.entry import serial_pipeline
 bipedalwalker_td3_config = dict(
     exp_name='bipedalwalker_td3_hhs128_seed0',
     env=dict(
+        env_id='BipedalWalker-v3',
         collector_env_num=1,
         evaluator_env_num=5,
         # (bool) Scale output action into legal range.
