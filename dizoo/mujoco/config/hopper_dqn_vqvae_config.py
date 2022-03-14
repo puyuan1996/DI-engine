@@ -25,6 +25,8 @@ hopper_dqn_default_config = dict(
         random_collect_size=int(1e4),
         original_action_shape=3,
         vqvae_embedding_dim=128,  # ved
+        is_ema=True,  # use EMA
+        # is_ema=False,  # no EMA
         model=dict(
             obs_shape=11,
             action_shape=int(128),  # num oof num_embeddings
@@ -46,7 +48,8 @@ hopper_dqn_default_config = dict(
             update_per_collect_rl=20,
             # update_per_collect_rl=256,
             update_per_collect_vae=10,
-            batch_size=512,
+            # batch_size=512,  # TODO(pu)
+            batch_size=32,  # nature dqn
             learning_rate=3e-4,
             learning_rate_vae=1e-4,
             # Frequency of target network update.
@@ -88,5 +91,25 @@ hopper_dqn_create_config = dict(
 hopper_dqn_create_config = EasyDict(hopper_dqn_create_config)
 create_config = hopper_dqn_create_config
 
+# if __name__ == "__main__":
+#     serial_pipeline_dqn_vqvae([main_config, create_config], seed=0)
+
+import copy
+
+def train(args):
+    main_config.exp_name = 'data_hopper/hopper_ema_upcr20_bs32_' + 'seed_' + f'{args.seed}'
+    # main_config.exp_name = 'hopper_noema_upcr20_bs32_' + 'seed_' + f'{args.seed}'
+
+    serial_pipeline_dqn_vqvae(
+        [copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed
+    )  #, max_env_step=int(3e3))
+
+
 if __name__ == "__main__":
-    serial_pipeline_dqn_vqvae([main_config, create_config], seed=0)
+    import argparse
+    for seed in [0, 1, 2, 3, 4]:
+        parser = argparse.ArgumentParser()
+        parser.add_argument('--seed', '-s', type=int, default=seed)
+        args = parser.parse_args()
+
+        train(args)
