@@ -30,16 +30,8 @@ class PolicyFactory:
         def forward(data: Dict[int, Any], *args, **kwargs) -> Dict[int, Any]:
 
             actions = {}
-            
-            # for env_id in data:
-            #     actions[env_id] = {'action': action_space.sample()}
-
             for env_id in data:
-                action_sample = action_space.sample()
-                # for gym_hybrid
-                if isinstance(action_space[0],gym.spaces.Discrete) and isinstance(action_space[1],gym.spaces.Box):
-                    action_sample = {'action_type': action_sample[0], 'action_args': action_sample[1]}
-                actions[env_id] = {'action': action_sample}
+                actions[env_id] = {'action': action_space.sample()}
             return actions
 
         def reset(*args, **kwargs) -> None:
