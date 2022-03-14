@@ -91,7 +91,9 @@ class DQNVQVAEPolicy(Policy):
             # Bigger "update_per_collect" means bigger off-policy.
             # collect data -> update policy-> collect data -> ...
             update_per_collect=3,
-            batch_size=64,
+            # batch_size=64,
+            rl_batch_size=512,
+            vqvae_batch_size=512,
             learning_rate=0.001,
             # ==============================================================
             # The following configs are algorithm-specific

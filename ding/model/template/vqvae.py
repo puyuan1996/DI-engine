@@ -6,6 +6,7 @@ from torch import nn
 from abc import abstractmethod
 from typing import List, Callable, Union, Any, TypeVar, Tuple
 import collections, numpy
+from ding.torch_utils import one_hot
 Tensor = TypeVar('torch.tensor')
 
 
