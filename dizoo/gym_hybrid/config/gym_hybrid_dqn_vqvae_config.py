@@ -115,8 +115,8 @@ create_config = gym_hybrid_dqn_create_config
 import copy
 
 def train(args):
-    # main_config.exp_name = 'data_gym_hybrid/sliding_ema_noobs_upcr256_rlbs512_vqvaebs512_prio_' + 'seed_' + f'{args.seed}'
-    main_config.exp_name = 'debug'
+    main_config.exp_name = 'data_gym_hybrid/sliding_ema_noobs_upcr256_rlbs512_vqvaebs512_prio_' + 'seed_' + f'{args.seed}'
+    # main_config.exp_name = 'debug'  # debug
 
     serial_pipeline_dqn_vqvae(
         [copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed
