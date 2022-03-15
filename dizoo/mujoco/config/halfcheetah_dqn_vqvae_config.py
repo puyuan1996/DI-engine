@@ -14,8 +14,8 @@ halfcheetah_dqn_default_config = dict(
         collector_env_num=8,
         evaluator_env_num=5,
         n_evaluator_episode=5,
-        stop_value=12000,
-        # stop_value=int(1e6),
+        # stop_value=12000,
+        stop_value=int(1e6),
     ),
     policy=dict(
         # Whether to use cuda for network.
@@ -47,9 +47,8 @@ halfcheetah_dqn_default_config = dict(
             rl_vae_update_circle=1,  # train rl 1 iter, vae 1 iter
             # update_per_collect_rl=20,
             update_per_collect_rl=256,
-
             update_per_collect_vae=10,
-            # batch_size=512,  # large batch size
+
             rl_batch_size=512,
             vqvae_batch_size=512,
 
@@ -57,10 +56,10 @@ halfcheetah_dqn_default_config = dict(
             learning_rate_vae=1e-4,
             # Frequency of target network update.
             target_update_freq=500,
+            
             # add noise in original continuous action
             noise=True,
             # noise=False,
-
             noise_sigma=0.1,
             noise_range=dict(
             min=-0.5,

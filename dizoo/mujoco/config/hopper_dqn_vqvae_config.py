@@ -10,7 +10,6 @@ hopper_dqn_default_config = dict(
         norm_reward=dict(use_norm=False, ),
         # (bool) Scale output action into legal range.
         use_act_scale=True,
-        # act_scale=True,
         # Env number respectively for collector and evaluator.
         collector_env_num=8,
         evaluator_env_num=5,
@@ -21,7 +20,9 @@ hopper_dqn_default_config = dict(
     policy=dict(
         # Whether to use cuda for network.
         cuda=True,
-        priority=False,
+        # priority=False,
+        # priority=False,
+        priority=True,
         random_collect_size=int(1e4),
         original_action_shape=3,
         vqvae_embedding_dim=128,  # ved
@@ -49,14 +50,20 @@ hopper_dqn_default_config = dict(
             update_per_collect_rl=20,
             # update_per_collect_rl=256,
             update_per_collect_vae=10,
-            # batch_size=512,  # TODO(pu)
-            # batch_size=32,  # nature dqn
             rl_batch_size=512,
             vqvae_batch_size=512,
             learning_rate=3e-4,
             learning_rate_vae=1e-4,
             # Frequency of target network update.
             target_update_freq=500,
+            # add noise in original continuous action
+            # noise=True,
+            noise=False,
+            noise_sigma=0.1,
+            noise_range=dict(
+            min=-0.5,
+            max=0.5,
+            ),
         ),
         # collect_mode config
         collect=dict(
