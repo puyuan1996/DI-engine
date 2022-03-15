@@ -428,7 +428,19 @@ class DQNVQVAEPolicy(Policy):
                 # output['action']  = self._vqvae_model.decode_with_obs(output['action'])
                 output['action'] = self._vqvae_model.decode_without_obs(output['action'])['recons_action']
 
-
+                # NOTE: add noise in the original actions
+                if self._cfg.learn.noise is True:
+                    from ding.rl_utils.exploration import GaussianNoise
+                    action = output['action']
+                    gaussian_noise = GaussianNoise(mu=0.0, sigma=0.1)
+                    noise = gaussian_noise(output['action'].shape, output['action'].device)
+                    if self._cfg.learn.noise_range is not None:
+                        noise = noise.clamp(self._cfg.learn.noise_range['min'], self._cfg.learn.noise_range['max'])
+                    action += noise
+                    self.action_range = {'min': -1, 'max': 1}
+                    if self.action_range is not None:
+                        action = action.clamp(self.action_range['min'], self.action_range['max'])
+                    output['action'] = action
 
         if self._cuda:
             output = to_device(output, 'cpu')
