@@ -45,7 +45,9 @@ halfcheetah_dqn_default_config = dict(
             ignore_done=True,
             warm_up_update=int(1e4),
             rl_vae_update_circle=1,  # train rl 1 iter, vae 1 iter
-            update_per_collect_rl=20,
+            # update_per_collect_rl=20,
+            update_per_collect_rl=256,
+
             update_per_collect_vae=10,
             # batch_size=512,  # large batch size
             rl_batch_size=512,
@@ -55,6 +57,15 @@ halfcheetah_dqn_default_config = dict(
             learning_rate_vae=1e-4,
             # Frequency of target network update.
             target_update_freq=500,
+            # add noise in original continuous action
+            noise=True,
+            # noise=False,
+
+            noise_sigma=0.1,
+            noise_range=dict(
+            min=-0.5,
+            max=0.5,
+            ),
         ),
         # collect_mode config
         collect=dict(
@@ -98,7 +109,7 @@ create_config = halfcheetah_dqn_create_config
 import copy
 
 def train(args):
-    main_config.exp_name = 'data_mujoco/halfcheetah_ema_noobs_upcr20_rlbs512_vqvaebs512_prio_' + 'seed_' + f'{args.seed}'
+    main_config.exp_name = 'data_halfcheetah/halfcheetah_ema_noobs_upcr256_rlbs512_vqvaebs512_prio_noise_' + 'seed_' + f'{args.seed}'
     # main_config.exp_name = 'debug'  # debug
 
     serial_pipeline_dqn_vqvae(
