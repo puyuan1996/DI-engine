@@ -27,8 +27,8 @@ lunarlander_dqn_default_config = dict(
         # random_collect_size=int(1),  # debug
         original_action_shape=2,
         vqvae_embedding_dim=64,  # ved
-        # is_ema=True,  # use EMA
-        is_ema=False,  # no EMA
+        is_ema=True,  # use EMA
+        # is_ema=False,  # no EMA
         action_space='continuous',  # 'hybrid',
         model=dict(
             obs_shape=8,
@@ -48,9 +48,6 @@ lunarlander_dqn_default_config = dict(
             rl_vae_update_circle=1,  # train rl 1 iter, vae 1 iter
             update_per_collect_rl=256,
             update_per_collect_vae=10,
-            # batch_size=512,  # TODO(pu)
-            # batch_size=32,  # nature dqn
-
             rl_batch_size=512,
             vqvae_batch_size=512,
 
@@ -58,6 +55,14 @@ lunarlander_dqn_default_config = dict(
             learning_rate_vae=1e-4,
             # Frequency of target network update.
             target_update_freq=500,
+            # add noise in original continuous action
+            # noise=True,
+            noise=False,
+            noise_sigma=0.1,
+            noise_range=dict(
+            min=-0.5,
+            max=0.5,
+            ),
         ),
         # collect_mode config
         collect=dict(
@@ -101,7 +106,7 @@ create_config = lunarlander_dqn_create_config
 import copy
 
 def train(args):
-    main_config.exp_name = 'lunarlander_noema_upcr256_bs512_' + 'seed_' + f'{args.seed}'
+    main_config.exp_name = 'lunarlander_ema_upcr256_bs512_' + 'seed_' + f'{args.seed}'
     serial_pipeline_dqn_vqvae(
         [copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed
     )  #, max_env_step=int(3e3))
