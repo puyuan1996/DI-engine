@@ -8,16 +8,17 @@ gym_hybrid_dqn_default_config = dict(
     exp_name='debug_gym_hybrid_cont_dqn_vqvae_ved64_k64_ehsl12812864_upcr256_bs512_ed1e5_rbs1e6_seed0_3M',
 
     env=dict(
-        # collector_env_num=8,
-        # evaluator_env_num=5,
-        collector_env_num=1,
-        evaluator_env_num=1,
+        collector_env_num=8,
+        evaluator_env_num=5,
+        # collector_env_num=1,
+        # evaluator_env_num=1,
         # (bool) Scale output action into legal range [-1, 1].
         act_scale=True,
         # env_id='Moving-v0',  # ['Moving-v0', 'Sliding-v0']
         env_id='Sliding-v0',  # ['Moving-v0', 'Sliding-v0']
         n_evaluator_episode=5,
-        stop_value=2,
+        # stop_value=2,
+        stop_value=999,
     ),
     policy=dict(
         # learned_model_path=module_path + '/learned_model_path/dqn_vqvae_k64_ckpt_best.pth.tar',  # TODO(pu)
@@ -25,9 +26,8 @@ gym_hybrid_dqn_default_config = dict(
 
         # Whether to use cuda for network.
         cuda=True,
-        # cuda=False,
-        priority=True,
-        # priority=False,
+        # priority=True,
+        priority=False,
         random_collect_size=int(1e4),
         # random_collect_size=int(0),  # debug
 
@@ -37,8 +37,8 @@ gym_hybrid_dqn_default_config = dict(
                 action_args_shape=2,
             ),
         vqvae_embedding_dim=64,  # ved
-        is_ema=True,  # use EMA
-        # is_ema=False,  # no EMA
+        # is_ema=True,  # use EMA
+        is_ema=False,  # no EMA
         action_space='hybrid',
         model=dict(
             # action_space='hybrid',
@@ -72,6 +72,21 @@ gym_hybrid_dqn_default_config = dict(
             learning_rate_vae=1e-4,
             # Frequency of target network update.
             target_update_freq=500,
+
+            # NOTE
+            # rl_clip_grad=True,
+            rl_clip_grad=False,
+            grad_clip_type='clip_norm',
+            grad_clip_value=0.5,
+
+            # add noise in original continuous action
+            # noise=True,
+            noise=False,
+            noise_sigma=0.1,
+            noise_range=dict(
+            min=-0.5,
+            max=0.5,
+            ),
         ),
         # collect_mode config
         collect=dict(
@@ -115,7 +130,10 @@ create_config = gym_hybrid_dqn_create_config
 import copy
 
 def train(args):
-    main_config.exp_name = 'data_gym_hybrid/sliding_ema_noobs_upcr256_rlbs512_vqvaebs512_prio_' + 'seed_' + f'{args.seed}'
+    # main_config.exp_name = 'data_gym_hybrid/sliding_ema_noobs_upcr256_rlbs512_vqvaebs512_prio_nonoise_rlclipgrad_' + 'seed' + f'{args.seed}'+'_3M'
+    # main_config.exp_name = 'data_gym_hybrid/sliding_noema_noobs_upcr256_rlbs512_vqvaebs512_noprio_nonoise_rlclipgrad_' + 'seed' + f'{args.seed}'+'_3M'
+    main_config.exp_name = 'data_gym_hybrid/sliding_upcr256_rlbs512_vqvaebs512_noobs_noema_nonoise_norlclipgrad_' + 'seed' + f'{args.seed}'+'_3M'
+
     # main_config.exp_name = 'debug'  # debug
 
     serial_pipeline_dqn_vqvae(
@@ -126,6 +144,9 @@ def train(args):
 if __name__ == "__main__":
     import argparse
     for seed in [0, 1, 2, 3, 4]:
+    # for seed in [0]:
+    # for seed in [1,2,3,4]:
+
         parser = argparse.ArgumentParser()
         parser.add_argument('--seed', '-s', type=int, default=seed)
         args = parser.parse_args()
