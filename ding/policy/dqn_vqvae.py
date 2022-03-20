@@ -13,6 +13,7 @@ from .common_utils import default_preprocess_learn
 from ding.model.template.vqvae import VQVAE
 from ding.utils import RunningMeanStd
 from torch.nn import functional as F
+import numpy as np
 
 
 @POLICY_REGISTRY.register('dqn-vqvae')
@@ -135,7 +136,17 @@ class DQNVQVAEPolicy(Policy):
         self._priority = self._cfg.priority
         self._priority_IS_weight = self._cfg.priority_IS_weight
         # Optimizer
-        self._optimizer = Adam(self._model.parameters(), lr=self._cfg.learn.learning_rate)
+        # NOTE: 
+        if self._cfg.learn.rl_clip_grad is True:
+            self._optimizer = Adam(
+                self._model.parameters(),
+                lr=self._cfg.learn.learning_rate,
+                grad_clip_type=self._cfg.learn.grad_clip_type,
+                clip_value=self._cfg.learn.grad_clip_value
+            )
+        else:
+            self._optimizer = Adam(self._model.parameters(), lr=self._cfg.learn.learning_rate)
+
 
         self._gamma = self._cfg.discount_factor
         self._nstep = self._cfg.nstep
@@ -222,6 +233,11 @@ class DQNVQVAEPolicy(Policy):
                 'td_error': td_error_per_sample,
                 **loss_dict,
                 **q_value_dict,
+                'latent_action_max':torch.Tensor([-1]).item(),
+                'latent_action_min':torch.Tensor([-1]).item(),
+                'latent_action_median':torch.Tensor([-1]).item(),
+                'latent_action_variance':torch.Tensor([-1]).item(),
+
             }
         ### VAE+RL phase ###
         else:
@@ -244,6 +260,7 @@ class DQNVQVAEPolicy(Policy):
 
                 result = self._vqvae_model.train_without_obs(data)
 
+
                 loss_dict['total_vqvae_loss'] = result['total_vqvae_loss'].item()
                 loss_dict['reconstruction_loss'] = result['recons_loss'].item()
                 loss_dict['vq_loss'] = result['vq_loss'].item()
@@ -261,6 +278,11 @@ class DQNVQVAEPolicy(Policy):
                     'td_error': td_error_per_sample,
                     **loss_dict,
                     **q_value_dict,
+                    'latent_action_max':torch.Tensor([-1]).item(),
+                    'latent_action_min':torch.Tensor([-1]).item(),
+                    'latent_action_median':torch.Tensor([-1]).item(),
+                    'latent_action_variance':torch.Tensor([-1]).item(),
+
                 }
             # ====================
             # train RL
@@ -331,6 +353,10 @@ class DQNVQVAEPolicy(Policy):
                     'td_error': td_error_per_sample.abs().mean(),
                     **loss_dict,
                     **q_value_dict,
+                    'latent_action_max':np.float(np.max(np.array(data['latent_action'].cpu()))),
+                    'latent_action_min':np.float(np.min(np.array(data['latent_action'].cpu()))),
+                    'latent_action_median':np.float(np.median(np.array(data['latent_action'].cpu()))),
+                    'latent_action_variance':np.float(np.var(np.array(data['latent_action'].cpu()))),
                 }
 
     def _monitor_vars_learn(self) -> List[str]:
@@ -339,9 +365,15 @@ class DQNVQVAEPolicy(Policy):
             'critic_loss',
             'q_value',
             'td_error',
-            'vae_loss',
+            'total_vqvae_loss',
             'reconstruction_loss',
-            'vq_loss',  # 'predict_loss'
+            'vq_loss',  
+            # 'predict_loss'
+            'latent_action_max',
+            'latent_action_min',
+            'latent_action_median',
+            'latent_action_variance',
+
         ]
         return ret
 
@@ -424,6 +456,20 @@ class DQNVQVAEPolicy(Policy):
             if self._cfg.action_space == 'hybrid':
                 recons_action = self._vqvae_model.decode_without_obs(output['action'])
                 output['action'] =  {'action_type':recons_action['recons_action']['disc'],'action_args':recons_action['recons_action']['cont']}
+            
+                # NOTE: add noise in the original actions
+                if self._cfg.learn.noise is True:
+                    from ding.rl_utils.exploration import GaussianNoise
+                    action = output['action']['action_args']
+                    gaussian_noise = GaussianNoise(mu=0.0, sigma=0.1)
+                    noise = gaussian_noise(output['action']['action_args'].shape, output['action']['action_args'].device)
+                    if self._cfg.learn.noise_range is not None:
+                        noise = noise.clamp(self._cfg.learn.noise_range['min'], self._cfg.learn.noise_range['max'])
+                    action += noise
+                    self.action_range = {'min': -1, 'max': 1}
+                    if self.action_range is not None:
+                        action = action.clamp(self.action_range['min'], self.action_range['max'])
+                    output['action']['action_args'] = action
             else:
                 # output['action']  = self._vqvae_model.decode_with_obs(output['action'])
                 output['action'] = self._vqvae_model.decode_without_obs(output['action'])['recons_action']

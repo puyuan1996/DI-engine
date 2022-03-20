@@ -42,7 +42,7 @@ walker2d_dqn_default_config = dict(
         nstep=nstep,
         # learn_mode config
         learn=dict(
-            ignore_done=True,
+            ignore_done=False,
             warm_up_update=int(1e4),
             rl_vae_update_circle=1,  # train rl 1 iter, vae 1 iter
             # update_per_collect_rl=20,
@@ -52,6 +52,11 @@ walker2d_dqn_default_config = dict(
             # batch_size=512,  # large batch size
             rl_batch_size=512,
             vqvae_batch_size=512,
+
+            # NOTE
+            rl_clip_grad=False,
+            grad_clip_type='clip_norm',
+            grad_clip_value=0.5,
 
             learning_rate=3e-4,
             learning_rate_vae=1e-4,
