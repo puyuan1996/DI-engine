@@ -35,12 +35,14 @@ class VectorQuantizer(nn.Module):
     [1] https://github.com/deepmind/sonnet/blob/v2/sonnet/src/nets/vqvae.py
     """
 
-    def __init__(self, num_embeddings: int, embedding_dim: int, beta: float = 0.25, is_ema=False):
+    def __init__(self, num_embeddings: int, embedding_dim: int, beta: float = 0.25, is_ema=False, is_ema_target=False):
         super(VectorQuantizer, self).__init__()
         self.K = num_embeddings
         self.D = embedding_dim
         self.beta = beta
         self.is_ema = is_ema
+        self.is_ema_target = is_ema_target
+
 
         self.embedding = nn.Embedding(self.K, self.D)
         self.embedding.weight.data.uniform_(-1 / self.K, 1 / self.K)
@@ -85,12 +87,21 @@ class VectorQuantizer(nn.Module):
 
         if self.is_ema:
             #  VQ-VAE dictionary updates with Exponential Moving Averages
+            if self.is_ema_target:
+                embedding_loss=torch.zeros(1, device=device)
             for i, N_i in collections.Counter(quantized_index.squeeze().cpu().numpy()).items():
                 N_i_index_list = numpy.where(quantized_index.squeeze().cpu().numpy() == i)[0]
                 self.ema_m.update('m' + f'{i}', encoding[N_i_index_list].sum(dim=0))  # m_i
                 self.ema_N.update('N' + f'{i}', N_i)  #   # N_i
-                self.embedding.weight.data[i] = self.ema_m.get('m' + f'{i}') / self.ema_N.get('N' + f'{i}')  # TODO(pu)
-            vq_loss = commitment_loss * self.beta
+                if not self.is_ema_target:
+                    self.embedding.weight.data[i] = self.ema_m.get('m' + f'{i}') / self.ema_N.get('N' + f'{i}')  # TODO(pu)
+                else:
+                    embedding_loss+=F.mse_loss(self.embedding.weight[i], self.ema_m.get('m' + f'{i}') / self.ema_N.get('N' + f'{i}'))
+            if not self.is_ema_target:
+                embedding_loss=torch.zeros(1, device=device)
+                vq_loss = commitment_loss * self.beta
+            else:
+                vq_loss = commitment_loss * self.beta + embedding_loss
 
         else:
             embedding_loss = F.mse_loss(quantized_embedding, encoding.detach())
@@ -100,7 +111,7 @@ class VectorQuantizer(nn.Module):
         # Add the residue back to the encoding
         quantized_embedding = encoding + (quantized_embedding - encoding).detach()
 
-        return quantized_index, quantized_embedding, vq_loss
+        return quantized_index, quantized_embedding, vq_loss, embedding_loss, commitment_loss
 
     def inference(self, encoding: Tensor) -> Tensor:
         encoding_shape = encoding.shape  # [A x D]
@@ -124,6 +135,7 @@ class VQVAE(nn.Module):
             hidden_dims: List = None,
             beta: float = 0.25,
             is_ema: bool = False,
+            is_ema_target: bool = False,
             img_size: int = 64,
             **kwargs
     ) -> None:
@@ -137,6 +149,8 @@ class VQVAE(nn.Module):
         self.img_size = img_size
         self.beta = beta
         self.is_ema = is_ema
+        self.is_ema_target = is_ema_target
+
 
         if hidden_dims is None:
             hidden_dims = [256, 256, 256]
@@ -157,7 +171,7 @@ class VQVAE(nn.Module):
         self.encoder = nn.Sequential(*modules)
 
         ### VQ layer
-        self.vq_layer = VectorQuantizer(num_embeddings, embedding_dim, self.beta, self.is_ema)
+        self.vq_layer = VectorQuantizer(num_embeddings, embedding_dim, self.beta, self.is_ema, self.is_ema_target)
 
         ### Decoder
         self.decode_action_head = nn.Sequential(nn.Linear(self.embedding_dim, hidden_dims[0]), nn.ReLU())
@@ -183,14 +197,14 @@ class VQVAE(nn.Module):
             action_disc_cont = torch.cat([action_disc_onehot.float(), data['action']['action_args']],dim=-1)
             encoding  = self.encoder(action_disc_cont)
 
-        quantized_index, quantized_embedding, vq_loss = self.vq_layer(encoding)
+        quantized_index, quantized_embedding, vq_loss, embedding_loss, commitment_loss= self.vq_layer(encoding)
 
         if isinstance(self.original_action_shape,int):  # continuous action
             recons_action = self.decoder(quantized_embedding)
             recons_loss = F.mse_loss(recons_action, data['action'])
             total_vqvae_loss = recons_loss + vq_loss
 
-            return {'total_vqvae_loss': total_vqvae_loss, 'recons_loss': recons_loss, 'vq_loss': vq_loss}
+            return {'total_vqvae_loss': total_vqvae_loss, 'recons_loss': recons_loss, 'vq_loss': vq_loss, 'embedding_loss': embedding_loss, 'commitment_loss':commitment_loss}
 
         elif isinstance(self.original_action_shape,dict):  # hybrid action
             action_decoding = self.decode_action_head(quantized_embedding)
@@ -206,7 +220,7 @@ class VQVAE(nn.Module):
             recons_loss=  recons_loss_cont +  recons_loss_disc
 
             total_vqvae_loss = recons_loss + vq_loss
-            return {'total_vqvae_loss': total_vqvae_loss, 'recons_loss': recons_loss, 'vq_loss': vq_loss}
+            return {'total_vqvae_loss': total_vqvae_loss, 'recons_loss': recons_loss, 'vq_loss': vq_loss, 'embedding_loss': embedding_loss, 'commitment_loss':commitment_loss}
 
 
 

@@ -170,6 +170,8 @@ class DQNVQVAEPolicy(Policy):
             self._cfg.vqvae_embedding_dim,
             self._cfg.model.action_shape,
             is_ema=self._cfg.is_ema,
+            is_ema_target=self._cfg.is_ema_target,
+
         )
         self._vqvae_model = to_device(self._vqvae_model, self._device)
         self._optimizer_vqvae = Adam(
@@ -218,6 +220,10 @@ class DQNVQVAEPolicy(Policy):
             loss_dict['total_vqvae_loss'] = result['total_vqvae_loss'].item()
             loss_dict['reconstruction_loss'] = result['recons_loss'].item()
             loss_dict['vq_loss'] = result['vq_loss'].item()
+            loss_dict['embedding_loss'] = result['embedding_loss'].item()
+            loss_dict['commitment_loss'] = result['commitment_loss'].item()
+
+
 
             # vae update
             self._optimizer_vqvae.zero_grad()
@@ -264,6 +270,8 @@ class DQNVQVAEPolicy(Policy):
                 loss_dict['total_vqvae_loss'] = result['total_vqvae_loss'].item()
                 loss_dict['reconstruction_loss'] = result['recons_loss'].item()
                 loss_dict['vq_loss'] = result['vq_loss'].item()
+                loss_dict['embedding_loss'] = result['embedding_loss'].item()
+                loss_dict['commitment_loss'] = result['commitment_loss'].item()
 
                 # vae update
                 self._optimizer_vqvae.zero_grad()
@@ -367,6 +375,8 @@ class DQNVQVAEPolicy(Policy):
             'td_error',
             'total_vqvae_loss',
             'reconstruction_loss',
+            'embedding_loss' ,
+            'commitment_loss'
             'vq_loss',  
             # 'predict_loss'
             'latent_action_max',
