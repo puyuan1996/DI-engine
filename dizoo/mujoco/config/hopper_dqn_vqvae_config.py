@@ -14,8 +14,8 @@ hopper_dqn_default_config = dict(
         collector_env_num=8,
         evaluator_env_num=5,
         n_evaluator_episode=5,
-        # stop_value=3000,
-        stop_value=int(1e6),  # max env steps 
+        stop_value=3000,
+        # stop_value=int(1e6),  # max env steps 
     ),
     policy=dict(
         # Whether to use cuda for network.
@@ -26,13 +26,15 @@ hopper_dqn_default_config = dict(
         random_collect_size=int(1e4),
         original_action_shape=3,
         vqvae_embedding_dim=128,  # ved
+        vqvae_hidden_dim=[256],  # vhd
+
         is_ema_target=False,  # use EMA
         is_ema=True,  # use EMA
         # is_ema=False,  # no EMA
         action_space='continuous',  # 'hybrid',
         model=dict(
             obs_shape=11,
-            action_shape=int(128),  # num oof num_embeddings
+            action_shape=int(128),  # num of num_embeddings
             # encoder_hidden_size_list=[128, 128, 64],  # small net
             encoder_hidden_size_list=[256, 256, 128],  # middle net
             # encoder_hidden_size_list=[512, 512, 256],  # large net
@@ -127,6 +129,7 @@ def train(args):
 if __name__ == "__main__":
     import argparse
     for seed in [0, 1, 2, 3, 4]:
+    # for seed in [0]:
         parser = argparse.ArgumentParser()
         parser.add_argument('--seed', '-s', type=int, default=seed)
         args = parser.parse_args()
