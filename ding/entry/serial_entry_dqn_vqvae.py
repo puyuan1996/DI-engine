@@ -88,8 +88,8 @@ def serial_pipeline_dqn_vqvae(
     # encoding = policy._vqvae_model.encoder(torch.Tensor(action_samples).to(torch.device('cuda')))
     # # encoding = policy._vqvae_model.encode(torch.Tensor(action_samples))[0]
     # encoding_inds, quantized_inputs, vq_loss = policy._vqvae_model.vq_layer(encoding)
-    # x = xx
-    # y = yy
+    # x = xx.ravel()
+    # y = yy.ravel()
     # # c = encoding_inds
     # c = encoding_inds.cpu().numpy()
     # fig = plt.figure()
