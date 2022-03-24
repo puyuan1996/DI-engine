@@ -25,13 +25,20 @@ halfcheetah_dqn_default_config = dict(
 
         random_collect_size=int(1e4),
         original_action_shape=6,
-        vqvae_embedding_dim=128,  # ved
+
+        # vqvae_embedding_dim=128,  # ved: D
+        # vqvae_hidden_dim=[256],  # vhd
+
+        vqvae_embedding_dim=256,  # ved: D
+        vqvae_hidden_dim=[512],  # vhd
+
+        is_ema_target=False,  # use EMA
         is_ema=True,  # use EMA
         # is_ema=False,  # no EMA
         action_space='continuous',  # 'hybrid',
         model=dict(
             obs_shape=17,
-            action_shape=int(128),  # num oof num_embeddings
+            action_shape=int(128),  # num of num_embeddings: k
             encoder_hidden_size_list=[256, 256, 128],
             # Whether to use dueling head.
             dueling=True,
@@ -57,6 +64,12 @@ halfcheetah_dqn_default_config = dict(
             # Frequency of target network update.
             target_update_freq=500,
             
+            # NOTE
+            rl_clip_grad=True,
+            # rl_clip_grad=False,
+            grad_clip_type='clip_norm',
+            grad_clip_value=0.5,
+
             # add noise in original continuous action
             noise=True,
             # noise=False,
@@ -108,7 +121,7 @@ create_config = halfcheetah_dqn_create_config
 import copy
 
 def train(args):
-    main_config.exp_name = 'data_halfcheetah/halfcheetah_ema_noobs_upcr256_rlbs512_vqvaebs512_noprio_noise_' + 'seed_' + f'{args.seed}'+'_5M'
+    main_config.exp_name = 'data_halfcheetah/noobs_noprio_ema_noise_rlcipgrad_vhd512_D256_k128' + 'seed_' + f'{args.seed}'+'_3M'
     # main_config.exp_name = 'debug'  # debug
 
     serial_pipeline_dqn_vqvae(
