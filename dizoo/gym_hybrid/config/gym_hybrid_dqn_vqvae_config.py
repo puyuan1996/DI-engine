@@ -38,8 +38,8 @@ gym_hybrid_dqn_default_config = dict(
             ),
         vqvae_embedding_dim=64,  # ved
         is_ema_target=False,  # use EMA
-        # is_ema=True,  # use EMA
-        is_ema=False,  # no EMA
+        is_ema=True,  # use EMA
+        # is_ema=False,  # no EMA
         action_space='hybrid',
         model=dict(
             # action_space='hybrid',
@@ -75,14 +75,14 @@ gym_hybrid_dqn_default_config = dict(
             target_update_freq=500,
 
             # NOTE
-            # rl_clip_grad=True,
-            rl_clip_grad=False,
+            rl_clip_grad=True,
+            # rl_clip_grad=False,
             grad_clip_type='clip_norm',
             grad_clip_value=0.5,
 
             # add noise in original continuous action
-            noise=True,
-            # noise=False,
+            # noise=True,
+            noise=False,
             noise_sigma=0.1,
             noise_range=dict(
             min=-0.5,
@@ -133,7 +133,7 @@ import copy
 def train(args):
     # main_config.exp_name = 'data_gym_hybrid/sliding_ema_noobs_upcr256_rlbs512_vqvaebs512_prio_nonoise_rlclipgrad_' + 'seed' + f'{args.seed}'+'_3M'
     # main_config.exp_name = 'data_gym_hybrid/sliding_noema_noobs_upcr256_rlbs512_vqvaebs512_noprio_nonoise_rlclipgrad_' + 'seed' + f'{args.seed}'+'_3M'
-    main_config.exp_name = 'data_gym_hybrid/sliding_upcr256_rlbs512_vqvaebs512_noobs_noema_noise_norlclipgrad_' + 'seed' + f'{args.seed}'+'_3M'
+    main_config.exp_name = 'data_gym_hybrid/sliding_upcr256_rlbs512_vqvaebs512_noobs_ema_nonoise_rlclipgrad_noprio_' + 'seed' + f'{args.seed}'+'_3M'
 
     # main_config.exp_name = 'debug'  # debug
 

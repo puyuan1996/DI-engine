@@ -169,6 +169,7 @@ class DQNVQVAEPolicy(Policy):
             self._cfg.original_action_shape,
             self._cfg.vqvae_embedding_dim,
             self._cfg.model.action_shape,
+            self._cfg.vqvae_hidden_dim,
             is_ema=self._cfg.is_ema,
             is_ema_target=self._cfg.is_ema_target,
 
@@ -383,7 +384,6 @@ class DQNVQVAEPolicy(Policy):
             'latent_action_min',
             'latent_action_median',
             'latent_action_variance',
-
         ]
         return ret
 

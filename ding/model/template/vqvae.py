@@ -52,9 +52,9 @@ class VectorQuantizer(nn.Module):
             self.ema_m = EMA(0.99)
             for i in range(self.K):
                 self.ema_N.register('N' + f'{i}', torch.zeros(1, device=torch.device('cuda')))  # TODO(pu)
-                self.ema_m.register('m' + f'{i}', torch.zeros(self.K, device=torch.device('cuda')))
+                self.ema_m.register('m' + f'{i}', torch.zeros(self.D, device=torch.device('cuda')))
                 # self.ema_N.register('N'+f'{i}', torch.zeros(1, device=torch.device('cpu')))
-                # self.ema_m.register('m'+f'{i}', torch.zeros(self.K, device=torch.device('cpu')))
+                # self.ema_m.register('m'+f'{i}', torch.zeros(self.D, device=torch.device('cpu')))
 
     def forward(self, encoding: Tensor) -> Tensor:
         encoding_shape = encoding.shape  # [A x D]
@@ -128,11 +128,10 @@ class VQVAE(nn.Module):
 
     def __init__(
             self,
-            # action_dim: int,
             original_action_shape: Any,
             embedding_dim: int,
             num_embeddings: int,
-            hidden_dims: List = None,
+            hidden_dims: List = [256],
             beta: float = 0.25,
             is_ema: bool = False,
             is_ema_target: bool = False,
@@ -151,22 +150,18 @@ class VQVAE(nn.Module):
         self.is_ema = is_ema
         self.is_ema_target = is_ema_target
 
-
-        if hidden_dims is None:
-            hidden_dims = [256, 256, 256]
-
         ### Encoder
 
         # action
         if isinstance(self.original_action_shape,int):  # continuous action
-            self.encode_action_head = nn.Sequential(nn.Linear(self.original_action_shape, hidden_dims[0]), nn.ReLU())
+            self.encode_action_head = nn.Sequential(nn.Linear(self.original_action_shape, self.hidden_dims[0]), nn.ReLU())
         elif isinstance(self.original_action_shape,dict):  # hybrid action
             # input action: concat(continuous action, one-hot encoding of discrete action)
-            self.encode_action_head = nn.Sequential(nn.Linear(self.original_action_shape['action_type_shape']+self.original_action_shape['action_args_shape'], hidden_dims[0]), nn.ReLU())
+            self.encode_action_head = nn.Sequential(nn.Linear(self.original_action_shape['action_type_shape']+self.original_action_shape['action_args_shape'], self.hidden_dims[0]), nn.ReLU())
 
 
-        self.encode_common = nn.Sequential(nn.Linear(hidden_dims[0], hidden_dims[0]), nn.ReLU())
-        self.encode_mu_head = nn.Linear(hidden_dims[0], self.embedding_dim)
+        self.encode_common = nn.Sequential(nn.Linear(self.hidden_dims[0], self.hidden_dims[0]), nn.ReLU())
+        self.encode_mu_head = nn.Linear(self.hidden_dims[0], self.embedding_dim)
         modules = [self.encode_action_head, self.encode_common, self.encode_mu_head]
         self.encoder = nn.Sequential(*modules)
 
@@ -174,18 +169,18 @@ class VQVAE(nn.Module):
         self.vq_layer = VectorQuantizer(num_embeddings, embedding_dim, self.beta, self.is_ema, self.is_ema_target)
 
         ### Decoder
-        self.decode_action_head = nn.Sequential(nn.Linear(self.embedding_dim, hidden_dims[0]), nn.ReLU())
-        self.decode_common = nn.Sequential(nn.Linear(hidden_dims[0], hidden_dims[0]), nn.ReLU())
+        self.decode_action_head = nn.Sequential(nn.Linear(self.embedding_dim, self.hidden_dims[0]), nn.ReLU())
+        self.decode_common = nn.Sequential(nn.Linear(self.hidden_dims[0], self.hidden_dims[0]), nn.ReLU())
 
         if isinstance(self.original_action_shape,int):  # continuous action
             # TODO(pu): tanh
-            self.decode_reconst_action_head = nn.Sequential(nn.Linear(hidden_dims[0], self.original_action_shape), nn.Tanh())
+            self.decode_reconst_action_head = nn.Sequential(nn.Linear(self.hidden_dims[0], self.original_action_shape), nn.Tanh())
             modules = [self.decode_action_head, self.decode_common, self.decode_reconst_action_head]
             self.decoder = nn.Sequential(*modules)
         elif isinstance(self.original_action_shape,dict):  # hybrid action
             # input action: concat(continuous action, one-hot encoding of discrete action)
-            self.decode_reconst_action_cont_head  = nn.Sequential(nn.Linear(hidden_dims[0],self.original_action_shape['action_args_shape']), nn.Tanh())
-            self.decode_reconst_action_disc_head  = nn.Sequential(nn.Linear(hidden_dims[0],self.original_action_shape['action_type_shape']), nn.ReLU())
+            self.decode_reconst_action_cont_head  = nn.Sequential(nn.Linear(self.hidden_dims[0],self.original_action_shape['action_args_shape']), nn.Tanh())
+            self.decode_reconst_action_disc_head  = nn.Sequential(nn.Linear(self.hidden_dims[0],self.original_action_shape['action_type_shape']), nn.ReLU())
 
 
     def train_without_obs(self, data):

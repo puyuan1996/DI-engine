@@ -21,11 +21,12 @@ hopper_dqn_default_config = dict(
         # Whether to use cuda for network.
         cuda=True,
         # priority=False,
-        # priority=False,
-        priority=True,
+        priority=False,
+        # priority=True,
         random_collect_size=int(1e4),
         original_action_shape=3,
         vqvae_embedding_dim=128,  # ved
+        is_ema_target=False,  # use EMA
         is_ema=True,  # use EMA
         # is_ema=False,  # no EMA
         action_space='continuous',  # 'hybrid',
@@ -47,8 +48,8 @@ hopper_dqn_default_config = dict(
         learn=dict(
             warm_up_update=int(1e4),
             rl_vae_update_circle=1,  # train rl 1 iter, vae 1 iter
-            update_per_collect_rl=20,
-            # update_per_collect_rl=256,
+            # update_per_collect_rl=20,
+            update_per_collect_rl=256,
             update_per_collect_vae=10,
             rl_batch_size=512,
             vqvae_batch_size=512,
@@ -56,6 +57,13 @@ hopper_dqn_default_config = dict(
             learning_rate_vae=1e-4,
             # Frequency of target network update.
             target_update_freq=500,
+
+            # NOTE
+            rl_clip_grad=True,
+            # rl_clip_grad=False,
+            grad_clip_type='clip_norm',
+            grad_clip_value=0.5,
+
             # add noise in original continuous action
             # noise=True,
             noise=False,
@@ -107,7 +115,8 @@ create_config = hopper_dqn_create_config
 import copy
 
 def train(args):
-    main_config.exp_name = 'data_hopper/hopper_ema_upcr20_bs512_' + 'seed_' + f'{args.seed}'
+    # main_config.exp_name = 'data_hopper/hopper_ema_upcr20_bs512_' + 'seed_' + f'{args.seed}'
+    main_config.exp_name = 'data_hopper/noobs_ema_nonoise_rlclipgrad_noprio_' + 'seed' + f'{args.seed}'+'_3M'
     # main_config.exp_name = 'hopper_noema_upcr20_bs32_' + 'seed_' + f'{args.seed}'
 
     serial_pipeline_dqn_vqvae(
