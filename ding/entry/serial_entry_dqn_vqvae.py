@@ -109,8 +109,8 @@ def serial_pipeline_dqn_vqvae(
         # Learn policy from collected data
         for i in range(cfg.policy.learn.warm_up_update):
             if i==0:
-                policy.visualize_latent(save_histogram=True, name='warmup-start_'+f'{cfg.env.env_id}') # NOTE:visualize_latent
-                policy.visualize_embedding_table(name='warmup-start_'+f'{cfg.env.env_id}')
+                policy.visualize_latent(save_histogram=True, name='warmup-start_'+f'{cfg.env.env_id}_s{cfg.seed}') # NOTE:visualize_latent
+                policy.visualize_embedding_table(name='warmup-start_'+f'{cfg.env.env_id}_s{cfg.seed}')
             # Learner will train ``update_per_collect`` times in one iteration.
             train_data = replay_buffer.sample(cfg.policy.learn.vqvae_batch_size, learner.train_iter)
             if train_data is None:
@@ -133,15 +133,15 @@ def serial_pipeline_dqn_vqvae(
 
     for iter in range(max_iterations):
         if iter%100000==0:
-            policy.visualize_latent(save_histogram=True, name=f'iter{iter}_{cfg.env.env_id}') # NOTE:visualize_latent
-            policy.visualize_embedding_table(name=f'iter{iter}_{cfg.env.env_id}')
+            policy.visualize_latent(save_histogram=True, name=f'iter{iter}_{cfg.env.env_id}_s{cfg.seed}') # NOTE:visualize_latent
+            policy.visualize_embedding_table(name=f'iter{iter}_{cfg.env.env_id}_s{cfg.seed}')
         collect_kwargs = commander.step()
         # Evaluate policy performance
         if evaluator.should_eval(learner.train_iter):
             stop, reward = evaluator.eval(learner.save_checkpoint, learner.train_iter, collector.envstep)
             if stop:
-                policy.visualize_latent(save_histogram=True, name=f'iter{iter}_{cfg.env.env_id}')# NOTE:visualize_latent
-                policy.visualize_embedding_table(name=f'iter{iter}_{cfg.env.env_id}')
+                policy.visualize_latent(save_histogram=True, name=f'iter{iter}_{cfg.env.env_id}_s{cfg.seed}')# NOTE:visualize_latent
+                policy.visualize_embedding_table(name=f'iter{iter}_{cfg.env.env_id}_s{cfg.seed}')
                 break
         # Collect data by default config n_sample/n_episode
         if hasattr(cfg.policy.collect, "each_iter_n_sample"):
@@ -211,8 +211,8 @@ def serial_pipeline_dqn_vqvae(
             replay_buffer_recent.clear()  # TODO(pu)
 
         if collector.envstep > 3e6:
-            policy.visualize_latent(save_histogram=True, name=f'iter{iter}_{cfg.env.env_id}') # NOTE:visualize_latent
-            policy.visualize_embedding_table(name=f'iter{iter}_{cfg.env.env_id}')
+            policy.visualize_latent(save_histogram=True, name=f'iter{iter}_{cfg.env.env_id}_s{cfg.seed}') # NOTE:visualize_latent
+            policy.visualize_embedding_table(name=f'iter{iter}_{cfg.env.env_id}_s{cfg.seed}')
             break
 
     # Learner's after_run hook.

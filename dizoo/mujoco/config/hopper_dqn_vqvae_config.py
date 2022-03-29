@@ -23,8 +23,8 @@ hopper_dqn_default_config = dict(
         # priority=False,
         priority=False,
         # priority=True,
-        # random_collect_size=int(1e4),
-        random_collect_size=int(1),  # debug
+        random_collect_size=int(1e4),
+        # random_collect_size=int(1),  # debug
 
         original_action_shape=3,
         vqvae_embedding_dim=128,  # ved
@@ -50,8 +50,8 @@ hopper_dqn_default_config = dict(
         nstep=nstep,
         # learn_mode config
         learn=dict(
-            # warm_up_update=int(1e4),
-            warm_up_update=int(1),
+            warm_up_update=int(1e4),
+            # warm_up_update=int(1),
 
             rl_vae_update_circle=1,  # train rl 1 iter, vae 1 iter
             # update_per_collect_rl=20,
@@ -123,7 +123,7 @@ import copy
 
 def train(args):
     # main_config.exp_name = 'data_hopper/hopper_ema_upcr20_bs512_' + 'seed_' + f'{args.seed}'
-    main_config.exp_name = 'data_hopper/noobs_ema_nonoise_rlclipgrad0.5_noprio_' + 'seed' + f'{args.seed}'+'_3M'
+    main_config.exp_name = 'data_hopper/noobs_ema_nonoise_rlclipgrad0.5_noprio_wu1e4_' + 'seed' + f'{args.seed}'+'_3M'
     # main_config.exp_name = 'hopper_noema_upcr20_bs32_' + 'seed_' + f'{args.seed}'
 
     serial_pipeline_dqn_vqvae(
