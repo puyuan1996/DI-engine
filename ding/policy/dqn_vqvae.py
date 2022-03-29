@@ -14,7 +14,7 @@ from ding.model.template.vqvae import VQVAE
 from ding.utils import RunningMeanStd
 from torch.nn import functional as F
 import numpy as np
-
+import matplotlib.pyplot as plt
 
 @POLICY_REGISTRY.register('dqn-vqvae')
 class DQNVQVAEPolicy(Policy):
@@ -224,8 +224,6 @@ class DQNVQVAEPolicy(Policy):
             loss_dict['embedding_loss'] = result['embedding_loss'].item()
             loss_dict['commitment_loss'] = result['commitment_loss'].item()
 
-
-
             # vae update
             self._optimizer_vqvae.zero_grad()
             result['total_vqvae_loss'].backward()
@@ -235,16 +233,19 @@ class DQNVQVAEPolicy(Policy):
             q_value_dict = {}
             q_value_dict['q_value'] = torch.Tensor([0]).item()
             td_error_per_sample = torch.Tensor([0]).item()
+
+            encoding_inds = self.visualize_latent(save_histogram=False) # NOTE:visualize_latent
+
             return {
                 'cur_lr': self._optimizer.defaults['lr'],
                 'td_error': td_error_per_sample,
                 **loss_dict,
                 **q_value_dict,
-                'latent_action_max':torch.Tensor([-1]).item(),
-                'latent_action_min':torch.Tensor([-1]).item(),
-                'latent_action_median':torch.Tensor([-1]).item(),
-                'latent_action_variance':torch.Tensor([-1]).item(),
-
+                # 'latent_action_max':torch.Tensor([-1]).item(),
+                # 'latent_action_min':torch.Tensor([-1]).item(),
+                # 'latent_action_median':torch.Tensor([-1]).item(),
+                # 'latent_action_variance':torch.Tensor([-1]).item(),
+                '[histogram]latent_action': encoding_inds,
             }
         ### VAE+RL phase ###
         else:
@@ -267,7 +268,6 @@ class DQNVQVAEPolicy(Policy):
 
                 result = self._vqvae_model.train_without_obs(data)
 
-
                 loss_dict['total_vqvae_loss'] = result['total_vqvae_loss'].item()
                 loss_dict['reconstruction_loss'] = result['recons_loss'].item()
                 loss_dict['vq_loss'] = result['vq_loss'].item()
@@ -277,21 +277,26 @@ class DQNVQVAEPolicy(Policy):
                 # vae update
                 self._optimizer_vqvae.zero_grad()
                 result['total_vqvae_loss'].backward()
+                total_grad_norm_vqvae = self._optimizer_vqvae.get_grad() 
                 self._optimizer_vqvae.step()
 
                 q_value_dict = {}
                 q_value_dict['q_value'] = torch.Tensor([0]).item()
                 td_error_per_sample = torch.Tensor([0]).item()
+
+                encoding_inds = self.visualize_latent(save_histogram=False) # NOTE:visualize_latent
+
                 return {
                     'cur_lr': self._optimizer.defaults['lr'],
                     'td_error': td_error_per_sample,
                     **loss_dict,
                     **q_value_dict,
-                    'latent_action_max':torch.Tensor([-1]).item(),
-                    'latent_action_min':torch.Tensor([-1]).item(),
-                    'latent_action_median':torch.Tensor([-1]).item(),
-                    'latent_action_variance':torch.Tensor([-1]).item(),
-
+                    # 'latent_action_max':torch.Tensor([-1]).item(),
+                    # 'latent_action_min':torch.Tensor([-1]).item(),
+                    # 'latent_action_median':torch.Tensor([-1]).item(),
+                    # 'latent_action_variance':torch.Tensor([-1]).item(),
+                    'total_grad_norm_vqvae':total_grad_norm_vqvae,
+                    '[histogram]latent_action': encoding_inds,
                 }
             # ====================
             # train RL
@@ -345,6 +350,7 @@ class DQNVQVAEPolicy(Policy):
                 # ====================
                 self._optimizer.zero_grad()
                 loss.backward()
+                total_grad_norm_rl = self._optimizer.get_grad() 
                 if self._cfg.learn.multi_gpu:
                     self.sync_gradients(self._learn_model)
                 self._optimizer.step()
@@ -357,15 +363,17 @@ class DQNVQVAEPolicy(Policy):
 
                 q_value_dict = {}
                 q_value_dict['q_value'] = q_value.mean().item()
+
                 return {
                     'cur_lr': self._optimizer.defaults['lr'],
                     'td_error': td_error_per_sample.abs().mean(),
                     **loss_dict,
                     **q_value_dict,
-                    'latent_action_max':np.float(np.max(np.array(data['latent_action'].cpu()))),
-                    'latent_action_min':np.float(np.min(np.array(data['latent_action'].cpu()))),
-                    'latent_action_median':np.float(np.median(np.array(data['latent_action'].cpu()))),
-                    'latent_action_variance':np.float(np.var(np.array(data['latent_action'].cpu()))),
+                    # 'latent_action_max':np.float(np.max(np.array(data['latent_action'].cpu()))),
+                    # 'latent_action_min':np.float(np.min(np.array(data['latent_action'].cpu()))),
+                    # 'latent_action_median':np.float(np.median(np.array(data['latent_action'].cpu()))),
+                    # 'latent_action_variance':np.float(np.var(np.array(data['latent_action'].cpu()))),
+                    'total_grad_norm_rl':total_grad_norm_rl,
                 }
 
     def _monitor_vars_learn(self) -> List[str]:
@@ -377,13 +385,16 @@ class DQNVQVAEPolicy(Policy):
             'total_vqvae_loss',
             'reconstruction_loss',
             'embedding_loss' ,
-            'commitment_loss'
+            'commitment_loss',
             'vq_loss',  
             # 'predict_loss'
-            'latent_action_max',
-            'latent_action_min',
-            'latent_action_median',
-            'latent_action_variance',
+            # 'latent_action_max',
+            # 'latent_action_min',
+            # 'latent_action_median',
+            # 'latent_action_variance',
+            # '[histogram]latent_action',
+            'total_grad_norm_rl',
+            'total_grad_norm_vqvae',
         ]
         return ret
 
@@ -619,3 +630,60 @@ class DQNVQVAEPolicy(Policy):
             by import_names path. For DQN, ``ding.model.template.q_learning.DQN``
         """
         return 'dqn', ['ding.model.template.q_learning']
+
+    def visualize_latent(self, save_histogram=True, name=0):
+        granularity=0.1
+        xx, yy, zz = np.meshgrid(np.arange(-1, 1, granularity), np.arange(-1, 1, granularity), np.arange(-1, 1, granularity))
+        cnt = int((2/granularity))**3
+        action_samples = np.array([xx.ravel(), yy.ravel(), zz.ravel()]).reshape(cnt, 3)
+
+        encoding = self._vqvae_model.encoder(torch.Tensor(action_samples).to(torch.device('cuda')))
+        encoding_inds, quantized_inputs, vq_loss,_,_ = self._vqvae_model.vq_layer(encoding)
+        if save_histogram:
+            fig = plt.figure()
+
+            # Fixing bin edges
+            HIST_BINS = np.linspace(0, 127, 128)
+
+            # the histogram of the data
+            n, bins, patches = plt.hist(encoding_inds.detach().cpu().numpy(), HIST_BINS, density=False, facecolor='g', alpha=0.75)
+
+            plt.xlabel('Latent Discrete action')
+            plt.ylabel('Count')
+            plt.title('Histogram of Latent Discrete action')
+            plt.grid(True)
+            plt.show()
+
+            if isinstance(name, int):
+                plt.savefig(f'latent_histogram_iter{name}.png')
+                print(f'save latent_histogram_iter{name}.png')
+            elif isinstance(name, str):
+                plt.savefig('latent_histogram_'+name+'.png')
+                print('latent_histogram_'+name+'.png')
+        else:
+            return encoding_inds.detach().cpu().numpy()
+
+    def visualize_embedding_table(self, save_dis_map=True, name=0):
+        embedding_table = self._vqvae_model.vq_layer.embedding.weight.detach().cpu()
+        """cos distance"""
+        cos = torch.nn.CosineSimilarity(dim=0, eps=1e-6)
+
+        dis = [[] for i in range(embedding_table.shape[0])]
+        for i in range(embedding_table.shape[0]):
+            for j in list(range(embedding_table.shape[0])):
+                dis[i].append(cos(embedding_table[i], embedding_table[j]).numpy())
+
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        ax.set_title('Embedding table CosineSimilarity')
+        plt.imshow(dis)
+        plt.colorbar()
+        plt.show()
+        if isinstance(name, int):
+            plt.savefig(f'embedding_table_CosineSimilarity_iter{name}.png')
+            print(f'save embedding_table_CosineSimilarity_iter{name}.png')
+        elif isinstance(name, str):
+            plt.savefig('embedding_table_CosineSimilarity_'+name+'.png')
+            print('save embedding_table_CosineSimilarity_'+name+'.png')
+
+

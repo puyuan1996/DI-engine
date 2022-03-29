@@ -52,8 +52,8 @@ halfcheetah_dqn_default_config = dict(
             ignore_done=True,
             warm_up_update=int(1e4),
             rl_vae_update_circle=1,  # train rl 1 iter, vae 1 iter
-            # update_per_collect_rl=20,
-            update_per_collect_rl=256,
+            update_per_collect_rl=20,
+            # update_per_collect_rl=256,
             update_per_collect_vae=10,
 
             rl_batch_size=512,
@@ -68,11 +68,13 @@ halfcheetah_dqn_default_config = dict(
             rl_clip_grad=True,
             # rl_clip_grad=False,
             grad_clip_type='clip_norm',
-            grad_clip_value=0.5,
+            # grad_clip_value=0.5,
+            grad_clip_value=5,
+
 
             # add noise in original continuous action
-            noise=True,
-            # noise=False,
+            # noise=True,
+            noise=False,
             noise_sigma=0.1,
             noise_range=dict(
             min=-0.5,
@@ -121,7 +123,7 @@ create_config = halfcheetah_dqn_create_config
 import copy
 
 def train(args):
-    main_config.exp_name = 'data_halfcheetah/noobs_noprio_ema_noise_rlcipgrad_vhd512_D256_k128' + 'seed_' + f'{args.seed}'+'_3M'
+    main_config.exp_name = 'data_halfcheetah/noobs_noprio_ema_nonoise_rlcipgrad5_vhd512_D256_k128_upcr20' + 'seed_' + f'{args.seed}'+'_3M'
     # main_config.exp_name = 'debug'  # debug
 
     serial_pipeline_dqn_vqvae(
