@@ -69,8 +69,6 @@ gym_hybrid_dqn_default_config = dict(
             rl_batch_size=512,
             vqvae_batch_size=512,
 
-            # batch_size=32, # nature dqn
-
             learning_rate=3e-4,
             learning_rate_vae=1e-4,
             # Frequency of target network update.
@@ -135,7 +133,7 @@ import copy
 def train(args):
     # main_config.exp_name = 'data_gym_hybrid/sliding_ema_noobs_upcr256_rlbs512_vqvaebs512_prio_nonoise_rlclipgrad_' + 'seed' + f'{args.seed}'+'_3M'
     # main_config.exp_name = 'data_gym_hybrid/sliding_noema_noobs_upcr256_rlbs512_vqvaebs512_noprio_nonoise_rlclipgrad_' + 'seed' + f'{args.seed}'+'_3M'
-    main_config.exp_name = 'data_gym_hybrid/sliding_upcr256_rlbs512_vqvaebs512_noobs_ema_nonoise_rlclipgrad_noprio_' + 'seed' + f'{args.seed}'+'_3M'
+    main_config.exp_name = 'data_sliding/noobs_ema_nonoise_rlclipgrad0.5_noprio_' + 'seed' + f'{args.seed}'+'_3M'
 
     # main_config.exp_name = 'debug'  # debug
 
@@ -146,10 +144,8 @@ def train(args):
 
 if __name__ == "__main__":
     import argparse
-    for seed in [0, 1, 2, 3, 4]:
-    # for seed in [0]:
-    # for seed in [1,2,3,4]:
-
+    # for seed in [0, 1, 2, 3, 4]:
+    for seed in [1]:
         parser = argparse.ArgumentParser()
         parser.add_argument('--seed', '-s', type=int, default=seed)
         args = parser.parse_args()

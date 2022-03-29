@@ -632,10 +632,21 @@ class DQNVQVAEPolicy(Policy):
         return 'dqn', ['ding.model.template.q_learning']
 
     def visualize_latent(self, save_histogram=True, name=0):
-        granularity=0.1
-        xx, yy, zz = np.meshgrid(np.arange(-1, 1, granularity), np.arange(-1, 1, granularity), np.arange(-1, 1, granularity))
-        cnt = int((2/granularity))**3
-        action_samples = np.array([xx.ravel(), yy.ravel(), zz.ravel()]).reshape(cnt, 3)
+        if self.cfg.action_space=='continuous':  # continuous action
+            granularity=0.1
+            xx, yy, zz = np.meshgrid(np.arange(-1, 1, granularity), np.arange(-1, 1, granularity), np.arange(-1, 1, granularity))
+            cnt = int((2/granularity))**3
+            action_samples = np.array([xx.ravel(), yy.ravel(), zz.ravel()]).reshape(cnt, 3)
+        elif self.cfg.action_space=='hybrid':  # hybrid action
+            granularity=0.1
+            xx, yy = np.meshgrid(np.arange(-1, 1, granularity), np.arange(-1, 1, granularity))
+            cnt = int((2/granularity))**2
+            action_samples = np.array([xx.ravel(), yy.ravel()]).reshape(cnt, 2)
+
+            action_samples_type1 = np.concatenate([np.tile(np.array([1, 0, 0]), cnt).reshape(cnt,3), action_samples], axis=-1)
+            action_samples_type2 = np.concatenate([np.tile(np.array([0, 1, 0]), cnt).reshape(cnt,3), action_samples], axis=-1)
+            action_samples_type3 = np.concatenate([np.tile(np.array([0, 0, 1]), cnt).reshape(cnt,3), action_samples], axis=-1)
+            action_samples = np.concatenate([action_samples_type1,action_samples_type2,action_samples_type3])
 
         encoding = self._vqvae_model.encoder(torch.Tensor(action_samples).to(torch.device('cuda')))
         encoding_inds, quantized_inputs, vq_loss,_,_ = self._vqvae_model.vq_layer(encoding)
