@@ -14,8 +14,8 @@ hopper_dqn_default_config = dict(
         collector_env_num=8,
         evaluator_env_num=5,
         n_evaluator_episode=5,
-        stop_value=3000,
-        # stop_value=int(1e6),  # max env steps 
+        # stop_value=3000,
+        stop_value=int(1e6),  # max env steps 
     ),
     policy=dict(
         # Whether to use cuda for network.
@@ -23,7 +23,9 @@ hopper_dqn_default_config = dict(
         # priority=False,
         priority=False,
         # priority=True,
-        random_collect_size=int(1e4),
+        # random_collect_size=int(1e4),
+        random_collect_size=int(1),  # debug
+
         original_action_shape=3,
         vqvae_embedding_dim=128,  # ved
         vqvae_hidden_dim=[256],  # vhd
@@ -48,7 +50,9 @@ hopper_dqn_default_config = dict(
         nstep=nstep,
         # learn_mode config
         learn=dict(
-            warm_up_update=int(1e4),
+            # warm_up_update=int(1e4),
+            warm_up_update=int(1),
+
             rl_vae_update_circle=1,  # train rl 1 iter, vae 1 iter
             # update_per_collect_rl=20,
             update_per_collect_rl=256,
@@ -83,6 +87,7 @@ hopper_dqn_default_config = dict(
             # Cut trajectories into pieces with length "unroll_len".
             unroll_len=1,
         ),
+        eval=dict(evaluator=dict(eval_freq=10000, )),
         # command_mode config
         other=dict(
             # Epsilon greedy with decay.
@@ -118,7 +123,7 @@ import copy
 
 def train(args):
     # main_config.exp_name = 'data_hopper/hopper_ema_upcr20_bs512_' + 'seed_' + f'{args.seed}'
-    main_config.exp_name = 'data_hopper/noobs_ema_nonoise_rlclipgrad_noprio_' + 'seed' + f'{args.seed}'+'_3M'
+    main_config.exp_name = 'data_hopper/noobs_ema_nonoise_rlclipgrad0.5_noprio_' + 'seed' + f'{args.seed}'+'_3M'
     # main_config.exp_name = 'hopper_noema_upcr20_bs32_' + 'seed_' + f'{args.seed}'
 
     serial_pipeline_dqn_vqvae(
@@ -128,8 +133,8 @@ def train(args):
 
 if __name__ == "__main__":
     import argparse
-    for seed in [0, 1, 2, 3, 4]:
-    # for seed in [0]:
+    # for seed in [0, 1, 2, 3, 4]:
+    for seed in [0]:
         parser = argparse.ArgumentParser()
         parser.add_argument('--seed', '-s', type=int, default=seed)
         args = parser.parse_args()

@@ -79,28 +79,6 @@ def serial_pipeline_dqn_vqvae(
     commander = BaseSerialCommander(
         cfg.policy.other.commander, learner, collector, evaluator, replay_buffer, policy.command_mode
     )
-    ###
-    # TODO(pu): plot latent action
-    # import matplotlib.pyplot as plt
-    # import numpy as np
-    # xx, yy = np.meshgrid(np.arange(-1, 1, 0.01), np.arange(-1, 1, 0.01))
-    # action_samples = np.array([xx.ravel(), yy.ravel()]).reshape(40000, 2)
-    # encoding = policy._vqvae_model.encoder(torch.Tensor(action_samples).to(torch.device('cuda')))
-    # # encoding = policy._vqvae_model.encode(torch.Tensor(action_samples))[0]
-    # encoding_inds, quantized_inputs, vq_loss = policy._vqvae_model.vq_layer(encoding)
-    # x = xx.ravel()
-    # y = yy.ravel()
-    # # c = encoding_inds
-    # c = encoding_inds.cpu().numpy()
-    # fig = plt.figure()
-    # ax = fig.add_subplot(111)
-    # sc = ax.scatter(x, y, c=c, marker='o')
-    # ax.set_title('K=64 latent action')
-    # fig.colorbar(sc)
-    # plt.show()
-    # # plt.savefig('lunarlander_cont_dqn_vqvae_ved64_k64_noema_seed0.png')
-    # plt.savefig('lunarlander_cont_dqn_vqvae_ved64_k64_noema_seed0_iter0.png')
-    ###
 
     # ==========
     # Main loop
@@ -130,6 +108,9 @@ def serial_pipeline_dqn_vqvae(
         # ====================
         # Learn policy from collected data
         for i in range(cfg.policy.learn.warm_up_update):
+            if i==0:
+                policy.visualize_latent(save_histogram=True, name='warmup-start_'+f'{cfg.env.env_id}') # NOTE:visualize_latent
+                policy.visualize_embedding_table(name='warmup-start_'+f'{cfg.env.env_id}')
             # Learner will train ``update_per_collect`` times in one iteration.
             train_data = replay_buffer.sample(cfg.policy.learn.vqvae_batch_size, learner.train_iter)
             if train_data is None:
@@ -151,11 +132,16 @@ def serial_pipeline_dqn_vqvae(
     collector.reset(policy.collect_mode)
 
     for iter in range(max_iterations):
+        if iter%100000==0:
+            policy.visualize_latent(save_histogram=True, name=f'iter{iter}_{cfg.env.env_id}') # NOTE:visualize_latent
+            policy.visualize_embedding_table(name=f'iter{iter}_{cfg.env.env_id}')
         collect_kwargs = commander.step()
         # Evaluate policy performance
         if evaluator.should_eval(learner.train_iter):
             stop, reward = evaluator.eval(learner.save_checkpoint, learner.train_iter, collector.envstep)
             if stop:
+                policy.visualize_latent(save_histogram=True, name=f'iter{iter}_{cfg.env.env_id}')# NOTE:visualize_latent
+                policy.visualize_embedding_table(name=f'iter{iter}_{cfg.env.env_id}')
                 break
         # Collect data by default config n_sample/n_episode
         if hasattr(cfg.policy.collect, "each_iter_n_sample"):
@@ -225,6 +211,8 @@ def serial_pipeline_dqn_vqvae(
             replay_buffer_recent.clear()  # TODO(pu)
 
         if collector.envstep > 3e6:
+            policy.visualize_latent(save_histogram=True, name=f'iter{iter}_{cfg.env.env_id}') # NOTE:visualize_latent
+            policy.visualize_embedding_table(name=f'iter{iter}_{cfg.env.env_id}')
             break
 
     # Learner's after_run hook.

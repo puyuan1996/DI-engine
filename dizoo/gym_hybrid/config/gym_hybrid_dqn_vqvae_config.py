@@ -37,6 +37,8 @@ gym_hybrid_dqn_default_config = dict(
                 action_args_shape=2,
             ),
         vqvae_embedding_dim=64,  # ved
+        vqvae_hidden_dim=[256],  # vhd
+
         is_ema_target=False,  # use EMA
         is_ema=True,  # use EMA
         # is_ema=False,  # no EMA
