@@ -7,6 +7,7 @@ from abc import abstractmethod
 from typing import List, Callable, Union, Any, TypeVar, Tuple
 import collections, numpy
 from ding.torch_utils import one_hot
+import numpy as np
 Tensor = TypeVar('torch.tensor')
 
 
@@ -35,13 +36,14 @@ class VectorQuantizer(nn.Module):
     [1] https://github.com/deepmind/sonnet/blob/v2/sonnet/src/nets/vqvae.py
     """
 
-    def __init__(self, num_embeddings: int, embedding_dim: int, beta: float = 0.25, is_ema=False, is_ema_target=False):
+    def __init__(self, num_embeddings: int, embedding_dim: int, beta: float = 0.25, is_ema=False, is_ema_target=False,eps_greedy_nearest=False):
         super(VectorQuantizer, self).__init__()
         self.K = num_embeddings
         self.D = embedding_dim
         self.beta = beta
         self.is_ema = is_ema
         self.is_ema_target = is_ema_target
+        self.eps_greedy_nearest = eps_greedy_nearest
 
 
         self.embedding = nn.Embedding(self.K, self.D)
@@ -56,7 +58,7 @@ class VectorQuantizer(nn.Module):
                 # self.ema_N.register('N'+f'{i}', torch.zeros(1, device=torch.device('cpu')))
                 # self.ema_m.register('m'+f'{i}', torch.zeros(self.D, device=torch.device('cpu')))
 
-    def forward(self, encoding: Tensor) -> Tensor:
+    def forward(self, encoding: Tensor, eps=0.05) -> Tensor:
         encoding_shape = encoding.shape  # [A x D]
         flat_encoding = encoding.view(-1, self.D)
 
@@ -96,7 +98,7 @@ class VectorQuantizer(nn.Module):
                 if not self.is_ema_target:
                     self.embedding.weight.data[i] = self.ema_m.get('m' + f'{i}') / self.ema_N.get('N' + f'{i}')  # TODO(pu)
                 else:
-                    embedding_loss+=F.mse_loss(self.embedding.weight[i], self.ema_m.get('m' + f'{i}') / self.ema_N.get('N' + f'{i}'))
+                    embedding_loss = F.mse_loss(self.embedding.weight[i], self.ema_m.get('m' + f'{i}') / self.ema_N.get('N' + f'{i}'))
             if not self.is_ema_target:
                 embedding_loss=torch.zeros(1, device=device)
                 vq_loss = commitment_loss * self.beta
@@ -106,6 +108,11 @@ class VectorQuantizer(nn.Module):
         else:
             embedding_loss = F.mse_loss(quantized_embedding, encoding.detach())
             vq_loss = commitment_loss * self.beta + embedding_loss
+
+        if self.eps_greedy_nearest:
+            if np.random.random() < eps:
+                quantized_index = torch.from_numpy(np.random.randint(0, self.K,1))
+                quantized_embedding = self.embedding.weight[quantized_index]
 
         # straight-through estimator
         # Add the residue back to the encoding
@@ -135,6 +142,7 @@ class VQVAE(nn.Module):
             beta: float = 0.25,
             is_ema: bool = False,
             is_ema_target: bool = False,
+            eps_greedy_nearest: bool =False,
             img_size: int = 64,
             **kwargs
     ) -> None:
@@ -149,6 +157,7 @@ class VQVAE(nn.Module):
         self.beta = beta
         self.is_ema = is_ema
         self.is_ema_target = is_ema_target
+        self.eps_greedy_nearest = eps_greedy_nearest
 
         ### Encoder
 
@@ -166,7 +175,7 @@ class VQVAE(nn.Module):
         self.encoder = nn.Sequential(*modules)
 
         ### VQ layer
-        self.vq_layer = VectorQuantizer(num_embeddings, embedding_dim, self.beta, self.is_ema, self.is_ema_target)
+        self.vq_layer = VectorQuantizer(num_embeddings, embedding_dim, self.beta, self.is_ema, self.is_ema_target,self.eps_greedy_nearest)
 
         ### Decoder
         self.decode_action_head = nn.Sequential(nn.Linear(self.embedding_dim, self.hidden_dims[0]), nn.ReLU())

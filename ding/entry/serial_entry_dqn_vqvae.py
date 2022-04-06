@@ -132,7 +132,7 @@ def serial_pipeline_dqn_vqvae(
     collector.reset(policy.collect_mode)
 
     for iter in range(max_iterations):
-        if iter%100000==0:
+        if iter%5000==0:
             policy.visualize_latent(save_histogram=True, name=f'iter{iter}_{cfg.env.env_id}_s{cfg.seed}') # NOTE:visualize_latent
             policy.visualize_embedding_table(name=f'iter{iter}_{cfg.env.env_id}_s{cfg.seed}')
         collect_kwargs = commander.step()
