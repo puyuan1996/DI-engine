@@ -33,6 +33,8 @@ hopper_dqn_default_config = dict(
         is_ema_target=False,  # use EMA
         is_ema=True,  # use EMA
         # is_ema=False,  # no EMA
+        eps_greedy_nearest=True,
+
         action_space='continuous',  # 'hybrid',
         model=dict(
             obs_shape=11,
@@ -50,8 +52,9 @@ hopper_dqn_default_config = dict(
         nstep=nstep,
         # learn_mode config
         learn=dict(
+            constrain_action=False,
             warm_up_update=int(1e4),
-            # warm_up_update=int(1),
+            # warm_up_update=int(1), # debug
 
             rl_vae_update_circle=1,  # train rl 1 iter, vae 1 iter
             # update_per_collect_rl=20,
@@ -87,7 +90,7 @@ hopper_dqn_default_config = dict(
             # Cut trajectories into pieces with length "unroll_len".
             unroll_len=1,
         ),
-        eval=dict(evaluator=dict(eval_freq=10000, )),
+        eval=dict(evaluator=dict(eval_freq=5000, )),
         # command_mode config
         other=dict(
             # Epsilon greedy with decay.
@@ -123,7 +126,7 @@ import copy
 
 def train(args):
     # main_config.exp_name = 'data_hopper/hopper_ema_upcr20_bs512_' + 'seed_' + f'{args.seed}'
-    main_config.exp_name = 'data_hopper/noobs_ema_nonoise_rlclipgrad0.5_noprio_wu1e4_' + 'seed' + f'{args.seed}'+'_3M'
+    main_config.exp_name = 'data_hopper/noobs_ema_nonoise_rlclipgrad0.5_noprio_wu1e4_eps-greedy-nearest_' + 'seed' + f'{args.seed}'+'_3M'
     # main_config.exp_name = 'hopper_noema_upcr20_bs32_' + 'seed_' + f'{args.seed}'
 
     serial_pipeline_dqn_vqvae(

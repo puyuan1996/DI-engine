@@ -167,11 +167,12 @@ class DQNVQVAEPolicy(Policy):
         # self._vqvae_model = VQVAE(2, 64, 64) #   action_dim: int, embedding_dim: int, num_embeddings: int,
         self._vqvae_model = VQVAE(
             self._cfg.original_action_shape,
-            self._cfg.vqvae_embedding_dim,
-            self._cfg.model.action_shape,
+            self._cfg.vqvae_embedding_dim,#D
+            self._cfg.model.action_shape, #K
             self._cfg.vqvae_hidden_dim,
             is_ema=self._cfg.is_ema,
             is_ema_target=self._cfg.is_ema_target,
+            eps_greedy_nearest=self._cfg.eps_greedy_nearest,
 
         )
         self._vqvae_model = to_device(self._vqvae_model, self._device)
@@ -235,6 +236,7 @@ class DQNVQVAEPolicy(Policy):
             td_error_per_sample = torch.Tensor([0]).item()
 
             encoding_inds = self.visualize_latent(save_histogram=False) # NOTE:visualize_latent
+            cos_similarity = self.visualize_embedding_table(save_dis_map=False)
 
             return {
                 'cur_lr': self._optimizer.defaults['lr'],
@@ -246,8 +248,9 @@ class DQNVQVAEPolicy(Policy):
                 # 'latent_action_median':torch.Tensor([-1]).item(),
                 # 'latent_action_variance':torch.Tensor([-1]).item(),
                 '[histogram]latent_action': encoding_inds,
+                '[histogram]cos_similarity': cos_similarity,
             }
-        ### VAE+RL phase ###
+        ### VQVAE+RL phase ###
         else:
             self._forward_learn_cnt += 1
             loss_dict = {}
@@ -260,7 +263,7 @@ class DQNVQVAEPolicy(Policy):
                 use_nstep=True
             )
             # ====================
-            # train vae
+            # train VQVAE
             # ====================
             if data['vae_phase'][0].item() is True:
                 if self._cuda:
@@ -285,6 +288,8 @@ class DQNVQVAEPolicy(Policy):
                 td_error_per_sample = torch.Tensor([0]).item()
 
                 encoding_inds = self.visualize_latent(save_histogram=False) # NOTE:visualize_latent
+                cos_similarity = self.visualize_embedding_table(save_dis_map=False)
+
 
                 return {
                     'cur_lr': self._optimizer.defaults['lr'],
@@ -297,6 +302,7 @@ class DQNVQVAEPolicy(Policy):
                     # 'latent_action_variance':torch.Tensor([-1]).item(),
                     'total_grad_norm_vqvae':total_grad_norm_vqvae,
                     '[histogram]latent_action': encoding_inds,
+                    '[histogram]cos_similarity': cos_similarity,
                 }
             # ====================
             # train RL
@@ -332,7 +338,15 @@ class DQNVQVAEPolicy(Policy):
                 with torch.no_grad():
                     target_q_value = self._target_model.forward(data['next_obs'])['logit']
                     # Max q value action (main model)
-                    target_q_action = self._learn_model.forward(data['next_obs'])['action']
+                    if self._cfg.learn.constrain_action is True:
+                        # TODO(pu)
+                        encoding_inds = self.visualize_latent(save_histogram=False) # NOTE:visualize_latent
+                        constrain_action = torch.unique(torch.from_numpy(encoding_inds))
+                        next_q_value = self._learn_model.forward(data['next_obs'])['logit']
+                        target_q_action = torch.argmax(next_q_value[:,constrain_action],dim=-1)
+                        # target_q_action = self._learn_model.forward(data['next_obs'])['action']
+                    else:
+                        target_q_action = self._learn_model.forward(data['next_obs'])['action']
 
                 # NOTE: RL learn policy in latent action space, so here using data['latent_action']
                 data_n = q_nstep_td_data(
@@ -387,14 +401,15 @@ class DQNVQVAEPolicy(Policy):
             'embedding_loss' ,
             'commitment_loss',
             'vq_loss',  
+            'total_grad_norm_rl',
+            'total_grad_norm_vqvae',
             # 'predict_loss'
             # 'latent_action_max',
             # 'latent_action_min',
             # 'latent_action_median',
             # 'latent_action_variance',
             # '[histogram]latent_action',
-            'total_grad_norm_rl',
-            'total_grad_norm_vqvae',
+            # '[histogram]cos_similarity',
         ]
         return ret
 
@@ -631,14 +646,12 @@ class DQNVQVAEPolicy(Policy):
         """
         return 'dqn', ['ding.model.template.q_learning']
 
-    def visualize_latent(self, save_histogram=True, name=0):
+    def visualize_latent(self, save_histogram=True, name=0, granularity=0.1):
         if self.cfg.action_space=='continuous':  # continuous action
-            granularity=0.1
             xx, yy, zz = np.meshgrid(np.arange(-1, 1, granularity), np.arange(-1, 1, granularity), np.arange(-1, 1, granularity))
             cnt = int((2/granularity))**3
             action_samples = np.array([xx.ravel(), yy.ravel(), zz.ravel()]).reshape(cnt, 3)
         elif self.cfg.action_space=='hybrid':  # hybrid action
-            granularity=0.1
             xx, yy = np.meshgrid(np.arange(-1, 1, granularity), np.arange(-1, 1, granularity))
             cnt = int((2/granularity))**2
             action_samples = np.array([xx.ravel(), yy.ravel()]).reshape(cnt, 2)
@@ -654,7 +667,7 @@ class DQNVQVAEPolicy(Policy):
             fig = plt.figure()
 
             # Fixing bin edges
-            HIST_BINS = np.linspace(0, 127, 128)
+            HIST_BINS = np.linspace(0, self._cfg.model.action_shape-1, self._cfg.model.action_shape)
 
             # the histogram of the data
             n, bins, patches = plt.hist(encoding_inds.detach().cpu().numpy(), HIST_BINS, density=False, facecolor='g', alpha=0.75)
@@ -683,18 +696,20 @@ class DQNVQVAEPolicy(Policy):
         for i in range(embedding_table.shape[0]):
             for j in list(range(embedding_table.shape[0])):
                 dis[i].append(cos(embedding_table[i], embedding_table[j]).numpy())
-
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-        ax.set_title('Embedding table CosineSimilarity')
-        plt.imshow(dis)
-        plt.colorbar()
-        plt.show()
-        if isinstance(name, int):
-            plt.savefig(f'embedding_table_CosineSimilarity_iter{name}.png')
-            print(f'save embedding_table_CosineSimilarity_iter{name}.png')
-        elif isinstance(name, str):
-            plt.savefig('embedding_table_CosineSimilarity_'+name+'.png')
-            print('save embedding_table_CosineSimilarity_'+name+'.png')
+        if save_dis_map:
+            fig = plt.figure()
+            ax = fig.add_subplot(111)
+            ax.set_title('Embedding table CosineSimilarity')
+            plt.imshow(dis)
+            plt.colorbar()
+            plt.show()
+            if isinstance(name, int):
+                plt.savefig(f'embedding_table_CosineSimilarity_iter{name}.png')
+                print(f'save embedding_table_CosineSimilarity_iter{name}.png')
+            elif isinstance(name, str):
+                plt.savefig('embedding_table_CosineSimilarity_'+name+'.png')
+                print('save embedding_table_CosineSimilarity_'+name+'.png')
+        else:
+            return  np.array(dis)
 
 

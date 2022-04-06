@@ -36,12 +36,13 @@ gym_hybrid_dqn_default_config = dict(
                 action_type_shape=3,
                 action_args_shape=2,
             ),
-        vqvae_embedding_dim=64,  # ved
+        vqvae_embedding_dim=64,  # ved: D
         vqvae_hidden_dim=[256],  # vhd
 
         is_ema_target=False,  # use EMA
-        is_ema=True,  # use EMA
-        # is_ema=False,  # no EMA
+        # is_ema=True,  # use EMA
+        is_ema=False,  # no EMA
+         eps_greedy_nearest=False,
         action_space='hybrid',
         model=dict(
             # action_space='hybrid',
@@ -57,6 +58,7 @@ gym_hybrid_dqn_default_config = dict(
         nstep=nstep,
         # learn_mode config
         learn=dict(
+            constrain_action=False,
             warm_up_update=int(1e4),
             # warm_up_update=int(0), # debug
 
@@ -133,7 +135,8 @@ import copy
 def train(args):
     # main_config.exp_name = 'data_gym_hybrid/sliding_ema_noobs_upcr256_rlbs512_vqvaebs512_prio_nonoise_rlclipgrad_' + 'seed' + f'{args.seed}'+'_3M'
     # main_config.exp_name = 'data_gym_hybrid/sliding_noema_noobs_upcr256_rlbs512_vqvaebs512_noprio_nonoise_rlclipgrad_' + 'seed' + f'{args.seed}'+'_3M'
-    main_config.exp_name = 'data_sliding/noobs_ema_nonoise_rlclipgrad0.5_noprio_' + 'seed' + f'{args.seed}'+'_3M'
+    # main_config.exp_name = 'data_sliding/noobs_ema_nonoise_rlclipgrad0.5_noprio_' + 'seed' + f'{args.seed}'+'_3M'
+    main_config.exp_name = 'data_sliding/noobs_noema_nonoise_rlclipgrad0.5_noprio' + 'seed' + f'{args.seed}'+'_3M'
 
     # main_config.exp_name = 'debug'  # debug
 
@@ -145,7 +148,7 @@ def train(args):
 if __name__ == "__main__":
     import argparse
     # for seed in [0, 1, 2, 3, 4]:
-    for seed in [1]:
+    for seed in [0,1]:
         parser = argparse.ArgumentParser()
         parser.add_argument('--seed', '-s', type=int, default=seed)
         args = parser.parse_args()
