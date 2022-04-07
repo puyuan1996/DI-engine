@@ -1,4 +1,4 @@
-from dizoo.mujoco.config.hopper_sac_data_generation_default_config_pu import main_config, create_config
+from dizoo.mujoco.config.halfcheetah_dqn_vqvae_data_generation_config import main_config, create_config
 from ding.entry import serial_pipeline_offline
 import os
 import torch
@@ -19,9 +19,15 @@ def train(args):
     # Dataset
     dataset = create_dataset(cfg)
     print(dataset.__len__())
-    print(dataset.__getitem__(0))
-    # for i in range(dataset.__len__()):
-    #     print(dataset.dataset.__len__()[i])
+    # print(dataset.__getitem__(0))
+    print(dataset.__getitem__(0)[0]['action'])
+
+    # episode_action = []
+    # for i in range(dataset.__getitem__(0).__len__()):  # length of the firse collected episode
+    #     episode_action.append(dataset.__getitem__(0)[i]['action'])
+    
+    # stacked action of the first collected episode
+    episode_action = torch.stack([dataset.__getitem__(0)[i]['action'] for i in range(dataset.__getitem__(0).__len__())],axis=0)
 
     # dataloader = DataLoader(dataset, cfg.policy.learn.batch_size, shuffle=True, collate_fn=lambda x: x)
     # for i, train_data in enumerate(dataloader):

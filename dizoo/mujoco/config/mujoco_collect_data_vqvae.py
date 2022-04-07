@@ -1,4 +1,4 @@
-from dizoo.mujoco.config.hopper_sac_data_generation_default_config_pu import main_config, create_config
+from dizoo.mujoco.config.halfcheetah_dqn_vqvae_data_generation_config import main_config, create_config
 from ding.entry import collect_episodic_demo_data, eval
 import torch
 import copy
@@ -7,6 +7,7 @@ import copy
 def eval_ckpt(args):
     config = copy.deepcopy([main_config, create_config])
     eval(config, seed=args.seed, load_path=main_config.policy.learn.learner.hook.load_ckpt_before_run)
+    # eval(config, seed=args.seed, load_path=main_config.policy.learn.learner.hook.load_ckpt_before_run,replay_path='/home/puyuan/halfcheetah_dqn_vqvae_seed0/')
 
 
 def generate(args):

@@ -61,7 +61,9 @@ def eval(
     if replay_path:
         evaluator_env.enable_save_replay(replay_path)
     set_pkg_seed(seed, use_cuda=cfg.policy.cuda)
-    policy = create_policy(cfg.policy, model=model, enable_field=['eval'])
+    # policy = create_policy(cfg.policy, model=model, enable_field=['eval'])
+    # TODO(pu)
+    policy = create_policy(cfg.policy, model=model, enable_field=['learn', 'collect', 'eval', 'command'])
     if state_dict is None:
         if load_path is None:
             load_path = cfg.policy.learn.learner.load_path
@@ -207,9 +209,15 @@ def collect_episodic_demo_data(
     else:
         env_fn, collector_env_cfg, _ = env_setting
     collector_env = create_env_manager(cfg.env.manager, [partial(env_fn, cfg=c) for c in collector_env_cfg])
+    # TODO(pu)
+    # collector_env.enable_save_replay(replay_path='/home/puyuan/halfcheetah_sac_seed0/')
+
     collector_env.seed(seed)
     set_pkg_seed(seed, use_cuda=cfg.policy.cuda)
-    policy = create_policy(cfg.policy, model=model, enable_field=['collect', 'eval'])
+    # policy = create_policy(cfg.policy, model=model, enable_field=['collect', 'eval'])
+    # TODO(pu)
+    policy = create_policy(cfg.policy, model=model, enable_field=['learn', 'collect', 'eval', 'command'])
+
     collect_demo_policy = policy.collect_mode
     if state_dict is None:
         assert state_dict_path is not None

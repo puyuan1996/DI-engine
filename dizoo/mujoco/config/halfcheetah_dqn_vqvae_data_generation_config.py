@@ -18,7 +18,7 @@ halfcheetah_dqn_default_config = dict(
         stop_value=int(1e6),
     ),
     policy=dict(
-        learned_model_path='/home/puyuan/DI-engine/data_halfcheetah/noobs_noprio_ema_nonoise_rlcipgrad_vhd512_D256_k128seed_0_3M/ckpt/ckpt_best.pth.tar',
+        # learned_model_path='/home/puyuan/DI-engine/data_halfcheetah/noobs_noprio_ema_nonoise_rlcipgrad_vhd512_D256_k128seed_0_3M/ckpt/ckpt_best.pth.tar',
 
         # Whether to use cuda for network.
         cuda=True,
@@ -37,6 +37,8 @@ halfcheetah_dqn_default_config = dict(
         is_ema_target=False,  # use EMA
         is_ema=True,  # use EMA
         # is_ema=False,  # no EMA
+        eps_greedy_nearest=False,
+
         action_space='continuous',  # 'hybrid',
         model=dict(
             obs_shape=17,
@@ -51,6 +53,7 @@ halfcheetah_dqn_default_config = dict(
         nstep=nstep,
         # learn_mode config
         learn=dict(
+            constrain_action=False,
             ignore_done=True,
             warm_up_update=int(1e4),
             rl_vae_update_circle=1,  # train rl 1 iter, vae 1 iter
@@ -82,6 +85,16 @@ halfcheetah_dqn_default_config = dict(
             min=-0.5,
             max=0.5,
             ),
+            learner=dict(
+                # load_path='/home/puyuan/halfcheetah_dqn_vqvae_seed0/ckpt/ckpt_best.pth.tar',
+                load_path='/home/puyuan/halfcheetah_dqn_vqvae_seed0/ckpt/iteration_3102260.pth.tar',
+                hook=dict(
+                    # load_ckpt_before_run='/home/puyuan/halfcheetah_dqn_vqvae_seed0/ckpt/ckpt_best.pth.tar',
+                    load_ckpt_before_run='/home/puyuan/halfcheetah_dqn_vqvae_seed0/ckpt/iteration_3102260.pth.tar',
+
+                    save_ckpt_after_run=False,
+                )
+            ),
         ),
         # collect_mode config
         collect=dict(
@@ -90,6 +103,12 @@ halfcheetah_dqn_default_config = dict(
             n_sample=256,
             # Cut trajectories into pieces with length "unroll_len".
             unroll_len=1,
+
+            # save
+            save_path='/home/puyuan/halfcheetah_dqn_vqvae_seed0/expert_data.pkl',
+            # load
+            data_type='naive',
+            data_path='/home/puyuan/halfcheetah_dqn_vqvae_seed0/expert_data.pkl'
         ),
         # command_mode config
         other=dict(
@@ -101,7 +120,7 @@ halfcheetah_dqn_default_config = dict(
                 end=0.05,
                 decay=int(1e5),
             ),
-            replay_buffer=dict(replay_buffer_size=int(1e6), )
+            replay_buffer=dict(replay_buffer_size=int(10), ) # TODO
         ),
     ),
 )
