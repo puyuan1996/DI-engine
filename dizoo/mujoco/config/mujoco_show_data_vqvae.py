@@ -33,6 +33,15 @@ def train(args):
     # for i, train_data in enumerate(dataloader):
     #     print(i, train_data)
     # serial_pipeline_offline(config, seed=args.seed)
+    import matplotlib.pyplot as plt
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    ax.set_title('episode actions')
+    plt.imshow(episode_action)
+    plt.colorbar()
+    plt.show()
+    plt.savefig(f'episode_actions_7400.png')
+    print(f'save episode_actions_7400.png')
 
 
 if __name__ == "__main__":
