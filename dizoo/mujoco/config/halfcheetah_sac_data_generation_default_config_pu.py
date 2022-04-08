@@ -5,10 +5,13 @@ halfcheetah_sac_data_genearation_default_config = dict(
         env_id='HalfCheetah-v3',
         norm_obs=dict(use_norm=False, ),
         norm_reward=dict(use_norm=False, ),
-        collector_env_num=10,
-        evaluator_env_num=8,
+        # collector_env_num=10,
+        # evaluator_env_num=8,
+        # n_evaluator_episode=8,
+        collector_env_num=1,
+        evaluator_env_num=1,
+        n_evaluator_episode=2,
         use_act_scale=True,
-        n_evaluator_episode=8,
         stop_value=12000,  # TODO
     ),
     policy=dict(
@@ -37,9 +40,11 @@ halfcheetah_sac_data_genearation_default_config = dict(
             reparameterization=True,
             auto_alpha=False,
             learner=dict(
-                load_path='/home/puyuan/halfcheetah_sac_seed0/ckpt/ckpt_best.pth.tar',
+                load_path='/home/puyuan/halfcheetah_sac_seed0/ckpt/iteration_100000.pth.tar',
+                # load_path='/home/puyuan/halfcheetah_sac_seed0/ckpt/ckpt_best.pth.tar',
                 hook=dict(
-                    load_ckpt_before_run='/home/puyuan/halfcheetah_sac_seed0/ckpt/ckpt_best.pth.tar',
+                    load_ckpt_before_run='/home/puyuan/halfcheetah_sac_seed0/ckpt/iteration_100000.pth.tar',
+                    # load_ckpt_before_run='/home/puyuan/halfcheetah_sac_seed0/ckpt/ckpt_best.pth.tar',
                     save_ckpt_after_run=False,
                 )
             ),
@@ -48,15 +53,16 @@ halfcheetah_sac_data_genearation_default_config = dict(
             n_sample=1,
             unroll_len=1,
             # save
-            # save_path='/home/puyuan/halfcheetah_sac_seed0/expert_iteration_200000.pkl',
-            save_path='/home/puyuan/halfcheetah_sac_seed0/expert_data.pkl',
+            save_path='/home/puyuan/halfcheetah_sac_seed0/data_iteration_100000.pkl',
+            # save_path='/home/puyuan/halfcheetah_sac_seed0/expert_data.pkl',
             # load
             data_type='naive',
-            data_path='/home/puyuan/halfcheetah_sac_seed0/expert_data.pkl'
+            data_path='/home/puyuan/halfcheetah_sac_seed0/data_iteration_100000.pkl',
+            # data_path='/home/puyuan/halfcheetah_sac_seed0/expert_data.pkl'
         ),
         command=dict(),
         eval=dict(),
-        other=dict(replay_buffer=dict(replay_buffer_size=1, ), ),  # TODO
+        other=dict(replay_buffer=dict(replay_buffer_size=2, ), ),  # TODO
     ),
 )
 

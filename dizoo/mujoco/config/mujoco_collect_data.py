@@ -7,6 +7,7 @@ import copy
 def eval_ckpt(args):
     config = copy.deepcopy([main_config, create_config])
     eval(config, seed=args.seed, load_path=main_config.policy.learn.learner.hook.load_ckpt_before_run,replay_path='/home/puyuan/halfcheetah_sac_seed0/')
+    # eval(config, seed=args.seed, load_path=main_config.policy.learn.learner.hook.load_ckpt_before_run)
 
 
 def generate(args):
@@ -29,5 +30,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     eval_ckpt(args)
-    generate(args)
+    # generate(args)
 
