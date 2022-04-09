@@ -1,4 +1,3 @@
-from ding.entry import serial_pipeline
 from easydict import EasyDict
 
 agent_num = 5
@@ -6,7 +5,7 @@ collector_env_num = 16
 evaluator_env_num = 8
 
 main_config = dict(
-    exp_name='smac_5m6m_qmix',
+    exp_name='smac_5m6m_qmix_seed0',
     env=dict(
         map_name='5m_vs_6m',
         difficulty=7,
@@ -15,9 +14,12 @@ main_config = dict(
         agent_num=agent_num,
         collector_env_num=collector_env_num,
         evaluator_env_num=evaluator_env_num,
-        shared_memory=False,
         stop_value=0.999,
         n_evaluator_episode=32,
+        manager=dict(
+            shared_memory=False,
+            reset_timeout=6000,
+        ),
     ),
     policy=dict(
         model=dict(
@@ -82,12 +84,14 @@ create_config = EasyDict(create_config)
 #     serial_pipeline([main_config, create_config], seed=0)
 
 def train(args):
+    
     main_config.exp_name='debug_smac_5m6m_qmix_para9'+'_seed'+f'{args.seed}'
     import copy
     serial_pipeline([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed)
     # serial_pipeline([main_config, create_config], seed=args.seed)
 
 if __name__ == "__main__":
+    from ding.entry import serial_pipeline
     import argparse
     for seed in [0]:     
         parser = argparse.ArgumentParser()

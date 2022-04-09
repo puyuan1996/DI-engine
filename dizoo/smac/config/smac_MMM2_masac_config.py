@@ -1,5 +1,4 @@
 from easydict import EasyDict
-from ding.entry import serial_pipeline
 
 agent_num = 10
 collector_env_num = 8
@@ -7,7 +6,7 @@ evaluator_env_num = 8
 special_global_state = True
 
 SMAC_MMM2_masac_default_config = dict(
-    # exp_name='debug_smac_MMM2_masac',
+    exp_name='smac_MMM2_masac_seed0',
     env=dict(
         map_name='MMM2',
         difficulty=7,
@@ -90,6 +89,7 @@ def train(args):
     serial_pipeline([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed)
 
 if __name__ == "__main__":
+    from ding.entry import serial_pipeline
     import argparse
     for seed in [0,1,2]:     
         parser = argparse.ArgumentParser()

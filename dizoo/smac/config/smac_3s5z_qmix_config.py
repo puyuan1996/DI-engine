@@ -1,4 +1,3 @@
-from ding.entry import serial_pipeline
 from easydict import EasyDict
 
 agent_num = 8
@@ -6,7 +5,7 @@ collector_env_num = 16
 evaluator_env_num = 8
 
 main_config = dict(
-    exp_name='smac_3s5z_qmix',
+    exp_name='smac_3s5z_qmix_seed0',
     env=dict(
         map_name='3s5z',
         difficulty=7,
@@ -15,9 +14,12 @@ main_config = dict(
         agent_num=agent_num,
         collector_env_num=collector_env_num,
         evaluator_env_num=evaluator_env_num,
-        shared_memory=False,
         stop_value=0.999,
         n_evaluator_episode=32,
+        manager=dict(
+            shared_memory=False,
+            reset_timeout=6000,
+        ),
     ),
     policy=dict(
         model=dict(
