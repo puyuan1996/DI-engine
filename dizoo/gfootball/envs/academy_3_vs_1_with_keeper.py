@@ -197,11 +197,11 @@ class Academy_3_vs_1_with_Keeper(MultiAgentEnv):
         if sum(rewards) <= 0:  
             # return obs, self.get_global_state(), -int(done), done, infos
             infos['final_eval_reward'] = infos['score_reward'] # TODO
-            return BaseEnvTimestep(obs, -int(done), done, infos)
+            return BaseEnvTimestep(obs, torch.tensor(-int(done),dtype=torch.float32), done, infos)
 
         infos['final_eval_reward'] = infos['score_reward'] # TODO
         # return obs, self.get_global_state(), 100, done, infos
-        return BaseEnvTimestep(obs, 100, done, infos)
+        return BaseEnvTimestep(obs, torch.tensor(100,dtype=torch.float32), done, infos)
 
     def get_obs(self):
         """Returns all agent observations in a list."""
