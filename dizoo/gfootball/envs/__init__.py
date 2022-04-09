@@ -5,3 +5,5 @@ try:
 except ImportError:
     warnings.warn("not found gfootball env, please install it")
     GfootballEnv = None
+
+# from .multiagentenv import MultiAgentEnv

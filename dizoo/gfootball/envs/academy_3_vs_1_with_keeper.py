@@ -1,17 +1,21 @@
-from .. import MultiAgentEnv
+from dizoo.gfootball.envs.multiagentenv import MultiAgentEnv
 import gfootball.env as football_env
 from gfootball.env import observation_preprocessing
 import gym
 import numpy as np
 from ding.utils import ENV_REGISTRY
-
-
+from typing import Any, List, Union, Optional
+import copy
+import torch
+from ding.envs import BaseEnv, BaseEnvTimestep, BaseEnvInfo
+from ding.torch_utils import to_ndarray, to_list
 
 @ENV_REGISTRY.register('keeper')
 class Academy_3_vs_1_with_Keeper(MultiAgentEnv):
 
     def __init__(
         self,
+        cfg: dict,
         dense_reward=False,
         write_full_episode_dumps=False,
         write_goal_dumps=False,
@@ -28,8 +32,9 @@ class Academy_3_vs_1_with_Keeper(MultiAgentEnv):
         logdir='football_dumps',
         write_video=True,
         number_of_right_players_agent_controls=0,
-        seed=0
+        # seed=0
     ):
+        self._cfg = cfg   # TODO
         self.dense_reward = dense_reward
         self.write_full_episode_dumps = write_full_episode_dumps
         self.write_goal_dumps = write_goal_dumps
@@ -46,7 +51,8 @@ class Academy_3_vs_1_with_Keeper(MultiAgentEnv):
         self.logdir = logdir
         self.write_video = write_video
         self.number_of_right_players_agent_controls = number_of_right_players_agent_controls
-        self.seed = seed
+        # self.seed = seed 
+        # self.seed = self._cfg.seed  # TODO
 
         self.env = football_env.create_environment(
             write_full_episode_dumps = self.write_full_episode_dumps,
@@ -62,16 +68,19 @@ class Academy_3_vs_1_with_Keeper(MultiAgentEnv):
             number_of_left_players_agent_controls=self.n_agents,
             number_of_right_players_agent_controls=self.number_of_right_players_agent_controls,
             channel_dimensions=(observation_preprocessing.SMM_WIDTH, observation_preprocessing.SMM_HEIGHT))
-        self.env.seed(self.seed)
+        # self.env.seed(self.seed)
 
         obs_space_low = self.env.observation_space.low[0][:self.obs_dim]
         obs_space_high = self.env.observation_space.high[0][:self.obs_dim]
 
-        self.action_space = [gym.spaces.Discrete(
+        self._action_space = [gym.spaces.Discrete(
             self.env.action_space.nvec[1]) for _ in range(self.n_agents)]
-        self.observation_space = [
+            
+        self._observation_space = [
             gym.spaces.Box(low=obs_space_low, high=obs_space_high, dtype=self.env.observation_space.dtype) for _ in range(self.n_agents)
         ]
+        self._reward_space = gym.spaces.Box(low=0, high=100, shape=(1,), dtype=np.float32)  # TODO
+
 
         self.n_actions = self.action_space[0].n
 
@@ -124,27 +133,57 @@ class Academy_3_vs_1_with_Keeper(MultiAgentEnv):
     def get_global_state(self):
         return self.get_simple_obs(-1)
 
+    def get_global_special_state(self):
+        return [np.concatenate([self.get_global_state(), self.get_obs_agent(i)]) for i in range(self.n_agents)]
+
     def check_if_done(self):
         cur_obs = self.env.unwrapped.observation()[0]
         ball_loc = cur_obs['ball']
         ours_loc = cur_obs['left_team'][-self.n_agents:]
 
         if ball_loc[0] < 0 or any(ours_loc[:, 0] < 0):
-            return True
+            return True # TODO(pu)
 
         return False
+
+    def reset(self):
+        """Returns initial observations and states."""
+        self.time_step = 0
+        self.env.reset()
+        # obs = np.array([self.get_simple_obs(i) for i in range(self.n_agents)])
+
+        obs = {
+            'agent_state': torch.tensor(np.stack(self.get_obs(),axis=0),dtype=torch.float32),
+            # 'global_state': self.get_state(),
+            'global_state': torch.tensor(np.stack(self.get_global_special_state(),axis=0,),dtype=torch.float32),
+            'action_mask': torch.tensor(np.stack(self.get_avail_actions(),axis=0),dtype=torch.float32),
+        }
+        # obs = to_ndarray(obs).astype(np.float32)
+        
+        if hasattr(self, '_seed') and hasattr(self, '_dynamic_seed') and self._dynamic_seed:
+            np_seed = 100 * np.random.randint(1, 1000)
+            self.env.seed(self._seed + np_seed)
+        elif hasattr(self, '_seed'):
+            self.env.seed(self._seed)
+        self._final_eval_reward = 0
+
+        # return obs, self.get_global_state()
+        return obs
 
     def step(self, actions):
         """Returns reward, terminated, info."""
         self.time_step += 1
+        if isinstance(actions,np.ndarray):
+            actions=torch.from_numpy(actions)
         _, original_rewards, done, infos = self.env.step(actions.to('cpu').numpy().tolist())
 
         obs = {
-            'agent_state': self.get_obs(),
-            'global_state': self.get_state(),
-            'action_mask': self.get_avail_actions(),
+            'agent_state': torch.tensor(np.stack(self.get_obs(),axis=0),dtype=torch.float32),
+            # 'global_state': self.get_state(),
+            'global_state': torch.tensor(np.stack(self.get_global_special_state(),axis=0,),dtype=torch.float32),
+            'action_mask': torch.tensor(np.stack(self.get_avail_actions(),axis=0),dtype=torch.float32),
         }
-
+        # obs = to_ndarray(obs).astype(np.float32)
 
         rewards = list(original_rewards)
         # obs = np.array([self.get_obs(i) for i in range(self.n_agents)])
@@ -155,12 +194,14 @@ class Academy_3_vs_1_with_Keeper(MultiAgentEnv):
         if self.check_if_done():
             done = True
 
-        if sum(rewards) <= 0:
+        if sum(rewards) <= 0:  
             # return obs, self.get_global_state(), -int(done), done, infos
-            return obs, -int(done), done, infos
+            infos['final_eval_reward'] = infos['score_reward'] # TODO
+            return BaseEnvTimestep(obs, -int(done), done, infos)
 
+        infos['final_eval_reward'] = infos['score_reward'] # TODO
         # return obs, self.get_global_state(), 100, done, infos
-        return obs, 100, done, infos
+        return BaseEnvTimestep(obs, 100, done, infos)
 
     def get_obs(self):
         """Returns all agent observations in a list."""
@@ -197,13 +238,7 @@ class Academy_3_vs_1_with_Keeper(MultiAgentEnv):
         """Returns the total number of actions an agent could ever take."""
         return self.action_space[0].n
 
-    def reset(self):
-        """Returns initial observations and states."""
-        self.time_step = 0
-        self.env.reset()
-        obs = np.array([self.get_simple_obs(i) for i in range(self.n_agents)])
 
-        return obs, self.get_global_state()
 
     def render(self):
         pass
@@ -211,9 +246,45 @@ class Academy_3_vs_1_with_Keeper(MultiAgentEnv):
     def close(self):
         self.env.close()
 
-    def seed(self):
-        pass
+    def seed(self, seed: int, dynamic_seed: bool = True) -> None:
+        self._seed = seed
+        self._dynamic_seed = dynamic_seed
+        np.random.seed(self._seed)
+
+    # def seed(self, seed, dynamic_seed=False):
+    #     self._seed = seed
 
     def save_replay(self):
         """Save a replay."""
         pass
+
+    def random_action(self) -> np.ndarray:
+        random_action = self.action_space.sample()
+        random_action = to_ndarray([random_action], dtype=np.int64)
+        return random_action
+
+    @property
+    def observation_space(self) -> gym.spaces.Space:
+        return self._observation_space
+
+    @property
+    def action_space(self) -> gym.spaces.Space:
+        return self._action_space
+
+    @property
+    def reward_space(self) -> gym.spaces.Space:
+        return self._reward_space
+
+    @staticmethod
+    def create_collector_env_cfg(cfg: dict) -> List[dict]:
+        collector_env_num = cfg.pop('collector_env_num')
+        cfg = copy.deepcopy(cfg)
+        cfg.is_train = True
+        return [cfg for _ in range(collector_env_num)]
+
+    @staticmethod
+    def create_evaluator_env_cfg(cfg: dict) -> List[dict]:
+        evaluator_env_num = cfg.pop('evaluator_env_num')
+        cfg = copy.deepcopy(cfg)
+        cfg.is_train = False
+        return [cfg for _ in range(evaluator_env_num)]

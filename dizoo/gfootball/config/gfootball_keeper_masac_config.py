@@ -1,15 +1,15 @@
 from easydict import EasyDict
 
 agent_num = 3
-collector_env_num = 8
-evaluator_env_num = 8
+collector_env_num = 1
+evaluator_env_num = 1
 # special_global_state = True
-# masac keeper
+# masac 5m6m config -> keeper
 gfootball_keeper_masac_default_config = dict(
     exp_name='gfootball_keeper_masac_seed0',
     env=dict(
         # map_name='academy_3_vs_1_with_keeper',
-         env_name='academy_3_vs_1_with_keeper',
+        env_name='academy_3_vs_1_with_keeper',
         difficulty=7,
         # reward_only_positive=True,
         # mirror_opponent=False,
@@ -27,11 +27,11 @@ gfootball_keeper_masac_default_config = dict(
     ),
     policy=dict(
         cuda=True,
-        # random_collect_size=0,
-        random_collect_size=int(1e4),
+        random_collect_size=0,
+        # random_collect_size=int(1e4),
         model=dict(
-            agent_obs_shape=72,
-            global_obs_shape=152,
+            agent_obs_shape=26,
+            global_obs_shape=52,
             action_shape=19,
             twin_critic=True,
             actor_head_hidden_size=256,
@@ -92,15 +92,14 @@ create_config = gfootball_keeper_masac_default_create_config
 
 def train(args):
     from ding.entry import serial_pipeline
-    main_config.exp_name='debug_gfootball_keeper_masac_'+'_seed'+f'{args.seed}'+'_rcs1e4'
-    # serial_pipeline([main_config, create_config], seed=args.seed)
+    main_config.exp_name='debug_gfootball_keeper_masac_'+'seed'+f'{args.seed}'+'_rcs0'
     import copy
-    serial_pipeline([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed)
+    serial_pipeline([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=4e6)
 
 
 if __name__ == "__main__":
     import argparse
-    for seed in [0]:
+    for seed in [0,1,2]:
         parser = argparse.ArgumentParser()
         parser.add_argument('--seed', '-s', type=int, default=seed)
         args = parser.parse_args()

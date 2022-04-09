@@ -53,7 +53,6 @@ def serial_pipeline(
     collector_env = create_env_manager(cfg.env.manager, [partial(env_fn, cfg=c) for c in collector_env_cfg])
     evaluator_env = create_env_manager(cfg.env.manager, [partial(env_fn, cfg=c) for c in evaluator_env_cfg])
     collector_env.seed(cfg.seed)
-    # collector_env.seed(cfg.seed, dynamic_seed=False)
     evaluator_env.seed(cfg.seed, dynamic_seed=False)
     set_pkg_seed(cfg.seed, use_cuda=cfg.policy.cuda)
     policy = create_policy(cfg.policy, model=model, enable_field=['learn', 'collect', 'eval', 'command'])
@@ -83,26 +82,9 @@ def serial_pipeline(
 
     # Accumulate plenty of data at the beginning of training.
     if cfg.policy.get('random_collect_size', 0) > 0:
-        if cfg.policy.get('transition_with_policy_data', False):
-            collector.reset_policy(policy.collect_mode)
-        else:
-            try:
-                action_space = collector_env.env_info().act_space
-            except:
-                # for smac
-                action_space = collector_env.action_helper[0].info()
-                action_space.value.update({'dtype': 'np.int64'})
-            random_policy = PolicyFactory.get_random_policy(policy.collect_mode, action_space=action_space)
-
-            collector.reset_policy(random_policy)
+        random_collect(cfg.policy, policy, collector, collector_env, commander, replay_buffer)
+    while True:
         collect_kwargs = commander.step()
-        new_data = collector.collect(n_sample=cfg.policy.random_collect_size, policy_kwargs=collect_kwargs)
-        replay_buffer.push(new_data, cur_collector_envstep=0)
-        collector.reset_policy(policy.collect_mode)
-    for _ in range(max_iterations):
-    # for _ in range(int(250000)):
-        collect_kwargs = commander.step()
-        # collect_kwargs = {'eps': 0.1}
         # Evaluate policy performance
         if evaluator.should_eval(learner.train_iter):
             stop, reward = evaluator.eval(learner.save_checkpoint, learner.train_iter, collector.envstep)
@@ -133,9 +115,6 @@ def serial_pipeline(
             if learner.policy.get_attribute('priority'):
                 replay_buffer.update(learner.priority_info)
         if collector.envstep >= max_env_step or learner.train_iter >= max_train_iter:
-            break
-
-        if collector.envstep >= int(3e3):
             break
 
     # Learner's after_run hook.
