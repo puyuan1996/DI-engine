@@ -33,7 +33,8 @@ class GfootballEnv(BaseEnv):
 
     def _launch_env(self, gui=False):
         self._env = football_env.create_environment(
-            env_name="11_vs_11_stochastic",
+            # env_name="11_vs_11_stochastic",
+            env_name="academy_3_vs_1_with_keeper",
             representation='raw',
             stacked=False,
             logdir='./tmp/football',
