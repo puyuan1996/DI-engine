@@ -1,8 +1,10 @@
 from easydict import EasyDict
 
 agent_num = 4
-collector_env_num = 1
-evaluator_env_num = 1
+collector_env_num = 8
+evaluator_env_num = 8
+# collector_env_num = 1
+# evaluator_env_num = 1
 # special_global_state = True
 # masac 5m6m config -> counter
 gfootball_counter_masac_default_config = dict(
@@ -18,8 +20,6 @@ gfootball_counter_masac_default_config = dict(
         n_evaluator_episode=32,
         # stop_value=0.99,
         stop_value=99,
-
-        # death_mask=True,
         # special_global_state=special_global_state,
         manager=dict(
             shared_memory=False,
@@ -28,8 +28,8 @@ gfootball_counter_masac_default_config = dict(
     ),
     policy=dict(
         cuda=True,
-        random_collect_size=0,
-        # random_collect_size=int(1e4),
+        # random_collect_size=0,
+        random_collect_size=int(1e4),
         model=dict(
             agent_obs_shape=34,
             global_obs_shape=68,
@@ -66,6 +66,8 @@ gfootball_counter_masac_default_config = dict(
                 start=1,
                 end=0.05,
                 decay=int(5e4),
+                # decay=int(1e5),
+
             ),
             replay_buffer=dict(replay_buffer_size=int(1e6), ), ),
     ),
@@ -81,7 +83,9 @@ gfootball_counter_masac_default_create_config = dict(
         import_names=['dizoo.gfootball.envs.academy_counterattack_hard'],
 
     ),
-    env_manager=dict(type='base'),
+    # env_manager=dict(type='base'),
+    env_manager=dict(type='subprocess'),
+
     policy=dict(type='sac_discrete', ),
 )
 gfootball_counter_masac_default_create_config = EasyDict(gfootball_counter_masac_default_create_config)
@@ -93,16 +97,17 @@ create_config = gfootball_counter_masac_default_create_config
 
 def train(args):
     from ding.entry import serial_pipeline
-    # main_config.exp_name='data_counter_4M/gfootball_counter_masac_'+'rcs0_'+'seed'+f'{args.seed}'+'_4M'
-    main_config.exp_name='data_counter_10M/gfootball_counter_masac_'+'rcs0_'+'seed'+f'{args.seed}'+'_10M'
+    main_config.exp_name='data_counter_10M/gfootball_counter_masac_'+'rcs1e4_'+'seed'+f'{args.seed}'+'_10M'+'_sub'
 
     import copy
-    serial_pipeline([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=4e6)
+    serial_pipeline([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=10e6)
 
 
 if __name__ == "__main__":
     import argparse
     for seed in [0,1,2]:
+    # for seed in [3]:
+    
         parser = argparse.ArgumentParser()
         parser.add_argument('--seed', '-s', type=int, default=seed)
         args = parser.parse_args()

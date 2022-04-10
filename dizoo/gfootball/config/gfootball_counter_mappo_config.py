@@ -2,10 +2,10 @@ from easydict import EasyDict
 
 
 agent_num = 4
-# collector_env_num = 8
-# evaluator_env_num = 8
-collector_env_num = 1
-evaluator_env_num = 1
+collector_env_num = 8
+evaluator_env_num = 8
+# collector_env_num = 1
+# evaluator_env_num = 1
 # special_global_state = True,
 
 main_config = dict(
@@ -85,7 +85,9 @@ create_config = dict(
         type='counter',
         import_names=['dizoo.gfootball.envs.academy_counterattack_hard'],
     ),
-    env_manager=dict(type='base'),
+    # env_manager=dict(type='base'),
+    env_manager=dict(type='subprocess'),
+
     policy=dict(type='ppo'),
 )
 create_config = EasyDict(create_config)
@@ -100,10 +102,10 @@ create_config = EasyDict(create_config)
 def train(args):
     from ding.entry import serial_pipeline_onpolicy
     # main_config.exp_name='data_counter_4M/gfootball_counter_mappo_'+'seed'+f'{args.seed}'+'_4M'
-    main_config.exp_name='data_counter_10M/gfootball_counter_mappo_'+'seed'+f'{args.seed}'+'_10M'
+    main_config.exp_name='data_counter_10M/gfootball_counter_mappo_'+'seed'+f'{args.seed}'+'_10M'+'_sub'
 
     import copy
-    serial_pipeline_onpolicy([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,max_env_step=4e6)
+    serial_pipeline_onpolicy([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,max_env_step=10e6)
 
 
 if __name__ == "__main__":

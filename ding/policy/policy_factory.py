@@ -66,6 +66,7 @@ from typing import Dict, Any, Callable
 from collections import namedtuple
 from ding.torch_utils import to_device
 import numpy as np
+from ding.torch_utils import to_ndarray, to_list
 
 class PolicyFactory:
     r"""
@@ -107,7 +108,7 @@ class PolicyFactory:
                 #     }
                 else:
                     # for gfootball
-                    actions[env_id] = {'action': [action_space_agent.sample() for action_space_agent in action_space], 
+                    actions[env_id] = {'action': np.array([action_space_agent.sample()  for action_space_agent in action_space]), 
                     'logit': np.ones([len(action_space),action_space[0].n])}
 
             return actions

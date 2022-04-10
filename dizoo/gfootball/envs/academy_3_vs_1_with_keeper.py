@@ -148,22 +148,22 @@ class Academy_3_vs_1_with_Keeper(MultiAgentEnv):
     def reset(self):
         """Returns initial observations and states."""
         self.time_step = 0
-        self.env.reset()
+        self._env.reset()
         # obs = np.array([self.get_simple_obs(i) for i in range(self.n_agents)])
 
         obs = {
-            'agent_state': torch.tensor(np.stack(self.get_obs(),axis=0),dtype=torch.float32),
+            'agent_state': np.stack(self.get_obs(),axis=0).astype(np.float32),
             # 'global_state': self.get_state(),
-            'global_state': torch.tensor(np.stack(self.get_global_special_state(),axis=0,),dtype=torch.float32),
-            'action_mask': torch.tensor(np.stack(self.get_avail_actions(),axis=0),dtype=torch.float32),
+            'global_state': np.stack(self.get_global_special_state(),axis=0,).astype(np.float32),
+            'action_mask': np.stack(self.get_avail_actions(),axis=0).astype(np.float32),
         }
         # obs = to_ndarray(obs).astype(np.float32)
         
         if hasattr(self, '_seed') and hasattr(self, '_dynamic_seed') and self._dynamic_seed:
             np_seed = 100 * np.random.randint(1, 1000)
-            self.env.seed(self._seed + np_seed)
+            self._env.seed(self._seed + np_seed)
         elif hasattr(self, '_seed'):
-            self.env.seed(self._seed)
+            self._env.seed(self._seed)
         self._final_eval_reward = 0
 
         # return obs, self.get_global_state()
@@ -172,17 +172,19 @@ class Academy_3_vs_1_with_Keeper(MultiAgentEnv):
     def step(self, actions):
         """Returns reward, terminated, info."""
         self.time_step += 1
-        if isinstance(actions,np.ndarray):
+        if isinstance(actions, np.ndarray):
             actions=torch.from_numpy(actions)
-        _, original_rewards, done, infos = self.env.step(actions.to('cpu').numpy().tolist())
+        
+        _, original_rewards, done, infos = self._env.step(actions.to('cpu').numpy().tolist())
 
         obs = {
-            'agent_state': torch.tensor(np.stack(self.get_obs(),axis=0),dtype=torch.float32),
+            'agent_state': np.stack(self.get_obs(),axis=0).astype(np.float32),
             # 'global_state': self.get_state(),
-            'global_state': torch.tensor(np.stack(self.get_global_special_state(),axis=0,),dtype=torch.float32),
-            'action_mask': torch.tensor(np.stack(self.get_avail_actions(),axis=0),dtype=torch.float32),
+            'global_state': np.stack(self.get_global_special_state(),axis=0,).astype(np.float32),
+            'action_mask': np.stack(self.get_avail_actions(),axis=0).astype(np.float32),
         }
         # obs = to_ndarray(obs).astype(np.float32)
+
 
         rewards = list(original_rewards)
         # obs = np.array([self.get_obs(i) for i in range(self.n_agents)])
@@ -193,15 +195,70 @@ class Academy_3_vs_1_with_Keeper(MultiAgentEnv):
         if self.check_if_done():
             done = True
 
-        if sum(rewards) <= 0:  
+        if sum(rewards) <= 0:
             # return obs, self.get_global_state(), -int(done), done, infos
             infos['final_eval_reward'] = infos['score_reward'] # TODO
             # return -int(done), done, infos
-            return BaseEnvTimestep(obs, torch.tensor(-int(done),dtype=torch.float32), done, infos)
+            return BaseEnvTimestep(obs, -int(done), done, infos)
 
-        infos['final_eval_reward'] = infos['score_reward'] # TODO
-        # return obs, self.get_global_state(), 100, done, infos
-        return BaseEnvTimestep(obs, torch.tensor(100,dtype=torch.float32), done, infos)
+
+    # def reset(self):
+    #     """Returns initial observations and states."""
+    #     self.time_step = 0
+    #     self.env.reset()
+    #     # obs = np.array([self.get_simple_obs(i) for i in range(self.n_agents)])
+
+    #     obs = {
+    #         'agent_state': torch.tensor(np.stack(self.get_obs(),axis=0),dtype=torch.float32),
+    #         # 'global_state': self.get_state(),
+    #         'global_state': torch.tensor(np.stack(self.get_global_special_state(),axis=0,),dtype=torch.float32),
+    #         'action_mask': torch.tensor(np.stack(self.get_avail_actions(),axis=0),dtype=torch.float32),
+    #     }
+    #     # obs = to_ndarray(obs).astype(np.float32)
+        
+    #     if hasattr(self, '_seed') and hasattr(self, '_dynamic_seed') and self._dynamic_seed:
+    #         np_seed = 100 * np.random.randint(1, 1000)
+    #         self.env.seed(self._seed + np_seed)
+    #     elif hasattr(self, '_seed'):
+    #         self.env.seed(self._seed)
+    #     self._final_eval_reward = 0
+
+    #     # return obs, self.get_global_state()
+    #     return obs
+
+    # def step(self, actions):
+    #     """Returns reward, terminated, info."""
+    #     self.time_step += 1
+    #     if isinstance(actions,np.ndarray):
+    #         actions=torch.from_numpy(actions)
+    #     _, original_rewards, done, infos = self.env.step(actions.to('cpu').numpy().tolist())
+
+    #     obs = {
+    #         'agent_state': torch.tensor(np.stack(self.get_obs(),axis=0),dtype=torch.float32),
+    #         # 'global_state': self.get_state(),
+    #         'global_state': torch.tensor(np.stack(self.get_global_special_state(),axis=0,),dtype=torch.float32),
+    #         'action_mask': torch.tensor(np.stack(self.get_avail_actions(),axis=0),dtype=torch.float32),
+    #     }
+    #     # obs = to_ndarray(obs).astype(np.float32)
+
+    #     rewards = list(original_rewards)
+    #     # obs = np.array([self.get_obs(i) for i in range(self.n_agents)])
+
+    #     if self.time_step >= self.episode_limit:
+    #         done = True
+
+    #     if self.check_if_done():
+    #         done = True
+
+    #     if sum(rewards) <= 0:  
+    #         # return obs, self.get_global_state(), -int(done), done, infos
+    #         infos['final_eval_reward'] = infos['score_reward'] # TODO
+    #         # return -int(done), done, infos
+    #         return BaseEnvTimestep(obs, torch.tensor(-int(done),dtype=torch.float32), done, infos)
+
+    #     infos['final_eval_reward'] = infos['score_reward'] # TODO
+    #     # return obs, self.get_global_state(), 100, done, infos
+    #     return BaseEnvTimestep(obs, torch.tensor(100,dtype=torch.float32), done, infos)
 
     def get_obs(self):
         """Returns all agent observations in a list."""
