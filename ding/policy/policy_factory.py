@@ -3,7 +3,6 @@
 
 # from ding.torch_utils import to_device
 
-
 # class PolicyFactory:
 #     r"""
 #     Overview:
@@ -38,14 +37,14 @@
 #                     if discrete else continuous_random_action(-1, 1, shape)
 #                 }
 #                 if 'global_state' in data[env_id].keys():
-                    # for smac
-                    # logit = np.ones_like(data[env_id]['action_mask'])
-                    # logit[data[env_id]['action_mask'] == 0.0] = -1e8
-                    # import torch
-                    # dist = torch.distributions.categorical.Categorical(logits=torch.Tensor(logit))
-                    # actions[env_id] = {
-                    #     'action': np.array(dist.sample()), 'logit': np.array(logit)
-                    # }
+# for smac
+# logit = np.ones_like(data[env_id]['action_mask'])
+# logit[data[env_id]['action_mask'] == 0.0] = -1e8
+# import torch
+# dist = torch.distributions.categorical.Categorical(logits=torch.Tensor(logit))
+# actions[env_id] = {
+#     'action': np.array(dist.sample()), 'logit': np.array(logit)
+# }
 
 #             return actions
 
@@ -61,12 +60,12 @@
 #                 forward, policy.process_transition, policy.get_train_sample, reset, policy.get_attribute
 #             )
 
-
 from typing import Dict, Any, Callable
 from collections import namedtuple
 from ding.torch_utils import to_device
 import numpy as np
 from ding.torch_utils import to_ndarray, to_list
+
 
 class PolicyFactory:
     r"""
@@ -95,8 +94,8 @@ class PolicyFactory:
 
             actions = {}
             for env_id in data:
-                if not isinstance(action_space,list):
-                    actions[env_id] = {'action': action_space.sample()} 
+                if not isinstance(action_space, list):
+                    actions[env_id] = {'action': action_space.sample()}
                 # elif 'global_state' in data[env_id].keys():
                 #     # for smac
                 #     logit = np.ones_like(data[env_id]['action_mask'])
@@ -108,8 +107,10 @@ class PolicyFactory:
                 #     }
                 else:
                     # for gfootball
-                    actions[env_id] = {'action': np.array([action_space_agent.sample()  for action_space_agent in action_space]), 
-                    'logit': np.ones([len(action_space),action_space[0].n])}
+                    actions[env_id] = {
+                        'action': np.array([action_space_agent.sample() for action_space_agent in action_space]),
+                        'logit': np.ones([len(action_space), action_space[0].n])
+                    }
 
             return actions
 

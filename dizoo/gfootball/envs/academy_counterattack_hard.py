@@ -32,7 +32,6 @@ class Academy_Counterattack_Hard(MultiAgentEnv):
         logdir='football_dumps',
         write_video=False,
         number_of_right_players_agent_controls=0,
-        # seed=0
     ):
         self._cfg = cfg   # TODO
         self.dense_reward = dense_reward
@@ -51,7 +50,6 @@ class Academy_Counterattack_Hard(MultiAgentEnv):
         self.logdir = logdir
         self.write_video = write_video
         self.number_of_right_players_agent_controls = number_of_right_players_agent_controls
-        # self.seed = seed
 
         self._env = football_env.create_environment(
             write_full_episode_dumps=self.write_full_episode_dumps,
@@ -67,7 +65,6 @@ class Academy_Counterattack_Hard(MultiAgentEnv):
             number_of_left_players_agent_controls=self.n_agents,
             number_of_right_players_agent_controls=self.number_of_right_players_agent_controls,
             channel_dimensions=(observation_preprocessing.SMM_WIDTH, observation_preprocessing.SMM_HEIGHT))
-        # self._env.seed(self.seed)
 
         obs_space_low = self._env.observation_space.low[0][:self.obs_dim]
         obs_space_high = self._env.observation_space.high[0][:self.obs_dim]
@@ -187,8 +184,6 @@ class Academy_Counterattack_Hard(MultiAgentEnv):
             'global_state': np.stack(self.get_global_special_state(),axis=0,).astype(np.float32),
             'action_mask': np.stack(self.get_avail_actions(),axis=0).astype(np.float32),
         }
-        # obs = to_ndarray(obs).astype(np.float32)
-
 
         rewards = list(original_rewards)
         # obs = np.array([self.get_obs(i) for i in range(self.n_agents)])
@@ -200,69 +195,13 @@ class Academy_Counterattack_Hard(MultiAgentEnv):
             done = True
 
         if sum(rewards) <= 0:
-            # return obs, self.get_global_state(), -int(done), done, infos
             infos['final_eval_reward'] = infos['score_reward'] # TODO
-            # return -int(done), done, infos
-            return BaseEnvTimestep(obs, -int(done), done, infos)
-
-    # def reset(self):
-    #     """Returns initial observations and states."""
-    #     self.time_step = 0
-    #     self._env.reset()
-    #     # obs = np.array([self.get_simple_obs(i) for i in range(self.n_agents)])
-
-    #     obs = {
-    #         'agent_state': torch.tensor(np.stack(self.get_obs(),axis=0),dtype=torch.float32),
-    #         # 'global_state': self.get_state(),
-    #         'global_state': torch.tensor(np.stack(self.get_global_special_state(),axis=0,),dtype=torch.float32),
-    #         'action_mask': torch.tensor(np.stack(self.get_avail_actions(),axis=0),dtype=torch.float32),
-    #     }
-    #     # obs = to_ndarray(obs).astype(np.float32)
-        
-    #     if hasattr(self, '_seed') and hasattr(self, '_dynamic_seed') and self._dynamic_seed:
-    #         np_seed = 100 * np.random.randint(1, 1000)
-    #         self._env.seed(self._seed + np_seed)
-    #     elif hasattr(self, '_seed'):
-    #         self._env.seed(self._seed)
-    #     self._final_eval_reward = 0
-
-    #     # return obs, self.get_global_state()
-    #     return obs
-
-    # def step(self, actions):
-    #     """Returns reward, terminated, info."""
-    #     self.time_step += 1
-    #     if isinstance(actions, np.ndarray):
-    #         actions=torch.from_numpy(actions)
-    #     _, original_rewards, done, infos = self._env.step(actions.to('cpu').numpy().tolist())
-
-    #     obs = {
-    #         'agent_state': torch.tensor(np.stack(self.get_obs(),axis=0),dtype=torch.float32),
-    #         # 'global_state': self.get_state(),
-    #         'global_state': torch.tensor(np.stack(self.get_global_special_state(),axis=0,),dtype=torch.float32),
-    #         'action_mask': torch.tensor(np.stack(self.get_avail_actions(),axis=0),dtype=torch.float32),
-    #     }
-    #     # obs = to_ndarray(obs).astype(np.float32))
-
-    #     rewards = list(original_rewards)
-    #     # obs = np.array([self.get_obs(i) for i in range(self.n_agents)])
-
-    #     if self.time_step >= self.episode_limit:
-    #         done = True
-
-    #     if self.check_if_done():
-    #         done = True
-
-    #     if sum(rewards) <= 0:
-    #         # return obs, self.get_global_state(), -int(done), done, infos
-    #         infos['final_eval_reward'] = infos['score_reward'] # TODO
-    #         # return -int(done), done, infos
-    #         return BaseEnvTimestep(obs, torch.tensor(-int(done), dtype=torch.float32), done, infos)
-
-        infos['final_eval_reward'] = infos['score_reward'] # TODO
-        # return obs, self.get_global_state(), 100, done, infos
-        return BaseEnvTimestep(obs, torch.tensor(100, dtype=torch.float32), done, infos)
-
+            return BaseEnvTimestep(obs, np.array(-int(done)).astype(np.float32), done, infos)
+            # return BaseEnvTimestep(obs, torch.tensor(-int(done),dtype=torch.float32), done, infos)
+        else:
+            infos['final_eval_reward'] = infos['score_reward'] # TODO
+            return BaseEnvTimestep(obs, np.array(100).astype(np.float32), done, infos)
+            # return BaseEnvTimestep(obs, torch.tensor(100, dtype=torch.float32), done, infos)
 
     def get_obs(self):
         """Returns all agent observations in a list."""

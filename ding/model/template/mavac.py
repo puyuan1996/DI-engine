@@ -30,7 +30,6 @@ class MAVAC(nn.Module):
             critic_head_layer_num: int = 1,
             activation: Optional[nn.Module] = nn.ReLU(),
             norm_type: Optional[str] = None,
-
     ) -> None:
         r"""
         Overview:
@@ -89,19 +88,19 @@ class MAVAC(nn.Module):
 
         # Head Type
         self.critic_head = nn.Sequential(
-                        nn.Linear(global_obs_shape, critic_head_hidden_size), activation,
-                        RegressionHead(
-                            critic_head_hidden_size, 1, critic_head_layer_num, activation=activation, norm_type=norm_type
-                        )
-                    )
+            nn.Linear(global_obs_shape, critic_head_hidden_size), activation,
+            RegressionHead(
+                critic_head_hidden_size, 1, critic_head_layer_num, activation=activation, norm_type=norm_type
+            )
+        )
 
         actor_head_cls = DiscreteHead
         self.actor_head = nn.Sequential(
-                        nn.Linear(agent_obs_shape, actor_head_hidden_size), activation,
-                        actor_head_cls(
-                            actor_head_hidden_size, action_shape, actor_head_layer_num, activation=activation, norm_type=norm_type
-                        )
-                    )
+            nn.Linear(agent_obs_shape, actor_head_hidden_size), activation,
+            actor_head_cls(
+                actor_head_hidden_size, action_shape, actor_head_layer_num, activation=activation, norm_type=norm_type
+            )
+        )
 
         # must use list, not nn.ModuleList
         self.actor = [self.actor_encoder, self.actor_head]

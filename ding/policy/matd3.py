@@ -307,12 +307,9 @@ class MATD3Policy(Policy):
                 #             torch.min(target_q_value[0], target_q_value[1]) - self._alpha * log_prob.squeeze(-1))).sum(
                 #     dim=-1)
                 # alogpi
-                target_value = (prob * (
-                            torch.min(target_q_value[0], target_q_value[1]))).sum(
-                    dim=-1)
+                target_value = (prob * (torch.min(target_q_value[0], target_q_value[1]))).sum(dim=-1)
             else:
-                target_value = (prob * (target_q_value - self._alpha * log_prob.squeeze(-1))).sum(
-                    dim=-1)
+                target_value = (prob * (target_q_value - self._alpha * log_prob.squeeze(-1))).sum(dim=-1)
         # target_value = target_q_value
 
         # 3. compute q loss
@@ -350,7 +347,7 @@ class MATD3Policy(Policy):
             if self._twin_critic:
                 new_q_value = torch.min(new_q_value[0], new_q_value[1])  # (64,10,16)
 
-        # # 7. compute policy loss: 
+        # # 7. compute policy loss:
         # matd3: alpha=0, ew0, ew0.01
         # matd3: alogpi
         policy_loss = (prob * (self._alpha * log_prob - new_q_value.squeeze(-1))).sum(dim=-1).mean()
@@ -384,7 +381,8 @@ class MATD3Policy(Policy):
                 loss_dict['alpha_loss'].backward()
                 self._alpha_optim.step()
                 self._alpha = max(0, self._alpha)
-                self._alpha.data = torch.where(self._alpha > 0, self._alpha, torch.zeros_like(self._alpha)).requires_grad_()
+                self._alpha.data = torch.where(self._alpha > 0, self._alpha,
+                                               torch.zeros_like(self._alpha)).requires_grad_()
 
         loss_dict['total_loss'] = sum(loss_dict.values())
 
@@ -540,10 +538,10 @@ class MATD3Policy(Policy):
         if self._auto_alpha:
             return super()._monitor_vars_learn() + [
                 'alpha_loss', 'policy_loss', 'critic_loss', 'cur_lr_q', 'cur_lr_p', 'target_q_value', 'q_value_1',
-                'q_value_2', 'alpha', 'td_error', 'target_value', 'entropy_q','entropy_policy'
+                'q_value_2', 'alpha', 'td_error', 'target_value', 'entropy_q', 'entropy_policy'
             ] + twin_critic
         else:
             return super()._monitor_vars_learn() + [
                 'policy_loss', 'critic_loss', 'cur_lr_q', 'cur_lr_p', 'target_q_value', 'q_value_1', 'q_value_2',
-                'alpha', 'td_error', 'target_value', 'entropy_q','entropy_policy'
+                'alpha', 'td_error', 'target_value', 'entropy_q', 'entropy_policy'
             ] + twin_critic

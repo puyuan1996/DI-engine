@@ -65,9 +65,7 @@ class MAQACNSW(nn.Module):
         )
         self.actor = nn.ModuleList()
         for _ in range(self.agent_num):
-            self.actor.append(
-                deepcopy(self.actor_agent)
-            )
+            self.actor.append(deepcopy(self.actor_agent))
 
         self.twin_critic = twin_critic
         if self.twin_critic:
@@ -86,19 +84,11 @@ class MAQACNSW(nn.Module):
             self.critic_2 = nn.ModuleList()
 
             for _ in range(self.agent_num):
-                self.critic_1.append(
-                    deepcopy(self.critic_agent)
-                )
+                self.critic_1.append(deepcopy(self.critic_agent))
             for _ in range(self.agent_num):
-                self.critic_2.append(
-                    deepcopy(self.critic_agent)
-                )
-            self.critic.append(
-                self.critic_1
-            )
-            self.critic.append(
-                self.critic_2
-            )
+                self.critic_2.append(deepcopy(self.critic_agent))
+            self.critic.append(self.critic_1)
+            self.critic.append(self.critic_2)
         # else:
         #     self.critic = nn.Sequential(
         #         nn.Linear(global_obs_shape, critic_head_hidden_size), activation,
@@ -230,4 +220,3 @@ class MAQACNSW(nn.Module):
         # else:
         #     x = self.critic(inputs['obs']['global_state'])['logit']
         return {'q_value': x}
-

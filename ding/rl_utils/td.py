@@ -10,7 +10,6 @@ from ding.hpc_rl import hpc_wrapper
 from ding.rl_utils.value_rescale import value_transform, value_inv_transform
 from ding.torch_utils import to_tensor
 
-
 q_v_1step_td_data = namedtuple('q_v_1step_td_data', ['q', 'v', 'act', 'reward', 'done', 'weight'])
 
 
@@ -509,13 +508,13 @@ def shape_fn_qntd_rescale(args, kwargs):
     shape_fn=shape_fn_qntd_rescale, namedtuple_data=True, include_args=[0, 1], include_kwargs=['data', 'gamma']
 )
 def q_nstep_td_error_with_rescale(
-        data: namedtuple,
-        gamma: float,
-        nstep: int = 1,
-        value_gamma: Optional[torch.Tensor] = None,
-        criterion: torch.nn.modules = nn.MSELoss(reduction='none'),
-        trans_fn: Callable = value_transform,
-        inv_trans_fn: Callable = value_inv_transform,
+    data: namedtuple,
+    gamma: float,
+    nstep: int = 1,
+    value_gamma: Optional[torch.Tensor] = None,
+    criterion: torch.nn.modules = nn.MSELoss(reduction='none'),
+    trans_fn: Callable = value_transform,
+    inv_trans_fn: Callable = value_inv_transform,
 ) -> torch.Tensor:
     """
     Overview:

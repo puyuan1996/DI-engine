@@ -85,15 +85,11 @@ gfootball_counter_masac_default_create_config = dict(
     ),
     # env_manager=dict(type='base'),
     env_manager=dict(type='subprocess'),
-
     policy=dict(type='sac_discrete', ),
 )
 gfootball_counter_masac_default_create_config = EasyDict(gfootball_counter_masac_default_create_config)
 create_config = gfootball_counter_masac_default_create_config
 
-
-# if __name__ == "__main__":
-#     serial_pipeline([main_config, create_config], seed=0)
 
 def train(args):
     from ding.entry import serial_pipeline

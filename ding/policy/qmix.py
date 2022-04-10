@@ -137,7 +137,7 @@ class QMIXPolicy(Policy):
         # self._optimizer = Adam(
         #     params=self._model.parameters(), lr=self._cfg.learn.learning_rate, weight_decay=1e-5, optim_type='adamw'
         # )
-        
+
         self._gamma = self._cfg.learn.discount_factor
 
         self._target_model = copy.deepcopy(self._model)

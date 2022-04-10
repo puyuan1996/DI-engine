@@ -97,18 +97,18 @@ class MAVACNSW(nn.Module):
         # )
 
         self.critic_head_agent = nn.Sequential(
-                        nn.Linear(global_obs_shape, critic_head_hidden_size), activation,
-                        RegressionHead(
-                            critic_head_hidden_size, 1, critic_head_layer_num, activation=activation, norm_type=norm_type
-                        )
-                    )
+            nn.Linear(global_obs_shape, critic_head_hidden_size), activation,
+            RegressionHead(
+                critic_head_hidden_size, 1, critic_head_layer_num, activation=activation, norm_type=norm_type
+            )
+        )
         actor_head_cls = DiscreteHead
         self.actor_head_agent = nn.Sequential(
-                        nn.Linear(agent_obs_shape, actor_head_hidden_size), activation,
-                        actor_head_cls(
-                            actor_head_hidden_size, action_shape, actor_head_layer_num, activation=activation, norm_type=norm_type
-                        )
-                    )
+            nn.Linear(agent_obs_shape, actor_head_hidden_size), activation,
+            actor_head_cls(
+                actor_head_hidden_size, action_shape, actor_head_layer_num, activation=activation, norm_type=norm_type
+            )
+        )
 
         # share weight:
         # self.actor = [self.actor_encoder, self.actor_head]
@@ -129,17 +129,13 @@ class MAVACNSW(nn.Module):
         #         deepcopy(self.actor_encoder_agent)
         #     )
         for _ in range(self.agent_num):
-            self.actor_head.append(
-                deepcopy(self.actor_head_agent)
-            )
+            self.actor_head.append(deepcopy(self.actor_head_agent))
         # for _ in range(self.agent_num):
         #     self.critic_encoder.append(
         #         deepcopy(self.critic_encoder_agent)
         #     )
         for _ in range(self.agent_num):
-            self.critic_head.append(
-                deepcopy(self.critic_head_agent)
-            )
+            self.critic_head.append(deepcopy(self.critic_head_agent))
         self.actor = [self.actor_encoder, self.actor_head]
         self.critic = [self.critic_encoder, self.critic_head]
 

@@ -1,8 +1,10 @@
 from easydict import EasyDict
 
 agent_num = 3
-collector_env_num = 1
-evaluator_env_num = 1
+collector_env_num = 8
+evaluator_env_num = 8
+# collector_env_num = 1
+# evaluator_env_num = 1
 # special_global_state = True
 # masac 5m6m config -> keeper
 gfootball_keeper_masac_default_config = dict(
@@ -28,8 +30,10 @@ gfootball_keeper_masac_default_config = dict(
     ),
     policy=dict(
         cuda=True,
-        random_collect_size=0,
-        # random_collect_size=int(1e4),
+        # share_weight=False,
+        share_weight=True,
+        # random_collect_size=0,
+        random_collect_size=int(1e4),
         model=dict(
             agent_obs_shape=26,
             global_obs_shape=52,
@@ -81,7 +85,8 @@ gfootball_keeper_masac_default_create_config = dict(
         import_names=['dizoo.gfootball.envs.academy_3_vs_1_with_keeper'],
 
     ),
-    env_manager=dict(type='base'),
+    # env_manager=dict(type='base'),
+    env_manager=dict(type='subprocess'),
     policy=dict(type='sac_discrete', ),
 )
 gfootball_keeper_masac_default_create_config = EasyDict(gfootball_keeper_masac_default_create_config)
@@ -93,12 +98,10 @@ create_config = gfootball_keeper_masac_default_create_config
 
 def train(args):
     from ding.entry import serial_pipeline
-    main_config.exp_name='data_keeper_4M/gfootball_keeper_masac_'+'rcs0_'+'seed'+f'{args.seed}'+'_4M'
-    # main_config.exp_name='data_counter_10M/gfootball_counter_masac_'+'rcs0_'+'seed'+f'{args.seed}'+'_10M'
-
+    main_config.exp_name='data_keeper_4M_noshare/keeper_masac_noshare_'+'rcs1e4_'+'seed'+f'{args.seed}'+'_4M'+'_sub'
+    # main_config.exp_name='data_keeper_4M/keeper_masac_'+'rcs1e4_'+'seed'+f'{args.seed}'+'_4M'+'_sub'
     import copy
     serial_pipeline([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=4e6)
-
 
 if __name__ == "__main__":
     import argparse

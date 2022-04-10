@@ -2,27 +2,22 @@ from easydict import EasyDict
 
 
 agent_num = 3
-# collector_env_num = 8
-# evaluator_env_num = 8
-collector_env_num = 1
-evaluator_env_num = 1
-# special_global_state = True,
+collector_env_num = 8
+evaluator_env_num = 8
+# collector_env_num = 1
+# evaluator_env_num = 1
 
 main_config = dict(
     exp_name='gfootball_keeper_mappo_seed0',
     env=dict(
         # map_name='academy_3_vs_1_with_keeper',
         env_name='academy_3_vs_1_with_keeper',
-        # difficulty=7,
-        # reward_only_positive=True,
-        # mirror_opponent=False,
         agent_num=agent_num,
         collector_env_num=collector_env_num,
         evaluator_env_num=evaluator_env_num,
         n_evaluator_episode=32,
         # stop_value=0.99,
         stop_value=99,
-        # death_mask=True,
         # special_global_state=special_global_state,
         manager=dict(
             shared_memory=False,
@@ -31,6 +26,8 @@ main_config = dict(
     ),
     policy=dict(
         cuda=True,
+        # share_weight=False,
+        share_weight=True,
         multi_agent=True,
         # action_space='discrete',
         model=dict(
@@ -86,26 +83,20 @@ create_config = dict(
         type='keeper',
         import_names=['dizoo.gfootball.envs.academy_3_vs_1_with_keeper'],
     ),
-    env_manager=dict(type='base'),
+    # env_manager=dict(type='base'),
+    env_manager=dict(type='subprocess'),
     policy=dict(type='ppo'),
 )
 create_config = EasyDict(create_config)
 
 
-# if __name__ == '__main__':
-
-#     from ding.entry import serial_pipeline_onpolicy
-#     serial_pipeline_onpolicy((main_config, create_config), seed=0)
-
-
 def train(args):
     from ding.entry import serial_pipeline_onpolicy
-    main_config.exp_name='data_keeper_4M/gfootball_keeper_mappo_'+'seed'+f'{args.seed}'+'_4M'
-    # main_config.exp_name='data_counter_10M/gfootball_counter_mappo_'+'seed'+f'{args.seed}'+'_10M'
+    main_config.exp_name='data_keeper_4M_noshare/keeper_mappo_noshare_'+'seed'+f'{args.seed}'+'_4M'+'_sub'
+    # main_config.exp_name='data_keeper_4M/keeper_mappo_'+'seed'+f'{args.seed}'+'_4M'+'_sub'
 
     import copy
     serial_pipeline_onpolicy([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,max_env_step=4e6)
-
 
 if __name__ == "__main__":
     import argparse
