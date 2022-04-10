@@ -5,22 +5,17 @@ collector_env_num = 8
 evaluator_env_num = 8
 # collector_env_num = 1
 # evaluator_env_num = 1
-# special_global_state = True
 # masac 5m6m config -> counter
 gfootball_counter_masac_default_config = dict(
     exp_name='gfootball_counter_masac_seed0',
     env=dict(
         env_name='academy_counterattack_hard',
-        difficulty=7,
-        # reward_only_positive=True,
-        # mirror_opponent=False,
         agent_num=agent_num,
         collector_env_num=collector_env_num,
         evaluator_env_num=evaluator_env_num,
         n_evaluator_episode=32,
         # stop_value=0.99,
         stop_value=99,
-        # special_global_state=special_global_state,
         manager=dict(
             shared_memory=False,
             reset_timeout=6000,
@@ -79,7 +74,6 @@ main_config = gfootball_counter_masac_default_config
 gfootball_counter_masac_default_create_config = dict(
     env=dict(
         type='counter',
-        # import_names=['dizoo.gfootball.envs.gfootball_env'],
         import_names=['dizoo.gfootball.envs.academy_counterattack_hard'],
 
     ),
@@ -102,8 +96,6 @@ def train(args):
 if __name__ == "__main__":
     import argparse
     for seed in [0,1,2]:
-    # for seed in [3]:
-    
         parser = argparse.ArgumentParser()
         parser.add_argument('--seed', '-s', type=int, default=seed)
         args = parser.parse_args()

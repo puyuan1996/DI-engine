@@ -5,24 +5,17 @@ collector_env_num = 8
 evaluator_env_num = 8
 # collector_env_num = 1
 # evaluator_env_num = 1
-# special_global_state = True
-# masac 5m6m config -> keeper
+# masac 5m6m config -> masac keeper config
 gfootball_keeper_masac_default_config = dict(
     exp_name='gfootball_keeper_masac_seed0',
     env=dict(
-        # map_name='academy_3_vs_1_with_keeper',
         env_name='academy_3_vs_1_with_keeper',
-        difficulty=7,
-        # reward_only_positive=True,
-        # mirror_opponent=False,
         agent_num=agent_num,
         collector_env_num=collector_env_num,
         evaluator_env_num=evaluator_env_num,
         n_evaluator_episode=32,
         # stop_value=0.99,
         stop_value=99,
-        # death_mask=True,
-        # special_global_state=special_global_state,
         manager=dict(
             shared_memory=False,
             reset_timeout=6000,
@@ -30,11 +23,12 @@ gfootball_keeper_masac_default_config = dict(
     ),
     policy=dict(
         cuda=True,
-        # share_weight=False,
-        share_weight=True,
+        share_weight=False,
+        # share_weight=True,
         # random_collect_size=0,
         random_collect_size=int(1e4),
         model=dict(
+            agent_num=agent_num,
             agent_obs_shape=26,
             global_obs_shape=52,
             action_shape=19,
@@ -81,7 +75,6 @@ main_config = gfootball_keeper_masac_default_config
 gfootball_keeper_masac_default_create_config = dict(
     env=dict(
         type='keeper',
-        # import_names=['dizoo.gfootball.envs.gfootball_env'],
         import_names=['dizoo.gfootball.envs.academy_3_vs_1_with_keeper'],
 
     ),
@@ -91,10 +84,6 @@ gfootball_keeper_masac_default_create_config = dict(
 )
 gfootball_keeper_masac_default_create_config = EasyDict(gfootball_keeper_masac_default_create_config)
 create_config = gfootball_keeper_masac_default_create_config
-
-
-# if __name__ == "__main__":
-#     serial_pipeline([main_config, create_config], seed=0)
 
 def train(args):
     from ding.entry import serial_pipeline

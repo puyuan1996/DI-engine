@@ -6,11 +6,10 @@ collector_env_num = 8
 evaluator_env_num = 8
 # collector_env_num = 1
 # evaluator_env_num = 1
-
+# mappo 5m6m config -> mappo keeper config
 main_config = dict(
     exp_name='gfootball_keeper_mappo_seed0',
     env=dict(
-        # map_name='academy_3_vs_1_with_keeper',
         env_name='academy_3_vs_1_with_keeper',
         agent_num=agent_num,
         collector_env_num=collector_env_num,
@@ -18,7 +17,6 @@ main_config = dict(
         n_evaluator_episode=32,
         # stop_value=0.99,
         stop_value=99,
-        # special_global_state=special_global_state,
         manager=dict(
             shared_memory=False,
             reset_timeout=6000,
@@ -26,8 +24,8 @@ main_config = dict(
     ),
     policy=dict(
         cuda=True,
-        # share_weight=False,
-        share_weight=True,
+        share_weight=False,
+        # share_weight=True,
         multi_agent=True,
         # action_space='discrete',
         model=dict(

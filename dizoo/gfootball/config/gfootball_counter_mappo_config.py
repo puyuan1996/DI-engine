@@ -6,23 +6,17 @@ collector_env_num = 8
 evaluator_env_num = 8
 # collector_env_num = 1
 # evaluator_env_num = 1
-# special_global_state = True,
 
 main_config = dict(
     exp_name='gfootball_counter_mappo_seed0',
     env=dict(
         env_name='academy_counterattack_hard',
-        # difficulty=7,
-        # reward_only_positive=True,
-        # mirror_opponent=False,
         agent_num=agent_num,
         collector_env_num=collector_env_num,
         evaluator_env_num=evaluator_env_num,
         n_evaluator_episode=32,
         # stop_value=0.99,
         stop_value=99,
-        # death_mask=True,
-        # special_global_state=special_global_state,
         manager=dict(
             shared_memory=False,
             reset_timeout=6000,
@@ -92,21 +86,12 @@ create_config = dict(
 )
 create_config = EasyDict(create_config)
 
-
-# if __name__ == '__main__':
-
-#     from ding.entry import serial_pipeline_onpolicy
-#     serial_pipeline_onpolicy((main_config, create_config), seed=0)
-
-
 def train(args):
     from ding.entry import serial_pipeline_onpolicy
     # main_config.exp_name='data_counter_4M/gfootball_counter_mappo_'+'seed'+f'{args.seed}'+'_4M'
     main_config.exp_name='data_counter_10M/gfootball_counter_mappo_'+'seed'+f'{args.seed}'+'_10M'+'_sub'
-
     import copy
     serial_pipeline_onpolicy([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,max_env_step=10e6)
-
 
 if __name__ == "__main__":
     import argparse
