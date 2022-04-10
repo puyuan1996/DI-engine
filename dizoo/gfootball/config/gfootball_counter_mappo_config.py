@@ -1,7 +1,7 @@
 from easydict import EasyDict
 
 
-agent_num = 3
+agent_num = 4
 # collector_env_num = 8
 # evaluator_env_num = 8
 collector_env_num = 1
@@ -9,10 +9,9 @@ evaluator_env_num = 1
 # special_global_state = True,
 
 main_config = dict(
-    exp_name='gfootball_keeper_mappo_seed0',
+    exp_name='gfootball_counter_mappo_seed0',
     env=dict(
-        # map_name='academy_3_vs_1_with_keeper',
-        env_name='academy_3_vs_1_with_keeper',
+        env_name='academy_counterattack_hard',
         # difficulty=7,
         # reward_only_positive=True,
         # mirror_opponent=False,
@@ -41,9 +40,9 @@ main_config = dict(
             # For 3s5z, obs_shape=150; for 2c_vs_64zg, agent_num=404.
             # (int) global_obs_shape: The shapeension of global observation.
             # For 3s5z, obs_shape=216; for 2c_vs_64zg, agent_num=342.
-            agent_obs_shape=26,
+            agent_obs_shape=34,
             #global_obs_shape=216,
-            global_obs_shape=52,
+            global_obs_shape=68,
             # (int) action_shape: The number of action which each agent can take.
             # action_shape= the number of common action (6) + the number of enemies.
             # For 3s5z, obs_shape=14 (6+8); for 2c_vs_64zg, agent_num=70 (6+64).
@@ -83,8 +82,8 @@ main_config = dict(
 main_config = EasyDict(main_config)
 create_config = dict(
     env=dict(
-        type='keeper',
-        import_names=['dizoo.gfootball.envs.academy_3_vs_1_with_keeper'],
+        type='counter',
+        import_names=['dizoo.gfootball.envs.academy_counterattack_hard'],
     ),
     env_manager=dict(type='base'),
     policy=dict(type='ppo'),
@@ -100,8 +99,8 @@ create_config = EasyDict(create_config)
 
 def train(args):
     from ding.entry import serial_pipeline_onpolicy
-    main_config.exp_name='data_keeper_4M/gfootball_keeper_mappo_'+'seed'+f'{args.seed}'+'_4M'
-    # main_config.exp_name='data_counter_10M/gfootball_counter_mappo_'+'seed'+f'{args.seed}'+'_10M'
+    # main_config.exp_name='data_counter_4M/gfootball_counter_mappo_'+'seed'+f'{args.seed}'+'_4M'
+    main_config.exp_name='data_counter_10M/gfootball_counter_mappo_'+'seed'+f'{args.seed}'+'_10M'
 
     import copy
     serial_pipeline_onpolicy([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,max_env_step=4e6)

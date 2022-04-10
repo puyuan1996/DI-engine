@@ -1,15 +1,14 @@
 from easydict import EasyDict
 
-agent_num = 3
+agent_num = 4
 collector_env_num = 1
 evaluator_env_num = 1
 # special_global_state = True
-# masac 5m6m config -> keeper
-gfootball_keeper_masac_default_config = dict(
-    exp_name='gfootball_keeper_masac_seed0',
+# masac 5m6m config -> counter
+gfootball_counter_masac_default_config = dict(
+    exp_name='gfootball_counter_masac_seed0',
     env=dict(
-        # map_name='academy_3_vs_1_with_keeper',
-        env_name='academy_3_vs_1_with_keeper',
+        env_name='academy_counterattack_hard',
         difficulty=7,
         # reward_only_positive=True,
         # mirror_opponent=False,
@@ -19,6 +18,7 @@ gfootball_keeper_masac_default_config = dict(
         n_evaluator_episode=32,
         # stop_value=0.99,
         stop_value=99,
+
         # death_mask=True,
         # special_global_state=special_global_state,
         manager=dict(
@@ -31,8 +31,8 @@ gfootball_keeper_masac_default_config = dict(
         random_collect_size=0,
         # random_collect_size=int(1e4),
         model=dict(
-            agent_obs_shape=26,
-            global_obs_shape=52,
+            agent_obs_shape=34,
+            global_obs_shape=68,
             action_shape=19,
             twin_critic=True,
             actor_head_hidden_size=256,
@@ -71,21 +71,21 @@ gfootball_keeper_masac_default_config = dict(
     ),
 )
 
-gfootball_keeper_masac_default_config = EasyDict(gfootball_keeper_masac_default_config)
-main_config = gfootball_keeper_masac_default_config
+gfootball_counter_masac_default_config = EasyDict(gfootball_counter_masac_default_config)
+main_config = gfootball_counter_masac_default_config
 
-gfootball_keeper_masac_default_create_config = dict(
+gfootball_counter_masac_default_create_config = dict(
     env=dict(
-        type='keeper',
+        type='counter',
         # import_names=['dizoo.gfootball.envs.gfootball_env'],
-        import_names=['dizoo.gfootball.envs.academy_3_vs_1_with_keeper'],
+        import_names=['dizoo.gfootball.envs.academy_counterattack_hard'],
 
     ),
     env_manager=dict(type='base'),
     policy=dict(type='sac_discrete', ),
 )
-gfootball_keeper_masac_default_create_config = EasyDict(gfootball_keeper_masac_default_create_config)
-create_config = gfootball_keeper_masac_default_create_config
+gfootball_counter_masac_default_create_config = EasyDict(gfootball_counter_masac_default_create_config)
+create_config = gfootball_counter_masac_default_create_config
 
 
 # if __name__ == "__main__":
@@ -93,8 +93,8 @@ create_config = gfootball_keeper_masac_default_create_config
 
 def train(args):
     from ding.entry import serial_pipeline
-    main_config.exp_name='data_keeper_4M/gfootball_keeper_masac_'+'rcs0_'+'seed'+f'{args.seed}'+'_4M'
-    # main_config.exp_name='data_counter_10M/gfootball_counter_masac_'+'rcs0_'+'seed'+f'{args.seed}'+'_10M'
+    # main_config.exp_name='data_counter_4M/gfootball_counter_masac_'+'rcs0_'+'seed'+f'{args.seed}'+'_4M'
+    main_config.exp_name='data_counter_10M/gfootball_counter_masac_'+'rcs0_'+'seed'+f'{args.seed}'+'_10M'
 
     import copy
     serial_pipeline([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=4e6)

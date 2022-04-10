@@ -10,8 +10,8 @@ import torch
 from ding.envs import BaseEnv, BaseEnvTimestep, BaseEnvInfo
 from ding.torch_utils import to_ndarray, to_list
 
-@ENV_REGISTRY.register('keeper')
-class Academy_3_vs_1_with_Keeper(MultiAgentEnv):
+@ENV_REGISTRY.register('counter')
+class Academy_Counterattack_Hard(MultiAgentEnv):
 
     def __init__(
         self,
@@ -21,16 +21,16 @@ class Academy_3_vs_1_with_Keeper(MultiAgentEnv):
         write_goal_dumps=False,
         dump_freq=1000,
         render=False,
-        n_agents=3,
+        n_agents=4,
         time_limit=150,
         time_step=0,
-        obs_dim=26,
-        env_name='academy_3_vs_1_with_keeper',
+        obs_dim=34,
+        env_name='academy_counterattack_hard',
         stacked=False,
         representation="simple115",
         rewards='scoring',
         logdir='football_dumps',
-        write_video=True,
+        write_video=False,
         number_of_right_players_agent_controls=0,
         # seed=0
     ):
@@ -51,11 +51,11 @@ class Academy_3_vs_1_with_Keeper(MultiAgentEnv):
         self.logdir = logdir
         self.write_video = write_video
         self.number_of_right_players_agent_controls = number_of_right_players_agent_controls
-        # self.seed = seed 
+        # self.seed = seed
 
         self.env = football_env.create_environment(
-            write_full_episode_dumps = self.write_full_episode_dumps,
-            write_goal_dumps = self.write_goal_dumps,
+            write_full_episode_dumps=self.write_full_episode_dumps,
+            write_goal_dumps=self.write_goal_dumps,
             env_name=self.env_name,
             stacked=self.stacked,
             representation=self.representation,
@@ -74,19 +74,16 @@ class Academy_3_vs_1_with_Keeper(MultiAgentEnv):
 
         self._action_space = [gym.spaces.Discrete(
             self.env.action_space.nvec[1]) for _ in range(self.n_agents)]
-            
         self._observation_space = [
             gym.spaces.Box(low=obs_space_low, high=obs_space_high, dtype=self.env.observation_space.dtype) for _ in range(self.n_agents)
         ]
-        self._reward_space = gym.spaces.Box(low=0, high=100, shape=(1,), dtype=np.float32)  # TODO
 
+        self._reward_space = gym.spaces.Box(low=0, high=100, shape=(1,), dtype=np.float32)  # TODO
 
         self.n_actions = self.action_space[0].n
 
-        self.unit_dim = self.obs_dim  # QPLEX unit_dim  for cds_gfootball
-        # self.unit_dim = 6  # QPLEX unit_dim set as that in Starcraft II
-
-
+        self.unit_dim = self.obs_dim  # QPLEX unit_dim for cds_gfootball
+        # self.unit_dim = 8  # QPLEX unit_dim set like that in Starcraft II
 
     def get_simple_obs(self, index=-1):
         full_obs = self.env.unwrapped.observation()[0]
@@ -99,8 +96,12 @@ class Academy_3_vs_1_with_Keeper(MultiAgentEnv):
             simple_obs.append(
                 full_obs['left_team_direction'][-self.n_agents:].reshape(-1))
 
-            simple_obs.append(full_obs['right_team'].reshape(-1))
-            simple_obs.append(full_obs['right_team_direction'].reshape(-1))
+            simple_obs.append(full_obs['right_team'][0])
+            simple_obs.append(full_obs['right_team'][1])
+            simple_obs.append(full_obs['right_team'][2])
+            simple_obs.append(full_obs['right_team_direction'][0])
+            simple_obs.append(full_obs['right_team_direction'][1])
+            simple_obs.append(full_obs['right_team_direction'][2])
 
             simple_obs.append(full_obs['ball'])
             simple_obs.append(full_obs['ball_direction'])
@@ -118,9 +119,12 @@ class Academy_3_vs_1_with_Keeper(MultiAgentEnv):
             simple_obs.append(np.delete(
                 full_obs['left_team_direction'][-self.n_agents:], index, axis=0).reshape(-1))
 
-            simple_obs.append(
-                (full_obs['right_team'] - ego_position).reshape(-1))
-            simple_obs.append(full_obs['right_team_direction'].reshape(-1))
+            simple_obs.append(full_obs['right_team'][0] - ego_position)
+            simple_obs.append(full_obs['right_team'][1] - ego_position)
+            simple_obs.append(full_obs['right_team'][2] - ego_position)
+            simple_obs.append(full_obs['right_team_direction'][0])
+            simple_obs.append(full_obs['right_team_direction'][1])
+            simple_obs.append(full_obs['right_team_direction'][2])
 
             simple_obs.append(full_obs['ball'][:2] - ego_position)
             simple_obs.append(full_obs['ball'][-1].reshape(-1))
@@ -141,7 +145,7 @@ class Academy_3_vs_1_with_Keeper(MultiAgentEnv):
         ours_loc = cur_obs['left_team'][-self.n_agents:]
 
         if ball_loc[0] < 0 or any(ours_loc[:, 0] < 0):
-            return True # TODO(pu)
+            return True
 
         return False
 
@@ -174,7 +178,8 @@ class Academy_3_vs_1_with_Keeper(MultiAgentEnv):
         self.time_step += 1
         if isinstance(actions,np.ndarray):
             actions=torch.from_numpy(actions)
-        _, original_rewards, done, infos = self.env.step(actions.to('cpu').numpy().tolist())
+        _, original_rewards, done, infos = self.env.step(
+            actions.to('cpu').numpy().tolist())
 
         obs = {
             'agent_state': torch.tensor(np.stack(self.get_obs(),axis=0),dtype=torch.float32),
@@ -182,7 +187,7 @@ class Academy_3_vs_1_with_Keeper(MultiAgentEnv):
             'global_state': torch.tensor(np.stack(self.get_global_special_state(),axis=0,),dtype=torch.float32),
             'action_mask': torch.tensor(np.stack(self.get_avail_actions(),axis=0),dtype=torch.float32),
         }
-        # obs = to_ndarray(obs).astype(np.float32)
+        # obs = to_ndarray(obs).astype(np.float32))
 
         rewards = list(original_rewards)
         # obs = np.array([self.get_obs(i) for i in range(self.n_agents)])
@@ -193,15 +198,17 @@ class Academy_3_vs_1_with_Keeper(MultiAgentEnv):
         if self.check_if_done():
             done = True
 
-        if sum(rewards) <= 0:  
+        if sum(rewards) <= 0:
             # return obs, self.get_global_state(), -int(done), done, infos
             infos['final_eval_reward'] = infos['score_reward'] # TODO
             # return -int(done), done, infos
             return BaseEnvTimestep(obs, torch.tensor(-int(done),dtype=torch.float32), done, infos)
 
+
         infos['final_eval_reward'] = infos['score_reward'] # TODO
         # return obs, self.get_global_state(), 100, done, infos
         return BaseEnvTimestep(obs, torch.tensor(100,dtype=torch.float32), done, infos)
+
 
     def get_obs(self):
         """Returns all agent observations in a list."""
@@ -237,6 +244,14 @@ class Academy_3_vs_1_with_Keeper(MultiAgentEnv):
     def get_total_actions(self):
         """Returns the total number of actions an agent could ever take."""
         return self.action_space[0].n
+
+    # def reset(self):
+    #     """Returns initial observations and states."""
+    #     self.time_step = 0
+    #     self.env.reset()
+    #     obs = np.array([self.get_simple_obs(i) for i in range(self.n_agents)])
+
+    #     return obs, self.get_global_state()
 
     def render(self):
         pass
