@@ -4,6 +4,7 @@ from collections import namedtuple
 from ding.torch_utils import to_device
 import gym
 
+
 class PolicyFactory:
     r"""
     Overview:
@@ -35,8 +36,11 @@ class PolicyFactory:
                     actions[env_id] = {'action': action_space.sample()}
                 else:
                     # for gym_hybrid
-                    if isinstance(action_space[0],gym.spaces.Discrete) and isinstance(action_space[1],gym.spaces.Box):
-                        action_sample = {'action_type':  action_space[0].sample(), 'action_args':  action_space[1].sample()}
+                    if isinstance(action_space[0], gym.spaces.Discrete) and isinstance(action_space[1], gym.spaces.Box):
+                        action_sample = {
+                            'action_type': action_space[0].sample(),
+                            'action_args': action_space[1].sample()
+                        }
                         actions[env_id] = {'action': action_sample}
 
             return actions

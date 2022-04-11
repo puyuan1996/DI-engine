@@ -58,7 +58,7 @@ def serial_pipeline_dqn_vqvae(
     policy = create_policy(cfg.policy, model=model, enable_field=['learn', 'collect', 'eval', 'command'])
 
     # TODO(pu):load model
-    policy.collect_mode.load_state_dict(torch.load(cfg.policy.learned_model_path, map_location='cuda'))
+    # policy.collect_mode.load_state_dict(torch.load(cfg.policy.learned_model_path, map_location='cuda'))
 
     # Create worker components: learner, collector, evaluator, replay buffer, commander.
     tb_logger = SummaryWriter(os.path.join('./{}/log/'.format(cfg.exp_name), 'serial'))
@@ -108,9 +108,12 @@ def serial_pipeline_dqn_vqvae(
         # ====================
         # Learn policy from collected data
         for i in range(cfg.policy.learn.warm_up_update):
-            if i==0:
-                policy.visualize_latent(save_histogram=True, name='warmup-start_'+f'{cfg.env.env_id}_s{cfg.seed}') # NOTE:visualize_latent
-                policy.visualize_embedding_table(name='warmup-start_'+f'{cfg.env.env_id}_s{cfg.seed}')
+            # NOTE: save visualized latent action and embedding_table
+            # if i == 0:
+            #     policy.visualize_latent(
+            #         save_histogram=True, name='warmup-start_' + f'{cfg.env.env_id}_s{cfg.seed}'
+            #     )
+            #     policy.visualize_embedding_table(name='warmup-start_' + f'{cfg.env.env_id}_s{cfg.seed}')
             # Learner will train ``update_per_collect`` times in one iteration.
             train_data = replay_buffer.sample(cfg.policy.learn.vqvae_batch_size, learner.train_iter)
             if train_data is None:
@@ -132,16 +135,22 @@ def serial_pipeline_dqn_vqvae(
     collector.reset(policy.collect_mode)
 
     for iter in range(max_iterations):
-        if iter%5000==0:
-            policy.visualize_latent(save_histogram=True, name=f'iter{iter}_{cfg.env.env_id}_s{cfg.seed}') # NOTE:visualize_latent
-            policy.visualize_embedding_table(name=f'iter{iter}_{cfg.env.env_id}_s{cfg.seed}')
+        # NOTE: save visualized latent action and embedding_table
+        # if iter % 5000 == 0:
+        #     policy.visualize_latent(
+        #         save_histogram=True, name=f'iter{iter}_{cfg.env.env_id}_s{cfg.seed}'
+        #     )  
+        #     policy.visualize_embedding_table(name=f'iter{iter}_{cfg.env.env_id}_s{cfg.seed}')
         collect_kwargs = commander.step()
         # Evaluate policy performance
         if evaluator.should_eval(learner.train_iter):
             stop, reward = evaluator.eval(learner.save_checkpoint, learner.train_iter, collector.envstep)
             if stop:
-                policy.visualize_latent(save_histogram=True, name=f'iter{iter}_{cfg.env.env_id}_s{cfg.seed}')# NOTE:visualize_latent
-                policy.visualize_embedding_table(name=f'iter{iter}_{cfg.env.env_id}_s{cfg.seed}')
+                # NOTE: save visualized latent action and embedding_table
+                # policy.visualize_latent(
+                #     save_histogram=True, name=f'iter{iter}_{cfg.env.env_id}_s{cfg.seed}'
+                # ) 
+                # policy.visualize_embedding_table(name=f'iter{iter}_{cfg.env.env_id}_s{cfg.seed}')
                 break
         # Collect data by default config n_sample/n_episode
         if hasattr(cfg.policy.collect, "each_iter_n_sample"):
@@ -208,11 +217,15 @@ def serial_pipeline_dqn_vqvae(
                 learner.train(train_data, collector.envstep)
                 # if learner.policy.get_attribute('priority'):
                 #     replay_buffer.update(learner.priority_info)
+
             replay_buffer_recent.clear()  # TODO(pu)
 
         if collector.envstep > 3e6:
-            policy.visualize_latent(save_histogram=True, name=f'iter{iter}_{cfg.env.env_id}_s{cfg.seed}') # NOTE:visualize_latent
-            policy.visualize_embedding_table(name=f'iter{iter}_{cfg.env.env_id}_s{cfg.seed}')
+            # NOTE: save visualized latent action and embedding_table
+            # policy.visualize_latent(
+            #     save_histogram=True, name=f'iter{iter}_{cfg.env.env_id}_s{cfg.seed}'
+            # )
+            # policy.visualize_embedding_table(name=f'iter{iter}_{cfg.env.env_id}_s{cfg.seed}')
             break
 
     # Learner's after_run hook.

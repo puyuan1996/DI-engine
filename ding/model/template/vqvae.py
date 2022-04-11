@@ -36,7 +36,15 @@ class VectorQuantizer(nn.Module):
     [1] https://github.com/deepmind/sonnet/blob/v2/sonnet/src/nets/vqvae.py
     """
 
-    def __init__(self, num_embeddings: int, embedding_dim: int, beta: float = 0.25, is_ema=False, is_ema_target=False,eps_greedy_nearest=False):
+    def __init__(
+        self,
+        num_embeddings: int,
+        embedding_dim: int,
+        beta: float = 0.25,
+        is_ema=False,
+        is_ema_target=False,
+        eps_greedy_nearest=False
+    ):
         super(VectorQuantizer, self).__init__()
         self.K = num_embeddings
         self.D = embedding_dim
@@ -44,7 +52,6 @@ class VectorQuantizer(nn.Module):
         self.is_ema = is_ema
         self.is_ema_target = is_ema_target
         self.eps_greedy_nearest = eps_greedy_nearest
-
 
         self.embedding = nn.Embedding(self.K, self.D)
         self.embedding.weight.data.uniform_(-1 / self.K, 1 / self.K)
@@ -90,17 +97,21 @@ class VectorQuantizer(nn.Module):
         if self.is_ema:
             #  VQ-VAE dictionary updates with Exponential Moving Averages
             if self.is_ema_target:
-                embedding_loss=torch.zeros(1, device=device)
+                embedding_loss = torch.zeros(1, device=device)
             for i, N_i in collections.Counter(quantized_index.squeeze().cpu().numpy()).items():
                 N_i_index_list = numpy.where(quantized_index.squeeze().cpu().numpy() == i)[0]
                 self.ema_m.update('m' + f'{i}', encoding[N_i_index_list].sum(dim=0))  # m_i
                 self.ema_N.update('N' + f'{i}', N_i)  #   # N_i
                 if not self.is_ema_target:
-                    self.embedding.weight.data[i] = self.ema_m.get('m' + f'{i}') / self.ema_N.get('N' + f'{i}')  # TODO(pu)
+                    self.embedding.weight.data[i] = self.ema_m.get('m' +
+                                                                   f'{i}') / self.ema_N.get('N' + f'{i}')  # TODO(pu)
                 else:
-                    embedding_loss = F.mse_loss(self.embedding.weight[i], self.ema_m.get('m' + f'{i}') / self.ema_N.get('N' + f'{i}'))
+                    embedding_loss = F.mse_loss(
+                        self.embedding.weight[i],
+                        self.ema_m.get('m' + f'{i}') / self.ema_N.get('N' + f'{i}')
+                    )
             if not self.is_ema_target:
-                embedding_loss=torch.zeros(1, device=device)
+                embedding_loss = torch.zeros(1, device=device)
                 vq_loss = commitment_loss * self.beta
             else:
                 vq_loss = commitment_loss * self.beta + embedding_loss
@@ -111,7 +122,7 @@ class VectorQuantizer(nn.Module):
 
         if self.eps_greedy_nearest:
             if np.random.random() < eps:
-                quantized_index = torch.from_numpy(np.random.randint(0, self.K,1))
+                quantized_index = torch.from_numpy(np.random.randint(0, self.K, 1))
                 quantized_embedding = self.embedding.weight[quantized_index]
 
         # straight-through estimator
@@ -142,7 +153,7 @@ class VQVAE(nn.Module):
             beta: float = 0.25,
             is_ema: bool = False,
             is_ema_target: bool = False,
-            eps_greedy_nearest: bool =False,
+            eps_greedy_nearest: bool = False,
             img_size: int = 64,
             **kwargs
     ) -> None:
@@ -162,12 +173,18 @@ class VQVAE(nn.Module):
         ### Encoder
 
         # action
-        if isinstance(self.original_action_shape,int):  # continuous action
-            self.encode_action_head = nn.Sequential(nn.Linear(self.original_action_shape, self.hidden_dims[0]), nn.ReLU())
-        elif isinstance(self.original_action_shape,dict):  # hybrid action
+        if isinstance(self.original_action_shape, int):  # continuous action
+            self.encode_action_head = nn.Sequential(
+                nn.Linear(self.original_action_shape, self.hidden_dims[0]), nn.ReLU()
+            )
+        elif isinstance(self.original_action_shape, dict):  # hybrid action
             # input action: concat(continuous action, one-hot encoding of discrete action)
-            self.encode_action_head = nn.Sequential(nn.Linear(self.original_action_shape['action_type_shape']+self.original_action_shape['action_args_shape'], self.hidden_dims[0]), nn.ReLU())
-
+            self.encode_action_head = nn.Sequential(
+                nn.Linear(
+                    self.original_action_shape['action_type_shape'] + self.original_action_shape['action_args_shape'],
+                    self.hidden_dims[0]
+                ), nn.ReLU()
+            )
 
         self.encode_common = nn.Sequential(nn.Linear(self.hidden_dims[0], self.hidden_dims[0]), nn.ReLU())
         self.encode_mu_head = nn.Linear(self.hidden_dims[0], self.embedding_dim)
@@ -175,70 +192,94 @@ class VQVAE(nn.Module):
         self.encoder = nn.Sequential(*modules)
 
         ### VQ layer
-        self.vq_layer = VectorQuantizer(num_embeddings, embedding_dim, self.beta, self.is_ema, self.is_ema_target,self.eps_greedy_nearest)
+        self.vq_layer = VectorQuantizer(
+            num_embeddings, embedding_dim, self.beta, self.is_ema, self.is_ema_target, self.eps_greedy_nearest
+        )
 
         ### Decoder
         self.decode_action_head = nn.Sequential(nn.Linear(self.embedding_dim, self.hidden_dims[0]), nn.ReLU())
         self.decode_common = nn.Sequential(nn.Linear(self.hidden_dims[0], self.hidden_dims[0]), nn.ReLU())
 
-        if isinstance(self.original_action_shape,int):  # continuous action
+        if isinstance(self.original_action_shape, int):  # continuous action
             # TODO(pu): tanh
-            self.decode_reconst_action_head = nn.Sequential(nn.Linear(self.hidden_dims[0], self.original_action_shape), nn.Tanh())
+            self.decode_reconst_action_head = nn.Sequential(
+                nn.Linear(self.hidden_dims[0], self.original_action_shape), nn.Tanh()
+            )
             modules = [self.decode_action_head, self.decode_common, self.decode_reconst_action_head]
             self.decoder = nn.Sequential(*modules)
-        elif isinstance(self.original_action_shape,dict):  # hybrid action
+        elif isinstance(self.original_action_shape, dict):  # hybrid action
             # input action: concat(continuous action, one-hot encoding of discrete action)
-            self.decode_reconst_action_cont_head  = nn.Sequential(nn.Linear(self.hidden_dims[0],self.original_action_shape['action_args_shape']), nn.Tanh())
-            self.decode_reconst_action_disc_head  = nn.Sequential(nn.Linear(self.hidden_dims[0],self.original_action_shape['action_type_shape']), nn.ReLU())
-
+            self.decode_reconst_action_cont_head = nn.Sequential(
+                nn.Linear(self.hidden_dims[0], self.original_action_shape['action_args_shape']), nn.Tanh()
+            )
+            self.decode_reconst_action_disc_head = nn.Sequential(
+                nn.Linear(self.hidden_dims[0], self.original_action_shape['action_type_shape']), nn.ReLU()
+            )
 
     def train_without_obs(self, data):
 
-        if isinstance(self.original_action_shape,int):  # continuous action
+        if isinstance(self.original_action_shape, int):  # continuous action
             encoding = self.encoder(data['action'])
-        elif isinstance(self.original_action_shape,dict):  # hybrid action
-            action_disc_onehot= one_hot(data['action']['action_type'], num=self.original_action_shape['action_type_shape'])
-            action_disc_cont = torch.cat([action_disc_onehot.float(), data['action']['action_args']],dim=-1)
-            encoding  = self.encoder(action_disc_cont)
+        elif isinstance(self.original_action_shape, dict):  # hybrid action
+            action_disc_onehot = one_hot(
+                data['action']['action_type'], num=self.original_action_shape['action_type_shape']
+            )
+            action_disc_cont = torch.cat([action_disc_onehot.float(), data['action']['action_args']], dim=-1)
+            encoding = self.encoder(action_disc_cont)
 
-        quantized_index, quantized_embedding, vq_loss, embedding_loss, commitment_loss= self.vq_layer(encoding)
+        quantized_index, quantized_embedding, vq_loss, embedding_loss, commitment_loss = self.vq_layer(encoding)
 
-        if isinstance(self.original_action_shape,int):  # continuous action
+        if isinstance(self.original_action_shape, int):  # continuous action
             recons_action = self.decoder(quantized_embedding)
             recons_loss = F.mse_loss(recons_action, data['action'])
             total_vqvae_loss = recons_loss + vq_loss
 
-            return {'total_vqvae_loss': total_vqvae_loss, 'recons_loss': recons_loss, 'vq_loss': vq_loss, 'embedding_loss': embedding_loss, 'commitment_loss':commitment_loss}
+            return {
+                'total_vqvae_loss': total_vqvae_loss,
+                'recons_loss': recons_loss,
+                'vq_loss': vq_loss,
+                'embedding_loss': embedding_loss,
+                'commitment_loss': commitment_loss
+            }
 
-        elif isinstance(self.original_action_shape,dict):  # hybrid action
+        elif isinstance(self.original_action_shape, dict):  # hybrid action
             action_decoding = self.decode_action_head(quantized_embedding)
             action_obs_decoding_tmp = self.decode_common(action_decoding)
             reconstruction_action_cont = self.decode_reconst_action_cont_head(action_obs_decoding_tmp)
             reconstruction_action_disc_logit = self.decode_reconst_action_disc_head(action_obs_decoding_tmp)
             reconstruction_action_disc = torch.argmax(reconstruction_action_disc_logit, dim=-1)
-            recons_action ={'cont': reconstruction_action_cont, 'disc': reconstruction_action_disc, 'disc_logit': reconstruction_action_disc_logit}
+            recons_action = {
+                'cont': reconstruction_action_cont,
+                'disc': reconstruction_action_disc,
+                'disc_logit': reconstruction_action_disc_logit
+            }
 
             recons_loss_cont = F.mse_loss(recons_action['cont'], data['action']['action_args'])
             recons_loss_disc = F.cross_entropy(recons_action['disc_logit'], data['action']['action_type'])
 
-            recons_loss=  recons_loss_cont +  recons_loss_disc
+            recons_loss = recons_loss_cont + recons_loss_disc
 
             total_vqvae_loss = recons_loss + vq_loss
-            return {'total_vqvae_loss': total_vqvae_loss, 'recons_loss': recons_loss, 'vq_loss': vq_loss, 'embedding_loss': embedding_loss, 'commitment_loss':commitment_loss}
-
-
-
+            return {
+                'total_vqvae_loss': total_vqvae_loss,
+                'recons_loss': recons_loss,
+                'vq_loss': vq_loss,
+                'embedding_loss': embedding_loss,
+                'commitment_loss': commitment_loss
+            }
 
     def inference_without_obs(self, data):
         # encoding = self.encoder(data['action'])
 
-        if isinstance(self.original_action_shape,int):  # continuous action
+        if isinstance(self.original_action_shape, int):  # continuous action
             encoding = self.encoder(data['action'])
 
-        elif isinstance(self.original_action_shape,dict):  # hybrid action
-            action_disc_onehot= one_hot(data['action']['action_type'], num=self.original_action_shape['action_type_shape'])
-            action_disc_cont = torch.cat([action_disc_onehot.float(), data['action']['action_args']],dim=-1)
-            encoding  = self.encoder(action_disc_cont)
+        elif isinstance(self.original_action_shape, dict):  # hybrid action
+            action_disc_onehot = one_hot(
+                data['action']['action_type'], num=self.original_action_shape['action_type_shape']
+            )
+            action_disc_cont = torch.cat([action_disc_onehot.float(), data['action']['action_args']], dim=-1)
+            encoding = self.encoder(action_disc_cont)
 
         quantized_index = self.vq_layer.inference(encoding)
 
@@ -260,20 +301,21 @@ class VQVAE(nn.Module):
         # Quantize the encoding
         quantized_embedding = torch.matmul(encoding_one_hot, self.vq_layer.embedding.weight)
 
-
-        if isinstance(self.original_action_shape,int):  # continuous action
+        if isinstance(self.original_action_shape, int):  # continuous action
             recons_action = self.decoder(quantized_embedding)
 
             return {'recons_action': recons_action}
 
-        elif isinstance(self.original_action_shape,dict):  # hybrid action
+        elif isinstance(self.original_action_shape, dict):  # hybrid action
             action_decoding = self.decode_action_head(quantized_embedding)
             action_obs_decoding_tmp = self.decode_common(action_decoding)
             reconstruction_action_cont = self.decode_reconst_action_cont_head(action_obs_decoding_tmp)
             reconstruction_action_disc_logit = self.decode_reconst_action_disc_head(action_obs_decoding_tmp)
             reconstruction_action_disc = torch.argmax(reconstruction_action_disc_logit, dim=-1)
-            recons_action ={'cont': reconstruction_action_cont, 'disc': reconstruction_action_disc, 'disc_logit': reconstruction_action_disc_logit}
+            recons_action = {
+                'cont': reconstruction_action_cont,
+                'disc': reconstruction_action_disc,
+                'disc_logit': reconstruction_action_disc_logit
+            }
 
             return {'recons_action': recons_action}
-
-
