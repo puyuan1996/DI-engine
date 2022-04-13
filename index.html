@@ -102,6 +102,7 @@
 <li class="toctree-l1"><a class="reference internal" href="guide/index.html">Developer Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorial_dev/index.html">Tutorial-Developer</a></li>
 <li class="toctree-l1"><a class="reference internal" href="architecture/index.html">Architecture Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="specification/index.html">Middleware code specification</a></li>
 </ul>
 
             
@@ -168,19 +169,19 @@
             
   <div class="section" id="welcome-to-di-engine-s-documentation">
 <h1>Welcome to DI-engine’s documentation!<a class="headerlink" href="#welcome-to-di-engine-s-documentation" title="Permalink to this headline">¶</a></h1>
-<p><a class="reference external" href="./index_zh.html">中文</a></p>
+<p><a class="reference external" href="/zh_CN/latest/index_zh.html">中文</a></p>
 <a class="reference internal image-reference" href="_images/di_engine_logo.svg"><img alt="_images/di_engine_logo.svg" class="align-center" src="_images/di_engine_logo.svg" width="300" /></a>
 <div class="section" id="overview">
 <h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
 <p>DI-engine is a generalized Decision Intelligence engine. It supports most basic deep reinforcement learning (DRL) algorithms,
 such as DQN, PPO, SAC, and domain-specific algorithms like QMIX in multi-agent RL, GAIL in inverse RL, and RND in exploration problems.
 The whole supported algorithms introduction can be found in <a class="reference external" href="./feature/algorithm_overview.html">Algorithm</a>.</p>
-<p>For scalability, DI-engine supports three different training pipeline:</p>
+<p>For scalability, DI-engine supports three different training pipelines:</p>
 <blockquote>
 <div><ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">serial</span></code></p>
 <ul>
-<li><p>feature: single-machine, learner-collector loop executes sequencially</p></li>
+<li><p>feature: single-machine, learner-collector loop executes sequentially</p></li>
 <li><p>usage: academic research</p></li>
 </ul>
 </li>
@@ -204,11 +205,11 @@ The whole supported algorithms introduction can be found in <a class="reference 
 <h2>Main Features<a class="headerlink" href="#main-features" title="Permalink to this headline">¶</a></h2>
 <blockquote>
 <div><ul class="simple">
-<li><p>DI-zoo: High performance DRL algorithm zoo, algorithm support list. <a class="reference external" href="feature/algorithm_overview.html">Link</a></p></li>
+<li><p>DI-zoo: High-performance DRL algorithm zoo, algorithm support list. <a class="reference external" href="feature/algorithm_overview.html">Link</a></p></li>
 <li><p>Generalized decision intelligence algorithms: DRL family, IRL family, MARL family, searching family(MCTS) and etc.</p></li>
 <li><p>Customized DRL demand implementation, such as Inverse RL/RL hybrid training; Multi-buffer training; League self-play training</p></li>
 <li><p>Large scale DRL training demonstration and application</p></li>
-<li><p>Various efficiency optimization module: DI-hpc, DI-store, EnvManager, DataLoader</p></li>
+<li><p>Various efficiency optimization modules: DI-hpc, DI-store, EnvManager, DataLoader</p></li>
 <li><p>k8s support, DI-orchestrator k8s cluster scheduler for dynamic collectors and other services</p></li>
 </ul>
 </div></blockquote>
@@ -245,26 +246,40 @@ If you want to deeply customize your algorithm and application with DI-engine, a
 </li>
 <li class="toctree-l1"><a class="reference internal" href="hands_on/index.html">RL Algorithm Cheat Sheet</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="hands_on/dqn.html">DQN</a></li>
-<li class="toctree-l2"><a class="reference internal" href="hands_on/c51_qrdqn_iqn.html">C51</a></li>
-<li class="toctree-l2"><a class="reference internal" href="hands_on/c51_qrdqn_iqn.html#qrdqn">QRDQN</a></li>
-<li class="toctree-l2"><a class="reference internal" href="hands_on/c51_qrdqn_iqn.html#iqn">IQN</a></li>
 <li class="toctree-l2"><a class="reference internal" href="hands_on/rainbow.html">Rainbow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hands_on/c51.html">C51</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hands_on/qrdqn.html">QRDQN</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hands_on/iqn.html">IQN</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hands_on/sql.html">SQL</a></li>
 <li class="toctree-l2"><a class="reference internal" href="hands_on/sqn.html">SQN</a></li>
-<li class="toctree-l2"><a class="reference internal" href="hands_on/sqil.html">SQIL</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hands_on/r2d2.html">R2D2</a></li>
 <li class="toctree-l2"><a class="reference internal" href="hands_on/a2c.html">A2C</a></li>
-<li class="toctree-l2"><a class="reference internal" href="hands_on/acer.html">ACER</a></li>
 <li class="toctree-l2"><a class="reference internal" href="hands_on/ppo.html">PPO</a></li>
-<li class="toctree-l2"><a class="reference internal" href="hands_on/ppg.html">PPG</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hands_on/acer.html">ACER</a></li>
 <li class="toctree-l2"><a class="reference internal" href="hands_on/impala.html">IMPALA</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hands_on/ppg.html">PPG</a></li>
 <li class="toctree-l2"><a class="reference internal" href="hands_on/ddpg.html">DDPG</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hands_on/d4pg.html">D4PG</a></li>
 <li class="toctree-l2"><a class="reference internal" href="hands_on/td3.html">TD3</a></li>
 <li class="toctree-l2"><a class="reference internal" href="hands_on/sac.html">SAC</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hands_on/cql.html">CQL</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hands_on/td3_bc.html">TD3BC</a></li>
 <li class="toctree-l2"><a class="reference internal" href="hands_on/qmix.html">QMIX</a></li>
 <li class="toctree-l2"><a class="reference internal" href="hands_on/coma.html">COMA</a></li>
-<li class="toctree-l2"><a class="reference internal" href="hands_on/atoc.html">ATOC</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hands_on/wqmix.html">WQMIX</a></li>
 <li class="toctree-l2"><a class="reference internal" href="hands_on/collaq.html">CollaQ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hands_on/atoc.html">ATOC</a></li>
 <li class="toctree-l2"><a class="reference internal" href="hands_on/rnd.html">RND</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hands_on/her.html">HER</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hands_on/dqfd.html">DQfD</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hands_on/sqil.html">SQIL</a></li>
 <li class="toctree-l2"><a class="reference internal" href="hands_on/gail.html">GAIL</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hands_on/trex.html">TREX</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hands_on/icm_zh.html">ICM</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hands_on/guided_cost_zh.html">Guided Cost Learning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hands_on/r2d3_zh.html">R2D3</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hands_on/gtrxl.html">GTrXL</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hands_on/mbpo.html">MBPO</a></li>
 <li class="toctree-l2"><a class="reference internal" href="hands_on/vpn.html">VPN</a></li>
 <li class="toctree-l2"><a class="reference internal" href="hands_on/mcts.html">MCTS</a></li>
 <li class="toctree-l2"><a class="reference internal" href="hands_on/alphago.html">AlphaGo</a></li>
@@ -330,6 +345,7 @@ If you want to deeply customize your algorithm and application with DI-engine, a
 <li class="toctree-l2"><a class="reference internal" href="faq/index.html#q2-cannot-use-di-engine-command-line-tool-cli-after-installation">Q2: Cannot use DI-engine command line tool (CLI) after installation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="faq/index.html#q3-no-permission-error-occurred-during-installation">Q3: “No permission” error occurred during installation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="faq/index.html#q4-how-to-set-the-relevant-operating-parameters-of-syncsubprocessenvmanager">Q4: How to set the relevant operating parameters of <code class="docutils literal notranslate"><span class="pre">SyncSubprocessEnvManager</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="faq/index.html#q5-how-to-adjust-the-learning-rate">Q5: How to adjust the learning rate</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="feature/index.html">Feature</a><ul>
@@ -368,6 +384,14 @@ If you want to deeply customize your algorithm and application with DI-engine, a
 <li class="toctree-l1"><a class="reference internal" href="architecture/index.html">Architecture Design</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="architecture/interaction/index.html">Interaction Framework</a></li>
 <li class="toctree-l2"><a class="reference internal" href="architecture/loader/index.html">Loader Framework</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="specification/index.html">Middleware code specification</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="specification/index.html#file-structure-and-naming">File structure and naming</a></li>
+<li class="toctree-l2"><a class="reference internal" href="specification/index.html#class-function-parameter">Class, Function, Parameter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="specification/index.html#construction-method">Construction method</a></li>
+<li class="toctree-l2"><a class="reference internal" href="specification/index.html#runtime-method">Runtime method</a></li>
+<li class="toctree-l2"><a class="reference internal" href="specification/index.html#event-naming-convention">Event naming convention</a></li>
 </ul>
 </li>
 </ul>

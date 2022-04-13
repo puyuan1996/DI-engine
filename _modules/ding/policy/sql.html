@@ -101,6 +101,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">Developer Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../tutorial_dev/index.html">Tutorial-Developer</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../architecture/index.html">Architecture Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../specification/index.html">Middleware code specification</a></li>
 </ul>
 
             
@@ -180,7 +181,7 @@
 <span class="kn">from</span> <span class="nn">.common_utils</span> <span class="kn">import</span> <span class="n">default_preprocess_learn</span>
 
 
-<div class="viewcode-block" id="SQLPolicy"><a class="viewcode-back" href="../../../hands_on/sqil.html#ding.policy.sql.SQLPolicy">[docs]</a><span class="nd">@POLICY_REGISTRY</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s1">&#39;sql&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="SQLPolicy"><a class="viewcode-back" href="../../../hands_on/sql.html#ding.policy.sql.SQLPolicy">[docs]</a><span class="nd">@POLICY_REGISTRY</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s1">&#39;sql&#39;</span><span class="p">)</span>
 <span class="k">class</span> <span class="nc">SQLPolicy</span><span class="p">(</span><span class="n">Policy</span><span class="p">):</span>
     <span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Overview:</span>
@@ -220,8 +221,8 @@
         <span class="p">),</span>
         <span class="c1"># collect_mode config</span>
         <span class="n">collect</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
-            <span class="c1"># (int) Only one of [n_sample, n_step, n_episode] shoule be set</span>
-            <span class="c1">#n_sample=8,  # collect 8 samples and put them in collector</span>
+            <span class="c1"># (int) Only one of [n_sample, n_episode] shoule be set</span>
+            <span class="c1"># n_sample=8,  # collect 8 samples and put them in collector</span>
             <span class="c1"># (int) Cut trajectories into pieces with length &quot;unroll_len&quot;.</span>
             <span class="n">unroll_len</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
         <span class="p">),</span>
