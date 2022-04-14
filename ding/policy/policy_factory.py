@@ -3,7 +3,7 @@ from collections import namedtuple
 
 from ding.torch_utils import to_device
 import gym
-
+import numpy as np
 
 class PolicyFactory:
     r"""
@@ -35,13 +35,26 @@ class PolicyFactory:
                 if isinstance(action_space, gym.spaces.Discrete) or isinstance(action_space, gym.spaces.Box):
                     actions[env_id] = {'action': action_space.sample()}
                 else:
-                    # for gym_hybrid
                     if isinstance(action_space[0], gym.spaces.Discrete) and isinstance(action_space[1], gym.spaces.Box):
+                        # for gym_hybrid
                         action_sample = {
                             'action_type': action_space[0].sample(),
                             'action_args': action_space[1].sample()
                         }
                         actions[env_id] = {'action': action_sample}
+
+                    else:
+                        # for go-bigger
+                        if isinstance(action_space[0], gym.spaces.Box) and isinstance(action_space[1],
+                                                                                      gym.spaces.Discrete):
+                            action_sample_player1 = np.concatenate(
+                                [action_space[0].sample(), np.array([action_space[1].sample()])])
+                            action_sample_player2 = np.concatenate(
+                                [action_space[0].sample(), np.array([action_space[1].sample()])])
+                            action_sample_player3 = np.concatenate(
+                                [action_space[0].sample(), np.array([action_space[1].sample()])])
+                            actions[env_id] = {'action': np.stack(
+                                [action_sample_player1, action_sample_player2, action_sample_player3])}
 
             return actions
 
