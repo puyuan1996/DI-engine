@@ -255,7 +255,7 @@ class VQVAE(nn.Module):
             }
 
             recons_loss_cont = F.mse_loss(recons_action['cont'], data['action']['action_args'])
-            recons_loss_disc = F.cross_entropy(recons_action['disc_logit'], data['action']['action_type'])
+            recons_loss_disc = F.cross_entropy(recons_action['disc_logit'].view(-1,recons_action['disc_logit'].shape[-1]), data['action']['action_type'].view(-1))
 
             recons_loss = recons_loss_cont + recons_loss_disc
 
@@ -269,8 +269,6 @@ class VQVAE(nn.Module):
             }
 
     def inference_without_obs(self, data):
-        # encoding = self.encoder(data['action'])
-
         if isinstance(self.original_action_shape, int):  # continuous action
             encoding = self.encoder(data['action'])
 
