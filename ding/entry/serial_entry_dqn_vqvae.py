@@ -21,6 +21,7 @@ def serial_pipeline_dqn_vqvae(
         env_setting: Optional[List[Any]] = None,
         model: Optional[torch.nn.Module] = None,
         max_iterations: Optional[int] = int(1e10),
+        max_env_step: Optional[int] = int(3e3),
 ) -> 'Policy':  # noqa
     """
     Overview:
@@ -220,7 +221,7 @@ def serial_pipeline_dqn_vqvae(
 
             replay_buffer_recent.clear()  # TODO(pu)
 
-        if collector.envstep > 3e6:
+        if collector.envstep > max_env_step:
             # NOTE: save visualized latent action and embedding_table
             # policy.visualize_latent(
             #     save_histogram=True, name=f'iter{iter}_{cfg.env.env_id}_s{cfg.seed}'

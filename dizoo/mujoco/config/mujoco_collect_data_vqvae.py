@@ -6,8 +6,8 @@ import copy
 
 def eval_ckpt(args):
     config = copy.deepcopy([main_config, create_config])
-    eval(config, seed=args.seed, load_path=main_config.policy.learn.learner.hook.load_ckpt_before_run)
-    # eval(config, seed=args.seed, load_path=main_config.policy.learn.learner.hook.load_ckpt_before_run,replay_path='/home/puyuan/halfcheetah_dqn_vqvae_seed0/')
+    # eval(config, seed=args.seed, load_path=main_config.policy.learn.learner.hook.load_ckpt_before_run)
+    eval(config, seed=args.seed, load_path=main_config.policy.learn.learner.hook.load_ckpt_before_run, replay_path='/home/puyuan/halfcheetah_dqn_vqvae_seed0/')
 
 
 def generate(args):

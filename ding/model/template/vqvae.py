@@ -66,17 +66,14 @@ class VectorQuantizer(nn.Module):
                 # self.ema_m.register('m'+f'{i}', torch.zeros(self.D, device=torch.device('cpu')))
 
     def forward(self, encoding: Tensor, eps=0.05) -> Tensor:
-        encoding_shape = encoding.shape  # [A x D]
-        flat_encoding = encoding.view(-1, self.D)
-
         # # Method 2: Compute L2 distance between encoding and embedding weights
-        # dist = torch.sum(flat_encoding ** 2, dim=1, keepdim=True) + \
+        # dist = torch.sum(encoding ** 2, dim=1, keepdim=True) + \
         #        torch.sum(self.embedding.weight ** 2, dim=1) - \
-        #        2 * torch.matmul(flat_encoding, self.embedding.weight.t())
+        #        2 * torch.matmul(encoding, self.embedding.weight.t())
         # # Get the encoding that has the min distance
         # quantized_index = torch.argmin(dist, dim=1).unsqueeze(1)
 
-        quantized_index = torch.cdist(flat_encoding, self.embedding.weight, p=2).sort()[1][:, 0]
+        quantized_index = torch.cdist(encoding, self.embedding.weight, p=2).sort()[1][:, 0]
         # .sort()[1] take the index after sorted, [:,0] take the nearest index
         quantized_index = quantized_index.unsqueeze(1)
 
@@ -89,7 +86,6 @@ class VectorQuantizer(nn.Module):
 
         # Quantize the encoding
         quantized_embedding = torch.matmul(encoding_one_hot, self.embedding.weight)
-        quantized_embedding = quantized_embedding.view(encoding_shape)
 
         # Compute the VQ Losses
         commitment_loss = F.mse_loss(quantized_embedding.detach(), encoding)
@@ -132,10 +128,7 @@ class VectorQuantizer(nn.Module):
         return quantized_index, quantized_embedding, vq_loss, embedding_loss, commitment_loss
 
     def inference(self, encoding: Tensor) -> Tensor:
-        encoding_shape = encoding.shape  # [A x D]
-        flat_encoding = encoding.view(-1, self.D)
-
-        quantized_index = torch.cdist(flat_encoding, self.embedding.weight, p=2).sort()[1][:, 0]
+        quantized_index = torch.cdist(encoding, self.embedding.weight, p=2).sort()[1][:, 0]
         # .sort()[1] take the index after sorted, [:,0] take the nearest index
         quantized_index = quantized_index.unsqueeze(1)
 
@@ -154,7 +147,7 @@ class VQVAE(nn.Module):
             is_ema: bool = False,
             is_ema_target: bool = False,
             eps_greedy_nearest: bool = False,
-            img_size: int = 64,
+            recons_loss_weight = 1,
             **kwargs
     ) -> None:
         super(VQVAE, self).__init__()
@@ -164,11 +157,11 @@ class VQVAE(nn.Module):
 
         self.embedding_dim = embedding_dim
         self.num_embeddings = num_embeddings
-        self.img_size = img_size
         self.beta = beta
         self.is_ema = is_ema
         self.is_ema_target = is_ema_target
         self.eps_greedy_nearest = eps_greedy_nearest
+        self.recons_loss_weight = recons_loss_weight
 
         ### Encoder
 
@@ -213,8 +206,8 @@ class VQVAE(nn.Module):
                 nn.Linear(self.hidden_dims[0], self.original_action_shape['action_args_shape']), nn.Tanh()
             )
             self.decode_reconst_action_disc_head = nn.Sequential(
-                nn.Linear(self.hidden_dims[0], self.original_action_shape['action_type_shape']), nn.ReLU()
-            )
+                nn.Linear(self.hidden_dims[0], self.original_action_shape['action_type_shape'])
+            )  # NOTE: no relu()
 
     def train_without_obs(self, data):
 
@@ -232,7 +225,7 @@ class VQVAE(nn.Module):
         if isinstance(self.original_action_shape, int):  # continuous action
             recons_action = self.decoder(quantized_embedding)
             recons_loss = F.mse_loss(recons_action, data['action'])
-            total_vqvae_loss = recons_loss + vq_loss
+            total_vqvae_loss = self.recons_loss_weight * recons_loss + vq_loss
 
             return {
                 'total_vqvae_loss': total_vqvae_loss,
@@ -259,7 +252,7 @@ class VQVAE(nn.Module):
 
             recons_loss = recons_loss_cont + recons_loss_disc
 
-            total_vqvae_loss = recons_loss + vq_loss
+            total_vqvae_loss =  self.recons_loss_weight * recons_loss + vq_loss
             return {
                 'total_vqvae_loss': total_vqvae_loss,
                 'recons_loss': recons_loss,

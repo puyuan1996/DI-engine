@@ -10,13 +10,13 @@ halfcheetah_sac_data_genearation_default_config = dict(
         # n_evaluator_episode=8,
         collector_env_num=1,
         evaluator_env_num=1,
-        n_evaluator_episode=2,
+        n_evaluator_episode=1,
         use_act_scale=True,
         stop_value=12000,  # TODO
     ),
     policy=dict(
         cuda=True,
-        random_collect_size=10000,
+        # random_collect_size=10000,
         model=dict(
             # halfcheetah # TODO
             obs_shape=17,
@@ -40,17 +40,18 @@ halfcheetah_sac_data_genearation_default_config = dict(
             reparameterization=True,
             auto_alpha=False,
             learner=dict(
-                load_path='/home/puyuan/halfcheetah_sac_seed0/ckpt/iteration_100000.pth.tar',
-                # load_path='/home/puyuan/halfcheetah_sac_seed0/ckpt/ckpt_best.pth.tar',
+                # load_path='/home/puyuan/halfcheetah_sac_seed0/ckpt/iteration_100000.pth.tar',
+                load_path='/home/puyuan/halfcheetah_sac_seed0/ckpt/ckpt_best.pth.tar',
                 hook=dict(
-                    load_ckpt_before_run='/home/puyuan/halfcheetah_sac_seed0/ckpt/iteration_100000.pth.tar',
-                    # load_ckpt_before_run='/home/puyuan/halfcheetah_sac_seed0/ckpt/ckpt_best.pth.tar',
+                    # load_ckpt_before_run='/home/puyuan/halfcheetah_sac_seed0/ckpt/iteration_100000.pth.tar',
+                    load_ckpt_before_run='/home/puyuan/halfcheetah_sac_seed0/ckpt/ckpt_best.pth.tar',
                     save_ckpt_after_run=False,
                 )
             ),
         ),
         collect=dict(
-            n_sample=1,
+            # n_sample=1,
+            n_sample=10000,  # TODO
             unroll_len=1,
             # save
             save_path='/home/puyuan/halfcheetah_sac_seed0/data_iteration_100000.pkl',
@@ -62,7 +63,7 @@ halfcheetah_sac_data_genearation_default_config = dict(
         ),
         command=dict(),
         eval=dict(),
-        other=dict(replay_buffer=dict(replay_buffer_size=2, ), ),  # TODO
+        other=dict(replay_buffer=dict(replay_buffer_size=int(1e6), ), ),  # TODO
     ),
 )
 

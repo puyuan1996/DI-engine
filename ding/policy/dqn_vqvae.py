@@ -101,7 +101,8 @@ class DQNVQVAEPolicy(Policy):
             # The following configs are algorithm-specific
             # ==============================================================
             # (int) Frequence of target network update.
-            target_update_freq=100,
+            # target_update_freq=100,
+            target_update_theta=0.001,
             # (bool) Whether ignore done(usually for max step termination env)
             ignore_done=False,
         ),
@@ -153,12 +154,19 @@ class DQNVQVAEPolicy(Policy):
 
         # use model_wrapper for specialized demands of different modes
         self._target_model = copy.deepcopy(self._model)
+        # self._target_model = model_wrap(
+        #     self._target_model,
+        #     wrapper_name='target',
+        #     update_type='assign',
+        #     update_kwargs={'freq': self._cfg.learn.target_update_freq}
+        # )
         self._target_model = model_wrap(
             self._target_model,
             wrapper_name='target',
-            update_type='assign',
-            update_kwargs={'freq': self._cfg.learn.target_update_freq}
+            update_type='momentum',
+            update_kwargs={'theta': self._cfg.learn.target_update_theta}
         )
+
         self._learn_model = model_wrap(self._model, wrapper_name='argmax_sample')
         self._learn_model.reset()
         self._target_model.reset()
@@ -173,6 +181,7 @@ class DQNVQVAEPolicy(Policy):
             is_ema=self._cfg.is_ema,
             is_ema_target=self._cfg.is_ema_target,
             eps_greedy_nearest=self._cfg.eps_greedy_nearest,
+            recons_loss_weight= self._cfg.recons_loss_weight,
         )
         self._vqvae_model = to_device(self._vqvae_model, self._device)
         self._optimizer_vqvae = Adam(
@@ -242,11 +251,7 @@ class DQNVQVAEPolicy(Policy):
                 'td_error': td_error_per_sample,
                 **loss_dict,
                 **q_value_dict,
-                # 'latent_action_max':torch.Tensor([-1]).item(),
-                # 'latent_action_min':torch.Tensor([-1]).item(),
-                # 'latent_action_median':torch.Tensor([-1]).item(),
-                # 'latent_action_variance':torch.Tensor([-1]).item(),
-                '[histogram]latent_action': encoding_inds,
+                # '[histogram]latent_action': encoding_inds,
                 '[histogram]cos_similarity': cos_similarity,
             }
         ### VQVAE+RL phase ###
@@ -299,7 +304,7 @@ class DQNVQVAEPolicy(Policy):
                     # 'latent_action_median':torch.Tensor([-1]).item(),
                     # 'latent_action_variance':torch.Tensor([-1]).item(),
                     'total_grad_norm_vqvae': total_grad_norm_vqvae,
-                    '[histogram]latent_action': encoding_inds,
+                    # '[histogram]latent_action': encoding_inds,
                     '[histogram]cos_similarity': cos_similarity,
                 }
             # ====================

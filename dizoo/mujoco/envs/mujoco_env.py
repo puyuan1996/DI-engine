@@ -3,6 +3,9 @@ import copy
 import numpy as np
 from easydict import EasyDict
 import gym
+import os
+from matplotlib import animation
+import matplotlib.pyplot as plt
 
 from ding.envs import BaseEnv, BaseEnvTimestep, BaseEnvInfo, update_shape
 from ding.envs.common.env_element import EnvElement, EnvElementInfo
@@ -32,6 +35,7 @@ class MujocoEnv(BaseEnv):
         self._delay_reward_step = cfg.delay_reward_step
         self._init_flag = False
         self._replay_path = None
+        self._save_replay = False
 
     def reset(self) -> np.ndarray:
         if not self._init_flag:
@@ -52,6 +56,8 @@ class MujocoEnv(BaseEnv):
                 self._env, self._replay_path, video_callable=lambda episode_id: True, force=True
             )
             self._env = gym.wrappers.RecordVideo(self._env, './videos/' + str('time()') + '/')  # time()
+        if self._save_replay:
+            self._frames = []
         obs = self._env.reset()
         obs = to_ndarray(obs).astype('float32')
         return obs
@@ -68,10 +74,19 @@ class MujocoEnv(BaseEnv):
 
     def step(self, action: Union[np.ndarray, list]) -> BaseEnvTimestep:
         action = to_ndarray(action)
+        if self._save_replay:
+            self._frames.append(self._env.render(mode='rgb_array'))
         if self._use_act_scale:
             action_range = {'min': self.action_space.low[0], 'max': self.action_space.high[0], 'dtype': np.float32}
             action = affine_transform(action, min_val=action_range['min'], max_val=action_range['max'])
         obs, rew, done, info = self._env.step(action)
+        if done:
+            if self._save_replay:
+                path = os.path.join(
+                    self._replay_path, '{}_episode_{}.gif'.format(self._cfg.env_id, self._save_replay_count)
+                )
+                self.display_frames_as_gif(self._frames, path)
+                self._save_replay_count += 1
         obs = to_ndarray(obs).astype(np.float32)
         rew = to_ndarray([rew]).astype(np.float32)
         return BaseEnvTimestep(obs, rew, done, info)
@@ -88,6 +103,19 @@ class MujocoEnv(BaseEnv):
         if replay_path is None:
             replay_path = './video'
         self._replay_path = replay_path
+        self._save_replay = True
+        self._save_replay_count = 0
+    
+    @staticmethod
+    def display_frames_as_gif(frames: list, path: str) -> None:
+        patch = plt.imshow(frames[0])
+        plt.axis('off')
+
+        def animate(i):
+            patch.set_data(frames[i])
+
+        anim = animation.FuncAnimation(plt.gcf(), animate, frames=len(frames), interval=5)
+        anim.save(path, writer='imagemagick', fps=20)
 
     def random_action(self) -> np.ndarray:
         return self.action_space.sample()

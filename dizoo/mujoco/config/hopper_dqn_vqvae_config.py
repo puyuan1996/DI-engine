@@ -11,38 +11,33 @@ hopper_dqn_default_config = dict(
         # (bool) Scale output action into legal range.
         use_act_scale=True,
         # Env number respectively for collector and evaluator.
-        collector_env_num=8,
-        evaluator_env_num=5,
-        n_evaluator_episode=5,
+        collector_env_num=16,
+        evaluator_env_num=8,
+        n_evaluator_episode=8,
         # stop_value=3000,
         stop_value=int(1e6),  # max env steps 
     ),
     policy=dict(
         # Whether to use cuda for network.
         cuda=True,
-        # priority=False,
         priority=False,
-        # priority=True,
         random_collect_size=int(1e4),
         # random_collect_size=int(1),  # debug
-
+        action_space='continuous',  # 'hybrid',
         original_action_shape=3,
         vqvae_embedding_dim=128,  # ved
         vqvae_hidden_dim=[256],  # vhd
-
         is_ema_target=False,  # use EMA
-        is_ema=True,  # use EMA
-        # is_ema=False,  # no EMA
-        eps_greedy_nearest=True,
 
-        action_space='continuous',  # 'hybrid',
+        is_ema=True,  # use EMA
+        eps_greedy_nearest=False, # TODO
+        recons_loss_weight=10,  # TODO
         model=dict(
             obs_shape=11,
             action_shape=int(128),  # num of num_embeddings
             # encoder_hidden_size_list=[128, 128, 64],  # small net
             encoder_hidden_size_list=[256, 256, 128],  # middle net
             # encoder_hidden_size_list=[512, 512, 256],  # large net
-
             # Whether to use dueling head.
             dueling=True,
         ),
@@ -52,12 +47,11 @@ hopper_dqn_default_config = dict(
         nstep=nstep,
         # learn_mode config
         learn=dict(
-            constrain_action=False,
+            constrain_action=True,  # TODO
             warm_up_update=int(1e4),
             # warm_up_update=int(1), # debug
 
             rl_vae_update_circle=1,  # train rl 1 iter, vae 1 iter
-            # update_per_collect_rl=20,
             update_per_collect_rl=256,
             update_per_collect_vae=10,
             rl_batch_size=512,
@@ -66,15 +60,14 @@ hopper_dqn_default_config = dict(
             learning_rate_vae=1e-4,
             # Frequency of target network update.
             target_update_freq=500,
+            target_update_theta=0.001,
 
             # NOTE
             rl_clip_grad=True,
-            # rl_clip_grad=False,
             grad_clip_type='clip_norm',
             grad_clip_value=0.5,
 
             # add noise in original continuous action
-            # noise=True,
             noise=False,
             noise_sigma=0.1,
             noise_range=dict(
@@ -113,31 +106,35 @@ hopper_dqn_create_config = dict(
         type='mujoco',
         import_names=['dizoo.mujoco.envs.mujoco_env'],
     ),
+    # env_manager=dict(type='subprocess'),
     env_manager=dict(type='base'),
+
     policy=dict(type='dqn_vqvae'),
 )
 hopper_dqn_create_config = EasyDict(hopper_dqn_create_config)
 create_config = hopper_dqn_create_config
 
-# if __name__ == "__main__":
-#     serial_pipeline_dqn_vqvae([main_config, create_config], seed=0)
 
 import copy
 
 def train(args):
-    # main_config.exp_name = 'data_hopper/hopper_ema_upcr20_bs512_' + 'seed_' + f'{args.seed}'
-    main_config.exp_name = 'data_hopper/noobs_ema_nonoise_rlclipgrad0.5_noprio_wu1e4_eps-greedy-nearest_' + 'seed' + f'{args.seed}'+'_3M'
-    # main_config.exp_name = 'hopper_noema_upcr20_bs32_' + 'seed_' + f'{args.seed}'
 
-    serial_pipeline_dqn_vqvae(
-        [copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed
-    )  #, max_env_step=int(3e3))
+    # main_config.exp_name = 'data_hopper/ema_rlclipgrad0.5_recons10' + '_seed' + f'{args.seed}'+'_3M'
+    # main_config.exp_name = 'data_hopper/ema_rlclipgrad0.5_recon50' + '_seed' + f'{args.seed}'+'_3M'
+    # main_config.exp_name = 'data_hopper/ema_rlclipgrad0.5_recon100' + '_seed' + f'{args.seed}'+'_3M'
+
+    # main_config.exp_name = 'data_hopper/ema_rlclipgrad0.5_softtarget' + '_seed' + f'{args.seed}'+'_3M'
+
+
+    # main_config.exp_name = 'data_hopper/ema_rlclipgrad0.5_softtarget_recos10_eps-nearest' + '_seed' + f'{args.seed}'+'_3M'
+    main_config.exp_name = 'data_hopper/ema_rlclipgrad0.5_softtarget_recos10_constrainaction' + '_seed' + f'{args.seed}'+'_3M'
+
+    serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,max_env_step=int(3e3))
 
 
 if __name__ == "__main__":
     import argparse
-    # for seed in [0, 1, 2, 3, 4]:
-    for seed in [0]:
+    for seed in [0, 1, 2]:
         parser = argparse.ArgumentParser()
         parser.add_argument('--seed', '-s', type=int, default=seed)
         args = parser.parse_args()
