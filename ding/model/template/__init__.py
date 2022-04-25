@@ -19,3 +19,4 @@ from .maqac import MAQAC, ContinuousMAQAC
 from .model_based import EnsembleDynamicsModel
 from .vae import VanillaVAE
 from .vqvae import VQVAE
+from .action_vqvae import ActionVQVAE, VectorQuantizer
