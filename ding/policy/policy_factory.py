@@ -5,6 +5,7 @@ from ding.torch_utils import to_device
 import gym
 import numpy as np
 
+
 class PolicyFactory:
     r"""
     Overview:
@@ -48,13 +49,22 @@ class PolicyFactory:
                         if isinstance(action_space[0], gym.spaces.Box) and isinstance(action_space[1],
                                                                                       gym.spaces.Discrete):
                             action_sample_player1 = np.concatenate(
-                                [action_space[0].sample(), np.array([action_space[1].sample()])])
+                                [action_space[0].sample(),
+                                 np.array([action_space[1].sample()])]
+                            )
                             action_sample_player2 = np.concatenate(
-                                [action_space[0].sample(), np.array([action_space[1].sample()])])
+                                [action_space[0].sample(),
+                                 np.array([action_space[1].sample()])]
+                            )
                             action_sample_player3 = np.concatenate(
-                                [action_space[0].sample(), np.array([action_space[1].sample()])])
-                            actions[env_id] = {'action': np.stack(
-                                [action_sample_player1, action_sample_player2, action_sample_player3])}
+                                [action_space[0].sample(),
+                                 np.array([action_space[1].sample()])]
+                            )
+                            actions[env_id] = {
+                                'action': np.stack(
+                                    [action_sample_player1, action_sample_player2, action_sample_player3]
+                                )
+                            }
 
             return actions
 

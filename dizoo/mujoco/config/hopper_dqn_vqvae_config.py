@@ -27,7 +27,11 @@ hopper_dqn_default_config = dict(
         original_action_shape=3,
         vqvae_embedding_dim=128,  # ved
         vqvae_hidden_dim=[256],  # vhd
+
+        vq_loss_weight=1,
         is_ema_target=False,  # use EMA
+        is_ema=True,  # use EMA
+        eps_greedy_nearest=False,
 
         is_ema=True,  # use EMA
         eps_greedy_nearest=False, # TODO
@@ -106,35 +110,35 @@ hopper_dqn_create_config = dict(
         type='mujoco',
         import_names=['dizoo.mujoco.envs.mujoco_env'],
     ),
-    # env_manager=dict(type='subprocess'),
-    env_manager=dict(type='base'),
-
+    env_manager=dict(type='subprocess'),
     policy=dict(type='dqn_vqvae'),
 )
 hopper_dqn_create_config = EasyDict(hopper_dqn_create_config)
 create_config = hopper_dqn_create_config
 
-
 import copy
 
 def train(args):
+    # main_config.exp_name = 'data_hopper/ema_rlclipgrad0.5_vq0.01' + '_seed' + f'{args.seed}'+'_3M'
+    # main_config.exp_name = 'data_hopper/ema_rlclipgrad0.5_vq0.1' + '_seed' + f'{args.seed}'+'_3M'
+    # main_config.exp_name = 'data_hopper/ema_rlclipgrad0.5_vq0.5' + '_seed' + f'{args.seed}'+'_3M'
+    main_config.exp_name = 'data_hopper/ema_rlclipgrad0.5_vq1' + '_seed' + f'{args.seed}'+'_3M'
 
-    # main_config.exp_name = 'data_hopper/ema_rlclipgrad0.5_recons10' + '_seed' + f'{args.seed}'+'_3M'
-    # main_config.exp_name = 'data_hopper/ema_rlclipgrad0.5_recon50' + '_seed' + f'{args.seed}'+'_3M'
-    # main_config.exp_name = 'data_hopper/ema_rlclipgrad0.5_recon100' + '_seed' + f'{args.seed}'+'_3M'
+    # main_config.exp_name = 'data_hopper/ema_rlclipgrad0.5_hardtarget' + '_seed' + f'{args.seed}'+'_3M'
+    # main_config.exp_name = 'data_hopper/ema_rlclipgrad0.5_vq0.1_eps-nearest' + '_seed' + f'{args.seed}'+'_3M'
+    # main_config.exp_name = 'data_hopper/ema_rlclipgrad0.5_vq0.1_constrainaction' + '_seed' + f'{args.seed}'+'_3M'
 
-    # main_config.exp_name = 'data_hopper/ema_rlclipgrad0.5_softtarget' + '_seed' + f'{args.seed}'+'_3M'
-
-
-    # main_config.exp_name = 'data_hopper/ema_rlclipgrad0.5_softtarget_recos10_eps-nearest' + '_seed' + f'{args.seed}'+'_3M'
-    main_config.exp_name = 'data_hopper/ema_rlclipgrad0.5_softtarget_recos10_constrainaction' + '_seed' + f'{args.seed}'+'_3M'
-
-    serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,max_env_step=int(3e3))
+    serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=int(3e3))
 
 
 if __name__ == "__main__":
     import argparse
+<<<<<<< HEAD
     for seed in [0, 1, 2]:
+=======
+    # for seed in [0, 1, 2, 3, 4]:
+    for seed in [0,1,2]:
+>>>>>>> fac22ccf121635ddf50c92206f3168ad91e60180
         parser = argparse.ArgumentParser()
         parser.add_argument('--seed', '-s', type=int, default=seed)
         args = parser.parse_args()

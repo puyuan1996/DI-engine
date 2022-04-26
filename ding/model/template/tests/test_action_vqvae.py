@@ -57,7 +57,17 @@ def test_vq_layer():
 @pytest.mark.unittest
 def test_action_vqvae():
     B, D = 3, 32
-    model = ActionVQVAE({'action_type_shape': 6, 'action_args_shape': 8}, 4, D, is_ema=True, is_ema_target=True)
+    model = ActionVQVAE(
+        {
+            'action_type_shape': 6,
+            'action_args_shape': 8
+        },
+        4,
+        D,
+        is_ema=True,
+        is_ema_target=True,
+        eps_greedy_nearest=True
+    )
     print(model)
     action = {'action_type': torch.randint(0, 6, size=(B, )), 'action_args': torch.tanh(torch.randn(B, 8))}
     inputs = {'action': action}

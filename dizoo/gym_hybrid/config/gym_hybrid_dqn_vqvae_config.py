@@ -1,4 +1,5 @@
 from easydict import EasyDict
+import copy
 from ding.entry import serial_pipeline_dqn_vqvae
 import os
 module_path = os.path.dirname(__file__)
@@ -32,11 +33,10 @@ gym_hybrid_dqn_default_config = dict(
             ),
         vqvae_embedding_dim=64,  # ved: D
         vqvae_hidden_dim=[256],  # vhd
-
+        vq_loss_weight=1,
         is_ema_target=False,  # use EMA target style
-        # is_ema=True,  # use EMA
-        is_ema=False,  # no EMA
-         eps_greedy_nearest=False,
+        is_ema=True,  # no EMA
+        eps_greedy_nearest=False,
         action_space='hybrid',
         model=dict(
             obs_shape=10,
@@ -66,6 +66,7 @@ gym_hybrid_dqn_default_config = dict(
             learning_rate_vae=1e-4,
             # Frequency of target network update.
             target_update_freq=500,
+            target_update_theta=0.001,
 
             rl_clip_grad=True,
             # rl_clip_grad=False,
@@ -111,20 +112,17 @@ gym_hybrid_dqn_create_config = dict(
         type='gym_hybrid',
         import_names=['dizoo.gym_hybrid.envs.gym_hybrid_env'],
     ),
-    # env_manager=dict(type='base'),
     env_manager=dict(type='subprocess'),
     policy=dict(type='dqn_vqvae'),
 )
 gym_hybrid_dqn_create_config = EasyDict(gym_hybrid_dqn_create_config)
 create_config = gym_hybrid_dqn_create_config
 
-import copy
 
 def train(args):
     main_config.exp_name = 'data_sliding/noema_rlclipgrad0.5_' + 'seed' + f'{args.seed}'+'_3M'
     serial_pipeline_dqn_vqvae(
-        [copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed
-    )
+        [copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,max_env_step=int(3e3))
 
 
 if __name__ == "__main__":

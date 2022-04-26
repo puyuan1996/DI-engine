@@ -140,7 +140,7 @@ def serial_pipeline_dqn_vqvae(
         # if iter % 5000 == 0:
         #     policy.visualize_latent(
         #         save_histogram=True, name=f'iter{iter}_{cfg.env.env_id}_s{cfg.seed}'
-        #     )  
+        #     )
         #     policy.visualize_embedding_table(name=f'iter{iter}_{cfg.env.env_id}_s{cfg.seed}')
         collect_kwargs = commander.step()
         # Evaluate policy performance
@@ -150,7 +150,7 @@ def serial_pipeline_dqn_vqvae(
                 # NOTE: save visualized latent action and embedding_table
                 # policy.visualize_latent(
                 #     save_histogram=True, name=f'iter{iter}_{cfg.env.env_id}_s{cfg.seed}'
-                # ) 
+                # )
                 # policy.visualize_embedding_table(name=f'iter{iter}_{cfg.env.env_id}_s{cfg.seed}')
                 break
         # Collect data by default config n_sample/n_episode
