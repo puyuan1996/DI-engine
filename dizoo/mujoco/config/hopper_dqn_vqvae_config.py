@@ -1,9 +1,8 @@
 from easydict import EasyDict
-from ding.entry import serial_pipeline_dqn_vqvae
 
 nstep = 3
 hopper_dqn_default_config = dict(
-    exp_name='debug_hopper_dqn_vqvae_ved128_k128_ehsl256256128_upcr20_bs512_ed1e5_rbs1e6_seed0_3M',
+    exp_name='hopper_dqn_vqvae_seed0',
     env=dict(
         env_id='Hopper-v3',
         norm_obs=dict(use_norm=False, ),
@@ -28,14 +27,15 @@ hopper_dqn_default_config = dict(
         vqvae_embedding_dim=128,  # ved
         vqvae_hidden_dim=[256],  # vhd
 
-        vq_loss_weight=1,
+        vq_loss_weight=1,  # TODO
         is_ema_target=False,  # use EMA
         is_ema=True,  # use EMA
-        eps_greedy_nearest=False,
-
-        is_ema=True,  # use EMA
         eps_greedy_nearest=False, # TODO
-        recons_loss_weight=10,  # TODO
+        # Reward's future discount factor, aka. gamma.
+        discount_factor=0.99,
+        # How many steps in td error.
+        nstep=nstep,
+        # learn_mode config
         model=dict(
             obs_shape=11,
             action_shape=int(128),  # num of num_embeddings
@@ -45,13 +45,8 @@ hopper_dqn_default_config = dict(
             # Whether to use dueling head.
             dueling=True,
         ),
-        # Reward's future discount factor, aka. gamma.
-        discount_factor=0.99,
-        # How many steps in td error.
-        nstep=nstep,
-        # learn_mode config
         learn=dict(
-            constrain_action=True,  # TODO
+            constrain_action=False,  # TODO
             warm_up_update=int(1e4),
             # warm_up_update=int(1), # debug
 
@@ -63,7 +58,7 @@ hopper_dqn_default_config = dict(
             learning_rate=3e-4,
             learning_rate_vae=1e-4,
             # Frequency of target network update.
-            target_update_freq=500,
+            # target_update_freq=500,
             target_update_theta=0.001,
 
             # NOTE
@@ -116,29 +111,27 @@ hopper_dqn_create_config = dict(
 hopper_dqn_create_config = EasyDict(hopper_dqn_create_config)
 create_config = hopper_dqn_create_config
 
-import copy
 
 def train(args):
+    # TODO
+    main_config.exp_name = 'data_hopper/ema_rlclipgrad0.5_hardtarget_vq1' + '_seed' + f'{args.seed}'+'_3M'
+
     # main_config.exp_name = 'data_hopper/ema_rlclipgrad0.5_vq0.01' + '_seed' + f'{args.seed}'+'_3M'
     # main_config.exp_name = 'data_hopper/ema_rlclipgrad0.5_vq0.1' + '_seed' + f'{args.seed}'+'_3M'
-    # main_config.exp_name = 'data_hopper/ema_rlclipgrad0.5_vq0.5' + '_seed' + f'{args.seed}'+'_3M'
-    main_config.exp_name = 'data_hopper/ema_rlclipgrad0.5_vq1' + '_seed' + f'{args.seed}'+'_3M'
+    # main_config.exp_name = 'data_hopper/ema_rlclipgrad0.5_vq1' + '_seed' + f'{args.seed}'+'_3M'
 
-    # main_config.exp_name = 'data_hopper/ema_rlclipgrad0.5_hardtarget' + '_seed' + f'{args.seed}'+'_3M'
+    # TODO: to run
     # main_config.exp_name = 'data_hopper/ema_rlclipgrad0.5_vq0.1_eps-nearest' + '_seed' + f'{args.seed}'+'_3M'
     # main_config.exp_name = 'data_hopper/ema_rlclipgrad0.5_vq0.1_constrainaction' + '_seed' + f'{args.seed}'+'_3M'
 
-    serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=int(3e3))
-
+    serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=int(3e6))
 
 if __name__ == "__main__":
+    import copy
     import argparse
-<<<<<<< HEAD
-    for seed in [0, 1, 2]:
-=======
-    # for seed in [0, 1, 2, 3, 4]:
+    from ding.entry import serial_pipeline_dqn_vqvae
+
     for seed in [0,1,2]:
->>>>>>> fac22ccf121635ddf50c92206f3168ad91e60180
         parser = argparse.ArgumentParser()
         parser.add_argument('--seed', '-s', type=int, default=seed)
         args = parser.parse_args()

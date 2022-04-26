@@ -1,11 +1,10 @@
 from easydict import EasyDict
-from ding.entry import serial_pipeline_dqn_vqvae
 import os
 module_path = os.path.dirname(__file__)
 
 nstep = 3
 lunarlander_dqn_default_config = dict(
-    exp_name='debug_lunarlander_cont_dqn_vqvae_ved64_k64_ehsl12812864_upcr256_bs512_ed1e5_rbs1e6_seed0_3M',
+    exp_name='lunarlander_cont_dqn_vqvae_seed0',
     env=dict(
         env_id='LunarLanderContinuous-v2',
         # (bool) Scale output action into legal range.
@@ -14,26 +13,30 @@ lunarlander_dqn_default_config = dict(
         collector_env_num=8,
         evaluator_env_num=5,
         n_evaluator_episode=5,
-        stop_value=200,
+        # stop_value=200,
+        stop_value=int(1e6),
     ),
     policy=dict(
         # learned_model_path=module_path + '/learned_model_path/iteration_0.pth.tar',  # TODO(pu)
 
         # Whether to use cuda for network.
         cuda=True,
-        # cuda=False,
         priority=False,
-        # random_collect_size=int(1e4),
-        random_collect_size=int(1),  # debug
+        random_collect_size=int(1e4),
+        # random_collect_size=int(1),  # debug
         original_action_shape=2,
         vqvae_embedding_dim=64,  # ved
         vqvae_hidden_dim=[256],  # vhd
-
+        vq_loss_weight=1,  # TODO
         is_ema=True,  # use EMA
-        is_ema_target=True,  # use EMA
-        # is_ema=False,  # no EMA
+        is_ema_target=False, 
         eps_greedy_nearest=False,
         action_space='continuous',  # 'hybrid',
+        # Reward's future discount factor, aka. gamma.
+        discount_factor=0.99,
+        # How many steps in td error.
+        nstep=nstep,
+        # learn_mode config
         model=dict(
             obs_shape=8,
             action_shape=int(64),  # num oof num_embeddings, K
@@ -41,36 +44,30 @@ lunarlander_dqn_default_config = dict(
             # Whether to use dueling head.
             dueling=True,
         ),
-        # Reward's future discount factor, aka. gamma.
-        discount_factor=0.99,
-        # How many steps in td error.
-        nstep=nstep,
-        # learn_mode config
         learn=dict(
             constrain_action=False,
-            # warm_up_update=int(1e4),
-            warm_up_update=int(1),  # debug
+            warm_up_update=int(1e4),
+            # warm_up_update=int(1),  # debug
             rl_vae_update_circle=1,  # train rl 1 iter, vae 1 iter
             update_per_collect_rl=256,
             update_per_collect_vae=10,
-            # rl_batch_size=512,
-            # vqvae_batch_size=512,
-            rl_batch_size=32,
-            vqvae_batch_size=32,
+            rl_batch_size=512,
+            vqvae_batch_size=512,
+            # rl_batch_size=32,
+            # vqvae_batch_size=32,
 
             learning_rate=3e-4,
             learning_rate_vae=1e-4,
             # Frequency of target network update.
-            target_update_freq=500,
+            # target_update_freq=500,
+            target_update_theta=0.001,
 
             # NOTE
-            # rl_clip_grad=True,
-            rl_clip_grad=False,
+            rl_clip_grad=True,
             grad_clip_type='clip_norm',
             grad_clip_value=0.5,
 
             # add noise in original continuous action
-            # noise=True,
             noise=False,
             noise_sigma=0.1,
             noise_range=dict(
@@ -114,25 +111,17 @@ lunarlander_dqn_create_config = dict(
 lunarlander_dqn_create_config = EasyDict(lunarlander_dqn_create_config)
 create_config = lunarlander_dqn_create_config
 
-# if __name__ == "__main__":
-#     serial_pipeline_dqn_vqvae([main_config, create_config], seed=0)
-
-import copy
 
 def train(args):
-    main_config.exp_name = 'data_lunarlander/upcr256_rlbs32_vqvaebs32_noobs_ematarget_nonoise_norlclipgrad_' + 'seed' + f'{args.seed}'+'_3M'
-    # main_config.exp_name = 'debug'  # debug
-
-    serial_pipeline_dqn_vqvae(
-        [copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed
-    )  #, max_env_step=int(3e3))
-
+    main_config.exp_name = 'data_lunarlander/ema_rlclipgrad0.5_vq1' + '_seed' + f'{args.seed}'+'_3M'
+    serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=int(3e3))
 
 if __name__ == "__main__":
+    import copy
     import argparse
-    for seed in [0, 1, 2, 3, 4]:
+    from ding.entry import serial_pipeline_dqn_vqvae
+    for seed in [0, 1, 2]:
         parser = argparse.ArgumentParser()
         parser.add_argument('--seed', '-s', type=int, default=seed)
         args = parser.parse_args()
-
         train(args)

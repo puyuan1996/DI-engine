@@ -1,6 +1,4 @@
 from easydict import EasyDict
-import copy
-from ding.entry import serial_pipeline_dqn_vqvae
 import os
 module_path = os.path.dirname(__file__)
 
@@ -34,10 +32,15 @@ gym_hybrid_dqn_default_config = dict(
         vqvae_embedding_dim=64,  # ved: D
         vqvae_hidden_dim=[256],  # vhd
         vq_loss_weight=1,
-        is_ema_target=False,  # use EMA target style
-        is_ema=True,  # no EMA
-        eps_greedy_nearest=False,
+        is_ema_target=False,  # if use EMA target style
+        is_ema=True,  # if use EMA
+        eps_greedy_nearest=False,  # TODO
         action_space='hybrid',
+        # Reward's future discount factor, aka. gamma.
+        discount_factor=0.99,
+        # How many steps in td error.
+        nstep=nstep,
+        # learn_mode config
         model=dict(
             obs_shape=10,
             action_shape=int(64),  # num oof num_embeddings, K
@@ -45,13 +48,8 @@ gym_hybrid_dqn_default_config = dict(
             # Whether to use dueling head.
             dueling=True,
         ),
-        # Reward's future discount factor, aka. gamma.
-        discount_factor=0.99,
-        # How many steps in td error.
-        nstep=nstep,
-        # learn_mode config
         learn=dict(
-            constrain_action=False,
+            constrain_action=False,  # TODO
             warm_up_update=int(1e4),
             # warm_up_update=int(0), # debug
 
@@ -65,16 +63,14 @@ gym_hybrid_dqn_default_config = dict(
             learning_rate=3e-4,
             learning_rate_vae=1e-4,
             # Frequency of target network update.
-            target_update_freq=500,
+            # target_update_freq=500,
             target_update_theta=0.001,
 
             rl_clip_grad=True,
-            # rl_clip_grad=False,
             grad_clip_type='clip_norm',
             grad_clip_value=0.5,
 
             # add noise in original continuous action
-            # noise=True,
             noise=False,
             noise_sigma=0.1,
             noise_range=dict(
@@ -120,15 +116,16 @@ create_config = gym_hybrid_dqn_create_config
 
 
 def train(args):
-    main_config.exp_name = 'data_sliding/noema_rlclipgrad0.5_' + 'seed' + f'{args.seed}'+'_3M'
-    serial_pipeline_dqn_vqvae(
-        [copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,max_env_step=int(3e3))
+    main_config.exp_name = 'data_sliding/ema_rlclipgrad0.5_vq1' + '_seed' + f'{args.seed}'+'_3M'
+    serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,max_env_step=int(3e6))
 
 
 if __name__ == "__main__":
+    import copy
     import argparse
-    # for seed in [0, 1, 2, 3, 4]:
-    for seed in [0]:
+    from ding.entry import serial_pipeline_dqn_vqvae
+
+    for seed in [0,1,2]:
         parser = argparse.ArgumentParser()
         parser.add_argument('--seed', '-s', type=int, default=seed)
         args = parser.parse_args()

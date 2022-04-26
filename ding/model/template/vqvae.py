@@ -147,7 +147,7 @@ class VQVAE(nn.Module):
             is_ema: bool = False,
             is_ema_target: bool = False,
             eps_greedy_nearest: bool = False,
-            recons_loss_weight = 1,
+            recons_loss_weight=1,
             **kwargs
     ) -> None:
         super(VQVAE, self).__init__()
@@ -255,7 +255,7 @@ class VQVAE(nn.Module):
 
             recons_loss = recons_loss_cont + recons_loss_disc
 
-            total_vqvae_loss =  self.recons_loss_weight * recons_loss + vq_loss
+            total_vqvae_loss = self.recons_loss_weight * recons_loss + vq_loss
             return {
                 'total_vqvae_loss': total_vqvae_loss,
                 'recons_loss': recons_loss,

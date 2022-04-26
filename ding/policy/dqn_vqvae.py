@@ -184,7 +184,6 @@ class DQNVQVAEPolicy(Policy):
             is_ema=self._cfg.is_ema,
             is_ema_target=self._cfg.is_ema_target,
             eps_greedy_nearest=self._cfg.eps_greedy_nearest,
-            recons_loss_weight= self._cfg.recons_loss_weight,
         )
         self._vqvae_model = to_device(self._vqvae_model, self._device)
         self._optimizer_vqvae = Adam(
@@ -247,7 +246,8 @@ class DQNVQVAEPolicy(Policy):
             q_value_dict['q_value'] = torch.Tensor([0]).item()
             td_error_per_sample = torch.Tensor([0]).item()
 
-            encoding_inds = self.visualize_latent(save_histogram=False)  # NOTE:visualize_latent
+            # NOTE:visualize_latent, now it's only for env hopper and gym_hybrid
+            quantized_index = self.visualize_latent(save_histogram=False)
             cos_similarity = self.visualize_embedding_table(save_dis_map=False)
 
             return {
@@ -255,7 +255,7 @@ class DQNVQVAEPolicy(Policy):
                 'td_error': td_error_per_sample,
                 **loss_dict,
                 **q_value_dict,
-                # '[histogram]latent_action': encoding_inds,
+                # '[histogram]latent_action': quantized_index,
                 '[histogram]cos_similarity': cos_similarity,
             }
         ### VQVAE+RL phase ###
@@ -295,8 +295,9 @@ class DQNVQVAEPolicy(Policy):
                 q_value_dict = {}
                 q_value_dict['q_value'] = torch.Tensor([0]).item()
                 td_error_per_sample = torch.Tensor([0]).item()
-
-                encoding_inds = self.visualize_latent(save_histogram=False)  # NOTE:visualize_latent
+                
+                # NOTE:visualize_latent, now it's only for env hopper and gym_hybrid
+                quantized_index = self.visualize_latent(save_histogram=False)
                 cos_similarity = self.visualize_embedding_table(save_dis_map=False)
 
                 return {
@@ -304,12 +305,8 @@ class DQNVQVAEPolicy(Policy):
                     'td_error': td_error_per_sample,
                     **loss_dict,
                     **q_value_dict,
-                    # 'latent_action_max':torch.Tensor([-1]).item(),
-                    # 'latent_action_min':torch.Tensor([-1]).item(),
-                    # 'latent_action_median':torch.Tensor([-1]).item(),
-                    # 'latent_action_variance':torch.Tensor([-1]).item(),
                     'total_grad_norm_vqvae': total_grad_norm_vqvae,
-                    # '[histogram]latent_action': encoding_inds,
+                    '[histogram]latent_action': quantized_index,
                     '[histogram]cos_similarity': cos_similarity,
                 }
             # ====================
@@ -351,8 +348,8 @@ class DQNVQVAEPolicy(Policy):
                     # Max q value action (main model)
                     if self._cfg.learn.constrain_action is True:
                         # TODO(pu)
-                        encoding_inds = self.visualize_latent(save_histogram=False)  # NOTE:visualize_latent
-                        constrain_action = torch.unique(torch.from_numpy(encoding_inds))
+                        quantized_index = self.visualize_latent(save_histogram=False)  # NOTE:visualize_latent
+                        constrain_action = torch.unique(torch.from_numpy(quantized_index))
                         next_q_value = self._learn_model.forward(data['next_obs'])['logit']
                         target_q_action = torch.argmax(next_q_value[:, constrain_action], dim=-1)
                         # target_q_action = self._learn_model.forward(data['next_obs'])['action']
@@ -394,10 +391,6 @@ class DQNVQVAEPolicy(Policy):
                     'td_error': td_error_per_sample.abs().mean(),
                     **loss_dict,
                     **q_value_dict,
-                    # 'latent_action_max':np.float(np.max(np.array(data['latent_action'].cpu()))),
-                    # 'latent_action_min':np.float(np.min(np.array(data['latent_action'].cpu()))),
-                    # 'latent_action_median':np.float(np.median(np.array(data['latent_action'].cpu()))),
-                    # 'latent_action_variance':np.float(np.var(np.array(data['latent_action'].cpu()))),
                     'total_grad_norm_rl': total_grad_norm_rl,
                 }
 
@@ -414,13 +407,9 @@ class DQNVQVAEPolicy(Policy):
             'vq_loss',
             'total_grad_norm_rl',
             'total_grad_norm_vqvae',
-            # 'predict_loss'
-            # 'latent_action_max',
-            # 'latent_action_min',
-            # 'latent_action_median',
-            # 'latent_action_variance',
-            # '[histogram]latent_action',
-            # '[histogram]cos_similarity',
+            # 'predict_loss',
+            '[histogram]latent_action',
+            '[histogram]cos_similarity',
         ]
         return ret
 
@@ -488,10 +477,11 @@ class DQNVQVAEPolicy(Policy):
         if self._cuda:
             data = to_device(data, self._device)
         self._collect_model.eval()
+        # for subprocess case
+        data = data.float()
         with torch.no_grad():
             output = self._collect_model.forward(data, eps=eps)
             # here output['action'] is the out of DQN, is discrete action
-            import copy
             output['latent_action'] = copy.deepcopy(output['action'])
             if self._cuda:
                 output = to_device(output, self._device)
@@ -501,14 +491,15 @@ class DQNVQVAEPolicy(Policy):
             # output['action'] = self._vqvae_model.decode_with_obs(output['action'], data})['recons_action']
 
             if self._cfg.action_space == 'hybrid':
-                recons_action = self._vqvae_model.decode_without_obs(output['action'])
+                # recons_action = self._vqvae_model.decode_without_obs(output['action'])
+                recons_action = self._vqvae_model.decode(output['action'])['recons_action']
                 output['action'] = {
                     'action_type': recons_action['recons_action']['disc'],
                     'action_args': recons_action['recons_action']['cont']
                 }
 
                 # NOTE: add noise in the original actions
-                if self._cfg.learn.noise is True:
+                if self._cfg.learn.noise:
                     from ding.rl_utils.exploration import GaussianNoise
                     action = output['action']['action_args']
                     gaussian_noise = GaussianNoise(mu=0.0, sigma=0.1)
@@ -524,10 +515,10 @@ class DQNVQVAEPolicy(Policy):
                     output['action']['action_args'] = action
             else:
                 # output['action']  = self._vqvae_model.decode_with_obs(output['action'])
-                output['action'] = self._vqvae_model.decode_without_obs(output['action'])['recons_action']
+                output['action'] = self._vqvae_model.decode(output['action'])['recons_action']
 
                 # NOTE: add noise in the original actions
-                if self._cfg.learn.noise is True:
+                if self._cfg.learn.noise:
                     from ding.rl_utils.exploration import GaussianNoise
                     action = output['action']
                     gaussian_noise = GaussianNoise(mu=0.0, sigma=0.1)
@@ -630,7 +621,6 @@ class DQNVQVAEPolicy(Policy):
             output = self._eval_model.forward(data)
             # here output['action'] is the out of DQN, is discrete action
             # output['latent_action'] = output['action']  # TODO(pu)
-            import copy
             output['latent_action'] = copy.deepcopy(output['action'])
 
             # TODO(pu): decode into original hybrid actions, here data is obs
@@ -645,7 +635,8 @@ class DQNVQVAEPolicy(Policy):
                 }
             else:
                 # output['action']  = self._vqvae_model.decode_with_obs(output['action'])
-                output['action'] = self._vqvae_model.decode_without_obs(output['action'])['recons_action']
+                # output['action'] = self._vqvae_model.decode_without_obs(output['action'])['recons_action']
+                output['action'] = self._vqvae_model.decode(output['action'])['recons_action']
 
         if self._cuda:
             output = to_device(output, 'cpu')
@@ -666,13 +657,15 @@ class DQNVQVAEPolicy(Policy):
         return 'dqn', ['ding.model.template.q_learning']
 
     def visualize_latent(self, save_histogram=True, name=0, granularity=0.1):
-        if self.cfg.action_space == 'continuous':  # continuous action
+        if self.cfg.action_space == 'continuous':
+            # continuous action, now only for hopper env: 3 dim cont
             xx, yy, zz = np.meshgrid(
                 np.arange(-1, 1, granularity), np.arange(-1, 1, granularity), np.arange(-1, 1, granularity)
             )
             cnt = int((2 / granularity)) ** 3
             action_samples = np.array([xx.ravel(), yy.ravel(), zz.ravel()]).reshape(cnt, 3)
-        elif self.cfg.action_space == 'hybrid':  # hybrid action
+        elif self.cfg.action_space == 'hybrid':  
+            # hybrid action, now only for gym_hybrid env: 3 dim discrete, 2 dim cont
             xx, yy = np.meshgrid(np.arange(-1, 1, granularity), np.arange(-1, 1, granularity))
             cnt = int((2 / granularity)) ** 2
             action_samples = np.array([xx.ravel(), yy.ravel()]).reshape(cnt, 2)
@@ -693,7 +686,7 @@ class DQNVQVAEPolicy(Policy):
 
         with torch.no_grad():
             # action_embedding = self._get_action_embedding(data)
-            encoding = self._vqvae_model.encoder(torch.Tensor(action_samples))
+            encoding = self._vqvae_model.encoder(to_device(torch.Tensor(action_samples), self._device))
             quantized_index = self._vqvae_model.vq_layer.encode(encoding)
 
         if save_histogram:
