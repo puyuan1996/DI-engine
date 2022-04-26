@@ -4,7 +4,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from ding.torch_utils import one_hot
+from ding.torch_utils import one_hot, to_tensor
 
 
 class ExponentialMovingAverage(nn.Module):
@@ -21,6 +21,7 @@ class ExponentialMovingAverage(nn.Module):
         self.count.add_(1)
         self.hidden -= (1.0 - self.decay) * (self.hidden - value)
         # ema correction
+        # NOTE
         self.average = self.hidden / (1 - torch.pow(self.decay, self.count))
 
     @property
@@ -65,9 +66,19 @@ class VectorQuantizer(nn.Module):
             self.ema_N = ExponentialMovingAverage(0.99, (self.K, ))
             self.ema_m = ExponentialMovingAverage(0.99, (self.K, self.D))
 
-    def train(self, encoding: torch.Tensor) -> torch.Tensor:
+    def train(self, encoding: torch.Tensor, eps=0.05) -> torch.Tensor:
+        """
+        Overview:
+            input the encoding of actions, caculate the vqvae loss
+        Arguments:
+            - encoding shape: (B,D)
+        """
         device = encoding.device
         quantized_index = self.encode(encoding)
+        if self.eps_greedy_nearest:
+            for i in range(encoding.shape[0]):
+                if np.random.random() < eps:
+                    quantized_index[i] = torch.randint(0, self.K, [1])
         quantized_one_hot = one_hot(quantized_index, self.K)  # B, K
         quantized_embedding = torch.matmul(quantized_one_hot, self.embedding.weight)
 
@@ -76,7 +87,9 @@ class VectorQuantizer(nn.Module):
 
         #  VQ-VAE dictionary updates with Exponential Moving Averages
         if self.is_ema:
+            # (K, )
             self.ema_N.update(quantized_one_hot.sum(dim=0))
+            # (B,K)->(K,B)  * (B,D)
             delta_m = torch.matmul(quantized_one_hot.permute(1, 0), encoding)  # K, D
             self.ema_m.update(delta_m)
 
@@ -108,7 +121,16 @@ class VectorQuantizer(nn.Module):
         # quantized_index = torch.argmin(dist, dim=1).unsqueeze(1)
 
         # .sort()[1] take the index after sorted, [:,0] take the nearest index
-        return torch.cdist(encoding, self.embedding.weight, p=2).sort()[1][:, 0]
+        # return torch.cdist(encoding, self.embedding.weight, p=2).sort()[1][:, 0]
+        """
+        Overview:
+            input the encoding of actions, find the nearest encoding index in embedding table
+        Arguments:
+            - encoding shape: (B,D) self.embedding.weight shape:(K,D)
+            - return shape: (B), the nearest encoding index in embedding table
+        """
+
+        return torch.cdist(encoding, self.embedding.weight, p=2).min(dim=-1)[1]
 
     def decode(self, quantized_index: torch.Tensor) -> torch.Tensor:
         # Convert to one-hot encodings
@@ -127,6 +149,7 @@ class ActionVQVAE(nn.Module):
             embedding_size: int = 128,
             hidden_dims: List = [256],
             beta: float = 0.25,
+            vq_loss_weight: float = 1,
             is_ema: bool = False,
             is_ema_target: bool = False,
             eps_greedy_nearest: bool = False,
@@ -135,7 +158,7 @@ class ActionVQVAE(nn.Module):
 
         self.action_shape = action_shape
         self.hidden_dims = hidden_dims
-
+        self.vq_loss_weight = vq_loss_weight
         self.embedding_size = embedding_size
         self.embedding_num = embedding_num
         self.act = nn.ReLU()
@@ -177,8 +200,12 @@ class ActionVQVAE(nn.Module):
             self.recons_action_cont_head = nn.Sequential(
                 nn.Linear(self.hidden_dims[0], self.action_shape['action_args_shape']), nn.Tanh()
             )
+            # self.recons_action_disc_head = nn.Sequential(
+            #     nn.Linear(self.hidden_dims[0], self.action_shape['action_type_shape']), nn.ReLU()
+            # )
+            # TODO
             self.recons_action_disc_head = nn.Sequential(
-                nn.Linear(self.hidden_dims[0], self.action_shape['action_type_shape']), nn.ReLU()
+                nn.Linear(self.hidden_dims[0], self.action_shape['action_type_shape'])
             )
 
     def _get_action_embedding(self, data: Dict) -> torch.Tensor:
@@ -226,7 +253,7 @@ class ActionVQVAE(nn.Module):
         action_decoding = self.decoder(quantized_embedding)
         recons_action, recons_loss = self._recons_action(action_decoding, data['action'])
 
-        total_vqvae_loss = recons_loss + vq_loss
+        total_vqvae_loss = recons_loss + self.vq_loss_weight * vq_loss
         return {
             'total_vqvae_loss': total_vqvae_loss,
             'recons_loss': recons_loss,

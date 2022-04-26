@@ -255,7 +255,10 @@ class VQVAE(nn.Module):
             }
 
             recons_loss_cont = F.mse_loss(recons_action['cont'], data['action']['action_args'])
-            recons_loss_disc = F.cross_entropy(recons_action['disc_logit'].view(-1,recons_action['disc_logit'].shape[-1]), data['action']['action_type'].view(-1))
+            recons_loss_disc = F.cross_entropy(
+                recons_action['disc_logit'].view(-1, recons_action['disc_logit'].shape[-1]),
+                data['action']['action_type'].view(-1)
+            )
 
             recons_loss = recons_loss_cont + recons_loss_disc
 

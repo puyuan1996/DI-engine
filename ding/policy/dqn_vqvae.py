@@ -10,7 +10,9 @@ from ding.utils import POLICY_REGISTRY
 from ding.utils.data import default_collate, default_decollate
 from .base_policy import Policy
 from .common_utils import default_preprocess_learn
-from ding.model.template.vqvae import VQVAE
+# from ding.model.template.vqvae import VQVAE
+from ding.model.template.action_vqvae import ActionVQVAE
+
 from ding.utils import RunningMeanStd
 from torch.nn import functional as F
 import numpy as np
@@ -102,6 +104,7 @@ class DQNVQVAEPolicy(Policy):
             # ==============================================================
             # (int) Frequence of target network update.
             target_update_freq=100,
+            target_update_theta=0.001,
             # (bool) Whether ignore done(usually for max step termination env)
             ignore_done=False,
         ),
@@ -153,11 +156,17 @@ class DQNVQVAEPolicy(Policy):
 
         # use model_wrapper for specialized demands of different modes
         self._target_model = copy.deepcopy(self._model)
+        # self._target_model = model_wrap(
+        #     self._target_model,
+        #     wrapper_name='target',
+        #     update_type='assign',
+        #     update_kwargs={'freq': self._cfg.learn.target_update_freq}
+        # )
         self._target_model = model_wrap(
             self._target_model,
             wrapper_name='target',
-            update_type='assign',
-            update_kwargs={'freq': self._cfg.learn.target_update_freq}
+            update_type='momentum',
+            update_kwargs={'theta': self._cfg.learn.target_update_theta}
         )
         self._learn_model = model_wrap(self._model, wrapper_name='argmax_sample')
         self._learn_model.reset()
@@ -165,11 +174,12 @@ class DQNVQVAEPolicy(Policy):
 
         self._forward_learn_cnt = 0  # count iterations
         # self._vqvae_model = VQVAE(2, 64, 64) #   action_dim: int, embedding_dim: int, num_embeddings: int,
-        self._vqvae_model = VQVAE(
+        self._vqvae_model = ActionVQVAE(
             self._cfg.original_action_shape,
             self._cfg.vqvae_embedding_dim,  #D
             self._cfg.model.action_shape,  #K
             self._cfg.vqvae_hidden_dim,
+            self._cfg.vq_loss_weight,
             is_ema=self._cfg.is_ema,
             is_ema_target=self._cfg.is_ema_target,
             eps_greedy_nearest=self._cfg.eps_greedy_nearest,
@@ -216,7 +226,8 @@ class DQNVQVAEPolicy(Policy):
             # ====================
             # train vae
             # ====================
-            result = self._vqvae_model.train_without_obs(data)
+            # result = self._vqvae_model.train_without_obs(data)
+            result = self._vqvae_model.train(data)
 
             loss_dict['total_vqvae_loss'] = result['total_vqvae_loss'].item()
             loss_dict['reconstruction_loss'] = result['recons_loss'].item()
@@ -268,7 +279,8 @@ class DQNVQVAEPolicy(Policy):
                 if self._cuda:
                     data = to_device(data, self._device)
 
-                result = self._vqvae_model.train_without_obs(data)
+                # result = self._vqvae_model.train_without_obs(data)
+                result = self._vqvae_model.train(data)
 
                 loss_dict['total_vqvae_loss'] = result['total_vqvae_loss'].item()
                 loss_dict['reconstruction_loss'] = result['recons_loss'].item()
@@ -320,8 +332,11 @@ class DQNVQVAEPolicy(Policy):
 
                 # Representation shift correction (RSC)
                 # update all latent action
-                result = self._vqvae_model.inference_without_obs({'action': data['action']})
-                data['latent_action'] = result['quantized_index'].clone().detach()
+                # result = self._vqvae_model.inference_without_obs({'action': data['action']})
+                # data['latent_action'] = result['quantized_index'].clone().detach()
+
+                quantized_index = self._vqvae_model.encode({'action': data['action']})
+                data['latent_action'] = quantized_index.clone().detach()
 
                 if self._cuda:
                     data = to_device(data, self._device)
@@ -675,8 +690,14 @@ class DQNVQVAEPolicy(Policy):
             )
             action_samples = np.concatenate([action_samples_type1, action_samples_type2, action_samples_type3])
 
-        encoding = self._vqvae_model.encoder(torch.Tensor(action_samples).to(torch.device('cuda')))
-        encoding_inds, quantized_inputs, vq_loss, _, _ = self._vqvae_model.vq_layer(encoding)
+        # encoding = self._vqvae_model.encoder(torch.Tensor(action_samples).to(torch.device('cuda')))
+        # quantized_index, quantized_inputs, vq_loss, _, _ = self._vqvae_model.vq_layer(encoding)
+
+        with torch.no_grad():
+            # action_embedding = self._get_action_embedding(data)
+            encoding = self._vqvae_model.encoder(torch.Tensor(action_samples))
+            quantized_index = self._vqvae_model.vq_layer.encode(encoding)
+
         if save_histogram:
             fig = plt.figure()
 
@@ -685,7 +706,7 @@ class DQNVQVAEPolicy(Policy):
 
             # the histogram of the data
             n, bins, patches = plt.hist(
-                encoding_inds.detach().cpu().numpy(), HIST_BINS, density=False, facecolor='g', alpha=0.75
+                quantized_index.detach().cpu().numpy(), HIST_BINS, density=False, facecolor='g', alpha=0.75
             )
 
             plt.xlabel('Latent Discrete action')
@@ -701,7 +722,7 @@ class DQNVQVAEPolicy(Policy):
                 plt.savefig('latent_histogram_' + name + '.png')
                 print('latent_histogram_' + name + '.png')
         else:
-            return encoding_inds.detach().cpu().numpy()
+            return quantized_index.detach().cpu().numpy()
 
     def visualize_embedding_table(self, save_dis_map=True, name=0):
         embedding_table = self._vqvae_model.vq_layer.embedding.weight.detach().cpu()

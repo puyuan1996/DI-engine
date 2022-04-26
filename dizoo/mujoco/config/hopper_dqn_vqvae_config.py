@@ -30,10 +30,10 @@ hopper_dqn_default_config = dict(
         vqvae_embedding_dim=128,  # ved
         vqvae_hidden_dim=[256],  # vhd
 
+        vq_loss_weight=1,
         is_ema_target=False,  # use EMA
         is_ema=True,  # use EMA
-        # is_ema=False,  # no EMA
-        eps_greedy_nearest=True,
+        eps_greedy_nearest=False,
 
         action_space='continuous',  # 'hybrid',
         model=dict(
@@ -66,6 +66,7 @@ hopper_dqn_default_config = dict(
             learning_rate_vae=1e-4,
             # Frequency of target network update.
             target_update_freq=500,
+            target_update_theta=0.001,
 
             # NOTE
             rl_clip_grad=True,
@@ -113,31 +114,31 @@ hopper_dqn_create_config = dict(
         type='mujoco',
         import_names=['dizoo.mujoco.envs.mujoco_env'],
     ),
-    env_manager=dict(type='base'),
+    env_manager=dict(type='subprocess'),
     policy=dict(type='dqn_vqvae'),
 )
 hopper_dqn_create_config = EasyDict(hopper_dqn_create_config)
 create_config = hopper_dqn_create_config
 
-# if __name__ == "__main__":
-#     serial_pipeline_dqn_vqvae([main_config, create_config], seed=0)
-
 import copy
 
 def train(args):
-    # main_config.exp_name = 'data_hopper/hopper_ema_upcr20_bs512_' + 'seed_' + f'{args.seed}'
-    main_config.exp_name = 'data_hopper/noobs_ema_nonoise_rlclipgrad0.5_noprio_wu1e4_eps-greedy-nearest_' + 'seed' + f'{args.seed}'+'_3M'
-    # main_config.exp_name = 'hopper_noema_upcr20_bs32_' + 'seed_' + f'{args.seed}'
+    # main_config.exp_name = 'data_hopper/ema_rlclipgrad0.5_vq0.01' + '_seed' + f'{args.seed}'+'_3M'
+    # main_config.exp_name = 'data_hopper/ema_rlclipgrad0.5_vq0.1' + '_seed' + f'{args.seed}'+'_3M'
+    # main_config.exp_name = 'data_hopper/ema_rlclipgrad0.5_vq0.5' + '_seed' + f'{args.seed}'+'_3M'
+    main_config.exp_name = 'data_hopper/ema_rlclipgrad0.5_vq1' + '_seed' + f'{args.seed}'+'_3M'
 
-    serial_pipeline_dqn_vqvae(
-        [copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed
-    )  #, max_env_step=int(3e3))
+    # main_config.exp_name = 'data_hopper/ema_rlclipgrad0.5_hardtarget' + '_seed' + f'{args.seed}'+'_3M'
+    # main_config.exp_name = 'data_hopper/ema_rlclipgrad0.5_vq0.1_eps-nearest' + '_seed' + f'{args.seed}'+'_3M'
+    # main_config.exp_name = 'data_hopper/ema_rlclipgrad0.5_vq0.1_constrainaction' + '_seed' + f'{args.seed}'+'_3M'
+
+    serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=int(3e3))
 
 
 if __name__ == "__main__":
     import argparse
     # for seed in [0, 1, 2, 3, 4]:
-    for seed in [0]:
+    for seed in [0,1,2]:
         parser = argparse.ArgumentParser()
         parser.add_argument('--seed', '-s', type=int, default=seed)
         args = parser.parse_args()
