@@ -63,7 +63,7 @@ gym_hybrid_dqn_default_config = dict(
             learning_rate=3e-4,
             learning_rate_vae=1e-4,
             # Frequency of target network update.
-            # target_update_freq=500,
+            target_update_freq=500,
             target_update_theta=0.001,
 
             rl_clip_grad=True,
@@ -116,7 +116,7 @@ create_config = gym_hybrid_dqn_create_config
 
 
 def train(args):
-    main_config.exp_name = 'data_sliding/ema_rlclipgrad0.5_vq1' + '_seed' + f'{args.seed}'+'_3M'
+    main_config.exp_name = 'data_sliding/ema_rlclipgrad0.5_hardtarget_vq1' + '_seed' + f'{args.seed}'+'_3M'
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,max_env_step=int(3e6))
 
 

@@ -1,6 +1,6 @@
 import pytest
 import torch
-from ding.model.template import ActionVQVAE, VectorQuantizer
+from ding.model.template import VQVAE, ActionVQVAE, VectorQuantizer
 from ding.model.template.action_vqvae import ExponentialMovingAverage
 from ding.torch_utils import is_differentiable
 
@@ -80,3 +80,41 @@ def test_action_vqvae():
     assert recons_action['action_type'].shape == (B, )
     assert recons_action['action_args'].shape == (B, 8)
     assert recons_action['logit'].shape == (B, 6)
+
+# @pytest.mark.unittest
+# def test_vqvae():
+B, D = 3, 32
+model_actionvqvae = ActionVQVAE(
+    {
+        'action_type_shape': 6,
+        'action_args_shape': 8
+    },
+    4,
+    D,
+    is_ema=False,
+    is_ema_target=False,
+    eps_greedy_nearest=False
+)
+model_vqvae = VQVAE(
+    {
+        'action_type_shape': 6,
+        'action_args_shape': 8
+    },
+    4,
+    D,
+    is_ema=False,
+    is_ema_target=False,
+    eps_greedy_nearest=False
+)
+action = {'action_type': torch.randint(0, 6, size=(B, )), 'action_args': torch.tanh(torch.randn(B, 8))}
+inputs = {'action': action}
+print(action)
+output_actionvqvae = model_actionvqvae.train(inputs)
+output_vqvae = model_vqvae.train_without_obs(inputs)
+
+# print(output)
+index_actionvqvae = model_actionvqvae.encode(inputs)
+recons_action_actionvqvae = model_actionvqvae.decode(index_actionvqvae)['recons_action']
+
+index_vqvae = model_vqvae.inference_without_obs(inputs)['quantized_index']
+recons_action_vqvae = model_vqvae.decode_without_obs(index_vqvae)

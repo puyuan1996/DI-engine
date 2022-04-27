@@ -13,8 +13,8 @@ lunarlander_dqn_default_config = dict(
         collector_env_num=8,
         evaluator_env_num=5,
         n_evaluator_episode=5,
-        # stop_value=200,
-        stop_value=int(1e6),
+        stop_value=200,
+        # stop_value=int(1e6),
     ),
     policy=dict(
         # learned_model_path=module_path + '/learned_model_path/iteration_0.pth.tar',  # TODO(pu)
@@ -29,6 +29,8 @@ lunarlander_dqn_default_config = dict(
         vqvae_hidden_dim=[256],  # vhd
         vq_loss_weight=1,  # TODO
         is_ema=True,  # use EMA
+        # is_ema=False,  # use EMA
+
         is_ema_target=False, 
         eps_greedy_nearest=False,
         action_space='continuous',  # 'hybrid',
@@ -59,7 +61,7 @@ lunarlander_dqn_default_config = dict(
             learning_rate=3e-4,
             learning_rate_vae=1e-4,
             # Frequency of target network update.
-            # target_update_freq=500,
+            target_update_freq=500,
             target_update_theta=0.001,
 
             # NOTE
@@ -91,7 +93,9 @@ lunarlander_dqn_default_config = dict(
                 type='exp',
                 start=1,
                 end=0.05,
-                decay=int(1e5),
+                # decay=int(1e5),
+                decay=int(5e4),
+
             ),
             replay_buffer=dict(replay_buffer_size=int(1e6), )
         ),
@@ -113,14 +117,15 @@ create_config = lunarlander_dqn_create_config
 
 
 def train(args):
-    main_config.exp_name = 'data_lunarlander/ema_rlclipgrad0.5_vq1' + '_seed' + f'{args.seed}'+'_3M'
-    serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=int(3e3))
+    main_config.exp_name = 'data_lunarlander/ema_rlclipgrad0.5_vq1_ed1e4' + '_seed' + f'{args.seed}'+'_3M'
+    # main_config.exp_name = 'data_lunarlander/noema_rlclipgrad0.5_vq1_ed1e4' + '_seed' + f'{args.seed}'+'_3M'
+    serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=int(3e6))
 
 if __name__ == "__main__":
     import copy
     import argparse
     from ding.entry import serial_pipeline_dqn_vqvae
-    for seed in [0, 1, 2]:
+    for seed in [0]:
         parser = argparse.ArgumentParser()
         parser.add_argument('--seed', '-s', type=int, default=seed)
         args = parser.parse_args()

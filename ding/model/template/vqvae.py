@@ -60,10 +60,10 @@ class VectorQuantizer(nn.Module):
             self.ema_N = EMA(0.99)
             self.ema_m = EMA(0.99)
             for i in range(self.K):
-                self.ema_N.register('N' + f'{i}', torch.zeros(1, device=torch.device('cuda')))  # TODO(pu)
-                self.ema_m.register('m' + f'{i}', torch.zeros(self.D, device=torch.device('cuda')))
-                # self.ema_N.register('N'+f'{i}', torch.zeros(1, device=torch.device('cpu')))
-                # self.ema_m.register('m'+f'{i}', torch.zeros(self.D, device=torch.device('cpu')))
+                # self.ema_N.register('N' + f'{i}', torch.zeros(1, device=torch.device('cuda')))  # TODO(pu)
+                # self.ema_m.register('m' + f'{i}', torch.zeros(self.D, device=torch.device('cuda')))
+                self.ema_N.register('N'+f'{i}', torch.zeros(1, device=torch.device('cpu')))
+                self.ema_m.register('m'+f'{i}', torch.zeros(self.D, device=torch.device('cpu')))
 
     def forward(self, encoding: Tensor, eps=0.05) -> Tensor:
         # # Method 2: Compute L2 distance between encoding and embedding weights
@@ -130,7 +130,7 @@ class VectorQuantizer(nn.Module):
     def inference(self, encoding: Tensor) -> Tensor:
         quantized_index = torch.cdist(encoding, self.embedding.weight, p=2).sort()[1][:, 0]
         # .sort()[1] take the index after sorted, [:,0] take the nearest index
-        quantized_index = quantized_index.unsqueeze(1)
+        # quantized_index = quantized_index.unsqueeze(1)
 
         return quantized_index
 

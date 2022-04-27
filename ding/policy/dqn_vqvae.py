@@ -156,18 +156,18 @@ class DQNVQVAEPolicy(Policy):
 
         # use model_wrapper for specialized demands of different modes
         self._target_model = copy.deepcopy(self._model)
-        # self._target_model = model_wrap(
-        #     self._target_model,
-        #     wrapper_name='target',
-        #     update_type='assign',
-        #     update_kwargs={'freq': self._cfg.learn.target_update_freq}
-        # )
         self._target_model = model_wrap(
             self._target_model,
             wrapper_name='target',
-            update_type='momentum',
-            update_kwargs={'theta': self._cfg.learn.target_update_theta}
+            update_type='assign',
+            update_kwargs={'freq': self._cfg.learn.target_update_freq}
         )
+        # self._target_model = model_wrap(
+        #     self._target_model,
+        #     wrapper_name='target',
+        #     update_type='momentum',
+        #     update_kwargs={'theta': self._cfg.learn.target_update_theta}
+        # )
 
         self._learn_model = model_wrap(self._model, wrapper_name='argmax_sample')
         self._learn_model.reset()
@@ -247,8 +247,8 @@ class DQNVQVAEPolicy(Policy):
             td_error_per_sample = torch.Tensor([0]).item()
 
             # NOTE:visualize_latent, now it's only for env hopper and gym_hybrid
-            quantized_index = self.visualize_latent(save_histogram=False)
-            cos_similarity = self.visualize_embedding_table(save_dis_map=False)
+            # quantized_index = self.visualize_latent(save_histogram=False)
+            # cos_similarity = self.visualize_embedding_table(save_dis_map=False)
 
             return {
                 'cur_lr': self._optimizer.defaults['lr'],
@@ -256,7 +256,7 @@ class DQNVQVAEPolicy(Policy):
                 **loss_dict,
                 **q_value_dict,
                 # '[histogram]latent_action': quantized_index,
-                '[histogram]cos_similarity': cos_similarity,
+                # '[histogram]cos_similarity': cos_similarity,
             }
         ### VQVAE+RL phase ###
         else:
@@ -297,8 +297,8 @@ class DQNVQVAEPolicy(Policy):
                 td_error_per_sample = torch.Tensor([0]).item()
                 
                 # NOTE:visualize_latent, now it's only for env hopper and gym_hybrid
-                quantized_index = self.visualize_latent(save_histogram=False)
-                cos_similarity = self.visualize_embedding_table(save_dis_map=False)
+                # quantized_index = self.visualize_latent(save_histogram=False)
+                # cos_similarity = self.visualize_embedding_table(save_dis_map=False)
 
                 return {
                     'cur_lr': self._optimizer.defaults['lr'],
@@ -306,8 +306,8 @@ class DQNVQVAEPolicy(Policy):
                     **loss_dict,
                     **q_value_dict,
                     'total_grad_norm_vqvae': total_grad_norm_vqvae,
-                    '[histogram]latent_action': quantized_index,
-                    '[histogram]cos_similarity': cos_similarity,
+                    # '[histogram]latent_action': quantized_index,
+                    # '[histogram]cos_similarity': cos_similarity,
                 }
             # ====================
             # train RL
@@ -408,8 +408,8 @@ class DQNVQVAEPolicy(Policy):
             'total_grad_norm_rl',
             'total_grad_norm_vqvae',
             # 'predict_loss',
-            '[histogram]latent_action',
-            '[histogram]cos_similarity',
+            # '[histogram]latent_action',
+            # '[histogram]cos_similarity',
         ]
         return ret
 

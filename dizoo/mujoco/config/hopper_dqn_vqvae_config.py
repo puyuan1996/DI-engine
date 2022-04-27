@@ -10,7 +10,7 @@ hopper_dqn_default_config = dict(
         # (bool) Scale output action into legal range.
         use_act_scale=True,
         # Env number respectively for collector and evaluator.
-        collector_env_num=16,
+        collector_env_num=8,
         evaluator_env_num=8,
         n_evaluator_episode=8,
         # stop_value=3000,
@@ -29,7 +29,9 @@ hopper_dqn_default_config = dict(
 
         vq_loss_weight=1,  # TODO
         is_ema_target=False,  # use EMA
-        is_ema=True,  # use EMA
+        # is_ema=True,  # use EMA
+        is_ema=False,  # use EMA
+
         eps_greedy_nearest=False, # TODO
         # Reward's future discount factor, aka. gamma.
         discount_factor=0.99,
@@ -58,7 +60,7 @@ hopper_dqn_default_config = dict(
             learning_rate=3e-4,
             learning_rate_vae=1e-4,
             # Frequency of target network update.
-            # target_update_freq=500,
+            target_update_freq=500,
             target_update_theta=0.001,
 
             # NOTE
@@ -91,7 +93,7 @@ hopper_dqn_default_config = dict(
                 type='exp',
                 start=1,
                 end=0.05,
-                decay=int(1e5),
+                decay=int(1e4),
             ),
             replay_buffer=dict(replay_buffer_size=int(1e6), )
         ),
@@ -114,7 +116,7 @@ create_config = hopper_dqn_create_config
 
 def train(args):
     # TODO
-    main_config.exp_name = 'data_hopper/ema_rlclipgrad0.5_hardtarget_vq1' + '_seed' + f'{args.seed}'+'_3M'
+    main_config.exp_name = 'data_hopper/noema_rlclipgrad0.5_hardtarget_vq1_ed1e4' + '_seed' + f'{args.seed}'+'_3M'
 
     # main_config.exp_name = 'data_hopper/ema_rlclipgrad0.5_vq0.01' + '_seed' + f'{args.seed}'+'_3M'
     # main_config.exp_name = 'data_hopper/ema_rlclipgrad0.5_vq0.1' + '_seed' + f'{args.seed}'+'_3M'
