@@ -75,6 +75,7 @@ class VectorQuantizer(nn.Module):
         """
         device = encoding.device
         quantized_index = self.encode(encoding)
+        # print('torch.unique(quantized_index):', torch.unique(quantized_index))
         if self.eps_greedy_nearest:
             for i in range(encoding.shape[0]):
                 if np.random.random() < eps:

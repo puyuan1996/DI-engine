@@ -27,12 +27,14 @@ lunarlander_dqn_default_config = dict(
         original_action_shape=2,
         vqvae_embedding_dim=64,  # ved
         vqvae_hidden_dim=[256],  # vhd
-        vq_loss_weight=1,  # TODO
+        vq_loss_weight=0.1,  # TODO
         is_ema=True,  # use EMA
         # is_ema=False,  # use EMA
 
         is_ema_target=False, 
-        eps_greedy_nearest=False,
+        # eps_greedy_nearest=False,
+        eps_greedy_nearest=True,
+
         action_space='continuous',  # 'hybrid',
         # Reward's future discount factor, aka. gamma.
         discount_factor=0.99,
@@ -41,7 +43,7 @@ lunarlander_dqn_default_config = dict(
         # learn_mode config
         model=dict(
             obs_shape=8,
-            action_shape=int(64),  # num oof num_embeddings, K
+            action_shape=int(64),  # num of num_embeddings, K
             encoder_hidden_size_list=[128, 128, 64],  # small net
             # Whether to use dueling head.
             dueling=True,
@@ -94,7 +96,7 @@ lunarlander_dqn_default_config = dict(
                 start=1,
                 end=0.05,
                 # decay=int(1e5),
-                decay=int(5e4),
+                decay=int(1e4),
 
             ),
             replay_buffer=dict(replay_buffer_size=int(1e6), )
@@ -117,8 +119,8 @@ create_config = lunarlander_dqn_create_config
 
 
 def train(args):
-    main_config.exp_name = 'data_lunarlander/ema_rlclipgrad0.5_vq1_ed1e4' + '_seed' + f'{args.seed}'+'_3M'
-    # main_config.exp_name = 'data_lunarlander/noema_rlclipgrad0.5_vq1_ed1e4' + '_seed' + f'{args.seed}'+'_3M'
+    main_config.exp_name = 'data_lunarlander/ema_egn_rlclipgrad0.5_vq1_ed1e4' + '_seed' + f'{args.seed}'+'_3M'
+    # main_config.exp_name = 'data_lunarlander/noema_rlclipgrad0.5_vq0.1_ed1e4' + '_seed' + f'{args.seed}'+'_3M'
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=int(3e6))
 
 if __name__ == "__main__":
