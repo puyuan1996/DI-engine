@@ -177,8 +177,8 @@ class DQNVQVAEPolicy(Policy):
         # self._vqvae_model = VQVAE(2, 64, 64) #   action_dim: int, embedding_dim: int, num_embeddings: int,
         self._vqvae_model = ActionVQVAE(
             self._cfg.original_action_shape,
-            self._cfg.vqvae_embedding_dim,  #D
             self._cfg.model.action_shape,  #K
+            self._cfg.vqvae_embedding_dim,  #D
             self._cfg.vqvae_hidden_dim,
             self._cfg.vq_loss_weight,
             is_ema=self._cfg.is_ema,
@@ -240,11 +240,11 @@ class DQNVQVAEPolicy(Policy):
             self._optimizer_vqvae.zero_grad()
             result['total_vqvae_loss'].backward()
             self._optimizer_vqvae.step()
-            loss_dict['critic_loss'] = torch.Tensor([0]).item()
-            loss_dict['total_loss'] = torch.Tensor([0]).item()
-            q_value_dict = {}
-            q_value_dict['q_value'] = torch.Tensor([0]).item()
-            td_error_per_sample = torch.Tensor([0]).item()
+            # loss_dict['critic_loss'] = torch.Tensor([0]).item()
+            # loss_dict['total_loss'] = torch.Tensor([0]).item()
+            # q_value_dict = {}
+            # q_value_dict['q_value'] = torch.Tensor([0]).item()
+            # td_error_per_sample = torch.Tensor([0]).item()
 
             # NOTE:visualize_latent, now it's only for env hopper and gym_hybrid
             # quantized_index = self.visualize_latent(save_histogram=False)
@@ -252,9 +252,9 @@ class DQNVQVAEPolicy(Policy):
 
             return {
                 'cur_lr': self._optimizer.defaults['lr'],
-                'td_error': td_error_per_sample,
+                # 'td_error': td_error_per_sample,
                 **loss_dict,
-                **q_value_dict,
+                # **q_value_dict,
                 # '[histogram]latent_action': quantized_index,
                 # '[histogram]cos_similarity': cos_similarity,
             }
@@ -292,9 +292,9 @@ class DQNVQVAEPolicy(Policy):
                 total_grad_norm_vqvae = self._optimizer_vqvae.get_grad()
                 self._optimizer_vqvae.step()
 
-                q_value_dict = {}
-                q_value_dict['q_value'] = torch.Tensor([0]).item()
-                td_error_per_sample = torch.Tensor([0]).item()
+                # q_value_dict = {}
+                # q_value_dict['q_value'] = torch.Tensor([0]).item()
+                # td_error_per_sample = torch.Tensor([0]).item()
                 
                 # NOTE:visualize_latent, now it's only for env hopper and gym_hybrid
                 # quantized_index = self.visualize_latent(save_histogram=False)
@@ -302,9 +302,9 @@ class DQNVQVAEPolicy(Policy):
 
                 return {
                     'cur_lr': self._optimizer.defaults['lr'],
-                    'td_error': td_error_per_sample,
+                    # 'td_error': td_error_per_sample,
                     **loss_dict,
-                    **q_value_dict,
+                    # **q_value_dict,
                     'total_grad_norm_vqvae': total_grad_norm_vqvae,
                     # '[histogram]latent_action': quantized_index,
                     # '[histogram]cos_similarity': cos_similarity,
@@ -332,6 +332,7 @@ class DQNVQVAEPolicy(Policy):
 
                 quantized_index = self._vqvae_model.encode({'action': data['action']})
                 data['latent_action'] = quantized_index.clone().detach()
+                # print(torch.unique(data['latent_action']))
 
                 if self._cuda:
                     data = to_device(data, self._device)
@@ -345,6 +346,8 @@ class DQNVQVAEPolicy(Policy):
                 # Target q value
                 with torch.no_grad():
                     target_q_value = self._target_model.forward(data['next_obs'])['logit']
+                    # print(torch.unique(data['next_obs'][:,0]))
+                    # print(torch.unique(target_q_value[:,0]))
                     # Max q value action (main model)
                     if self._cfg.learn.constrain_action is True:
                         # TODO(pu)
@@ -355,6 +358,7 @@ class DQNVQVAEPolicy(Policy):
                         # target_q_action = self._learn_model.forward(data['next_obs'])['action']
                     else:
                         target_q_action = self._learn_model.forward(data['next_obs'])['action']
+                        # print(torch.unique( target_q_action))
 
                 # NOTE: RL learn policy in latent action space, so here using data['latent_action']
                 data_n = q_nstep_td_data(
@@ -492,10 +496,14 @@ class DQNVQVAEPolicy(Policy):
 
             if self._cfg.action_space == 'hybrid':
                 # recons_action = self._vqvae_model.decode_without_obs(output['action'])
-                recons_action = self._vqvae_model.decode(output['action'])['recons_action']
+                # output['action'] = {
+                #     'action_type': recons_action['recons_action']['disc'],
+                #     'action_args': recons_action['recons_action']['cont']
+                # }
+                recons_action = self._vqvae_model.decode(output['action'])
                 output['action'] = {
-                    'action_type': recons_action['recons_action']['disc'],
-                    'action_args': recons_action['recons_action']['cont']
+                    'action_type': recons_action['recons_action']['action_type'],
+                    'action_args': recons_action['recons_action']['action_args']
                 }
 
                 # NOTE: add noise in the original actions
@@ -628,13 +636,17 @@ class DQNVQVAEPolicy(Policy):
             # output['action'] = self._vqvae_model.decode_with_obs(output['action'], data})['recons_action']
 
             if self._cfg.action_space == 'hybrid':
-                recons_action = self._vqvae_model.decode_without_obs(output['action'])
+                # recons_action = self._vqvae_model.decode_without_obs(output['action'])
+                # output['action'] = {
+                #     'action_type': recons_action['recons_action']['disc'],
+                #     'action_args': recons_action['recons_action']['cont']
+                # }
+                recons_action = self._vqvae_model.decode(output['action'])
                 output['action'] = {
-                    'action_type': recons_action['recons_action']['disc'],
-                    'action_args': recons_action['recons_action']['cont']
+                    'action_type': recons_action['recons_action']['action_type'],
+                    'action_args': recons_action['recons_action']['action_args']
                 }
             else:
-                # output['action']  = self._vqvae_model.decode_with_obs(output['action'])
                 # output['action'] = self._vqvae_model.decode_without_obs(output['action'])['recons_action']
                 output['action'] = self._vqvae_model.decode(output['action'])['recons_action']
 

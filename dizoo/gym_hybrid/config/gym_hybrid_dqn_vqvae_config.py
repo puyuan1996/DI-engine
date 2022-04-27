@@ -23,7 +23,7 @@ gym_hybrid_dqn_default_config = dict(
         cuda=True,
         priority=False,
         random_collect_size=int(1e4),
-        # random_collect_size=int(0),  # debug
+        # random_collect_size=int(1),  # debug
 
         original_action_shape=dict(
                 action_type_shape=3,
@@ -51,7 +51,7 @@ gym_hybrid_dqn_default_config = dict(
         learn=dict(
             constrain_action=False,  # TODO
             warm_up_update=int(1e4),
-            # warm_up_update=int(0), # debug
+            # warm_up_update=int(1), # debug
 
             rl_vae_update_circle=1,  # train rl 1 iter, vae 1 iter
             update_per_collect_rl=256,
