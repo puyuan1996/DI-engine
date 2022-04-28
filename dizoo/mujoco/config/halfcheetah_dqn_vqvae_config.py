@@ -3,7 +3,7 @@ from ding.entry import serial_pipeline_dqn_vqvae
 
 nstep = 3
 halfcheetah_dqn_default_config = dict(
-    exp_name='debug_halfcheetah_dqn_vqvae_ved128_k128_ehsl256256128_upcr20_bs512_ed1e5_rbs1e6_seed0_3M',
+    exp_name='halfcheetah_dqn_vqvae_seed0_3M',
     env=dict(
         env_id='HalfCheetah-v3',
         norm_obs=dict(use_norm=False, ),
@@ -12,50 +12,55 @@ halfcheetah_dqn_default_config = dict(
         use_act_scale=True,
         # Env number respectively for collector and evaluator.
         collector_env_num=8,
-        evaluator_env_num=5,
-        n_evaluator_episode=5,
+        evaluator_env_num=8,
+        n_evaluator_episode=8,
         # stop_value=12000,
         stop_value=int(1e6),
     ),
     policy=dict(
-        learned_model_path='/home/puyuan/DI-engine/data_halfcheetah/noobs_noprio_ema_nonoise_rlcipgrad_vhd512_D256_k128seed_0_3M/ckpt/ckpt_best.pth.tar',
+        # learned_model_path='/home/puyuan/DI-engine/data_halfcheetah/noobs_noprio_ema_nonoise_rlcipgrad_vhd512_D256_k128seed_0_3M/ckpt/ckpt_best.pth.tar',
 
         # Whether to use cuda for network.
         cuda=True,
         priority=False,
-        # priority=True,
-
-        random_collect_size=int(1e4),
-        original_action_shape=6,
-
-        # vqvae_embedding_dim=128,  # ved: D
-        # vqvae_hidden_dim=[256],  # vhd
-
-        vqvae_embedding_dim=256,  # ved: D
-        vqvae_hidden_dim=[512],  # vhd
-
-        is_ema_target=False,  # use EMA
-        is_ema=True,  # use EMA
-        # is_ema=False,  # no EMA
-        action_space='continuous',  # 'hybrid',
-        model=dict(
-            obs_shape=17,
-            action_shape=int(128),  # num of num_embeddings: k
-            encoder_hidden_size_list=[256, 256, 128],
-            # Whether to use dueling head.
-            dueling=True,
-        ),
         # Reward's future discount factor, aka. gamma.
         discount_factor=0.99,
         # How many steps in td error.
         nstep=nstep,
         # learn_mode config
+        action_space='continuous',  # 'hybrid',
+        original_action_shape=6,
+
+        vqvae_hidden_dim=[256],  # vhd
+        vq_loss_weight=1,  # TODO
+        is_ema_target=False,  # use EMA
+
+        random_collect_size=int(1e4),
+        # random_collect_size=int(1),  # debug
+        vqvae_embedding_dim=64,  # ved
+        # vqvae_embedding_dim=128,  # ved
+
+        is_ema=True,  # use EMA
+        # is_ema=False,  # use EMA # TODO
+        eps_greedy_nearest=False, # TODO
+        # eps_greedy_nearest=True, 
+
+        model=dict(
+            obs_shape=17,
+            action_shape=int(64),  # num of num_embeddings: k
+            encoder_hidden_size_list=[128, 128, 64],  # small net
+            # encoder_hidden_size_list=[256, 256, 128],  # middle net
+            # encoder_hidden_size_list=[512, 512, 256],  # large net
+            # Whether to use dueling head.
+            dueling=True,
+        ),
         learn=dict(
-            ignore_done=True,
+            ignore_done=True,  # TODO
+            constrain_action=False,  # TODO
             warm_up_update=int(1e4),
             rl_vae_update_circle=1,  # train rl 1 iter, vae 1 iter
-            update_per_collect_rl=20,
-            # update_per_collect_rl=256,
+            # update_per_collect_rl=20,
+            update_per_collect_rl=256,
             update_per_collect_vae=10,
 
             rl_batch_size=512,
@@ -65,13 +70,13 @@ halfcheetah_dqn_default_config = dict(
             learning_rate_vae=1e-4,
             # Frequency of target network update.
             target_update_freq=500,
+            target_update_theta=0.001,
             
             # NOTE
             rl_clip_grad=True,
             # rl_clip_grad=False,
             grad_clip_type='clip_norm',
-            # grad_clip_value=0.5,
-            grad_clip_value=5,
+            grad_clip_value=0.5,
 
 
             # add noise in original continuous action
@@ -119,24 +124,16 @@ halfcheetah_dqn_create_config = dict(
 halfcheetah_dqn_create_config = EasyDict(halfcheetah_dqn_create_config)
 create_config = halfcheetah_dqn_create_config
 
-# if __name__ == "__main__":
-#     serial_pipeline_dqn_vqvae([main_config, create_config], seed=0)
 
 import copy
 
 def train(args):
-    main_config.exp_name = 'data_halfcheetah/noobs_noprio_ema_nonoise_rlcipgrad5_vhd512_D256_k128_upcr20' + 'seed_' + f'{args.seed}'+'_3M'
-    # main_config.exp_name = 'debug'  # debug
-
-    serial_pipeline_dqn_vqvae(
-        [copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed
-    )
-
+    main_config.exp_name = 'data_halfcheetah/base_ema_rlclipgrad0.5_hardtarget_vq1_ed1e5_smallnet_noise_K64_upcr256' + '_seed' + f'{args.seed}'+'_3M'
+    serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=int(3e6))
 
 if __name__ == "__main__":
     import argparse
-    # for seed in [0, 1, 2, 3, 4]:
-    for seed in [0]:
+    for seed in [0,1,2]:
         parser = argparse.ArgumentParser()
         parser.add_argument('--seed', '-s', type=int, default=seed)
         args = parser.parse_args()

@@ -74,6 +74,11 @@ class VectorQuantizer(nn.Module):
             - encoding shape: (B,D)
         """
         device = encoding.device
+        encoding_shape = encoding.shape
+        if len(encoding_shape)==3:
+            # for multi-agent case, e.g. gobigger, 
+            # if encoding shape is (B,A,D), where B is batch_size, A is agent_num, D is encoding_dim
+            encoding = encoding.view(-1, encoding_shape[-1]) 
         quantized_index = self.encode(encoding)
         # print('torch.unique(quantized_index):', torch.unique(quantized_index))
         if self.eps_greedy_nearest:
@@ -241,8 +246,9 @@ class ActionVQVAE(nn.Module):
             if isinstance(self.action_shape, int):  # continuous action
                 recons_loss = F.mse_loss(recons_action, target_action)
             elif isinstance(self.action_shape, dict):  # hybrid action
-                recons_loss_cont = F.mse_loss(recons_action['action_args'], target_action['action_args'])
-                recons_loss_disc = F.cross_entropy(recons_action['logit'], target_action['action_type'])
+                recons_loss_cont = F.mse_loss(recons_action['action_args'], target_action['action_args'].view(-1,target_action['action_args'].shape[-1]))
+                recons_loss_disc = F.cross_entropy(recons_action['logit'], target_action['action_type'].view(-1))
+                # here view(-1) is to be compatiable with multi_agent case, e.g. gobigger
                 recons_loss = recons_loss_cont + recons_loss_disc
 
             return recons_action, recons_loss

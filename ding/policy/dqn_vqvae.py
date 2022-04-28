@@ -510,7 +510,7 @@ class DQNVQVAEPolicy(Policy):
                 if self._cfg.learn.noise:
                     from ding.rl_utils.exploration import GaussianNoise
                     action = output['action']['action_args']
-                    gaussian_noise = GaussianNoise(mu=0.0, sigma=0.1)
+                    gaussian_noise = GaussianNoise(mu=0.0, sigma=self._cfg.learn.noise_sigma)
                     noise = gaussian_noise(
                         output['action']['action_args'].shape, output['action']['action_args'].device
                     )
@@ -529,7 +529,7 @@ class DQNVQVAEPolicy(Policy):
                 if self._cfg.learn.noise:
                     from ding.rl_utils.exploration import GaussianNoise
                     action = output['action']
-                    gaussian_noise = GaussianNoise(mu=0.0, sigma=0.1)
+                    gaussian_noise = GaussianNoise(mu=0.0, sigma=self._cfg.learn.noise_sigma)
                     noise = gaussian_noise(output['action'].shape, output['action'].device)
                     if self._cfg.learn.noise_range is not None:
                         noise = noise.clamp(self._cfg.learn.noise_range['min'], self._cfg.learn.noise_range['max'])
