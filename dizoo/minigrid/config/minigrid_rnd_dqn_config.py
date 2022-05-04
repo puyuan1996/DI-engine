@@ -2,8 +2,8 @@ from easydict import EasyDict
 
 collector_env_num = 8
 evaluator_env_num = 8
-minigrid_ppo_rnd_config = dict(
-    exp_name='minigrid_empty8_rnd_onppo_seed0',
+minigrid_dqn_rnd_config = dict(
+    exp_name='minigrid_empty8_rnd_dqn_seed0',
     env=dict(
         collector_env_num=collector_env_num,
         evaluator_env_num=evaluator_env_num,
@@ -36,52 +36,49 @@ minigrid_ppo_rnd_config = dict(
         obs_norm_clamp_min=-5,
     ),
     policy=dict(
-        recompute_adv=True,
         cuda=True,
-        action_space='discrete',
+        nstep=3,
+        discount_factor=0.99,
         model=dict(
             obs_shape=2739,
             action_shape=7,
-            action_space='discrete',
             encoder_hidden_size_list=[256, 128, 64, 64],
-            critic_head_hidden_size=64,
-            actor_head_hidden_size=64,
         ),
         learn=dict(
-            epoch_per_collect=10,
-            update_per_collect=1,
-            batch_size=320,
-            learning_rate=3e-4,
-            value_weight=0.5,
-            entropy_weight=0.001,
-            clip_ratio=0.2,
-            adv_norm=True,
-            value_norm=True,
+            update_per_collect=10,
+            batch_size=32,
+            learning_rate=0.0001,
+            target_update_freq=500,
         ),
-        collect=dict(
-            collector_env_num=collector_env_num,
-            n_sample=3200,
-            unroll_len=1,
-            discount_factor=0.99,
-            gae_lambda=0.95,
+        collect=dict(n_sample=3200, ),
+        eval=dict(evaluator=dict(eval_freq=4000, )),
+        other=dict(
+            eps=dict(
+                type='exp',
+                start=1.,
+                end=0.05,
+                decay=250000,
+            ),
+            replay_buffer=dict(replay_buffer_size=100000, ),
         ),
     ),
 )
-minigrid_ppo_rnd_config = EasyDict(minigrid_ppo_rnd_config)
-main_config = minigrid_ppo_rnd_config
-minigrid_ppo_rnd_create_config = dict(
+minigrid_dqn_rnd_config = EasyDict(minigrid_dqn_rnd_config)
+main_config = minigrid_dqn_rnd_config
+minigrid_dqn_rnd_create_config = dict(
     env=dict(
         type='minigrid',
         import_names=['dizoo.minigrid.envs.minigrid_env'],
     ),
     env_manager=dict(type='subprocess'),
-    policy=dict(type='ppo'),
+    policy=dict(type='dqn'),
     reward_model=dict(type='rnd'),
 )
-minigrid_ppo_rnd_create_config = EasyDict(minigrid_ppo_rnd_create_config)
-create_config = minigrid_ppo_rnd_create_config
+minigrid_dqn_rnd_create_config = EasyDict(minigrid_dqn_rnd_create_config)
+create_config = minigrid_dqn_rnd_create_config
 
 if __name__ == "__main__":
-    # or you can enter `ding -m serial_reward_model_onpolicy -c minigrid_rnd_config.py -s 0`
-    from ding.entry import serial_pipeline_reward_model_onpolicy
-    serial_pipeline_reward_model_onpolicy([main_config, create_config], seed=0)
+    # TODO(pu): how to deal with nstep reward in dqn+rnd?
+    # or you can enter `ding -m serial_reward_model_offpolicy -c minigrid_rnd_config.py -s 0`
+    from ding.entry import serial_pipeline_reward_model_offpolicy
+    serial_pipeline_reward_model_offpolicy([main_config, create_config], seed=0)

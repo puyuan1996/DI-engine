@@ -68,7 +68,8 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
             'parallel',
             'dist',
             'eval',
-            'serial_reward_model',
+            'serial_reward_model_onpolicy',
+            'serial_reward_model_offpolicy',
             'serial_gail',
             'serial_offline',
         ]
@@ -196,7 +197,10 @@ def cli(
             from .serial_entry_sqil import serial_pipeline_sqil
             expert_config = input("Enter the name of the config you used to generate your expert model: ")
             serial_pipeline_sqil(config, expert_config, seed, max_train_iter=train_iter, max_env_step=env_step)
-        elif mode == 'serial_reward_model':
+        elif mode == 'serial_reward_model_onpolicy':
+            from .serial_entry_reward_model_onpolicy import serial_pipeline_reward_model_onpolicy
+            serial_pipeline_reward_model_onpolicy(config, seed, max_train_iter=train_iter, max_env_step=env_step)
+        elif mode == 'serial_reward_model_offpolicy':
             from .serial_entry_reward_model_offpolicy import serial_pipeline_reward_model_offpolicy
             serial_pipeline_reward_model_offpolicy(config, seed, max_train_iter=train_iter, max_env_step=env_step)
         elif mode == 'serial_gail':

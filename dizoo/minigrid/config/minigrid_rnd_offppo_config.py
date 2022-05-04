@@ -3,7 +3,7 @@ from easydict import EasyDict
 collector_env_num = 8
 evaluator_env_num = 8
 minigrid_ppo_rnd_config = dict(
-    exp_name='minigrid_empty8_rnd_onppo_seed0',
+    exp_name='minigrid_empty8_rnd_offppo_seed0',
     env=dict(
         collector_env_num=collector_env_num,
         evaluator_env_num=evaluator_env_num,
@@ -48,8 +48,8 @@ minigrid_ppo_rnd_config = dict(
             actor_head_hidden_size=64,
         ),
         learn=dict(
-            epoch_per_collect=10,
-            update_per_collect=1,
+            # epoch_per_collect=10,
+            update_per_collect=10,
             batch_size=320,
             learning_rate=3e-4,
             value_weight=0.5,
@@ -75,13 +75,14 @@ minigrid_ppo_rnd_create_config = dict(
         import_names=['dizoo.minigrid.envs.minigrid_env'],
     ),
     env_manager=dict(type='subprocess'),
-    policy=dict(type='ppo'),
+    policy=dict(type='ppo_offpolicy'),
     reward_model=dict(type='rnd'),
 )
 minigrid_ppo_rnd_create_config = EasyDict(minigrid_ppo_rnd_create_config)
 create_config = minigrid_ppo_rnd_create_config
 
 if __name__ == "__main__":
-    # or you can enter `ding -m serial_reward_model_onpolicy -c minigrid_rnd_config.py -s 0`
-    from ding.entry import serial_pipeline_reward_model_onpolicy
-    serial_pipeline_reward_model_onpolicy([main_config, create_config], seed=0)
+    # TODO(pu): how to recompute advantage in offppo+rnd?
+    # or you can enter `ding -m serial_reward_model_offpolicy -c minigrid_rnd_config.py -s 0`
+    from ding.entry import serial_pipeline_reward_model_offpolicy
+    serial_pipeline_reward_model_offpolicy([main_config, create_config], seed=0)
