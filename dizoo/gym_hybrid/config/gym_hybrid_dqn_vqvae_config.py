@@ -54,7 +54,8 @@ gym_hybrid_dqn_default_config = dict(
             # warm_up_update=int(1), # debug
 
             rl_vae_update_circle=1,  # train rl 1 iter, vae 1 iter
-            update_per_collect_rl=256,
+            # update_per_collect_rl=256,
+            update_per_collect_rl=20,
             update_per_collect_vae=10,
 
             rl_batch_size=512,
@@ -108,7 +109,8 @@ gym_hybrid_dqn_create_config = dict(
         type='gym_hybrid',
         import_names=['dizoo.gym_hybrid.envs.gym_hybrid_env'],
     ),
-    env_manager=dict(type='subprocess'),
+    # env_manager=dict(type='subprocess'),
+    env_manager=dict(type='base'),
     policy=dict(type='dqn_vqvae'),
 )
 gym_hybrid_dqn_create_config = EasyDict(gym_hybrid_dqn_create_config)
@@ -116,7 +118,10 @@ create_config = gym_hybrid_dqn_create_config
 
 
 def train(args):
-    main_config.exp_name = 'data_sliding/ema_rlclipgrad0.5_hardtarget_vq1' + '_seed' + f'{args.seed}'+'_3M'
+    # main_config.exp_name = 'data_sliding/ema_rlclipgrad0.5_hardtarget_vq1' + '_seed' + f'{args.seed}'+'_3M'
+    # main_config.exp_name = 'data_sliding/base_nsample256_ema_rlclipgrad0.5_hardtarget_vq1_ed1e5_smallnet_K64_upcr256' + '_seed' + f'{args.seed}'+'_3M'
+    main_config.exp_name = 'data_sliding/base_nsample256_ema_rlclipgrad0.5_hardtarget_vq1_ed1e5_smallnet_K64_upcr20' + '_seed' + f'{args.seed}'+'_3M'
+
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,max_env_step=int(3e6))
 
 

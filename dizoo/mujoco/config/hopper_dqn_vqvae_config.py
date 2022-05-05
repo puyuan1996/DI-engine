@@ -44,7 +44,7 @@ hopper_dqn_default_config = dict(
 
         model=dict(
             obs_shape=11,
-            action_shape=int(64),  # num of num_embeddings
+            action_shape=int(16),  # num of num_embeddings
             encoder_hidden_size_list=[128, 128, 64],  # small net
             # encoder_hidden_size_list=[256, 256, 128],  # middle net
             # encoder_hidden_size_list=[512, 512, 256],  # large net
@@ -132,7 +132,7 @@ def train(args):
     # main_config.exp_name = 'data_hopper/debug_subprocess'
     # main_config.exp_name = 'data_hopper/sub_eachiternsample3200_ema_rlclipgrad0.5_hardtarget_vq1_ed1e5_smallnet_K64_upcr256' + '_seed' + f'{args.seed}'+'_3M'
     # main_config.exp_name = 'data_hopper/sub_nsample256_ema_rlclipgrad0.5_hardtarget_vq1_ed1e5_smallnet_K64_upcr256' + '_seed' + f'{args.seed}'+'_3M'
-    main_config.exp_name = 'data_hopper/base_nsample256_ema_rlclipgrad0.5_hardtarget_vq1_ed1e5_smallnet_K64_upcr256' + '_seed' + f'{args.seed}'+'_3M'
+    main_config.exp_name = 'data_hopper/base_nsample256_ema_rlclipgrad0.5_hardtarget_vq1_ed1e5_smallnet_K16_upcr256' + '_seed' + f'{args.seed}'+'_3M'
 
 
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=int(3e6))
@@ -142,8 +142,8 @@ if __name__ == "__main__":
     import argparse
     from ding.entry import serial_pipeline_dqn_vqvae
 
-    # for seed in [0,1,2]:
-    for seed in [0]:
+    for seed in [0,1,2]:
+    # for seed in [0]:
 
         parser = argparse.ArgumentParser()
         parser.add_argument('--seed', '-s', type=int, default=seed)
