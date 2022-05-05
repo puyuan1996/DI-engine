@@ -33,6 +33,10 @@ cudatest:
 	pytest ${TEST_DIR} \
 		-sv -m cudatest
 
+envpooltest:
+	pytest ${TEST_DIR} \
+		-sv -m envpooltest
+
 dockertest:
 	./ding/scripts/docker-test-entry.sh
 
@@ -57,6 +61,6 @@ all_test: unittest algotest cudatest benchmark
 format:
 	yapf --in-place --recursive -p --verbose --style .style.yapf ${FORMAT_DIR}
 format_test:
-	bash format.sh ./ding --test
+	bash format.sh ${FORMAT_DIR} --test
 flake_check:
-	flake8 ./ding
+	flake8 ${FORMAT_DIR}

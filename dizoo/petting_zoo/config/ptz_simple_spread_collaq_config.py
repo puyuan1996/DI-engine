@@ -2,9 +2,10 @@ from easydict import EasyDict
 
 n_agent = 5
 n_landmark = n_agent
-collector_env_num = 4
-evaluator_env_num = 2
+collector_env_num = 8
+evaluator_env_num = 8
 ptz_simple_spread_collaq_config = dict(
+    exp_name='ptz_simple_spread_collaq_seed0',
     env=dict(
         env_family='mpe',
         env_id='simple_spread_v2',
@@ -15,9 +16,8 @@ ptz_simple_spread_collaq_config = dict(
         continuous_actions=False,
         collector_env_num=collector_env_num,
         evaluator_env_num=evaluator_env_num,
-        n_evaluator_episode=10,
+        n_evaluator_episode=evaluator_env_num,
         stop_value=0,
-        manager=dict(shared_memory=False, ),
     ),
     policy=dict(
         cuda=True,
@@ -67,3 +67,8 @@ ptz_simple_spread_collaq_create_config = dict(
 )
 ptz_simple_spread_collaq_create_config = EasyDict(ptz_simple_spread_collaq_create_config)
 create_config = ptz_simple_spread_collaq_create_config
+
+if __name__ == '__main__':
+    # or you can enter `ding -m serial -c ptz_simple_spread_collaq_config.py -s 0`
+    from ding.entry import serial_pipeline
+    serial_pipeline((main_config, create_config), seed=0)

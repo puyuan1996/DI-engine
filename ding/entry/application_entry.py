@@ -1,5 +1,6 @@
 from typing import Union, Optional, List, Any, Tuple
 import pickle
+import numpy as np
 import torch
 from functools import partial
 import os
@@ -72,7 +73,9 @@ def eval(
     evaluator = InteractionSerialEvaluator(cfg.policy.eval.evaluator, evaluator_env, policy.eval_mode)
 
     # Evaluate
-    _, eval_reward = evaluator.eval()
+    _, episode_info = evaluator.eval()
+    reward = [e['final_eval_reward'] for e in episode_info]
+    eval_reward = np.mean(reward)
     print('Eval is over! The performance of your RL policy is {}'.format(eval_reward))
     return eval_reward
 
@@ -81,7 +84,7 @@ def collect_demo_data(
         input_cfg: Union[str, dict],
         seed: int,
         collect_count: int,
-        expert_data_path: str,
+        expert_data_path: Optional[str] = None,
         env_setting: Optional[List[Any]] = None,
         model: Optional[torch.nn.Module] = None,
         state_dict: Optional[dict] = None,
@@ -118,6 +121,8 @@ def collect_demo_data(
         save_cfg=True,
         save_path='collect_demo_data_config.py'
     )
+    if expert_data_path is None:
+        expert_data_path = cfg.policy.collect.save_path
 
     # Create components: env, policy, collector
     if env_setting is None:

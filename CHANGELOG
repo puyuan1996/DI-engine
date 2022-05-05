@@ -1,3 +1,80 @@
+2022.04.23(v0.3.1)
+- env: polish and standardize dizoo config (#252) (#255) (#249) (#246) (#262) (#261) (#266) (#273) (#263) (#280) (#259) (#286) (#277) (#290) (#289) (#299)
+- env: add GRF academic env and config (#281)
+- env: update env inferface of GRF (#258)
+- env: update D4RL offline RL env and config (#285)
+- env: polish PomdpAtariEnv (#254)
+- algo: DREX algorithm (#218)
+- feature: separate mq and parallel modules, add redis (#247)
+- feature: rename env variables; fix attach_to parameter (#244) 
+- feature: env implementation check (#275)
+- feature: adjust and set the max column number of tabulate in log (#296)
+- feature: add drop_extra option for sample collect
+- feature: speed up GTrXL forward method + GRU unittest (#253) (#292)
+- fix: add act_scale in DingEnvWrapper; fix envpool env manager (#245)
+- fix: auto_reset=False and env_ref bug in env manager (#248)
+- fix: data type and deepcopy bug in RND (#288)
+- fix: share_memory bug and multi_mujoco env (#279)
+- fix: some bugs in GTrXL (#276)
+- fix: update gym_vector_env_manager and add more unittest (#241)
+- fix: mdpolicy random collect bug (#293)
+- fix: gym.wrapper save video replay bug
+- fix: collect abnormal step format bug and add unittest
+- test: add buffer benchmark & socket test (#284)
+- style: upgrade mpire (#251)
+- style: add GRF(google research football) docker (#256)
+- style: update policy and gail comment
+
+2022.03.24(v0.3.0)
+- env: add bitfilp HER DQN benchmark (#192) (#193) (#197)
+- env: slime volley league training demo (#229)
+- algo: Gated TransformXL (GTrXL) algorithm (#136)
+- algo: TD3 + VAE(HyAR) latent action algorithm (#152)
+- algo: stochastic dueling network (#234)
+- algo: use log prob instead of using prob in ACER (#186)
+- feature: support envpool env manager (#228)
+- feature: add league main and other improvements in new framework (#177) (#214)
+- feature: add pace controller middleware in new framework (#198)
+- feature: add auto recover option in new framework (#242)
+- feature: add k8s parser in new framework (#243)
+- feature: support async event handler and logger (#213)
+- feautre: add grad norm calculator (#205)
+- feautre: add gym vector env manager (#147)
+- feautre: add train_iter and env_step in serial pipeline (#212)
+- feautre: add rich logger handler (#219) (#223) (#232)
+- feature: add naive lr_scheduler demo
+- refactor: new BaseEnv and DingEnvWrapper (#171) (#231) (#240)
+- polish: MAPPO and MASAC smac config (#209) (#239)
+- polish: QMIX smac config (#175)
+- polish: R2D2 atari config (#181)
+- polish: A2C atari config (#189)
+- polish: GAIL box2d and mujoco config (#188)
+- polish: ACER atari config (#180)
+- polish: SQIL atari config (#230)
+- polish: TREX atari/mujoco config
+- polish: IMPALA atari config
+- polish: MBPO/D4PG mujoco config
+- fix: random_collect compatible to episode collector (#190)
+- fix: remove default n_sample/n_episode value in policy config (#185)
+- fix: PDQN model bug on gpu device (#220)
+- fix: TREX algorithm CLI bug (#182)
+- fix: DQfD JE computation bug and move to AdamW optimizer (#191)
+- fix: pytest problem for parallel middleware (#211)
+- fix: mujoco numpy compatibility bug
+- fix: markupsafe 2.1.0 bug
+- fix: framework parallel module network emit bug
+- fix: mpire bug and disable algotest in py3.8
+- fix: lunarlander env import and env_id bug
+- fix: icm unittest repeat name bug
+- fix: buffer thruput close bug
+- test: resnet unittest (#199)
+- test: SAC/SQN unittest (#207)
+- test: CQL/R2D3/GAIL unittest (#201)
+- test: NGU td unittest (#210)
+- test: model wrapper unittest (#215)
+- test: MAQAC model unittest (#226)
+- style: add doc docker (#221)
+
 2022.01.01(v0.2.3)
 - env: add multi-agent mujoco env (#146)
 - env: add delay reward mujoco env (#145)

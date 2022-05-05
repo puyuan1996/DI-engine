@@ -1,6 +1,6 @@
 from typing import Dict, Any, Callable
 from collections import namedtuple
-
+import torch
 from ding.torch_utils import to_device
 import gym
 import numpy as np
@@ -35,6 +35,22 @@ class PolicyFactory:
             for env_id in data:
                 if isinstance(action_space, gym.spaces.Discrete) or isinstance(action_space, gym.spaces.Box):
                     actions[env_id] = {'action': action_space.sample()}
+                elif isinstance(action_space, gym.spaces.MultiDiscrete):
+                    action = action_space.sample()
+                    action = [torch.LongTensor([v]) for v in action]
+                    actions[env_id] = {'action': action}
+                elif 'global_state' in data[env_id].keys():
+                    # for smac
+                    logit = np.ones_like(data[env_id]['action_mask'])
+                    logit[data[env_id]['action_mask'] == 0.0] = -1e8
+                    dist = torch.distributions.categorical.Categorical(logits=torch.Tensor(logit))
+                    actions[env_id] = {'action': np.array(dist.sample()), 'logit': np.array(logit)}
+                elif isinstance(action_space, list):
+                    # for gfootball
+                    actions[env_id] = {
+                        'action': np.array([action_space_agent.sample() for action_space_agent in action_space]),
+                        'logit': np.ones([len(action_space), action_space[0].n])
+                    }
                 else:
                     if isinstance(action_space[0], gym.spaces.Discrete) and isinstance(action_space[1], gym.spaces.Box):
                         # for gym_hybrid
@@ -65,6 +81,7 @@ class PolicyFactory:
                                     [action_sample_player1, action_sample_player2, action_sample_player3]
                                 )
                             }
+
 
             return actions
 

@@ -199,7 +199,7 @@ class EpisodeSerialCollector(ISerialCollector):
                 raise RuntimeError("Please specify collect n_episode")
             else:
                 n_episode = self._default_n_episode
-        assert n_episode >= self._env_num, "Please make sure n_episode >= env_num"
+        assert n_episode >= self._env_num, "Please make sure n_episode >= env_num{}/{}".format(n_episode, self._env_num)
         if policy_kwargs is None:
             policy_kwargs = {}
         collected_episode = 0
@@ -238,7 +238,7 @@ class EpisodeSerialCollector(ISerialCollector):
                         self._env.reset({env_id: None})
                         self._policy.reset([env_id])
                         self._reset_stat(env_id)
-                        self._logger.info('env_id {}, abnormal step {}', env_id, timestep.info)
+                        self._logger.info('Env{} returns a abnormal step, its info is {}'.format(env_id, timestep.info))
                         continue
                     transition = self._policy.process_transition(
                         self._obs_pool[env_id], self._policy_output_pool[env_id], timestep

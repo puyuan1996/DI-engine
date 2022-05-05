@@ -1,5 +1,4 @@
 from easydict import EasyDict
-from ding.entry import serial_pipeline
 
 agent_num = 5
 collector_env_num = 8
@@ -7,7 +6,7 @@ evaluator_env_num = 8
 special_global_state = True
 
 SMAC_5m6m_masac_default_config = dict(
-    exp_name='debug_smac_5m6m_masac_d5e4',
+    exp_name='smac_5m6m_masac_seed0',
     env=dict(
         map_name='5m_vs_6m',
         difficulty=7,
@@ -85,22 +84,8 @@ SMAC_5m6m_masac_default_create_config = dict(
 SMAC_5m6m_masac_default_create_config = EasyDict(SMAC_5m6m_masac_default_create_config)
 create_config = SMAC_5m6m_masac_default_create_config
 
-# if __name__ == "__main__":
-#     serial_pipeline([main_config, create_config], seed=0)
 
+if __name__ == '__main__':
 
-def train(args):
-    main_config.exp_name = 'debug_smac_5m6m_masac_' + '_seed' + f'{args.seed}' + '_rcs1e4'
-    # serial_pipeline([main_config, create_config], seed=args.seed)
-    import copy
-    serial_pipeline([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed)
-
-
-if __name__ == "__main__":
-    import argparse
-    for seed in [1]:
-        parser = argparse.ArgumentParser()
-        parser.add_argument('--seed', '-s', type=int, default=seed)
-        args = parser.parse_args()
-
-        train(args)
+    from ding.entry import serial_pipeline
+    serial_pipeline((main_config, create_config), seed=0)

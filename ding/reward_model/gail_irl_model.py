@@ -1,4 +1,4 @@
-from typing import Dict, Any
+from typing import List, Dict, Any
 import pickle
 import random
 from collections.abc import Iterable
@@ -116,25 +116,26 @@ class GailRewardModel(BaseRewardModel):
            == ====================  ========   =============  ================================= =======================
            ID Symbol                Type       Default Value  Description                       Other(Shape)
            == ====================  ========   =============  ================================= =======================
-           1  ``type``              str        gail            | RL policy register name, refer  | this arg is optional,
-                                                               | to registry ``POLICY_REGISTRY`` | a placeholder
-           2  | ``expert_data_      str        expert_data.    | Path to the expert dataset      | Should be a '.pkl'
-              |   path``                       .pkl            |                                 | file
-           3  | ``update_per_       int        100             | Number of updates per collect   |
-              |    collect``                                   |                                 |
-           4  | ``batch_size``      int        64              | Training batch size             |
-           5  | ``input_size``      int                        | Size of the input:              |
-              |                                                | obs_dim + act_dim               |
-           6  | ``target_new_       int        64              | Collect steps per iteration     |
-              |    data_count``                                |                                 |
-           7  | ``hidden_size``     int        128             | Linear model hidden size        |
-           8  | ``collect_count``   int        100000          | Expert dataset size             | One entry is a (s,a)
-              |                                                |                                 | tuple
+           1  ``type``              str        gail           | RL policy register name, refer  | this arg is optional,
+                                                              | to registry ``POLICY_REGISTRY`` | a placeholder
+           2  | ``expert_data_``    str        expert_data.   | Path to the expert dataset      | Should be a '.pkl'
+              | ``path``                       .pkl           |                                 | file
+           3  | ``update_per_``     int        100            | Number of updates per collect   |
+              | ``collect``                                   |                                 |
+           4  | ``batch_size``      int        64             | Training batch size             |
+           5  | ``input_size``      int                       | Size of the input:              |
+              |                                               | obs_dim + act_dim               |
+           6  | ``target_new_``     int        64             | Collect steps per iteration     |
+              | ``data_count``                                |                                 |
+           7  | ``hidden_size``     int        128            | Linear model hidden size        |
+           8  | ``collect_count``   int        100000         | Expert dataset size             | One entry is a (s,a)
+              |                                               |                                 | tuple
+           == ====================  ========   =============  ================================= =======================
+
        """
     config = dict(
         type='gail',
         learning_rate=1e-3,
-        expert_data_path='expert_data.pkl',
         update_per_collect=100,
         batch_size=64,
         input_size=4,
@@ -177,12 +178,12 @@ class GailRewardModel(BaseRewardModel):
     def load_expert_data(self) -> None:
         """
         Overview:
-            Getting the expert data from ``config.expert_data_path`` attribute in self
+            Getting the expert data from ``config.data_path`` attribute in self
         Effects:
             This is a side effect function which updates the expert data attribute \
                 (i.e. ``self.expert_data``) with ``fn:concat_state_action_pairs``
         """
-        with open(self.cfg.expert_data_path, 'rb') as f:
+        with open(self.cfg.data_path + '/expert_data.pkl', 'rb') as f:
             self.expert_data_loader: list = pickle.load(f)
         self.expert_data = self.concat_state_action_pairs(self.expert_data_loader)
 
@@ -234,7 +235,7 @@ class GailRewardModel(BaseRewardModel):
             self.tb_logger.add_scalar('reward_model/gail_loss', loss, self.train_iter)
             self.train_iter += 1
 
-    def estimate(self, data: list) -> None:
+    def estimate(self, data: list) -> List[Dict]:
         """
         Overview:
             Estimate reward by rewriting the reward key in each row of the data.
@@ -244,13 +245,18 @@ class GailRewardModel(BaseRewardModel):
         Effects:
             - This is a side effect function which updates the reward values in place.
         """
-        res = self.concat_state_action_pairs(data)
+        # NOTE: deepcopy reward part of data is very important,
+        # otherwise the reward of data in the replay buffer will be incorrectly modified.
+        train_data_augmented = self.reward_deepcopy(data)
+        res = self.concat_state_action_pairs(train_data_augmented)
         res = torch.stack(res).to(self.device)
         with torch.no_grad():
             reward = self.reward_model(res).squeeze(-1).cpu()
         reward = torch.chunk(reward, reward.shape[0], dim=0)
-        for item, rew in zip(data, reward):
+        for item, rew in zip(train_data_augmented, reward):
             item['reward'] = -torch.log(rew + 1e-8)
+
+        return train_data_augmented
 
     def collect_data(self, data: list) -> None:
         """

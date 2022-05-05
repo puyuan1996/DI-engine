@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from ding.torch_utils import GTrXL
+from ding.torch_utils import GTrXL, GRUGatingUnit
 
 
 @pytest.mark.unittest
@@ -39,7 +39,11 @@ class TestGTrXL:
             else:
                 model.reset_memory(state=m)
             output = model(input, batch_first=bf)
-            loss = output['logit'].mean()
+            target = torch.randn(output['logit'].shape)
+            mse_loss = torch.nn.MSELoss()
+            target = torch.randn(output['logit'].shape)
+            loss = mse_loss(output['logit'], target)
+            assert input.grad is None
             loss.backward()
             assert isinstance(input.grad, torch.Tensor)
             if bf is False:
@@ -87,3 +91,17 @@ class TestGTrXL:
         # and the third input in its last 4 positions
         assert torch.all(torch.eq(memories[3][-1][4:], outs[2]))
         assert torch.all(torch.eq(memories[3][-1][:4], outs[1]))
+
+    def test_gru(self):
+        input_dim = 32
+        gru = GRUGatingUnit(input_dim, 1.)
+        x = torch.rand((4, 12, 32))
+        y = torch.rand((4, 12, 32))
+        out = gru(x, y)
+        assert out.shape == x.shape
+        gru = GRUGatingUnit(input_dim, 100000.)  # set high bias to check 'out' is similar to the first input 'x'
+        # In GTrXL the bias is initialized with a value high enough such that information coming from the second input
+        # 'y' are partially ignored so to produce a behavior more similar to a MDP, thus giving less importance to
+        # past information
+        out = gru(x, y)
+        torch.testing.assert_close(out, x)

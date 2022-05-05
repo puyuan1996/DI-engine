@@ -1,9 +1,8 @@
 from copy import deepcopy
-from ding.entry import serial_pipeline
 from easydict import EasyDict
-from ding.utils import DistContext
 
-space_invaders_dqn_config = dict(
+spaceinvaders_dqn_config = dict(
+    exp_name='spaceinvaders_dqn_multi_gpu_ddp_seed0',
     env=dict(
         collector_env_num=8,
         evaluator_env_num=8,
@@ -43,9 +42,9 @@ space_invaders_dqn_config = dict(
         ),
     ),
 )
-space_invaders_dqn_config = EasyDict(space_invaders_dqn_config)
-main_config = space_invaders_dqn_config
-space_invaders_dqn_create_config = dict(
+spaceinvaders_dqn_config = EasyDict(spaceinvaders_dqn_config)
+main_config = spaceinvaders_dqn_config
+spaceinvaders_dqn_create_config = dict(
     env=dict(
         type='atari',
         import_names=['dizoo.atari.envs.atari_env'],
@@ -53,9 +52,11 @@ space_invaders_dqn_create_config = dict(
     env_manager=dict(type='subprocess'),
     policy=dict(type='dqn'),
 )
-space_invaders_dqn_create_config = EasyDict(space_invaders_dqn_create_config)
-create_config = space_invaders_dqn_create_config
+spaceinvaders_dqn_create_config = EasyDict(spaceinvaders_dqn_create_config)
+create_config = spaceinvaders_dqn_create_config
 
 if __name__ == '__main__':
+    from ding.entry import serial_pipeline
+    from ding.utils import DistContext
     with DistContext():
         serial_pipeline((main_config, create_config), seed=0)

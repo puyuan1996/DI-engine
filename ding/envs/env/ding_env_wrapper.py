@@ -4,11 +4,10 @@ import copy
 import numpy as np
 from numpy.lib.arraysetops import isin
 
-from ding.envs.common.env_element import EnvElementInfo
+from ding.envs.common.common_function import affine_transform
 from ding.envs.env_wrappers import create_env_wrapper
 from ding.torch_utils import to_ndarray
-from ding.utils import ENV_WRAPPER_REGISTRY, import_module
-from .base_env import BaseEnv, BaseEnvTimestep, BaseEnvInfo
+from .base_env import BaseEnv, BaseEnvTimestep
 from .default_wrapper import get_default_wrappers
 
 
@@ -53,15 +52,19 @@ class DingEnvWrapper(BaseEnv):
                 low=self._env.reward_range[0], high=self._env.reward_range[1], shape=(1, ), dtype=np.float32
             )
             self._init_flag = True
+        if self._replay_path is not None:
+            self._env = gym.wrappers.RecordVideo(
+                self._env,
+                video_folder=self._replay_path,
+                episode_trigger=lambda episode_id: True,
+                name_prefix='rl-video-{}'.format(id(self))
+            )
+            self._replay_path = None
         if hasattr(self, '_seed') and hasattr(self, '_dynamic_seed') and self._dynamic_seed:
             np_seed = 100 * np.random.randint(1, 1000)
             self._env.seed(self._seed + np_seed)
         elif hasattr(self, '_seed'):
             self._env.seed(self._seed)
-        if self._replay_path is not None:
-            self._env = gym.wrappers.Monitor(
-                self._env, self._replay_path, video_callable=lambda episode_id: True, force=True
-            )
         obs = self._env.reset()
         obs = to_ndarray(obs).astype(np.float32)
         self._action_type = self._cfg.get('action_type', 'scalar')
@@ -80,6 +83,8 @@ class DingEnvWrapper(BaseEnv):
     # override
     def step(self, action: np.ndarray) -> BaseEnvTimestep:
         action = self._judge_action_type(action)
+        if self._cfg.get('act_scale', False):
+            action = affine_transform(action, min_val=self._env.action_space.low, max_val=self._env.action_space.high)
         obs, rew, done, info = self._env.step(action)
         obs = to_ndarray(obs).astype(np.float32)
         rew = to_ndarray([rew]).astype(np.float32)

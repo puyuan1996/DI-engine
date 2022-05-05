@@ -6,13 +6,14 @@ import torch
 from tensorboardX import SummaryWriter
 
 from ding.config import compile_config
-from ding.worker import BaseLearner, BattleEpisodeSerialCollector, BattleInteractionSerialEvaluator, NaiveReplayBuffer
+from ding.worker import BaseLearner, BattleInteractionSerialEvaluator, NaiveReplayBuffer
 from ding.envs import BaseEnvManager, DingEnvWrapper
 from ding.policy import PPOPolicy
 from ding.model import VAC
 from ding.utils import set_pkg_seed
 from dizoo.league_demo.game_env import GameEnv
-from dizoo.league_demo.league_demo_ppo_config import league_demo_ppo_config
+from dizoo.league_demo.league_demo_collector import LeagueDemoCollector
+from dizoo.league_demo.selfplay_demo_ppo_config import selfplay_demo_ppo_config
 
 
 class EvalPolicy1:
@@ -39,13 +40,12 @@ class EvalPolicy2:
 
 
 def main(cfg, seed=0, max_train_iter=int(1e8), max_env_step=int(1e8)):
-    cfg.exp_name = 'selfplay_demo_ppo'
     cfg = compile_config(
         cfg,
         BaseEnvManager,
         PPOPolicy,
         BaseLearner,
-        BattleEpisodeSerialCollector,
+        LeagueDemoCollector,
         BattleInteractionSerialEvaluator,
         NaiveReplayBuffer,
         save_cfg=True
@@ -81,7 +81,7 @@ def main(cfg, seed=0, max_train_iter=int(1e8), max_env_step=int(1e8)):
     learner2 = BaseLearner(
         cfg.policy.learn.learner, policy2.learn_mode, tb_logger, exp_name=cfg.exp_name, instance_name='learner2'
     )
-    collector = BattleEpisodeSerialCollector(
+    collector = LeagueDemoCollector(
         cfg.policy.collect.collector,
         collector_env, [policy1.collect_mode, policy2.collect_mode],
         tb_logger,
@@ -109,11 +109,9 @@ def main(cfg, seed=0, max_train_iter=int(1e8), max_env_step=int(1e8)):
 
     while True:
         if evaluator1.should_eval(learner1.train_iter):
-            stop_flag1, reward, _ = evaluator1.eval(learner1.save_checkpoint, learner1.train_iter, collector.envstep)
-            tb_logger.add_scalar('fixed_evaluator_step/reward_mean', reward, collector.envstep)
+            stop_flag1, _ = evaluator1.eval(learner1.save_checkpoint, learner1.train_iter, collector.envstep)
         if evaluator2.should_eval(learner1.train_iter):
-            stop_flag2, reward, _ = evaluator2.eval(learner1.save_checkpoint, learner1.train_iter, collector.envstep)
-            tb_logger.add_scalar('uniform_evaluator_step/reward_mean', reward, collector.envstep)
+            stop_flag2, _ = evaluator2.eval(learner1.save_checkpoint, learner1.train_iter, collector.envstep)
         if stop_flag1 and stop_flag2:
             break
         train_data, _ = collector.collect(train_iter=learner1.train_iter)
@@ -128,4 +126,4 @@ def main(cfg, seed=0, max_train_iter=int(1e8), max_env_step=int(1e8)):
 
 
 if __name__ == "__main__":
-    main(league_demo_ppo_config)
+    main(selfplay_demo_ppo_config)
