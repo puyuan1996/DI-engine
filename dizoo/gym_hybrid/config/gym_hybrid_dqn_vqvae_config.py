@@ -22,28 +22,30 @@ gym_hybrid_dqn_default_config = dict(
         # Whether to use cuda for network.
         cuda=True,
         priority=False,
-        random_collect_size=int(1e4),
-        # random_collect_size=int(1),  # debug
-
-        original_action_shape=dict(
-                action_type_shape=3,
-                action_args_shape=2,
-            ),
-        vqvae_embedding_dim=64,  # ved: D
-        vqvae_hidden_dim=[256],  # vhd
-        vq_loss_weight=1,
-        is_ema_target=False,  # if use EMA target style
-        is_ema=True,  # if use EMA
-        eps_greedy_nearest=False,  # TODO
-        action_space='hybrid',
         # Reward's future discount factor, aka. gamma.
         discount_factor=0.99,
         # How many steps in td error.
         nstep=nstep,
         # learn_mode config
+        action_space='hybrid',
+
+        eps_greedy_nearest=False, # TODO
+        is_ema_target=False,  # use EMA
+
+        is_ema=False,  # no use EMA # TODO
+        # is_ema=True,  # use EMA
+       original_action_shape=dict(
+                action_type_shape=3,
+                action_args_shape=2,
+            ),
+        random_collect_size=int(1e4),
+        # random_collect_size=int(1),  # debug
+        vqvae_embedding_dim=64,  # ved: D
+        vqvae_hidden_dim=[256],  # vhd
+        vq_loss_weight=1,
         model=dict(
             obs_shape=10,
-            action_shape=int(64),  # num oof num_embeddings, K
+            action_shape=int(16),  # num oof num_embeddings: K
             encoder_hidden_size_list=[128, 128, 64],  # small net
             # Whether to use dueling head.
             dueling=True,
@@ -54,7 +56,6 @@ gym_hybrid_dqn_default_config = dict(
             # warm_up_update=int(1), # debug
 
             rl_vae_update_circle=1,  # train rl 1 iter, vae 1 iter
-            # update_per_collect_rl=256,
             update_per_collect_rl=20,
             update_per_collect_vae=10,
 
@@ -64,7 +65,6 @@ gym_hybrid_dqn_default_config = dict(
             learning_rate=3e-4,
             learning_rate_vae=1e-4,
             # Frequency of target network update.
-            target_update_freq=500,
             target_update_theta=0.001,
 
             rl_clip_grad=True,
@@ -118,10 +118,7 @@ create_config = gym_hybrid_dqn_create_config
 
 
 def train(args):
-    # main_config.exp_name = 'data_sliding/ema_rlclipgrad0.5_hardtarget_vq1' + '_seed' + f'{args.seed}'+'_3M'
-    # main_config.exp_name = 'data_sliding/base_nsample256_ema_rlclipgrad0.5_hardtarget_vq1_ed1e5_smallnet_K64_upcr256' + '_seed' + f'{args.seed}'+'_3M'
-    main_config.exp_name = 'data_sliding/base_nsample256_ema_rlclipgrad0.5_hardtarget_vq1_ed1e5_smallnet_K64_upcr20' + '_seed' + f'{args.seed}'+'_3M'
-
+    main_config.exp_name = 'data_sliding/base_nsample256_rlclipgrad0.5_softtarget_vq1_ed1e5_smallnet_noema_k16_upcr20' + '_seed' + f'{args.seed}'+'_3M'
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,max_env_step=int(3e6))
 
 

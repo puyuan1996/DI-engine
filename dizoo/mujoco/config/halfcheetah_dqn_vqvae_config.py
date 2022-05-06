@@ -28,26 +28,22 @@ halfcheetah_dqn_default_config = dict(
         # How many steps in td error.
         nstep=nstep,
         # learn_mode config
-        action_space='continuous',  # 'hybrid',
-        original_action_shape=6,
+        action_space='continuous',  # 'hybrid'
 
-        vqvae_hidden_dim=[256],  # vhd
-        vq_loss_weight=1,  # TODO
+        eps_greedy_nearest=False, # TODO
         is_ema_target=False,  # use EMA
 
+        is_ema=False,  # no use EMA # TODO
+        # is_ema=True,  # use EMA
+        original_action_shape=6,
         random_collect_size=int(1e4),
         # random_collect_size=int(1),  # debug
-        vqvae_embedding_dim=64,  # ved
-        # vqvae_embedding_dim=128,  # ved
-
-        is_ema=True,  # use EMA
-        # is_ema=False,  # use EMA # TODO
-        eps_greedy_nearest=False, # TODO
-        # eps_greedy_nearest=True, 
-
+        vqvae_embedding_dim=64,  # ved: D
+        vqvae_hidden_dim=[256],  # vhd
+        vq_loss_weight=1,
         model=dict(
             obs_shape=17,
-            action_shape=int(64),  # num of num_embeddings: k
+            action_shape=int(64),  # num of num_embeddings: K
             encoder_hidden_size_list=[128, 128, 64],  # small net
             # encoder_hidden_size_list=[256, 256, 128],  # middle net
             # encoder_hidden_size_list=[512, 512, 256],  # large net
@@ -57,10 +53,11 @@ halfcheetah_dqn_default_config = dict(
         learn=dict(
             ignore_done=True,  # TODO
             constrain_action=False,  # TODO
+
             warm_up_update=int(1e4),
+            # warm_up_update=int(1),  # debug
             rl_vae_update_circle=1,  # train rl 1 iter, vae 1 iter
-            # update_per_collect_rl=20,
-            update_per_collect_rl=256,
+            update_per_collect_rl=20,
             update_per_collect_vae=10,
 
             rl_batch_size=512,
@@ -69,12 +66,9 @@ halfcheetah_dqn_default_config = dict(
             learning_rate=3e-4,
             learning_rate_vae=1e-4,
             # Frequency of target network update.
-            target_update_freq=500,
             target_update_theta=0.001,
             
-            # NOTE
             rl_clip_grad=True,
-            # rl_clip_grad=False,
             grad_clip_type='clip_norm',
             grad_clip_value=0.5,
 
@@ -128,7 +122,7 @@ create_config = halfcheetah_dqn_create_config
 import copy
 
 def train(args):
-    main_config.exp_name = 'data_halfcheetah/base_ema_rlclipgrad0.5_hardtarget_vq1_ed1e5_smallnet_noise_K64_upcr256' + '_seed' + f'{args.seed}'+'_3M'
+    main_config.exp_name = 'data_halfcheetah/base_rlclipgrad0.5_softtarget_vq1_ed1e5_smallnet_noema_k32_upcr20' + '_seed' + f'{args.seed}'+'_3M'
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=int(3e6))
 
 if __name__ == "__main__":
