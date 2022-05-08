@@ -7,6 +7,8 @@ from collections import namedtuple
 from ding.utils import import_module, ENV_REGISTRY
 
 BaseEnvTimestep = namedtuple('BaseEnvTimestep', ['obs', 'reward', 'done', 'info'])
+BaseEnvInfo = namedtuple('BaseEnvInfo', ['agent_num', 'obs_space', 'act_space', 'rew_space', 'use_wrappers'])
+
 
 
 class BaseEnv(ABC, gym.Env):
