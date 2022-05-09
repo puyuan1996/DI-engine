@@ -203,7 +203,12 @@ def serial_pipeline_dqn_vqvae(
                     int(cfg.policy.learn.vqvae_batch_size / 2), learner.train_iter
                 )
                 train_data = train_data_history + train_data_recent  # TODO(pu):
-
+            
+                # train_data_recent = replay_buffer_recent.sample(
+                #     int(cfg.policy.learn.vqvae_batch_size / 2), learner.train_iter
+                # )
+                # train_data = train_data_recent  # TODO(pu):
+                
                 if train_data is not None:
                     for item in train_data:
                         item['rl_phase'] = False

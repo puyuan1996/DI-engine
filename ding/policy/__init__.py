@@ -1,6 +1,8 @@
 from .base_policy import Policy, CommandModePolicy, create_policy, get_policy_cls
 from .dqn import DQNPolicy
 from .dqn_vqvae import DQNVQVAEPolicy
+from .rainbow_vqvae import RainbowDQNVQVAEPolicy
+
 from .iqn import IQNPolicy
 from .qrdqn import QRDQNPolicy
 from .c51 import C51Policy

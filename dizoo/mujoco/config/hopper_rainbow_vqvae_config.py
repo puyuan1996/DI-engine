@@ -1,8 +1,8 @@
 from easydict import EasyDict
 
 nstep = 3
-hopper_dqn_default_config = dict(
-    exp_name='hopper_dqn_vqvae_seed0',
+hopper_rainbow_default_config = dict(
+    exp_name='hopper_rainbow_vqvae_seed0',
     env=dict(
         env_id='Hopper-v3',
         norm_obs=dict(use_norm=False, ),
@@ -20,6 +20,7 @@ hopper_dqn_default_config = dict(
         # Whether to use cuda for network.
         cuda=True,
         priority=False,
+        priority_IS_weight=False,
         # Reward's future discount factor, aka. gamma.
         discount_factor=0.99,
         # How many steps in td error.
@@ -40,12 +41,16 @@ hopper_dqn_default_config = dict(
         vq_loss_weight=1,
         model=dict(
             obs_shape=11,
-            action_shape=int(16),  # num of num_embeddings: K
-            encoder_hidden_size_list=[128, 128, 64],  # small net
-            # encoder_hidden_size_list=[256, 256, 128],  # middle net
+            action_shape=int(128),  # num of num_embeddings: K
+            # encoder_hidden_size_list=[128, 128, 64],  # small net
+            encoder_hidden_size_list=[256, 256, 128],  # middle net
             # encoder_hidden_size_list=[512, 512, 256],  # large net
             # Whether to use dueling head.
-            dueling=True,
+            # dueling=True,
+            # rainbow
+            v_min=-10,
+            v_max=10,
+            n_atom=51,
         ),
         learn=dict(
             constrain_action=False,  # TODO
@@ -60,6 +65,8 @@ hopper_dqn_default_config = dict(
             learning_rate_vae=1e-4,
             # Frequency of target network update.
             target_update_theta=0.001,
+            target_update_freq=500,
+
 
             rl_clip_grad=True,
             vqvae_clip_grad=False,
@@ -98,24 +105,24 @@ hopper_dqn_default_config = dict(
         ),
     ),
 )
-hopper_dqn_default_config = EasyDict(hopper_dqn_default_config)
-main_config = hopper_dqn_default_config
+hopper_rainbow_default_config = EasyDict(hopper_rainbow_default_config)
+main_config = hopper_rainbow_default_config
 
-hopper_dqn_create_config = dict(
+hopper_rainbow_create_config = dict(
     env=dict(
         type='mujoco',
         import_names=['dizoo.mujoco.envs.mujoco_env'],
     ),
-    # env_manager=dict(type='subprocess'),
-    env_manager=dict(type='base'),
-    policy=dict(type='dqn_vqvae'),
+    env_manager=dict(type='subprocess'),
+    # env_manager=dict(type='base'),
+    policy=dict(type='rainbow_vqvae'),
 )
-hopper_dqn_create_config = EasyDict(hopper_dqn_create_config)
-create_config = hopper_dqn_create_config
+hopper_rainbow_create_config = EasyDict(hopper_rainbow_create_config)
+create_config = hopper_rainbow_create_config
 
 
 def train(args):
-    main_config.exp_name = 'data_hopper/base_nsample256_rlclipgrad0.5_softtarget_vq1_ed1e5_smallnet_noema_k16_upcr20' + '_seed' + f'{args.seed}'+'_3M'
+    main_config.exp_name = 'data_hopper/rainbow_middlenet_noema_k16_upcr20' + '_seed' + f'{args.seed}'+'_3M'
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=int(3e6))
 
 if __name__ == "__main__":
@@ -124,6 +131,7 @@ if __name__ == "__main__":
     from ding.entry import serial_pipeline_dqn_vqvae
 
     for seed in [0,1,2]:
+    # for seed in [0,1,2]:
         parser = argparse.ArgumentParser()
         parser.add_argument('--seed', '-s', type=int, default=seed)
         args = parser.parse_args()

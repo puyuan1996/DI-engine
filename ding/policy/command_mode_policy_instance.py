@@ -4,6 +4,8 @@ from .base_policy import CommandModePolicy
 
 from .dqn import DQNPolicy
 from .dqn_vqvae import DQNVQVAEPolicy
+from .rainbow_vqvae import RainbowDQNVQVAEPolicy
+
 from .c51 import C51Policy
 from .qrdqn import QRDQNPolicy
 from .iqn import IQNPolicy
@@ -230,6 +232,11 @@ class TD3VAECommandModePolicy(TD3VAEPolicy, DummyCommandModePolicy):
 @POLICY_REGISTRY.register('dqn_vqvae_command')
 class DQNVQVAECommandModePolicy(DQNVQVAEPolicy, EpsCommandModePolicy):
     pass
+
+@POLICY_REGISTRY.register('rainbow_vqvae_command')
+class RainbowDQNVQVAECommandModePolicy(RainbowDQNVQVAEPolicy, EpsCommandModePolicy):
+    pass
+
 
 
 @POLICY_REGISTRY.register('td3_bc_command')
