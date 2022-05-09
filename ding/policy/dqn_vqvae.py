@@ -156,16 +156,21 @@ class DQNVQVAEPolicy(Policy):
         self._target_model = model_wrap(
             self._target_model,
             wrapper_name='target',
-            update_type='momentum',
-            update_kwargs={'theta': self._cfg.learn.target_update_theta}
+            update_type='assign',
+            update_kwargs={'freq': self._cfg.learn.target_update_freq}
         )
+        # self._target_model = model_wrap(
+        #     self._target_model,
+        #     wrapper_name='target',
+        #     update_type='momentum',
+        #     update_kwargs={'theta': self._cfg.learn.target_update_theta}
+        # )
 
         self._learn_model = model_wrap(self._model, wrapper_name='argmax_sample')
         self._learn_model.reset()
         self._target_model.reset()
 
         self._forward_learn_cnt = 0  # count iterations
-        # self._vqvae_model = VQVAE(2, 64, 64) #   action_dim: int, embedding_dim: int, num_embeddings: int,
         self._vqvae_model = ActionVQVAE(
             self._cfg.original_action_shape,
             self._cfg.model.action_shape,  #K
@@ -235,6 +240,10 @@ class DQNVQVAEPolicy(Policy):
             loss_dict['vq_loss'] = result['vq_loss'].item()
             loss_dict['embedding_loss'] = result['embedding_loss'].item()
             loss_dict['commitment_loss'] = result['commitment_loss'].item()
+
+            # print(loss_dict['reconstruction_loss'])
+            if loss_dict['reconstruction_loss'] < self._cfg.learn.reconst_loss_stop_value:
+                self._warm_up_stop = True
 
             # vae update
             self._optimizer_vqvae.zero_grad()
@@ -454,6 +463,7 @@ class DQNVQVAEPolicy(Policy):
         self._nstep = self._cfg.nstep  # necessary for parallel
         self._collect_model = model_wrap(self._model, wrapper_name='eps_greedy_sample')
         self._collect_model.reset()
+        self._warm_up_stop = False
 
     def _forward_collect(self, data: Dict[int, Any], eps: float) -> Dict[int, Any]:
         """

@@ -16,8 +16,7 @@ gym_hybrid_dqn_default_config = dict(
     ),
     policy=dict(
         # TODO(pu)
-        # learned_model_path=module_path + '/learned_model_path/dqn_vqvae_k64_ckpt_best.pth.tar',
-        # learned_model_path='/home/puyuan/DI-engine/debug_gym_hybrid_cont_dqn_vqvae_ved64_k64_seed1/ckpt/iteration_38728.pth.tar',
+        # learned_model_path=module_path + '/learned_model_path/ckpt_best.pth.tar',
 
         # Whether to use cuda for network.
         cuda=True,
@@ -28,7 +27,6 @@ gym_hybrid_dqn_default_config = dict(
         nstep=nstep,
         # learn_mode config
         action_space='hybrid',
-
         eps_greedy_nearest=False, # TODO
         is_ema_target=False,  # use EMA
 
@@ -57,17 +55,20 @@ gym_hybrid_dqn_default_config = dict(
 
             rl_vae_update_circle=1,  # train rl 1 iter, vae 1 iter
             update_per_collect_rl=20,
-            update_per_collect_vae=10,
+            update_per_collect_vae=20,
 
             rl_batch_size=512,
             vqvae_batch_size=512,
 
             learning_rate=3e-4,
-            learning_rate_vae=1e-4,
+            learning_rate_vae=3e-4,
             # Frequency of target network update.
-            target_update_theta=0.001,
+            # target_update_theta=0.001,
+            target_update_freq=500,
+
 
             rl_clip_grad=True,
+            vqvae_clip_grad=True,
             grad_clip_type='clip_norm',
             grad_clip_value=0.5,
 
@@ -109,8 +110,8 @@ gym_hybrid_dqn_create_config = dict(
         type='gym_hybrid',
         import_names=['dizoo.gym_hybrid.envs.gym_hybrid_env'],
     ),
-    # env_manager=dict(type='subprocess'),
-    env_manager=dict(type='base'),
+    env_manager=dict(type='subprocess'),
+    # env_manager=dict(type='base'),
     policy=dict(type='dqn_vqvae'),
 )
 gym_hybrid_dqn_create_config = EasyDict(gym_hybrid_dqn_create_config)
@@ -118,7 +119,7 @@ create_config = gym_hybrid_dqn_create_config
 
 
 def train(args):
-    main_config.exp_name = 'data_sliding/base_nsample256_rlclipgrad0.5_softtarget_vq1_ed1e5_smallnet_noema_k16_upcr20' + '_seed' + f'{args.seed}'+'_3M'
+    main_config.exp_name = 'data_sliding/dqn_noema_smallnet_k16_upcr20' + '_seed' + f'{args.seed}'+'_3M'
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,max_env_step=int(3e6))
 
 

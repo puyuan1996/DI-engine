@@ -128,6 +128,8 @@ def serial_pipeline_dqn_vqvae(
 
             if learner.policy.get_attribute('priority'):
                 replay_buffer.update(learner.priority_info)
+            if learner.policy.get_attribute('warm_up_stop'):
+                break
         replay_buffer.clear()  # TODO(pu): NOTE
 
     # NOTE: for the case collector_env_num>1, because after the random collect phase,  self._traj_buffer[env_id] may be not empty. Only
@@ -208,7 +210,7 @@ def serial_pipeline_dqn_vqvae(
                 #     int(cfg.policy.learn.vqvae_batch_size / 2), learner.train_iter
                 # )
                 # train_data = train_data_recent  # TODO(pu):
-                
+
                 if train_data is not None:
                     for item in train_data:
                         item['rl_phase'] = False

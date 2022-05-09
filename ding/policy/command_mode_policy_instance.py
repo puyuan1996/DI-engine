@@ -5,6 +5,8 @@ from .base_policy import CommandModePolicy
 from .dqn import DQNPolicy
 from .dqn_vqvae import DQNVQVAEPolicy
 from .rainbow_vqvae import RainbowDQNVQVAEPolicy
+from .sql_vqvae import SQLVQVAEPolicy
+
 
 from .c51 import C51Policy
 from .qrdqn import QRDQNPolicy
@@ -235,6 +237,11 @@ class DQNVQVAECommandModePolicy(DQNVQVAEPolicy, EpsCommandModePolicy):
 
 @POLICY_REGISTRY.register('rainbow_vqvae_command')
 class RainbowDQNVQVAECommandModePolicy(RainbowDQNVQVAEPolicy, EpsCommandModePolicy):
+    pass
+
+
+@POLICY_REGISTRY.register('sql_vqvae_command')
+class SQLVQVAECommandModePolicy(SQLVQVAEPolicy, EpsCommandModePolicy):
     pass
 
 

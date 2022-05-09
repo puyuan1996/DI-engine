@@ -1,102 +1,48 @@
-from typing import List, Dict, Any, Tuple, Union
-from collections import namedtuple
-import torch
+from typing import List, Dict, Any, Tuple, Union, Optional
+from collections import namedtuple, deque
 import copy
-
+import torch
+from torch.distributions import Categorical
+import logging
+from easydict import EasyDict
 from ding.torch_utils import Adam, to_device
-from ding.rl_utils import dist_nstep_td_data, dist_nstep_td_error, get_train_sample, get_nstep_return_data
+from ding.utils.data import default_collate, default_decollate
+from ding.rl_utils import q_nstep_td_data, q_nstep_sql_td_error, get_nstep_return_data, get_train_sample
 from ding.model import model_wrap
 from ding.utils import POLICY_REGISTRY
-from ding.utils.data import default_collate, default_decollate
-from .dqn import DQNPolicy
+from .base_policy import Policy
 from .common_utils import default_preprocess_learn
 from ding.model.template.action_vqvae import ActionVQVAE
 
 
-
-@POLICY_REGISTRY.register('rainbow-vqvae')
-class RainbowDQNVQVAEPolicy(DQNPolicy):
+@POLICY_REGISTRY.register('sql-vqvae')
+class SQLVQVAEPolicy(Policy):
     r"""
     Overview:
-        Rainbow DQN contain several improvements upon DQN, including:
-            - target network
-            - dueling architecture
-            - prioritized experience replay
-            - n_step return
-            - noise net
-            - distribution net
-
-        Therefore, the RainbowDQNPolicy class inherit upon DQNPolicy class
-
-    Config:
-        == ==================== ======== ============== ======================================== =======================
-        ID Symbol               Type     Default Value  Description                              Other(Shape)
-        == ==================== ======== ============== ======================================== =======================
-        1  ``type``             str      rainbow        | RL policy register name, refer to      | this arg is optional,
-                                                        | registry ``POLICY_REGISTRY``           | a placeholder
-        2  ``cuda``             bool     False          | Whether to use cuda for network        | this arg can be diff-
-                                                                                                 | erent from modes
-        3  ``on_policy``        bool     False          | Whether the RL algorithm is on-policy
-                                                        | or off-policy
-        4  ``priority``         bool     True           | Whether use priority(PER)              | priority sample,
-                                                                                                 | update priority
-        5  ``model.v_min``      float    -10            | Value of the smallest atom
-                                                        | in the support set.
-        6  ``model.v_max``      float    10             | Value of the largest atom
-                                                        | in the support set.
-        7  ``model.n_atom``     int      51             | Number of atoms in the support set
-                                                        | of the value distribution.
-        8  | ``other.eps``      float    0.05           | Start value for epsilon decay. It's
-           | ``.start``                                 | small because rainbow use noisy net.
-        9  | ``other.eps``      float    0.05           | End value for epsilon decay.
-           | ``.end``
-        10 | ``discount_``      float    0.97,          | Reward's future discount factor, aka.  | may be 1 when sparse
-           | ``factor``                  [0.95, 0.999]  | gamma                                  | reward env
-        11 ``nstep``            int      3,             | N-step reward discount sum for target
-                                         [3, 5]         | q_value estimation
-        12 | ``learn.update``   int      3              | How many updates(iterations) to train  | this args can be vary
-           | ``per_collect``                            | after collector's one collection. Only | from envs. Bigger val
-                                                        | valid in serial training               | means more off-policy
-        == ==================== ======== ============== ======================================== =======================
-
+        Policy class of SQL algorithm.
     """
 
     config = dict(
         # (str) RL policy register name (refer to function "POLICY_REGISTRY").
-        type='rainbow-vqvae',
+        type='sql-vqvae',
         # (bool) Whether to use cuda for network.
         cuda=False,
         # (bool) Whether the RL algorithm is on-policy or off-policy.
         on_policy=False,
         # (bool) Whether use priority(priority sample, IS weight, update priority)
-        priority=True,
-        # (bool) Whether use Importance Sampling Weight to correct biased update. If True, priority must be True.
-        priority_IS_weight=True,
-        # (int) Number of training samples(randomly collected) in replay buffer when training starts.
-        # random_collect_size=2000,
-        model=dict(
-            # (float) Value of the smallest atom in the support set.
-            # Default to -10.0.
-            v_min=-10,
-            # (float) Value of the smallest atom in the support set.
-            # Default to 10.0.
-            v_max=10,
-            # (int) Number of atoms in the support set of the
-            # value distribution. Default to 51.
-            n_atom=51,
-        ),
+        priority=False,
         # (float) Reward's future discount factor, aka. gamma.
-        discount_factor=0.99,
+        discount_factor=0.97,
         # (int) N-step reward for target q_value estimation
-        nstep=3,
+        nstep=1,
         learn=dict(
             # (bool) Whether to use multi gpu
             multi_gpu=False,
             # How many updates(iterations) to train after collector's one collection.
             # Bigger "update_per_collect" means bigger off-policy.
             # collect data -> update policy-> collect data -> ...
-            update_per_collect=1,
-            batch_size=32,
+            update_per_collect=3,  # after the batch data come into the learner, train with the data for 3 times
+            batch_size=64,
             learning_rate=0.001,
             # ==============================================================
             # The following configs are algorithm-specific
@@ -105,11 +51,12 @@ class RainbowDQNVQVAEPolicy(DQNPolicy):
             target_update_freq=100,
             # (bool) Whether ignore done(usually for max step termination env)
             ignore_done=False,
+            alpha=0.1,
         ),
         # collect_mode config
         collect=dict(
             # (int) Only one of [n_sample, n_episode] shoule be set
-            # n_sample=32,
+            # n_sample=8,  # collect 8 samples and put them in collector
             # (int) Cut trajectories into pieces with length "unroll_len".
             unroll_len=1,
         ),
@@ -120,42 +67,23 @@ class RainbowDQNVQVAEPolicy(DQNPolicy):
             eps=dict(
                 # (str) Decay type. Support ['exp', 'linear'].
                 type='exp',
-                # (float) End value for epsilon decay, in [0, 1]. It's equals to `end` because rainbow uses noisy net.
-                start=0.05,
-                # (float) End value for epsilon decay, in [0, 1].
-                end=0.05,
-                # (int) Env steps of epsilon decay.
-                decay=100000,
+                start=0.95,
+                end=0.1,
+                # (int) Decay length(env step)
+                decay=10000,
             ),
-            replay_buffer=dict(
-                # (int) Max size of replay buffer.
-                replay_buffer_size=100000,
-                # (float) Prioritization exponent.
-                alpha=0.6,
-                # (float) Importance sample soft coefficient.
-                # 0 means no correction, while 1 means full correction
-                beta=0.4,
-                # (int) Anneal step for beta: 0 means no annealing. Defaults to 0
-                anneal_step=100000,
-            )
+            replay_buffer=dict(replay_buffer_size=10000, )
         ),
     )
 
     def _init_learn(self) -> None:
         r"""
         Overview:
-            Init the learner model of RainbowDQNPolicy
-
-        Arguments:
-            - learning_rate (:obj:`float`): the learning rate fo the optimizer
-            - gamma (:obj:`float`): the discount factor
-            - nstep (:obj:`int`): the num of n step return
-            - v_min (:obj:`float`): value distribution minimum value
-            - v_max (:obj:`float`): value distribution maximum value
-            - n_atom (:obj:`int`): the number of atom sample point
+            Learn mode init method. Called by ``self.__init__``.
+            Init the optimizer, algorithm config, main and target models.
         """
         self._priority = self._cfg.priority
-        self._priority_IS_weight = self._cfg.priority_IS_weight
+        # Optimizer
         # NOTE:
         if self._cfg.learn.rl_clip_grad is True:
             self._optimizer = Adam(
@@ -168,10 +96,8 @@ class RainbowDQNVQVAEPolicy(DQNPolicy):
             self._optimizer = Adam(self._model.parameters(), lr=self._cfg.learn.learning_rate)
         self._gamma = self._cfg.discount_factor
         self._nstep = self._cfg.nstep
-        self._v_max = self._cfg.model.v_max
-        self._v_min = self._cfg.model.v_min
-        self._n_atom = self._cfg.model.n_atom
-
+        self._alpha = self._cfg.learn.alpha
+        # use wrapper instead of plugin
         self._target_model = copy.deepcopy(self._model)
         self._target_model = model_wrap(
             self._target_model,
@@ -184,7 +110,6 @@ class RainbowDQNVQVAEPolicy(DQNPolicy):
         self._target_model.reset()
 
         self._forward_learn_cnt = 0  # count iterations
-        # self._vqvae_model = VQVAE(2, 64, 64) #   action_dim: int, embedding_dim: int, num_embeddings: int,
         self._vqvae_model = ActionVQVAE(
             self._cfg.original_action_shape,
             self._cfg.model.action_shape,  #K
@@ -211,18 +136,13 @@ class RainbowDQNVQVAEPolicy(DQNPolicy):
             )
 
     def _forward_learn(self, data: dict) -> Dict[str, Any]:
-        """
+        r"""
         Overview:
-            Forward and backward function of learn mode, acquire the data and calculate the loss and\
-            optimize learner model
-
+            Forward and backward function of learn mode.
         Arguments:
-            - data (:obj:`dict`): Dict type data, including at least ['obs', 'next_obs', 'reward', 'action']
-
+            - data (:obj:`dict`): Dict type data, including at least ['obs', 'action', 'reward', 'next_obs']
         Returns:
-            - info_dict (:obj:`Dict[str, Any]`): Including cur_lr and total_loss
-                - cur_lr (:obj:`float`): current learning rate
-                - total_loss (:obj:`float`): the calculated loss
+            - info_dict (:obj:`Dict[str, Any]`): Including current lr and loss.
         """
         ### warmup phase: train VAE ###
         if 'warm_up' in data[0].keys() and data[0]['warm_up'] is True:
@@ -248,10 +168,11 @@ class RainbowDQNVQVAEPolicy(DQNPolicy):
             loss_dict['vq_loss'] = result['vq_loss'].item()
             loss_dict['embedding_loss'] = result['embedding_loss'].item()
             loss_dict['commitment_loss'] = result['commitment_loss'].item()
-            
-            # print(loss_dict['reconstruction_loss'])
+            #
+            #  print(loss_dict['reconstruction_loss'])
             if loss_dict['reconstruction_loss'] < self._cfg.learn.reconst_loss_stop_value:
                 self._warm_up_stop = True
+                
             # vae update
             self._optimizer_vqvae.zero_grad()
             result['total_vqvae_loss'].backward()
@@ -329,65 +250,74 @@ class RainbowDQNVQVAEPolicy(DQNPolicy):
 
                 # Representation shift correction (RSC)
                 # update all latent action
+                # result = self._vqvae_model.inference_without_obs({'action': data['action']})
+                # data['latent_action'] = result['quantized_index'].clone().detach()
+
                 quantized_index = self._vqvae_model.encode({'action': data['action']})
                 data['latent_action'] = quantized_index.clone().detach()
                 # print(torch.unique(data['latent_action']))
 
-                if self._cuda:
-                    data = to_device(data, self._device)
-
                 # ====================
-                # Rainbow forward
+                # Q-learning forward
                 # ====================
                 self._learn_model.train()
                 self._target_model.train()
-                # reset noise of noisenet for both main model and target model
-                self._reset_noise(self._learn_model)
-                self._reset_noise(self._target_model)
-                q_dist = self._learn_model.forward(data['obs'])['distribution']
+                # Current q value (main model)
+                q_value = self._learn_model.forward(data['obs'])['logit']
                 with torch.no_grad():
-                    target_q_dist = self._target_model.forward(data['next_obs'])['distribution']
-                    self._reset_noise(self._learn_model)
+                    # Target q value
+                    target_q_value = self._target_model.forward(data['next_obs'])['logit']
+                    # Max q value action (main model)
                     target_q_action = self._learn_model.forward(data['next_obs'])['action']
-                value_gamma = data.get('value_gamma', None)
 
+                # data_n = q_nstep_td_data(
+                #     q_value, target_q_value, data['action'], target_q_action, data['reward'], data['done'], data['weight']
+                # )
                 # NOTE: RL learn policy in latent action space, so here using data['latent_action']
-                data = dist_nstep_td_data(
-                            q_dist, target_q_dist, data['latent_action'].squeeze(-1), target_q_action, data['reward'], data['done'], data['weight']
-                        )
-
-                loss, td_error_per_sample = dist_nstep_td_error(
-                    data, self._gamma, self._v_min, self._v_max, self._n_atom, nstep=self._nstep, value_gamma=value_gamma
+                data_n = q_nstep_td_data(
+                    q_value, target_q_value, data['latent_action'].squeeze(-1), target_q_action, data['reward'],
+                    data['done'], data['weight']
                 )
+                value_gamma = data.get('value_gamma')
+                loss, td_error_per_sample, record_target_v = q_nstep_sql_td_error(
+                    data_n, self._gamma, self._cfg.learn.alpha, nstep=self._nstep, value_gamma=value_gamma
+                )
+                record_target_v = record_target_v.mean()
                 # ====================
-                # Rainbow update
+                # Q-learning update
                 # ====================
                 self._optimizer.zero_grad()
                 loss.backward()
                 total_grad_norm_rl = self._optimizer.get_grad()
+                if self._cfg.learn.multi_gpu:
+                    self.sync_gradients(self._learn_model)
                 self._optimizer.step()
+
                 # =============
                 # after update
                 # =============
                 self._target_model.update(self._learn_model.state_dict())
-                loss_dict['critic_loss'] = loss.item()
 
                 q_value_dict = {}
-                q_value_dict['q_dist'] = q_dist.mean().item()
+                q_value_dict['q_value'] = q_value.mean().item()
 
                 return {
                     'cur_lr': self._optimizer.defaults['lr'],
-                    'td_error': td_error_per_sample.abs().mean(),
-                    **loss_dict,
+                    'total_loss': loss.item(),
+                    'priority': td_error_per_sample.abs().tolist(),
+                    'record_value_function': record_target_v,
+                    # Only discrete action satisfying len(data['action'])==1 can return this and draw histogram on tensorboard.
+                    # '[histogram]action_distribution': data['action'],
                     **q_value_dict,
                     'total_grad_norm_rl': total_grad_norm_rl,
                 }
+
 
     def _monitor_vars_learn(self) -> List[str]:
         ret = [
             'cur_lr',
             'critic_loss',
-            'q_dist',
+            'q_value',
             'td_error',
             'total_vqvae_loss',
             'reconstruction_loss',
@@ -396,11 +326,15 @@ class RainbowDQNVQVAEPolicy(DQNPolicy):
             'vq_loss',
             'total_grad_norm_rl',
             'total_grad_norm_vqvae',
+            'record_value_function'
             # 'predict_loss',
             # '[histogram]latent_action',
             # '[histogram]cos_similarity',
         ]
         return ret
+
+    # def _monitor_vars_learn(self) -> List[str]:
+    #     return super()._monitor_vars_learn() + ['record_value_function']
 
     def _state_dict_learn(self) -> Dict[str, Any]:
         """
@@ -433,28 +367,31 @@ class RainbowDQNVQVAEPolicy(DQNPolicy):
         self._optimizer.load_state_dict(state_dict['optimizer'])
         self._vqvae_model.load_state_dict(state_dict['vqvae_model'])
 
+
+    def _load_state_dict_learn(self, state_dict: Dict[str, Any]) -> None:
+        self._learn_model.load_state_dict(state_dict['model'])
+        self._target_model.load_state_dict(state_dict['target_model'])
+        self._optimizer.load_state_dict(state_dict['optimizer'])
+
     def _init_collect(self) -> None:
         r"""
         Overview:
-            Collect mode init moethod. Called by ``self.__init__``.
+            Collect mode init method. Called by ``self.__init__``.
             Init traj and unroll length, collect model.
-
-            .. note::
-                the rainbow dqn enable the eps_greedy_sample, but might not need to use it, \
-                    as the noise_net contain noise that can help exploration
+            Enable the eps_greedy_sample
         """
         self._unroll_len = self._cfg.collect.unroll_len
-        self._nstep = self._cfg.nstep
-        self._gamma = self._cfg.discount_factor
-        self._collect_model = model_wrap(self._model, wrapper_name='eps_greedy_sample')
+        self._gamma = self._cfg.discount_factor  # necessary for parallel
+        self._nstep = self._cfg.nstep  # necessary for parallel
+        self._collect_model = model_wrap(self._model, wrapper_name='eps_greedy_multinomial_sample')
         self._collect_model.reset()
         self._warm_up_stop = False
 
-    def _forward_collect(self, data: dict, eps: float) -> dict:
+
+    def _forward_collect(self, data: Dict[int, Any], eps: float) -> Dict[int, Any]:
         r"""
         Overview:
-            Reset the noise from noise net and collect output according to eps_greedy plugin
-
+            Forward function for collect mode with eps_greedy
         Arguments:
             - data (:obj:`Dict[str, Any]`): Dict type data, stacked env data for predicting policy_output(action), \
                 values are torch.Tensor or np.ndarray or dict/list combinations, keys are env_id indicated by integer.
@@ -469,9 +406,11 @@ class RainbowDQNVQVAEPolicy(DQNPolicy):
         if self._cuda:
             data = to_device(data, self._device)
         self._collect_model.eval()
-        self._reset_noise(self._collect_model)
+        # for subprocess case
+        data = data.float()
         with torch.no_grad():
-            output = self._collect_model.forward(data, eps=eps)
+            output = self._collect_model.forward(data, eps=eps, alpha=self._cfg.learn.alpha)
+            
             # here output['action'] is the out of DQN, is discrete action
             output['latent_action'] = copy.deepcopy(output['action'])
             if self._cuda:
@@ -525,22 +464,40 @@ class RainbowDQNVQVAEPolicy(DQNPolicy):
                     if self.action_range is not None:
                         action = action.clamp(self.action_range['min'], self.action_range['max'])
                     output['action'] = action
-
         if self._cuda:
             output = to_device(output, 'cpu')
         output = default_decollate(output)
         return {i: d for i, d in zip(data_id, output)}
 
-    def _process_transition(self, obs: Any, policy_output: Dict[str, Any], timestep: namedtuple) -> Dict[str, Any]:
+    def _get_train_sample(self, data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """
         Overview:
-            Generate a transition(e.g.: <s, a, s', r, d>) for this algorithm training.
+            For a given trajectory(transitions, a list of transition) data, process it into a list of sample that \
+            can be used for training directly. A train sample can be a processed transition(DQN with nstep TD) \
+            or some continuous transitions(DRQN).
         Arguments:
-            - obs (:obj:`Any`): Env observation.
-            - policy_output (:obj:`Dict[str, Any]`): The output of policy collect mode(``self._forward_collect``),\
-                including at least ``action``.
-            - timestep (:obj:`namedtuple`): The output after env step(execute policy output action), including at \
-                least ``obs``, ``reward``, ``done``, (here obs indicates obs after env step).
+            - data (:obj:`List[Dict[str, Any]`): The trajectory data(a list of transition), each element is the same \
+                format as the return value of ``self._process_transition`` method.
+        Returns:
+            - samples (:obj:`dict`): The list of training samples.
+
+        .. note::
+            We will vectorize ``process_transition`` and ``get_train_sample`` method in the following release version. \
+            And the user can customize the this data processing procecure by overriding this two methods and collector \
+            itself.
+        """
+        data = get_nstep_return_data(data, self._nstep, gamma=self._gamma)
+        return get_train_sample(data, self._unroll_len)
+
+    def _process_transition(self, obs: Any, policy_output: dict, timestep: namedtuple) -> dict:
+        r"""
+        Overview:
+            Generate dict type transition data from inputs.
+        Arguments:
+            - obs (:obj:`Any`): Env observation
+            - policy_output (:obj:`dict`): Output of collect model, including at least ['action']
+            - timestep (:obj:`namedtuple`): Output after env step, including at least ['obs', 'reward', 'done'] \
+                (here 'obs' indicates obs after env step).
         Returns:
             - transition (:obj:`dict`): Dict type transition data.
         """
@@ -564,18 +521,24 @@ class RainbowDQNVQVAEPolicy(DQNPolicy):
             }
         return transition
 
-    def _forward_eval(self, data: Dict[int, Any]) -> Dict[int, Any]:
-        """
+    def _init_eval(self) -> None:
+        r"""
         Overview:
-            Forward computation graph of eval mode(evaluate policy performance), at most cases, it is similar to \
-            ``self._forward_collect``.
+            Evaluate mode init method. Called by ``self.__init__``.
+            Init eval model with argmax strategy.
+        """
+        self._eval_model = model_wrap(self._model, wrapper_name='argmax_sample')
+        self._eval_model.reset()
+
+    def _forward_eval(self, data: dict) -> dict:
+        r"""
+        Overview:
+            Forward function of eval mode, similar to ``self._forward_collect``.
         Arguments:
             - data (:obj:`Dict[str, Any]`): Dict type data, stacked env data for predicting policy_output(action), \
                 values are torch.Tensor or np.ndarray or dict/list combinations, keys are env_id indicated by integer.
         Returns:
             - output (:obj:`Dict[int, Any]`): The dict of predicting action for the interaction with env.
-        ArgumentsKeys:
-            - necessary: ``obs``
         ReturnsKeys
             - necessary: ``action``
         """
@@ -586,7 +549,7 @@ class RainbowDQNVQVAEPolicy(DQNPolicy):
         self._eval_model.eval()
         with torch.no_grad():
             output = self._eval_model.forward(data)
-            # here output['action'] is the out of DQN, is discrete action
+                        # here output['action'] is the out of DQN, is discrete action
             # output['latent_action'] = output['action']  # TODO(pu)
             output['latent_action'] = copy.deepcopy(output['action'])
 
@@ -608,37 +571,22 @@ class RainbowDQNVQVAEPolicy(DQNPolicy):
             else:
                 # output['action'] = self._vqvae_model.decode_without_obs(output['action'])['recons_action']
                 output['action'] = self._vqvae_model.decode(output['action'])['recons_action']
-
+        
         if self._cuda:
             output = to_device(output, 'cpu')
         output = default_decollate(output)
         return {i: d for i, d in zip(data_id, output)}
 
-    def _get_train_sample(self, traj: list) -> Union[None, List[Any]]:
-        r"""
-        Overview:
-            Get the trajectory and the n step return data, then sample from the n_step return data
-
-        Arguments:
-            - traj (:obj:`list`): The trajactory's buffer list
-
-        Returns:
-            - samples (:obj:`dict`): The training samples generated
-        """
-        data = get_nstep_return_data(traj, self._nstep, gamma=self._gamma)
-        return get_train_sample(data, self._unroll_len)
-
     def default_model(self) -> Tuple[str, List[str]]:
-        return 'rainbowdqn', ['ding.model.template.q_learning']
-
-    def _reset_noise(self, model: torch.nn.Module):
-        r"""
-        Overview:
-            Reset the noise of model
-
-        Arguments:
-            - model (:obj:`torch.nn.Module`): the model to reset, must contain reset_noise method
         """
-        for m in model.modules():
-            if hasattr(m, 'reset_noise'):
-                m.reset_noise()
+        Overview:
+            Return this algorithm default model setting for demonstration.
+        Returns:
+            - model_info (:obj:`Tuple[str, List[str]]`): model name and mode import_names
+
+        .. note::
+            The user can define and use customized network model but must obey the same inferface definition indicated \
+            by import_names path. For DQN, ``ding.model.template.q_learning.DQN``
+        """
+        return 'dqn', ['ding.model.template.q_learning']
+

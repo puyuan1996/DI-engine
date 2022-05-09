@@ -1,8 +1,8 @@
 from easydict import EasyDict
 
 nstep = 3
-hopper_rainbow_default_config = dict(
-    exp_name='hopper_rainbow_vqvae_seed0',
+hopper_sql_default_config = dict(
+    exp_name='hopper_sql_vqvae_seed0',
     env=dict(
         env_id='Hopper-v3',
         norm_obs=dict(use_norm=False, ),
@@ -46,19 +46,17 @@ hopper_rainbow_default_config = dict(
             # encoder_hidden_size_list=[512, 512, 256],  # large net
             # Whether to use dueling head.
             # dueling=True,
-            # rainbow
-            v_min=-10,
-            v_max=10,
-            n_atom=51,
         ),
         learn=dict(
             reconst_loss_stop_value=1e-3, # TODO
+            alpha=0.12, # SQL
             constrain_action=False,  # TODO
             warm_up_update=int(1e4),
             # warm_up_update=int(1), # debug
             rl_vae_update_circle=1,  # train rl 1 iter, vae 1 iter
             update_per_collect_rl=20,
             update_per_collect_vae=20,
+            
             rl_batch_size=512,
             vqvae_batch_size=512,
             learning_rate=3e-4,
@@ -103,24 +101,24 @@ hopper_rainbow_default_config = dict(
         ),
     ),
 )
-hopper_rainbow_default_config = EasyDict(hopper_rainbow_default_config)
-main_config = hopper_rainbow_default_config
+hopper_sql_default_config = EasyDict(hopper_sql_default_config)
+main_config = hopper_sql_default_config
 
-hopper_rainbow_create_config = dict(
+hopper_sql_create_config = dict(
     env=dict(
         type='mujoco',
         import_names=['dizoo.mujoco.envs.mujoco_env'],
     ),
     env_manager=dict(type='subprocess'),
     # env_manager=dict(type='base'),
-    policy=dict(type='rainbow_vqvae'),
+    policy=dict(type='sql_vqvae'),
 )
-hopper_rainbow_create_config = EasyDict(hopper_rainbow_create_config)
-create_config = hopper_rainbow_create_config
+hopper_sql_create_config = EasyDict(hopper_sql_create_config)
+create_config = hopper_sql_create_config
 
 
 def train(args):
-    main_config.exp_name = 'data_hopper/rainbow_noema_middlenet_k16_upcr20' + '_seed' + f'{args.seed}'+'_3M'
+    main_config.exp_name = 'data_hopper/sql_noema_middlenet_k64_upcr20' + '_seed' + f'{args.seed}'+'_3M'
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=int(3e6))
 
 if __name__ == "__main__":
@@ -129,6 +127,7 @@ if __name__ == "__main__":
     from ding.entry import serial_pipeline_dqn_vqvae
 
     for seed in [0,1,2]:
+    # for seed in [0,1,2]:
         parser = argparse.ArgumentParser()
         parser.add_argument('--seed', '-s', type=int, default=seed)
         args = parser.parse_args()

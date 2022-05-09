@@ -26,43 +26,44 @@ hopper_dqn_default_config = dict(
         nstep=nstep,
         # learn_mode config
         action_space='continuous',  # 'hybrid'
-
         eps_greedy_nearest=False, # TODO
-        is_ema_target=False,  # use EMA
+        is_ema_target=False,
 
         is_ema=False,  # no use EMA # TODO
         # is_ema=True,  # use EMA
         original_action_shape=3,
-        random_collect_size=int(1e4),
+        random_collect_size=int(5e4),
         # random_collect_size=int(1),  # debug
         vqvae_embedding_dim=64,  # ved: D
         vqvae_hidden_dim=[256],  # vhd
         vq_loss_weight=1,
         model=dict(
             obs_shape=11,
-            action_shape=int(16),  # num of num_embeddings: K
-            encoder_hidden_size_list=[128, 128, 64],  # small net
-            # encoder_hidden_size_list=[256, 256, 128],  # middle net
+            action_shape=int(64),  # num of num_embeddings: K
+            # encoder_hidden_size_list=[128, 128, 64],  # small net
+            encoder_hidden_size_list=[256, 256, 128],  # middle net
             # encoder_hidden_size_list=[512, 512, 256],  # large net
             # Whether to use dueling head.
             dueling=True,
         ),
         learn=dict(
+            reconst_loss_stop_value=1e-3, # TODO
             constrain_action=False,  # TODO
             warm_up_update=int(1e4),
             # warm_up_update=int(1), # debug
             rl_vae_update_circle=1,  # train rl 1 iter, vae 1 iter
             update_per_collect_rl=20,
-            update_per_collect_vae=10,
+            update_per_collect_vae=20,
             rl_batch_size=512,
             vqvae_batch_size=512,
             learning_rate=3e-4,
-            learning_rate_vae=1e-4,
+            learning_rate_vae=3e-4,
             # Frequency of target network update.
-            target_update_theta=0.001,
+            # target_update_theta=0.001,
+            target_update_freq=500,
 
             rl_clip_grad=True,
-            vqvae_clip_grad=False,
+            vqvae_clip_grad=True,
             grad_clip_type='clip_norm',
             grad_clip_value=0.5,
 
@@ -106,8 +107,8 @@ hopper_dqn_create_config = dict(
         type='mujoco',
         import_names=['dizoo.mujoco.envs.mujoco_env'],
     ),
-    # env_manager=dict(type='subprocess'),
-    env_manager=dict(type='base'),
+    env_manager=dict(type='subprocess'),
+    # env_manager=dict(type='base'),
     policy=dict(type='dqn_vqvae'),
 )
 hopper_dqn_create_config = EasyDict(hopper_dqn_create_config)
@@ -115,7 +116,7 @@ create_config = hopper_dqn_create_config
 
 
 def train(args):
-    main_config.exp_name = 'data_hopper/base_nsample256_rlclipgrad0.5_softtarget_vq1_ed1e5_smallnet_noema_k16_upcr20' + '_seed' + f'{args.seed}'+'_3M'
+    main_config.exp_name = 'data_hopper/dqn_noema_middlenet_k64_upcr20' + '_seed' + f'{args.seed}'+'_3M'
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=int(3e6))
 
 if __name__ == "__main__":
