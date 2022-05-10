@@ -39,7 +39,7 @@ class PolicyFactory:
                     action = action_space.sample()
                     action = [torch.LongTensor([v]) for v in action]
                     actions[env_id] = {'action': action}
-                elif 'global_state' in data[env_id].keys():
+                elif isinstance(data[env_id], dict) and 'global_state' in data[env_id].keys():
                     # for smac
                     logit = np.ones_like(data[env_id]['action_mask'])
                     logit[data[env_id]['action_mask'] == 0.0] = -1e8

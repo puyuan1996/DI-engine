@@ -9,7 +9,8 @@ gym_hybrid_dqn_default_config = dict(
         evaluator_env_num=8,
         # (bool) Scale output action into legal range [-1, 1].
         act_scale=True,
-        env_id='Sliding-v0',  # ['Moving-v0', 'Sliding-v0']
+        # env_id='Sliding-v0',  # ['Moving-v0', 'Sliding-v0']
+        env_id='Moving-v0',  # ['Moving-v0', 'Sliding-v0']
         n_evaluator_episode=8,
         # stop_value=2,
         stop_value=999,
@@ -40,7 +41,7 @@ gym_hybrid_dqn_default_config = dict(
         # random_collect_size=int(1),  # debug
         vqvae_embedding_dim=64,  # ved: D
         vqvae_hidden_dim=[256],  # vhd
-        vq_loss_weight=1,
+        vq_loss_weight=0.1,
         model=dict(
             obs_shape=10,
             action_shape=int(16),  # num oof num_embeddings: K
@@ -49,6 +50,7 @@ gym_hybrid_dqn_default_config = dict(
             dueling=True,
         ),
         learn=dict(
+            reconst_loss_stop_value=1e-6, # TODO
             constrain_action=False,  # TODO
             warm_up_update=int(1e4),
             # warm_up_update=int(1), # debug
@@ -119,7 +121,8 @@ create_config = gym_hybrid_dqn_create_config
 
 
 def train(args):
-    main_config.exp_name = 'data_sliding/dqn_noema_smallnet_k16_upcr20' + '_seed' + f'{args.seed}'+'_3M'
+    # main_config.exp_name = 'data_sliding/dqn_noema_smallnet_k16_upcr20' + '_seed' + f'{args.seed}'+'_3M'
+    main_config.exp_name = 'data_moving/dqn_noema_smallnet_k16_upcr20_vqloss0.1' + '_seed' + f'{args.seed}'+'_3M'
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,max_env_step=int(3e6))
 
 

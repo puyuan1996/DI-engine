@@ -30,17 +30,19 @@ hopper_dqn_default_config = dict(
         model=dict(
             obs_shape=11,
             action_shape=int(64),  # num of num_embeddings: K = n**m e.g. 4**3
-            encoder_hidden_size_list=[128, 128, 64],  # small net
-            # encoder_hidden_size_list=[256, 256, 128],  # middle net
+            # encoder_hidden_size_list=[128, 128, 64],  # small net
+            encoder_hidden_size_list=[256, 256, 128],  # middle net
             # encoder_hidden_size_list=[512, 512, 256],  # large net
             # Whether to use dueling head.
             dueling=True,
         ),
         learn=dict(
+            ignore_done=False,
             batch_size=512,
             learning_rate=3e-4,
             # Frequency of target network update.
             target_update_theta=0.001,
+            update_per_collect=20,
 
             # rl_clip_grad=True,
             # grad_clip_type='clip_norm',
@@ -87,7 +89,7 @@ create_config = hopper_dqn_create_config
 
 
 def train(args):
-    main_config.exp_name = 'data_hopper/dqn_k64_smallnet' + '_seed' + f'{args.seed}'+'_3M'
+    main_config.exp_name = 'data_hopper/dqn_k64_middlenet_upc20' + '_seed' + f'{args.seed}'+'_3M'
     serial_pipeline([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=int(3e6))
 
 if __name__ == "__main__":
@@ -95,7 +97,8 @@ if __name__ == "__main__":
     import argparse
     from ding.entry import serial_pipeline
 
-    for seed in [0,1,2]:
+    # for seed in [0,1,2]:
+    for seed in [0]:
         parser = argparse.ArgumentParser()
         parser.add_argument('--seed', '-s', type=int, default=seed)
         args = parser.parse_args()

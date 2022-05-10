@@ -52,7 +52,7 @@ hopper_rainbow_default_config = dict(
             n_atom=51,
         ),
         learn=dict(
-            reconst_loss_stop_value=1e-3, # TODO
+            reconst_loss_stop_value=1e-6, # TODO
             constrain_action=False,  # TODO
             warm_up_update=int(1e4),
             # warm_up_update=int(1), # debug
@@ -120,7 +120,7 @@ create_config = hopper_rainbow_create_config
 
 
 def train(args):
-    main_config.exp_name = 'data_hopper/rainbow_noema_middlenet_k16_upcr20' + '_seed' + f'{args.seed}'+'_3M'
+    main_config.exp_name = 'data_hopper/rainbow_noema_middlenet_k64_upcr20' + '_seed' + f'{args.seed}'+'_3M'
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=int(3e6))
 
 if __name__ == "__main__":

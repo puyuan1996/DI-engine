@@ -241,7 +241,7 @@ class DQNVQVAEPolicy(Policy):
             loss_dict['embedding_loss'] = result['embedding_loss'].item()
             loss_dict['commitment_loss'] = result['commitment_loss'].item()
 
-            # print(loss_dict['reconstruction_loss'])
+            print(loss_dict['reconstruction_loss'])
             if loss_dict['reconstruction_loss'] < self._cfg.learn.reconst_loss_stop_value:
                 self._warm_up_stop = True
 

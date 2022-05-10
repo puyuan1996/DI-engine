@@ -48,7 +48,7 @@ hopper_sql_default_config = dict(
             # dueling=True,
         ),
         learn=dict(
-            reconst_loss_stop_value=1e-3, # TODO
+            reconst_loss_stop_value=1e-6, # TODO
             alpha=0.12, # SQL
             constrain_action=False,  # TODO
             warm_up_update=int(1e4),
