@@ -15,7 +15,7 @@ halfcheetah_dqn_default_config = dict(
         n_evaluator_episode=8,
         # stop_value=3000,
         stop_value=int(1e6),  # max env steps
-        each_dim_disc_size=2,  # n: discrete size of each dim in origin continuous action
+        each_dim_disc_size=3,  # n: discrete size of each dim in origin continuous action
     ),
     policy=dict(
         # Whether to use cuda for network.
@@ -29,10 +29,10 @@ halfcheetah_dqn_default_config = dict(
         # original_action_shape=3,  # m
         model=dict(
             obs_shape=17,
-            action_shape=int(64),  # num of num_embeddings: K = n**m e.g. 4**3
+            action_shape=int(3**6),  # num of num_embeddings: K = n**m e.g. 2**6=64, 3**6=729, 4**6=4096
             # encoder_hidden_size_list=[128, 128, 64],  # small net
-            encoder_hidden_size_list=[256, 256, 128],  # middle net
-            # encoder_hidden_size_list=[512, 512, 256],  # large net
+            # encoder_hidden_size_list=[256, 256, 128],  # middle net
+            encoder_hidden_size_list=[512, 512, 256],  # large net
             # Whether to use dueling head.
             dueling=True,
         ),
@@ -90,7 +90,7 @@ create_config = halfcheetah_dqn_create_config
 
 
 def train(args):
-    main_config.exp_name = 'data_halfcheetah/dqn_k64_middlenet_upc20' + '_seed' + f'{args.seed}'+'_3M'
+    main_config.exp_name = 'data_halfcheetah/dqn_k64_largenet_upc20' + '_seed' + f'{args.seed}'+'_3M'
     serial_pipeline([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=int(3e6))
 
 if __name__ == "__main__":

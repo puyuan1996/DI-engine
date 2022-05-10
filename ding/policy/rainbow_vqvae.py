@@ -184,7 +184,6 @@ class RainbowDQNVQVAEPolicy(DQNPolicy):
         self._target_model.reset()
 
         self._forward_learn_cnt = 0  # count iterations
-        # self._vqvae_model = VQVAE(2, 64, 64) #   action_dim: int, embedding_dim: int, num_embeddings: int,
         self._vqvae_model = ActionVQVAE(
             self._cfg.original_action_shape,
             self._cfg.model.action_shape,  #K
@@ -240,7 +239,6 @@ class RainbowDQNVQVAEPolicy(DQNPolicy):
             # ====================
             # train vae
             # ====================
-            # result = self._vqvae_model.train_without_obs(data)
             result = self._vqvae_model.train(data)
 
             loss_dict['total_vqvae_loss'] = result['total_vqvae_loss'].item()
@@ -288,7 +286,6 @@ class RainbowDQNVQVAEPolicy(DQNPolicy):
                 if self._cuda:
                     data = to_device(data, self._device)
 
-                # result = self._vqvae_model.train_without_obs(data)
                 result = self._vqvae_model.train(data)
 
                 loss_dict['total_vqvae_loss'] = result['total_vqvae_loss'].item()
@@ -477,16 +474,7 @@ class RainbowDQNVQVAEPolicy(DQNPolicy):
             if self._cuda:
                 output = to_device(output, self._device)
 
-            # TODO(pu): decode into original hybrid actions, here data is obs
-            # this is very important to generate self.obs_encoding using in decode phase
-            # output['action'] = self._vqvae_model.decode_with_obs(output['action'], data})['recons_action']
-
             if self._cfg.action_space == 'hybrid':
-                # recons_action = self._vqvae_model.decode_without_obs(output['action'])
-                # output['action'] = {
-                #     'action_type': recons_action['recons_action']['disc'],
-                #     'action_args': recons_action['recons_action']['cont']
-                # }
                 recons_action = self._vqvae_model.decode(output['action'])
                 output['action'] = {
                     'action_type': recons_action['recons_action']['action_type'],
@@ -509,7 +497,6 @@ class RainbowDQNVQVAEPolicy(DQNPolicy):
                         action = action.clamp(self.action_range['min'], self.action_range['max'])
                     output['action']['action_args'] = action
             else:
-                # output['action']  = self._vqvae_model.decode_with_obs(output['action'])
                 output['action'] = self._vqvae_model.decode(output['action'])['recons_action']
 
                 # NOTE: add noise in the original actions
@@ -590,23 +577,13 @@ class RainbowDQNVQVAEPolicy(DQNPolicy):
             # output['latent_action'] = output['action']  # TODO(pu)
             output['latent_action'] = copy.deepcopy(output['action'])
 
-            # TODO(pu): decode into original hybrid actions, here data is obs
-            # this is very important to generate self.obs_encoding using in decode phase
-            # output['action'] = self._vqvae_model.decode_with_obs(output['action'], data})['recons_action']
-
             if self._cfg.action_space == 'hybrid':
-                # recons_action = self._vqvae_model.decode_without_obs(output['action'])
-                # output['action'] = {
-                #     'action_type': recons_action['recons_action']['disc'],
-                #     'action_args': recons_action['recons_action']['cont']
-                # }
                 recons_action = self._vqvae_model.decode(output['action'])
                 output['action'] = {
                     'action_type': recons_action['recons_action']['action_type'],
                     'action_args': recons_action['recons_action']['action_args']
                 }
             else:
-                # output['action'] = self._vqvae_model.decode_without_obs(output['action'])['recons_action']
                 output['action'] = self._vqvae_model.decode(output['action'])['recons_action']
 
         if self._cuda:

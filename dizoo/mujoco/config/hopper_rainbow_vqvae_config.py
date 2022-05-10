@@ -67,7 +67,7 @@ hopper_rainbow_default_config = dict(
             target_update_freq=500,
 
             rl_clip_grad=True,
-            vqvae_clip_grad=False,
+            vqvae_clip_grad=True,
             grad_clip_type='clip_norm',
             grad_clip_value=0.5,
 

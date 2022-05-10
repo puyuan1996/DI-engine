@@ -29,7 +29,7 @@ hopper_dqn_default_config = dict(
         # original_action_shape=3,  # m
         model=dict(
             obs_shape=11,
-            action_shape=int(64),  # num of num_embeddings: K = n**m e.g. 4**3
+            action_shape=int(64),  # num of num_embeddings: K = n**m e.g. 4**3=64
             # encoder_hidden_size_list=[128, 128, 64],  # small net
             encoder_hidden_size_list=[256, 256, 128],  # middle net
             # encoder_hidden_size_list=[512, 512, 256],  # large net

@@ -160,7 +160,6 @@ class SQLVQVAEPolicy(Policy):
             # ====================
             # train vae
             # ====================
-            # result = self._vqvae_model.train_without_obs(data)
             result = self._vqvae_model.train(data)
 
             loss_dict['total_vqvae_loss'] = result['total_vqvae_loss'].item()
@@ -168,7 +167,7 @@ class SQLVQVAEPolicy(Policy):
             loss_dict['vq_loss'] = result['vq_loss'].item()
             loss_dict['embedding_loss'] = result['embedding_loss'].item()
             loss_dict['commitment_loss'] = result['commitment_loss'].item()
-            #
+            
             #  print(loss_dict['reconstruction_loss'])
             if loss_dict['reconstruction_loss'] < self._cfg.learn.reconst_loss_stop_value:
                 self._warm_up_stop = True
@@ -209,7 +208,6 @@ class SQLVQVAEPolicy(Policy):
                 if self._cuda:
                     data = to_device(data, self._device)
 
-                # result = self._vqvae_model.train_without_obs(data)
                 result = self._vqvae_model.train(data)
 
                 loss_dict['total_vqvae_loss'] = result['total_vqvae_loss'].item()
@@ -250,9 +248,6 @@ class SQLVQVAEPolicy(Policy):
 
                 # Representation shift correction (RSC)
                 # update all latent action
-                # result = self._vqvae_model.inference_without_obs({'action': data['action']})
-                # data['latent_action'] = result['quantized_index'].clone().detach()
-
                 quantized_index = self._vqvae_model.encode({'action': data['action']})
                 data['latent_action'] = quantized_index.clone().detach()
                 # print(torch.unique(data['latent_action']))
@@ -270,9 +265,6 @@ class SQLVQVAEPolicy(Policy):
                     # Max q value action (main model)
                     target_q_action = self._learn_model.forward(data['next_obs'])['action']
 
-                # data_n = q_nstep_td_data(
-                #     q_value, target_q_value, data['action'], target_q_action, data['reward'], data['done'], data['weight']
-                # )
                 # NOTE: RL learn policy in latent action space, so here using data['latent_action']
                 data_n = q_nstep_td_data(
                     q_value, target_q_value, data['latent_action'].squeeze(-1), target_q_action, data['reward'],
@@ -332,9 +324,6 @@ class SQLVQVAEPolicy(Policy):
             # '[histogram]cos_similarity',
         ]
         return ret
-
-    # def _monitor_vars_learn(self) -> List[str]:
-    #     return super()._monitor_vars_learn() + ['record_value_function']
 
     def _state_dict_learn(self) -> Dict[str, Any]:
         """
@@ -416,16 +405,7 @@ class SQLVQVAEPolicy(Policy):
             if self._cuda:
                 output = to_device(output, self._device)
 
-            # TODO(pu): decode into original hybrid actions, here data is obs
-            # this is very important to generate self.obs_encoding using in decode phase
-            # output['action'] = self._vqvae_model.decode_with_obs(output['action'], data})['recons_action']
-
             if self._cfg.action_space == 'hybrid':
-                # recons_action = self._vqvae_model.decode_without_obs(output['action'])
-                # output['action'] = {
-                #     'action_type': recons_action['recons_action']['disc'],
-                #     'action_args': recons_action['recons_action']['cont']
-                # }
                 recons_action = self._vqvae_model.decode(output['action'])
                 output['action'] = {
                     'action_type': recons_action['recons_action']['action_type'],
@@ -448,7 +428,6 @@ class SQLVQVAEPolicy(Policy):
                         action = action.clamp(self.action_range['min'], self.action_range['max'])
                     output['action']['action_args'] = action
             else:
-                # output['action']  = self._vqvae_model.decode_with_obs(output['action'])
                 output['action'] = self._vqvae_model.decode(output['action'])['recons_action']
 
                 # NOTE: add noise in the original actions
@@ -549,27 +528,17 @@ class SQLVQVAEPolicy(Policy):
         self._eval_model.eval()
         with torch.no_grad():
             output = self._eval_model.forward(data)
-                        # here output['action'] is the out of DQN, is discrete action
+            # here output['action'] is the out of DQN, is discrete action
             # output['latent_action'] = output['action']  # TODO(pu)
             output['latent_action'] = copy.deepcopy(output['action'])
 
-            # TODO(pu): decode into original hybrid actions, here data is obs
-            # this is very important to generate self.obs_encoding using in decode phase
-            # output['action'] = self._vqvae_model.decode_with_obs(output['action'], data})['recons_action']
-
             if self._cfg.action_space == 'hybrid':
-                # recons_action = self._vqvae_model.decode_without_obs(output['action'])
-                # output['action'] = {
-                #     'action_type': recons_action['recons_action']['disc'],
-                #     'action_args': recons_action['recons_action']['cont']
-                # }
                 recons_action = self._vqvae_model.decode(output['action'])
                 output['action'] = {
                     'action_type': recons_action['recons_action']['action_type'],
                     'action_args': recons_action['recons_action']['action_args']
                 }
             else:
-                # output['action'] = self._vqvae_model.decode_without_obs(output['action'])['recons_action']
                 output['action'] = self._vqvae_model.decode(output['action'])['recons_action']
         
         if self._cuda:
@@ -589,4 +558,3 @@ class SQLVQVAEPolicy(Policy):
             by import_names path. For DQN, ``ding.model.template.q_learning.DQN``
         """
         return 'dqn', ['ding.model.template.q_learning']
-
