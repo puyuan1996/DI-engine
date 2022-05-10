@@ -25,10 +25,7 @@ class GymHybridEnv(BaseEnv):
 
     def reset(self) -> np.ndarray:
         if not self._init_flag:
-            if self._env_id == 'HardMove-v0':
-                self._env = gym.make(self._env_id, num_actuators=self._cfg.num_actuators)
-            else:
-                self._env = gym.make(self._env_id)
+            self._env = gym.make(self._env_id)
             if self._replay_path is not None:
                 self._env = gym.wrappers.RecordVideo(
                     self._env,
@@ -65,15 +62,12 @@ class GymHybridEnv(BaseEnv):
 
     def step(self, action: Dict) -> BaseEnvTimestep:
         if self._act_scale:
-            if self._env_id == 'HardMove-v0':
-                action = [action['action_type'], [affine_transform(i, min_val=-1, max_val=1) for i in action['action_args']]]
-            else:
-                # acceleration_value.
-                action['action_args'][0] = affine_transform(action['action_args'][0], min_val=0, max_val=1)
-                # rotation_value. Following line can be omitted, because in the affine_transform function,
-                # we have already done the clip(-1,1) operation
-                action['action_args'][1] = affine_transform(action['action_args'][1], min_val=-1, max_val=1)
-                action = [action['action_type'], action['action_args']]
+            # acceleration_value.
+            action['action_args'][0] = affine_transform(action['action_args'][0], min_val=0, max_val=1)
+            # rotation_value. Following line can be omitted, because in the affine_transform function,
+            # we have already done the clip(-1,1) operation
+            action['action_args'][1] = affine_transform(action['action_args'][1], min_val=-1, max_val=1)
+            action = [action['action_type'], action['action_args']]
         obs, rew, done, info = self._env.step(action)
         self._final_eval_reward += rew
         if done:

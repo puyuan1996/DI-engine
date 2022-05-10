@@ -198,18 +198,27 @@ def serial_pipeline_dqn_vqvae(
                                                                  cfg.policy.learn.rl_vae_update_circle):
             for i in range(cfg.policy.learn.update_per_collect_vae):
                 # Learner will train ``update_per_collect`` times in one iteration.
+                # TODO(pu):
+                # history+recent
                 train_data_history = replay_buffer.sample(
                     int(cfg.policy.learn.vqvae_batch_size / 2), learner.train_iter
                 )
                 train_data_recent = replay_buffer_recent.sample(
                     int(cfg.policy.learn.vqvae_batch_size / 2), learner.train_iter
                 )
-                train_data = train_data_history + train_data_recent  # TODO(pu):
-            
+                train_data = train_data_history + train_data_recent
+                
+                # recent
                 # train_data_recent = replay_buffer_recent.sample(
                 #     int(cfg.policy.learn.vqvae_batch_size / 2), learner.train_iter
                 # )
-                # train_data = train_data_recent  # TODO(pu):
+                # train_data = train_data_recent
+                
+                # history
+                # train_data_history = replay_buffer.sample(
+                #     int(cfg.policy.learn.vqvae_batch_size), learner.train_iter
+                # )
+                # train_data = train_data_history
 
                 if train_data is not None:
                     for item in train_data:

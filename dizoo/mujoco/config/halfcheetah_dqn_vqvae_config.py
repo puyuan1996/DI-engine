@@ -40,7 +40,7 @@ halfcheetah_dqn_default_config = dict(
         # random_collect_size=int(1),  # debug
         vqvae_embedding_dim=64,  # ved: D
         vqvae_hidden_dim=[256],  # vhd
-        vq_loss_weight=1,
+        vq_loss_weight=0.1,
         model=dict(
             obs_shape=17,
             action_shape=int(64),  # num of num_embeddings: K
@@ -125,7 +125,7 @@ create_config = halfcheetah_dqn_create_config
 import copy
 
 def train(args):
-    main_config.exp_name = 'data_halfcheetah/dqn_noema_middlenet_k64_upcr20' + '_seed' + f'{args.seed}'+'_3M'
+    main_config.exp_name = 'data_halfcheetah/dqn_noema_middlenet_k64_upcr20_vqloss01' + '_seed' + f'{args.seed}'+'_3M'
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=int(3e6))
 
 if __name__ == "__main__":

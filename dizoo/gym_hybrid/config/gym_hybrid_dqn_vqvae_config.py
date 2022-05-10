@@ -3,14 +3,17 @@ import os
 module_path = os.path.dirname(__file__)
 
 nstep = 3
+num_actuators=4
 gym_hybrid_dqn_default_config = dict(
     env=dict(
         collector_env_num=8,
         evaluator_env_num=8,
         # (bool) Scale output action into legal range [-1, 1].
         act_scale=True,
-        # env_id='Sliding-v0',  # ['Moving-v0', 'Sliding-v0']
-        env_id='Moving-v0',  # ['Moving-v0', 'Sliding-v0']
+        # env_id='Sliding-v0',
+        # env_id='Moving-v0',
+        env_id='HardMove-v0',
+        num_actuators=num_actuators,  # only for 'HardMove-v0'
         n_evaluator_episode=8,
         # stop_value=2,
         stop_value=999,
@@ -33,15 +36,21 @@ gym_hybrid_dqn_default_config = dict(
 
         is_ema=False,  # no use EMA # TODO
         # is_ema=True,  # use EMA
-       original_action_shape=dict(
-                action_type_shape=3,
-                action_args_shape=2,
+        # for 'Sliding-v0','Moving-v0'
+        # original_action_shape=dict(
+        #             action_type_shape=3,
+        #             action_args_shape=2,
+        #         ),
+        # for 'HardMove-v0'
+        original_action_shape=dict( 
+                action_type_shape=int(2** num_actuators),
+                action_args_shape=int(num_actuators),
             ),
         random_collect_size=int(1e4),
         # random_collect_size=int(1),  # debug
         vqvae_embedding_dim=64,  # ved: D
         vqvae_hidden_dim=[256],  # vhd
-        vq_loss_weight=0.1,
+        vq_loss_weight=1,
         model=dict(
             obs_shape=10,
             action_shape=int(16),  # num oof num_embeddings: K
@@ -122,7 +131,9 @@ create_config = gym_hybrid_dqn_create_config
 
 def train(args):
     # main_config.exp_name = 'data_sliding/dqn_noema_smallnet_k16_upcr20' + '_seed' + f'{args.seed}'+'_3M'
-    main_config.exp_name = 'data_moving/dqn_noema_smallnet_k16_upcr20_vqloss0.1' + '_seed' + f'{args.seed}'+'_3M'
+    # main_config.exp_name = 'data_moving/dqn_noema_smallnet_k16_upcr20_vqloss0.1' + '_seed' + f'{args.seed}'+'_3M'
+    main_config.exp_name = 'data_hardmove/dqn_noema_smallnet_k16_upcr20' + '_seed' + f'{args.seed}'+'_3M'
+
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,max_env_step=int(3e6))
 
 
