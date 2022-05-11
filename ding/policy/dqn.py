@@ -331,6 +331,7 @@ class DQNPolicy(Policy):
             'action': policy_output['action'],
             'reward': timestep.reward,
             'done': timestep.done,
+            'info':timestep.info,
         }
         return transition
 

@@ -3,7 +3,7 @@ import os
 module_path = os.path.dirname(__file__)
 
 nstep = 3
-num_actuators=4
+num_actuators=10
 gym_hybrid_dqn_default_config = dict(
     env=dict(
         collector_env_num=8,
@@ -55,6 +55,8 @@ gym_hybrid_dqn_default_config = dict(
             obs_shape=10,
             action_shape=int(16),  # num oof num_embeddings: K
             encoder_hidden_size_list=[128, 128, 64],  # small net
+            # encoder_hidden_size_list=[256, 256, 128],  # middle net
+            # encoder_hidden_size_list=[512, 512, 256],  # large net
             # Whether to use dueling head.
             dueling=True,
         ),
@@ -132,7 +134,8 @@ create_config = gym_hybrid_dqn_create_config
 def train(args):
     # main_config.exp_name = 'data_sliding/dqn_noema_smallnet_k16_upcr20' + '_seed' + f'{args.seed}'+'_3M'
     # main_config.exp_name = 'data_moving/dqn_noema_smallnet_k16_upcr20_vqloss0.1' + '_seed' + f'{args.seed}'+'_3M'
-    main_config.exp_name = 'data_hardmove/dqn_noema_smallnet_k16_upcr20' + '_seed' + f'{args.seed}'+'_3M'
+    # main_config.exp_name = 'data_hardmove_n10/dqn_noema_middlenet_k64_upcr20' + '_seed' + f'{args.seed}'+'_3M'
+    main_config.exp_name = 'data_hardmove_n10/dqn_noema_smallnet_k16_upcr20' + '_seed' + f'{args.seed}'+'_3M'
 
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,max_env_step=int(3e6))
 

@@ -96,7 +96,8 @@ class MujocoEnv(BaseEnv):
             self._cfg.env_id,
             norm_obs=self._cfg.get('norm_obs', None),
             norm_reward=self._cfg.get('norm_reward', None),
-            delay_reward_step=self._delay_reward_step
+            delay_reward_step=self._delay_reward_step,
+            is_train=self._cfg.is_train
         )
 
     def enable_save_replay(self, replay_path: Optional[str] = None) -> None:
@@ -127,6 +128,10 @@ class MujocoEnv(BaseEnv):
     def create_collector_env_cfg(cfg: dict) -> List[dict]:
         collector_cfg = copy.deepcopy(cfg)
         collector_env_num = collector_cfg.pop('collector_env_num', 1)
+        # collector_cfg.is_train = True
+        collector_cfg.is_train = False
+
+
         return [collector_cfg for _ in range(collector_env_num)]
 
     @staticmethod
@@ -134,6 +139,7 @@ class MujocoEnv(BaseEnv):
         evaluator_cfg = copy.deepcopy(cfg)
         evaluator_env_num = evaluator_cfg.pop('evaluator_env_num', 1)
         evaluator_cfg.norm_reward.use_norm = False
+        evaluator_cfg.is_train = False
         return [evaluator_cfg for _ in range(evaluator_env_num)]
 
     @property

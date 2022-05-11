@@ -18,6 +18,8 @@ hopper_dqn_default_config = dict(
         each_dim_disc_size=4,  # n: discrete size of each dim in origin continuous action
     ),
     policy=dict(
+        model_path='/home/puyuan/DI-engine/data_hopper/dqn_middlenet_k64_upc20_seed0_3M/ckpt/ckpt_best.pth.tar',
+
         # Whether to use cuda for network.
         cuda=True,
         priority=False,

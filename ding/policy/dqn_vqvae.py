@@ -400,6 +400,9 @@ class DQNVQVAEPolicy(Policy):
                     **loss_dict,
                     **q_value_dict,
                     'total_grad_norm_rl': total_grad_norm_rl,
+                    'rewrad_run': data['rewrad_run'].mean().item(),
+                    'rewrad_ctrl': data['rewrad_ctrl'].mean().item(),
+
                 }
 
     def _monitor_vars_learn(self) -> List[str]:
@@ -450,6 +453,36 @@ class DQNVQVAEPolicy(Policy):
         self._learn_model.load_state_dict(state_dict['model'])
         self._target_model.load_state_dict(state_dict['target_model'])
         self._optimizer.load_state_dict(state_dict['optimizer'])
+        self._vqvae_model.load_state_dict(state_dict['vqvae_model'])
+    
+    def _load_state_dict_collect(self, state_dict: Dict[str, Any]) -> None:
+        """
+        Overview:
+            Load the state_dict variable into policy learn mode.
+        Arguments:
+            - state_dict (:obj:`Dict[str, Any]`): the dict of policy learn state saved before.
+
+        .. tip::
+            If you want to only load some parts of model, you can simply set the ``strict`` argument in \
+            load_state_dict to ``False``, or refer to ``ding.torch_utils.checkpoint_helper`` for more \
+            complicated operation.
+        """
+        self._learn_model.load_state_dict(state_dict['model'])
+        self._vqvae_model.load_state_dict(state_dict['vqvae_model'])
+
+    def _load_state_dict_eval(self, state_dict: Dict[str, Any]) -> None:
+        """
+        Overview:
+            Load the state_dict variable into policy learn mode.
+        Arguments:
+            - state_dict (:obj:`Dict[str, Any]`): the dict of policy learn state saved before.
+
+        .. tip::
+            If you want to only load some parts of model, you can simply set the ``strict`` argument in \
+            load_state_dict to ``False``, or refer to ``ding.torch_utils.checkpoint_helper`` for more \
+            complicated operation.
+        """
+        self._learn_model.load_state_dict(state_dict['model'])
         self._vqvae_model.load_state_dict(state_dict['vqvae_model'])
 
     def _init_collect(self) -> None:
@@ -589,6 +622,9 @@ class DQNVQVAEPolicy(Policy):
                 'action': policy_output['action'],
                 'latent_action': policy_output['latent_action'],
                 'reward': timestep.reward,
+                # 'rewrad_run': timestep.info['rewrad_run'],
+                # 'rewrad_ctrl': timestep.info['rewrad_ctrl'],
+                'info': timestep.info,
                 'done': timestep.done,
             }
         else:  # if random collect at fist
@@ -634,6 +670,7 @@ class DQNVQVAEPolicy(Policy):
             output = self._eval_model.forward(data)
             # here output['action'] is the out of DQN, is discrete action
             # output['latent_action'] = output['action']  # TODO(pu)
+            print('k', output['action'])
             output['latent_action'] = copy.deepcopy(output['action'])
 
             # TODO(pu): decode into original hybrid actions, here data is obs
@@ -756,3 +793,11 @@ class DQNVQVAEPolicy(Policy):
                 print('save embedding_table_CosineSimilarity_' + name + '.png')
         else:
             return np.array(dis)
+
+# import matplotlib.pyplot as plt
+# fig = plt.figure()
+# ax = fig.add_subplot(111)
+# ax.set_title('Hopper-v3 dqn episode0_latent_actions')
+# plt.plot(episode0_latent_actions)
+# plt.show()
+# plt.savefig(f'hopper-v3_dqn_episode0_latent_actions.png')

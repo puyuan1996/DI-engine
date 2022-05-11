@@ -9,7 +9,7 @@ from ding.config import compile_config, read_config
 from ding.worker import SampleSerialCollector, InteractionSerialEvaluator, EpisodeSerialCollector
 from ding.envs import create_env_manager, get_vec_env_setting
 from ding.policy import create_policy
-from ding.torch_utils import to_device
+from ding.torch_utils import to_device, to_ndarray
 from ding.utils import set_pkg_seed
 from ding.utils.data import offline_data_save_type
 from ding.rl_utils import get_nstep_return_data
@@ -75,7 +75,7 @@ def eval(
     # Evaluate
     _, episode_info = evaluator.eval()
     reward = [e['final_eval_reward'] for e in episode_info]
-    eval_reward = np.mean(reward)
+    eval_reward = np.mean(to_ndarray(reward))
     print('Eval is over! The performance of your RL policy is {}'.format(eval_reward))
     return eval_reward
 
@@ -215,7 +215,7 @@ def collect_episodic_demo_data(
         env_fn, collector_env_cfg, _ = env_setting
     collector_env = create_env_manager(cfg.env.manager, [partial(env_fn, cfg=c) for c in collector_env_cfg])
     # TODO(pu)
-    # collector_env.enable_save_replay(replay_path='/home/puyuan/halfcheetah_sac_seed0/')
+    # collector_env.enable_save_replay(replay_path='/home/puyuan/hopper_dqn_vqvae_seed0/')
 
     collector_env.seed(seed)
     set_pkg_seed(seed, use_cuda=cfg.policy.cuda)

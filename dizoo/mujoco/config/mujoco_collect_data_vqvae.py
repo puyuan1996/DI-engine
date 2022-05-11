@@ -1,4 +1,6 @@
-from dizoo.mujoco.config.halfcheetah_dqn_vqvae_data_generation_config import main_config, create_config
+# from dizoo.mujoco.config.hopper_dqn_vqvae_data_generation_config import main_config, create_config
+from dizoo.mujoco.config.hopper_dqn_data_generation_config import main_config, create_config
+
 from ding.entry import collect_episodic_demo_data, eval
 import torch
 import copy
@@ -7,12 +9,12 @@ import copy
 def eval_ckpt(args):
     config = copy.deepcopy([main_config, create_config])
     # eval(config, seed=args.seed, load_path=main_config.policy.learn.learner.hook.load_ckpt_before_run)
-    eval(config, seed=args.seed, load_path=main_config.policy.learn.learner.hook.load_ckpt_before_run, replay_path='/home/puyuan/halfcheetah_dqn_vqvae_seed0/')
-
+    eval(config, seed=args.seed, load_path=main_config.policy.learn.learner.model_path)
+    # eval(config, seed=args.seed, load_path=main_config.policy.learn.learner.hook.load_ckpt_before_run, replay_path='/home/puyuan/hopper_dqn_vqvae_seed0/')
 
 def generate(args):
     config = copy.deepcopy([main_config, create_config])
-    state_dict = torch.load(main_config.policy.learn.learner.load_path, map_location='cpu')
+    state_dict = torch.load(main_config.policy.learn.learner.model_path, map_location='cpu')
     collect_episodic_demo_data(
         config,
         collect_count=main_config.policy.other.replay_buffer.replay_buffer_size,
@@ -21,7 +23,6 @@ def generate(args):
         state_dict=state_dict
     )
 
-
 if __name__ == "__main__":
     import argparse
 
@@ -29,6 +30,6 @@ if __name__ == "__main__":
     parser.add_argument('--seed', '-s', type=int, default=0)
     args = parser.parse_args()
 
-    eval_ckpt(args)
+    # eval_ckpt(args)
     generate(args)
 

@@ -861,6 +861,34 @@ class FireResetWrapper(gym.Wrapper):
         return self.env.step(1)[0]
 
 
+@ENV_WRAPPER_REGISTRY.register('discard_reward')
+class DiscardReward(gym.RewardWrapper):
+    """
+    Overview:
+        Clip the reward to {+1, 0, -1} by its sign.
+    Interface:
+        ``__init__``, ``reward``, ``new_shape``
+    Properties:
+        - env (:obj:`gym.Env`): the environment to wrap.
+        - ``reward_range``
+
+    """
+
+    def __init__(self, env):
+        """
+        Overview:
+            Initialize ``self.`` See ``help(type(self))`` for accurate signature; setup the properties.
+        Arguments:
+            - env (:obj:`gym.Env`): the environment to wrap.
+        """
+        super().__init__(env)
+
+    def step(self, action):
+        obs, reward, done, info = self.env.step(action)
+        reward -= info['reward_ctrl']
+        return obs, reward, done, info
+        
+
 @ENV_WRAPPER_REGISTRY.register('gym_hybrid_dict_action')
 class GymHybridDictActionWrapper(gym.ActionWrapper):
     """
