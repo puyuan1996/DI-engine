@@ -101,7 +101,8 @@ class DQNVQVAEPolicy(Policy):
             # ==============================================================
             # The following configs are algorithm-specific
             # ==============================================================
-            target_update_theta=0.001,
+            # Frequency of target network update.
+            target_update_freq=500,
             # (bool) Whether ignore done(usually for max step termination env)
             ignore_done=False,
         ),
@@ -136,6 +137,8 @@ class DQNVQVAEPolicy(Policy):
         """
         self._priority = self._cfg.priority
         self._priority_IS_weight = self._cfg.priority_IS_weight
+        self._priority_vqvae = self._cfg.priority_vqvae
+        self._priority_IS_weight_vqvae = self._cfg.priority_IS_weight_vqvae
         # Optimizer
         # NOTE:
         if self._cfg.learn.rl_clip_grad is True:
@@ -310,6 +313,8 @@ class DQNVQVAEPolicy(Policy):
                 # cos_similarity = self.visualize_embedding_table(save_dis_map=False)
 
                 return {
+                    # TODO: data['reward'] is nstep reward, take the true reward 
+                    'priority':  data['reward'][0].tolist(), 
                     'cur_lr': self._optimizer.defaults['lr'],
                     # 'td_error': td_error_per_sample,
                     **loss_dict,
@@ -322,7 +327,6 @@ class DQNVQVAEPolicy(Policy):
             # train RL
             # ====================
             else:
-
                 # ====================
                 # relabel latent action
                 # ====================

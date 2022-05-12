@@ -20,6 +20,8 @@ hopper_dqn_default_config = dict(
         # Whether to use cuda for network.
         cuda=True,
         priority=False,
+        # (bool) Whether use Importance Sampling Weight to correct biased update. If True, priority must be True.
+        priority_IS_weight=False,
         # Reward's future discount factor, aka. gamma.
         discount_factor=0.99,
         # How many steps in td error.
@@ -32,11 +34,15 @@ hopper_dqn_default_config = dict(
         is_ema=False,  # no use EMA # TODO
         # is_ema=True,  # use EMA
         original_action_shape=3,
-        # random_collect_size=int(5e4),
-        random_collect_size=int(1),  # debug
+        random_collect_size=int(5e4),
+        # random_collect_size=int(1),  # debug
         vqvae_embedding_dim=64,  # ved: D
         vqvae_hidden_dim=[256],  # vhd
         vq_loss_weight=0.1,  # TODO
+        replay_buffer_size_vqvae=int(1e6),
+        priority_vqvae=True,
+        # (bool) Whether use Importance Sampling Weight to correct biased update. If True, priority must be True.
+        priority_IS_weight_vqvae=True,
         model=dict(
             obs_shape=11,
             action_shape=int(64),  # num of num_embeddings: K
@@ -49,8 +55,8 @@ hopper_dqn_default_config = dict(
         learn=dict(
             reconst_loss_stop_value=1e-6, # TODO
             constrain_action=False,  # TODO
-            # warm_up_update=int(1e4),
-            warm_up_update=int(1), # debug
+            warm_up_update=int(1e4),
+            # warm_up_update=int(1), # debug
             rl_vae_update_circle=1,  # train rl 1 iter, vae 1 iter
             update_per_collect_rl=20,
             update_per_collect_vae=20,
@@ -59,7 +65,7 @@ hopper_dqn_default_config = dict(
             learning_rate=3e-4,
             learning_rate_vae=3e-4,
             # Frequency of target network update.
-            # target_update_theta=0.001,
+            # target_update_theta=0.001, # TODO
             target_update_freq=500,
 
             rl_clip_grad=True,
@@ -68,14 +74,12 @@ hopper_dqn_default_config = dict(
             grad_clip_value=0.5,
 
             # add noise in original continuous action
-            # noise=False,
+            # noise=False,  # TODO
             noise=True,
-            noise_sigma=0.2,
+            noise_sigma=0.1,
             noise_range=dict(
             min=-0.5,
             max=0.5,
-            # min=-1,
-            # max=1,
             ),
         ),
         # collect_mode config
@@ -97,7 +101,7 @@ hopper_dqn_default_config = dict(
                 end=0.05,
                 decay=int(1e5),
             ),
-            replay_buffer=dict(replay_buffer_size=int(1e6), )
+            replay_buffer=dict(replay_buffer_size=int(1e6), ),
         ),
     ),
 )
@@ -118,7 +122,7 @@ create_config = hopper_dqn_create_config
 
 
 def train(args):
-    main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_upcr20_noise1_history' + '_seed' + f'{args.seed}'+'_3M'
+    main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_vqvae-reward-priority' + '_seed' + f'{args.seed}'+'_3M'
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=int(3e6))
 
 if __name__ == "__main__":

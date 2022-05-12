@@ -2,7 +2,6 @@ from easydict import EasyDict
 import os
 module_path = os.path.dirname(__file__)
 
-
 nstep = 3
 num_actuators=4
 gym_hybrid_dqn_default_config = dict(

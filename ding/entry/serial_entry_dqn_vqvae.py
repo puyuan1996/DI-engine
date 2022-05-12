@@ -75,7 +75,8 @@ def serial_pipeline_dqn_vqvae(
         cfg.policy.eval.evaluator, evaluator_env, policy.eval_mode, tb_logger, exp_name=cfg.exp_name
     )
     replay_buffer = create_buffer(cfg.policy.other.replay_buffer, tb_logger=tb_logger, exp_name=cfg.exp_name)
-    replay_buffer_recent = create_buffer(cfg.policy.other.replay_buffer, tb_logger=tb_logger, exp_name=cfg.exp_name)
+    cfg.policy.other.replay_buffer.replay_buffer_size = cfg.policy.replay_buffer_size_vqvae
+    replay_buffer_vqvae = create_buffer(cfg.policy.other.replay_buffer, tb_logger=tb_logger, exp_name=cfg.exp_name)
 
     commander = BaseSerialCommander(
         cfg.policy.other.commander, learner, collector, evaluator, replay_buffer, policy.command_mode
@@ -156,18 +157,11 @@ def serial_pipeline_dqn_vqvae(
                 # policy.visualize_embedding_table(name=f'iter{iter}_{cfg.env.env_id}_s{cfg.seed}')
                 break
         # Collect data by default config n_sample/n_episode
-        if hasattr(cfg.policy.collect, "each_iter_n_sample"):
-            new_data = collector.collect(
-                n_sample=cfg.policy.collect.each_iter_n_sample,
-                train_iter=learner.train_iter,
-                policy_kwargs=collect_kwargs
-            )
-        else:
-            new_data = collector.collect(train_iter=learner.train_iter, policy_kwargs=collect_kwargs)
+        new_data = collector.collect(train_iter=learner.train_iter, policy_kwargs=collect_kwargs)
         for item in new_data:
             item['warm_up'] = False
         replay_buffer.push(new_data, cur_collector_envstep=collector.envstep)
-        replay_buffer_recent.push(copy.deepcopy(new_data), cur_collector_envstep=collector.envstep)
+        replay_buffer_vqvae.push(copy.deepcopy(new_data), cur_collector_envstep=collector.envstep)
 
         # ====================
         # RL phase
@@ -203,22 +197,30 @@ def serial_pipeline_dqn_vqvae(
                 # train_data_history = replay_buffer.sample(
                 #     int(cfg.policy.learn.vqvae_batch_size / 2), learner.train_iter
                 # )
-                # train_data_recent = replay_buffer_recent.sample(
+                # train_data_recent = replay_buffer_vqvae.sample(
                 #     int(cfg.policy.learn.vqvae_batch_size / 2), learner.train_iter
                 # )
                 # train_data = train_data_history + train_data_recent
                 
                 # recent
-                # train_data_recent = replay_buffer_recent.sample(
+                # add replay_buffer_vqvae.clear()  # TODO(pu)
+                # train_data_recent = replay_buffer_vqvae.sample(
                 #     int(cfg.policy.learn.vqvae_batch_size / 2), learner.train_iter
                 # )
                 # train_data = train_data_recent
+
                 
                 # history
-                train_data_history = replay_buffer.sample(
+                # train_data_history = replay_buffer.sample(
+                #     int(cfg.policy.learn.vqvae_batch_size), learner.train_iter
+                # )
+                # train_data = train_data_history
+
+                # replay_buffer_vqvae reward priority
+                train_data_vqvae = replay_buffer_vqvae.sample(
                     int(cfg.policy.learn.vqvae_batch_size), learner.train_iter
                 )
-                train_data = train_data_history
+                train_data = train_data_vqvae
 
                 if train_data is not None:
                     for item in train_data:
@@ -232,10 +234,10 @@ def serial_pipeline_dqn_vqvae(
                     )
                     break
                 learner.train(train_data, collector.envstep)
-                # if learner.policy.get_attribute('priority'):
-                #     replay_buffer.update(learner.priority_info)
+                if learner.policy.get_attribute('priority_vqvae'):
+                    replay_buffer_vqvae.update(learner.priority_info)
 
-            replay_buffer_recent.clear()  # TODO(pu)
+            # replay_buffer_vqvae.clear()  # TODO(pu)
 
         if collector.envstep > max_env_step:
             # NOTE: save visualized latent action and embedding_table
