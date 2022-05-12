@@ -400,8 +400,8 @@ class DQNVQVAEPolicy(Policy):
                     **loss_dict,
                     **q_value_dict,
                     'total_grad_norm_rl': total_grad_norm_rl,
-                    'rewrad_run': data['rewrad_run'].mean().item(),
-                    'rewrad_ctrl': data['rewrad_ctrl'].mean().item(),
+                    # 'rewrad_run': data['rewrad_run'].mean().item(),
+                    # 'rewrad_ctrl': data['rewrad_ctrl'].mean().item(),
 
                 }
 
@@ -624,7 +624,7 @@ class DQNVQVAEPolicy(Policy):
                 'reward': timestep.reward,
                 # 'rewrad_run': timestep.info['rewrad_run'],
                 # 'rewrad_ctrl': timestep.info['rewrad_ctrl'],
-                'info': timestep.info,
+                # 'info': timestep.info,
                 'done': timestep.done,
             }
         else:  # if random collect at fist
@@ -670,7 +670,7 @@ class DQNVQVAEPolicy(Policy):
             output = self._eval_model.forward(data)
             # here output['action'] is the out of DQN, is discrete action
             # output['latent_action'] = output['action']  # TODO(pu)
-            print('k', output['action'])
+            # print('k', output['action'])
             output['latent_action'] = copy.deepcopy(output['action'])
 
             # TODO(pu): decode into original hybrid actions, here data is obs

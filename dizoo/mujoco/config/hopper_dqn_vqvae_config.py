@@ -32,8 +32,8 @@ hopper_dqn_default_config = dict(
         is_ema=False,  # no use EMA # TODO
         # is_ema=True,  # use EMA
         original_action_shape=3,
-        random_collect_size=int(5e4),
-        # random_collect_size=int(1),  # debug
+        # random_collect_size=int(5e4),
+        random_collect_size=int(1),  # debug
         vqvae_embedding_dim=64,  # ved: D
         vqvae_hidden_dim=[256],  # vhd
         vq_loss_weight=0.1,  # TODO
@@ -49,8 +49,8 @@ hopper_dqn_default_config = dict(
         learn=dict(
             reconst_loss_stop_value=1e-6, # TODO
             constrain_action=False,  # TODO
-            warm_up_update=int(1e4),
-            # warm_up_update=int(1), # debug
+            # warm_up_update=int(1e4),
+            warm_up_update=int(1), # debug
             rl_vae_update_circle=1,  # train rl 1 iter, vae 1 iter
             update_per_collect_rl=20,
             update_per_collect_vae=20,
@@ -70,12 +70,12 @@ hopper_dqn_default_config = dict(
             # add noise in original continuous action
             # noise=False,
             noise=True,
-            noise_sigma=0.1,
+            noise_sigma=0.2,
             noise_range=dict(
-            # min=-0.5,
-            # max=0.5,
-            min=-1,
-            max=1,
+            min=-0.5,
+            max=0.5,
+            # min=-1,
+            # max=1,
             ),
         ),
         # collect_mode config
