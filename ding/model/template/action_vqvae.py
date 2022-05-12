@@ -159,6 +159,7 @@ class ActionVQVAE(nn.Module):
             is_ema: bool = False,
             is_ema_target: bool = False,
             eps_greedy_nearest: bool = False,
+            cont_reconst_l1_loss: bool = False,
     ) -> None:
         super(ActionVQVAE, self).__init__()
 
@@ -168,6 +169,7 @@ class ActionVQVAE(nn.Module):
         self.embedding_size = embedding_size
         self.embedding_num = embedding_num
         self.act = nn.ReLU()
+        self.cont_reconst_l1_loss = cont_reconst_l1_loss
 
         # Encoder
         if isinstance(self.action_shape, int):  # continuous action
@@ -244,9 +246,15 @@ class ActionVQVAE(nn.Module):
             return recons_action
         else:
             if isinstance(self.action_shape, int):  # continuous action
-                recons_loss = F.mse_loss(recons_action, target_action)
+                if  self.cont_reconst_l1_loss:
+                    recons_loss = F.l1_loss(recons_action, target_action)
+                else:
+                    recons_loss = F.mse_loss(recons_action, target_action)
             elif isinstance(self.action_shape, dict):  # hybrid action
-                recons_loss_cont = F.mse_loss(recons_action['action_args'], target_action['action_args'].view(-1,target_action['action_args'].shape[-1]))
+                if  self.cont_reconst_l1_loss:
+                    recons_loss_cont = F.l1_loss(recons_action['action_args'], target_action['action_args'].view(-1,target_action['action_args'].shape[-1]))
+                else:
+                    recons_loss_cont = F.mse_loss(recons_action['action_args'], target_action['action_args'].view(-1,target_action['action_args'].shape[-1]))
                 recons_loss_disc = F.cross_entropy(recons_action['logit'], target_action['action_type'].view(-1))
                 # here view(-1) is to be compatiable with multi_agent case, e.g. gobigger
                 recons_loss = recons_loss_cont + recons_loss_disc

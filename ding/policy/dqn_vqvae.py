@@ -83,6 +83,9 @@ class DQNVQVAEPolicy(Policy):
         priority=False,
         # (bool) Whether use Importance Sampling Weight to correct biased update. If True, priority must be True.
         priority_IS_weight=False,
+        priority_vqvae=False,
+        # (bool) Whether use Importance Sampling Weight to correct biased update. If True, priority must be True.
+        priority_IS_weight_vqvae=False,
         discount_factor=0.97,
         nstep=1,
         original_action_shape=2,
@@ -183,6 +186,7 @@ class DQNVQVAEPolicy(Policy):
             is_ema=self._cfg.is_ema,
             is_ema_target=self._cfg.is_ema_target,
             eps_greedy_nearest=self._cfg.eps_greedy_nearest,
+            cont_reconst_l1_loss=self._cfg.cont_reconst_l1_loss,
         )
         self._vqvae_model = to_device(self._vqvae_model, self._device)
         # NOTE:
@@ -311,10 +315,12 @@ class DQNVQVAEPolicy(Policy):
                 # NOTE:visualize_latent, now it's only for env hopper and gym_hybrid
                 # quantized_index = self.visualize_latent(save_histogram=False)
                 # cos_similarity = self.visualize_embedding_table(save_dis_map=False)
-
+                
+                # TODO: data['reward'] is nstep reward, take the true reward 
+                # max-min normalization, transform to [0, 1] priority should be non negtive (>=0)
+                reward_normalization = (data['reward'][0] - data['reward'][0].min())/(data['reward'][0].max() - data['reward'][0].min()+1e-8)
                 return {
-                    # TODO: data['reward'] is nstep reward, take the true reward 
-                    'priority':  data['reward'][0].tolist(), 
+                    'priority': reward_normalization.tolist(), 
                     'cur_lr': self._optimizer.defaults['lr'],
                     # 'td_error': td_error_per_sample,
                     **loss_dict,
@@ -411,6 +417,7 @@ class DQNVQVAEPolicy(Policy):
 
     def _monitor_vars_learn(self) -> List[str]:
         ret = [
+            'priority',
             'cur_lr',
             'critic_loss',
             'q_value',
