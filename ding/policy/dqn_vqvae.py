@@ -17,7 +17,7 @@ from ding.utils import RunningMeanStd
 from torch.nn import functional as F
 import numpy as np
 import matplotlib.pyplot as plt
-
+from ding.envs.common import affine_transform
 
 @POLICY_REGISTRY.register('dqn-vqvae')
 class DQNVQVAEPolicy(Policy):
@@ -317,8 +317,11 @@ class DQNVQVAEPolicy(Policy):
                 # cos_similarity = self.visualize_embedding_table(save_dis_map=False)
                 
                 # TODO: data['reward'] is nstep reward, take the true reward 
-                # max-min normalization, transform to [0, 1] priority should be non negtive (>=0)
+                # first max-min normalization, transform to [0, 1] priority should be non negtive (>=0)
+                # then scale to [0.2, 1], to make sure all data can be used to update vqvae
                 reward_normalization = (data['reward'][0] - data['reward'][0].min())/(data['reward'][0].max() - data['reward'][0].min()+1e-8)
+                reward_normalization = 0.8* reward_normalization +0.2 
+
                 return {
                     'priority': reward_normalization.tolist(), 
                     'cur_lr': self._optimizer.defaults['lr'],
@@ -344,9 +347,14 @@ class DQNVQVAEPolicy(Policy):
                 # result = self._vqvae_model.inference_without_obs({'action': data['action']})
                 # data['latent_action'] = result['quantized_index'].clone().detach()
 
-                quantized_index = self._vqvae_model.encode({'action': data['action']})
-                data['latent_action'] = quantized_index.clone().detach()
-                # print(torch.unique(data['latent_action']))
+                if self._cfg.rl_reconst_loss_reweight:
+                    result = self._vqvae_model.train(data)
+                    reconstruction_loss_none_reduction = result['recons_loss_none_reduction']
+                    data['latent_action'] = result['quantized_index'].clone().detach()
+                else:
+                    quantized_index = self._vqvae_model.encode({'action': data['action']})
+                    data['latent_action'] = quantized_index.clone().detach()
+                    # print(torch.unique(data['latent_action']))
 
                 if self._cuda:
                     data = to_device(data, self._device)
@@ -374,6 +382,17 @@ class DQNVQVAEPolicy(Policy):
                         target_q_action = self._learn_model.forward(data['next_obs'])['action']
                         # print(torch.unique( target_q_action))
 
+                # TODO: reweight RL loss according to the reconstruct loss, because in 
+                # In the area with large reconstruction loss, the action reconstruction is inaccurate, that is, the (\hat{x}, r) does not match, 
+                # and the corresponding Q value is inaccurate. The update should be reduced to avoid wrong gradient.
+                if self._cfg.rl_reconst_loss_reweight:
+                    # TODO:
+                    # fist max-min normalization, transform to [0, 1]
+                    # then scale to [0.2, 1], to make sure all data can be used to calculate gradients
+                    reconstruction_loss_none_reduction_normalization = (reconstruction_loss_none_reduction - reconstruction_loss_none_reduction.min())/(reconstruction_loss_none_reduction.max() - reconstruction_loss_none_reduction.min()+1e-8)
+                    reconstruction_loss_weight = 0.8 * reconstruction_loss_none_reduction_normalization +0.2 
+                    data['weight'] = reconstruction_loss_weight
+
                 # NOTE: RL learn policy in latent action space, so here using data['latent_action']
                 data_n = q_nstep_td_data(
                     q_value, target_q_value, data['latent_action'].squeeze(-1), target_q_action, data['reward'],
@@ -381,6 +400,7 @@ class DQNVQVAEPolicy(Policy):
                 )
 
                 value_gamma = data.get('value_gamma')
+
                 loss, td_error_per_sample = q_nstep_td_error(
                     data_n, self._gamma, nstep=self._nstep, value_gamma=value_gamma
                 )

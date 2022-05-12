@@ -248,28 +248,42 @@ class ActionVQVAE(nn.Module):
             if isinstance(self.action_shape, int):  # continuous action
                 if  self.cont_reconst_l1_loss:
                     recons_loss = F.l1_loss(recons_action, target_action)
+                    recons_loss_none_reduction = F.l1_loss(recons_action, target_action, reduction='none').mean(-1)
                 else:
                     recons_loss = F.mse_loss(recons_action, target_action)
+                    recons_loss_none_reduction = F.mse_loss(recons_action, target_action, reduction='none').mean(-1)
+
             elif isinstance(self.action_shape, dict):  # hybrid action
                 if  self.cont_reconst_l1_loss:
                     recons_loss_cont = F.l1_loss(recons_action['action_args'], target_action['action_args'].view(-1,target_action['action_args'].shape[-1]))
+                    recons_loss_cont_none_reduction = F.l1_loss(recons_action['action_args'], target_action['action_args'].view(-1,target_action['action_args'].shape[-1]), reduction='none').mean(-1)
+
+
                 else:
                     recons_loss_cont = F.mse_loss(recons_action['action_args'], target_action['action_args'].view(-1,target_action['action_args'].shape[-1]))
+                    recons_loss_cont_none_reduction = F.mse_loss(recons_action['action_args'], target_action['action_args'].view(-1,target_action['action_args'].shape[-1]), reduction='none').mean(-1)
+
                 recons_loss_disc = F.cross_entropy(recons_action['logit'], target_action['action_type'].view(-1))
+                recons_loss_disc_none_reduction = F.cross_entropy(recons_action['logit'], target_action['action_type'].view(-1), reduction='none').mean(-1)
+
                 # here view(-1) is to be compatiable with multi_agent case, e.g. gobigger
                 recons_loss = recons_loss_cont + recons_loss_disc
+                recons_loss_none_reduction = recons_loss_cont_none_reduction + recons_loss_disc_none_reduction
 
-            return recons_action, recons_loss
+
+            return recons_action, recons_loss, recons_loss_none_reduction
 
     def train(self, data: Dict) -> Dict[str, torch.Tensor]:
         action_embedding = self._get_action_embedding(data)
         encoding = self.encoder(action_embedding)
         quantized_index, quantized_embedding, vq_loss, embedding_loss, commitment_loss = self.vq_layer.train(encoding)
         action_decoding = self.decoder(quantized_embedding)
-        recons_action, recons_loss = self._recons_action(action_decoding, data['action'])
+        recons_action, recons_loss, recons_loss_none_reduction = self._recons_action(action_decoding, data['action'])
 
         total_vqvae_loss = recons_loss + self.vq_loss_weight * vq_loss
         return {
+            'quantized_index': quantized_index,
+            'recons_loss_none_reduction': recons_loss_none_reduction, # use for rl priority in dqn_vqvae
             'total_vqvae_loss': total_vqvae_loss,
             'recons_loss': recons_loss,
             'vq_loss': vq_loss,
