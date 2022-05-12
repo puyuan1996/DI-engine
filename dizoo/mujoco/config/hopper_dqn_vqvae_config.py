@@ -40,15 +40,17 @@ hopper_dqn_default_config = dict(
         replay_buffer_size_vqvae=int(1e6),
         priority=False,
         priority_IS_weight=False,
-        # TODO: reweight RL loss according to the reconstruct loss, because in 
+        # TODO: weight RL loss according to the reconstruct loss, because in 
         # In the area with large reconstruction loss, the action reconstruction is inaccurate, that is, the (\hat{x}, r) does not match, 
         # and the corresponding Q value is inaccurate. The update should be reduced to avoid wrong gradient.
-        rl_reconst_loss_reweight=True,
+        rl_reconst_loss_weight=True,
+        rl_reconst_loss_weight_min=0.2,
         # priority_vqvae=True,
         # priority_IS_weight_vqvae=True,
         # cont_reconst_l1_loss=True,
         priority_vqvae=False,
         priority_IS_weight_vqvae=False,
+        priority_vqvae_min=0.2,
         cont_reconst_l1_loss=False,
         model=dict(
             obs_shape=11,

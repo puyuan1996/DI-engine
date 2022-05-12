@@ -3,7 +3,7 @@ import os
 module_path = os.path.dirname(__file__)
 
 nstep = 3
-num_actuators=4
+num_actuators=10
 gym_hybrid_dqn_default_config = dict(
     env=dict(
         collector_env_num=8,
@@ -24,7 +24,6 @@ gym_hybrid_dqn_default_config = dict(
 
         # Whether to use cuda for network.
         cuda=True,
-        priority=False,
         # Reward's future discount factor, aka. gamma.
         discount_factor=0.99,
         # How many steps in td error.
@@ -49,9 +48,25 @@ gym_hybrid_dqn_default_config = dict(
         random_collect_size=int(5e4),
         # random_collect_size=int(1),  # debug
         vqvae_embedding_dim=64,  # ved: D
-        vqvae_hidden_dim=[256],  # vhd
-        # vqvae_hidden_dim=[512],  # vhd
+        # vqvae_hidden_dim=[256],  # vhd
+        vqvae_hidden_dim=[512],  # vhd
+        # vqvae_hidden_dim=[1024],  # vhd
         vq_loss_weight=0.1,
+        replay_buffer_size_vqvae=int(1e6),
+        priority=False,
+        priority_IS_weight=False,
+        # TODO: weight RL loss according to the reconstruct loss, because in 
+        # In the area with large reconstruction loss, the action reconstruction is inaccurate, that is, the (\hat{x}, r) does not match, 
+        # and the corresponding Q value is inaccurate. The update should be reduced to avoid wrong gradient.
+        rl_reconst_loss_weight=False,
+        rl_reconst_loss_weight_min=0.2,
+        # priority_vqvae=True,
+        # priority_IS_weight_vqvae=True,
+        # cont_reconst_l1_loss=True,
+        priority_vqvae=False,
+        priority_IS_weight_vqvae=False,
+        priority_vqvae_min=0.2,
+        cont_reconst_l1_loss=False,
         model=dict(
             obs_shape=10,
             action_shape=int(64),  # num oof num_embeddings: K
@@ -136,7 +151,8 @@ create_config = gym_hybrid_dqn_create_config
 def train(args):
     # main_config.exp_name = 'data_sliding/dqn_noema_smallnet_k16_upcr20' + '_seed' + f'{args.seed}'+'_3M'
     # main_config.exp_name = 'data_moving/dqn_noema_smallnet_k16_upcr20_vqloss0.1' + '_seed' + f'{args.seed}'+'_3M'
-    main_config.exp_name = 'data_hardmove_n4/dqn_noema_middlenet_k64_noise_history' + '_seed' + f'{args.seed}'+'_3M'
+    # main_config.exp_name = 'data_hardmove_n4/dqn_noema_middlenet_k64_noise_history' + '_seed' + f'{args.seed}'+'_3M'
+    main_config.exp_name = 'data_hardmove_n10_25/dqn_noema_middlenet_k64_noise_history_vhd512' + '_seed' + f'{args.seed}'+'_3M'
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,max_env_step=int(3e6))
 
 

@@ -320,7 +320,7 @@ class DQNVQVAEPolicy(Policy):
                 # first max-min normalization, transform to [0, 1] priority should be non negtive (>=0)
                 # then scale to [0.2, 1], to make sure all data can be used to update vqvae
                 reward_normalization = (data['reward'][0] - data['reward'][0].min())/(data['reward'][0].max() - data['reward'][0].min()+1e-8)
-                reward_normalization = 0.8* reward_normalization +0.2 
+                reward_normalization =  (1-self._cfg.priority_vqvae_min)* reward_normalization + self._cfg.priority_vqvae_min
 
                 return {
                     'priority': reward_normalization.tolist(), 
@@ -347,7 +347,7 @@ class DQNVQVAEPolicy(Policy):
                 # result = self._vqvae_model.inference_without_obs({'action': data['action']})
                 # data['latent_action'] = result['quantized_index'].clone().detach()
 
-                if self._cfg.rl_reconst_loss_reweight:
+                if self._cfg.rl_reconst_loss_weight:
                     result = self._vqvae_model.train(data)
                     reconstruction_loss_none_reduction = result['recons_loss_none_reduction']
                     data['latent_action'] = result['quantized_index'].clone().detach()
@@ -382,15 +382,17 @@ class DQNVQVAEPolicy(Policy):
                         target_q_action = self._learn_model.forward(data['next_obs'])['action']
                         # print(torch.unique( target_q_action))
 
-                # TODO: reweight RL loss according to the reconstruct loss, because in 
+                # TODO: weight RL loss according to the reconstruct loss, because in 
                 # In the area with large reconstruction loss, the action reconstruction is inaccurate, that is, the (\hat{x}, r) does not match, 
                 # and the corresponding Q value is inaccurate. The update should be reduced to avoid wrong gradient.
-                if self._cfg.rl_reconst_loss_reweight:
+                if self._cfg.rl_reconst_loss_weight:
                     # TODO:
                     # fist max-min normalization, transform to [0, 1]
-                    # then scale to [0.2, 1], to make sure all data can be used to calculate gradients
                     reconstruction_loss_none_reduction_normalization = (reconstruction_loss_none_reduction - reconstruction_loss_none_reduction.min())/(reconstruction_loss_none_reduction.max() - reconstruction_loss_none_reduction.min()+1e-8)
-                    reconstruction_loss_weight = 0.8 * reconstruction_loss_none_reduction_normalization +0.2 
+                    # then scale to [0.2, 1], to make sure all data can be used to calculate gradients
+                    # reconstruction_loss_weight = (1-self._cfg.rl_reconst_loss_weight_min) * reconstruction_loss_none_reduction_normalization + self._cfg.rl_reconst_loss_weight_min
+                    # then scale to [1, 0.2], to make sure all data can be used to calculate gradients
+                    reconstruction_loss_weight = -(1-self._cfg.rl_reconst_loss_weight_min) * reconstruction_loss_none_reduction_normalization + 1
                     data['weight'] = reconstruction_loss_weight
 
                 # NOTE: RL learn policy in latent action space, so here using data['latent_action']
