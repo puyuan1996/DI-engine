@@ -2,8 +2,9 @@ from easydict import EasyDict
 import os
 module_path = os.path.dirname(__file__)
 
+
 nstep = 3
-num_actuators=10
+num_actuators=4
 gym_hybrid_dqn_default_config = dict(
     env=dict(
         collector_env_num=8,
@@ -43,19 +44,20 @@ gym_hybrid_dqn_default_config = dict(
         #         ),
         # for 'HardMove-v0'
         original_action_shape=dict( 
-                action_type_shape=int(2** num_actuators),
-                action_args_shape=int(num_actuators),
+                action_type_shape=int(2** num_actuators),  # 2**4=16, 2**6=64, 2**8=256, 2**10=1024
+                action_args_shape=int(num_actuators), # 4,6,8,10
             ),
-        random_collect_size=int(1e4),
+        random_collect_size=int(5e4),
         # random_collect_size=int(1),  # debug
         vqvae_embedding_dim=64,  # ved: D
         vqvae_hidden_dim=[256],  # vhd
-        vq_loss_weight=1,
+        # vqvae_hidden_dim=[512],  # vhd
+        vq_loss_weight=0.1,
         model=dict(
             obs_shape=10,
-            action_shape=int(16),  # num oof num_embeddings: K
-            encoder_hidden_size_list=[128, 128, 64],  # small net
-            # encoder_hidden_size_list=[256, 256, 128],  # middle net
+            action_shape=int(64),  # num oof num_embeddings: K
+            # encoder_hidden_size_list=[128, 128, 64],  # small net
+            encoder_hidden_size_list=[256, 256, 128],  # middle net
             # encoder_hidden_size_list=[512, 512, 256],  # large net
             # Whether to use dueling head.
             dueling=True,
@@ -86,7 +88,8 @@ gym_hybrid_dqn_default_config = dict(
             grad_clip_value=0.5,
 
             # add noise in original continuous action
-            noise=False,
+            # noise=False,
+            noise=True,
             noise_sigma=0.1,
             noise_range=dict(
             min=-0.5,
@@ -134,9 +137,7 @@ create_config = gym_hybrid_dqn_create_config
 def train(args):
     # main_config.exp_name = 'data_sliding/dqn_noema_smallnet_k16_upcr20' + '_seed' + f'{args.seed}'+'_3M'
     # main_config.exp_name = 'data_moving/dqn_noema_smallnet_k16_upcr20_vqloss0.1' + '_seed' + f'{args.seed}'+'_3M'
-    # main_config.exp_name = 'data_hardmove_n10/dqn_noema_middlenet_k64_upcr20' + '_seed' + f'{args.seed}'+'_3M'
-    main_config.exp_name = 'data_hardmove_n10/dqn_noema_smallnet_k16_upcr20' + '_seed' + f'{args.seed}'+'_3M'
-
+    main_config.exp_name = 'data_hardmove_n4/dqn_noema_middlenet_k64_noise_history' + '_seed' + f'{args.seed}'+'_3M'
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,max_env_step=int(3e6))
 
 

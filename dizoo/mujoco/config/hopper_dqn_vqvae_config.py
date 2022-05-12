@@ -68,12 +68,14 @@ hopper_dqn_default_config = dict(
             grad_clip_value=0.5,
 
             # add noise in original continuous action
-            noise=False,
-            # noise=True,
+            # noise=False,
+            noise=True,
             noise_sigma=0.1,
             noise_range=dict(
-            min=-0.5,
-            max=0.5,
+            # min=-0.5,
+            # max=0.5,
+            min=-1,
+            max=1,
             ),
         ),
         # collect_mode config
@@ -116,7 +118,7 @@ create_config = hopper_dqn_create_config
 
 
 def train(args):
-    main_config.exp_name = 'data_hopper/dqn_noema_middlenet_k64_upcr20' + '_seed' + f'{args.seed}'+'_3M'
+    main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_upcr20_noise1_history' + '_seed' + f'{args.seed}'+'_3M'
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=int(3e6))
 
 if __name__ == "__main__":
@@ -124,8 +126,8 @@ if __name__ == "__main__":
     import argparse
     from ding.entry import serial_pipeline_dqn_vqvae
 
-    # for seed in [0,1,2]:
-    for seed in [1]:
+    for seed in [0,1,2]:
+    # for seed in [1]:
         parser = argparse.ArgumentParser()
         parser.add_argument('--seed', '-s', type=int, default=seed)
         args = parser.parse_args()
