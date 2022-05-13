@@ -3,7 +3,7 @@ from collections import namedtuple
 import copy
 import torch
 
-from ding.torch_utils import Adam, to_device
+from ding.torch_utils import Adam, to_device, to_tensor
 from ding.rl_utils import q_nstep_td_data, q_nstep_td_error, get_nstep_return_data, get_train_sample
 from ding.model import model_wrap
 from ding.utils import POLICY_REGISTRY
@@ -188,7 +188,8 @@ class DQNVQVAEPolicy(Policy):
             eps_greedy_nearest=self._cfg.eps_greedy_nearest,
             cont_reconst_l1_loss=self._cfg.cont_reconst_l1_loss,
             cont_reconst_smooth_l1_loss=self._cfg.cont_reconst_smooth_l1_loss,
-
+            distribution_head_for_cont_action=self._cfg.distribution_head_for_cont_action,
+            n_atom=self._cfg.n_atom,
         )
         self._vqvae_model = to_device(self._vqvae_model, self._device)
         # NOTE:
@@ -317,12 +318,12 @@ class DQNVQVAEPolicy(Policy):
                 # NOTE:visualize_latent, now it's only for env hopper and gym_hybrid
                 # quantized_index = self.visualize_latent(save_histogram=False)
                 # cos_similarity = self.visualize_embedding_table(save_dis_map=False)
-                
-                # TODO: data['reward'] is nstep reward, take the true reward 
-                # first max-min normalization, transform to [0, 1] priority should be non negtive (>=0)
-                # then scale to [0.2, 1], to make sure all data can be used to update vqvae
-                reward_normalization = (data['reward'][0] - data['reward'][0].min())/(data['reward'][0].max() - data['reward'][0].min()+1e-8)
-                reward_normalization =  (1-self._cfg.priority_vqvae_min)* reward_normalization + self._cfg.priority_vqvae_min
+                if self._cfg.priority_type_vqvae=='reward':
+                    # TODO: data['reward'] is nstep reward, take the true reward 
+                    # first max-min normalization, transform to [0, 1] priority should be non negtive (>=0)
+                    # then scale to [0.2, 1], to make sure all data can be used to update vqvae
+                    reward_normalization = (data['reward'][0] - data['reward'][0].min())/(data['reward'][0].max() - data['reward'][0].min()+1e-8)
+                    reward_normalization =  (1-self._cfg.priority_vqvae_min)* reward_normalization + self._cfg.priority_vqvae_min
 
                 return {
                     'priority': reward_normalization.tolist(), 
@@ -598,6 +599,8 @@ class DQNVQVAEPolicy(Policy):
             else:
                 # output['action']  = self._vqvae_model.decode_with_obs(output['action'])
                 output['action'] = self._vqvae_model.decode(output['action'])['recons_action']
+                # latents = to_device(torch.arange(512), 'cuda')
+                # print(self._vqvae_model.decode(latents)['recons_action'].max(0), self._vqvae_model.decode(latents)['recons_action'].min(0),self._vqvae_model.decode(latents)['recons_action'].std(0))
 
                 # NOTE: add noise in the original actions
                 if self._cfg.learn.noise:

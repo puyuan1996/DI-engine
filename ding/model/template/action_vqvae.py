@@ -161,6 +161,8 @@ class ActionVQVAE(nn.Module):
             eps_greedy_nearest: bool = False,
             cont_reconst_l1_loss: bool = False,
             cont_reconst_smooth_l1_loss: bool = False,
+            distribution_head_for_cont_action: bool = False,
+            n_atom: int = 21,
     ) -> None:
         super(ActionVQVAE, self).__init__()
 
@@ -172,6 +174,8 @@ class ActionVQVAE(nn.Module):
         self.act = nn.ReLU()
         self.cont_reconst_l1_loss = cont_reconst_l1_loss
         self.cont_reconst_smooth_l1_loss = cont_reconst_smooth_l1_loss
+        self.distribution_head_for_cont_action=distribution_head_for_cont_action
+        self.n_atom = n_atom
 
 
         # Encoder
@@ -205,12 +209,23 @@ class ActionVQVAE(nn.Module):
         )
 
         if isinstance(self.action_shape, int):  # continuous action
-            self.recons_action_head = nn.Sequential(nn.Linear(self.hidden_dims[0], self.action_shape), nn.Tanh())
+            if not self.distribution_head_for_cont_action:
+                self.recons_action_head = nn.Sequential(nn.Linear(self.hidden_dims[0], self.action_shape), nn.Tanh())
+            else:
+                self.recons_action_head = nn.Sequential(nn.Linear(self.hidden_dims[0], self.action_shape*self.n_atom), nn.Tanh())
+
+
+            
         elif isinstance(self.action_shape, dict):  # hybrid action
             # input action: concat(continuous action, one-hot encoding of discrete action)
-            self.recons_action_cont_head = nn.Sequential(
-                nn.Linear(self.hidden_dims[0], self.action_shape['action_args_shape']), nn.Tanh()
-            )
+            if not self.distribution_head_for_cont_action:
+                self.recons_action_cont_head = nn.Sequential(
+                    nn.Linear(self.hidden_dims[0], self.action_shape['action_args_shape']), nn.Tanh()
+                )
+            else:
+                self.recons_action_cont_head = nn.Sequential(
+                    nn.Linear(self.hidden_dims[0], self.action_shape['action_args_shape']*self.n_atom), nn.Tanh()
+                )
             # self.recons_action_disc_head = nn.Sequential(
             #     nn.Linear(self.hidden_dims[0], self.action_shape['action_type_shape']), nn.ReLU()
             # )
@@ -234,9 +249,19 @@ class ActionVQVAE(nn.Module):
     ) -> Tuple[Union[torch.Tensor, Dict[str, torch.Tensor]], torch.Tensor]:
 
         if isinstance(self.action_shape, int):  # continuous action
-            recons_action = self.recons_action_head(action_decoding)
+            if not self.distribution_head_for_cont_action:
+                recons_action = self.recons_action_head(action_decoding)
+            else:
+                support = torch.linspace(-1, 1, self.n_atom).to(action_decoding.device)  # TODO
+                recons_action_logits = self.recons_action_head(action_decoding).view(-1, self.action_shape, self.n_atom)
+                recons_action = torch.mean(recons_action_logits * support, dim=-1)
         elif isinstance(self.action_shape, dict):  # hybrid action
-            recons_action_cont = self.recons_action_cont_head(action_decoding)
+            if not self.distribution_head_for_cont_action:
+                recons_action_cont = self.recons_action_cont_head(action_decoding)
+            else:
+                support = torch.linspace(-1, 1, self.n_atom).to(action_decoding.device)  # TODO
+                recons_action_logits = self.recons_action_head(action_decoding).view(-1, self.action_shape, self.n_atom)
+                recons_action_cont = torch.mean(recons_action_logits * support, dim=-1)
             recons_action_disc_logit = self.recons_action_disc_head(action_decoding)
             recons_action_disc = torch.argmax(recons_action_disc_logit, dim=-1)
             recons_action = {

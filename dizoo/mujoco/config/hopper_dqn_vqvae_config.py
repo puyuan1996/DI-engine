@@ -36,6 +36,8 @@ hopper_dqn_default_config = dict(
         # random_collect_size=int(1),  # debug
         vqvae_embedding_dim=64,  # ved: D
         vqvae_hidden_dim=[256],  # vhd
+        # vqvae_embedding_dim=128,  # ved: D
+        # vqvae_hidden_dim=[512],  # vhd
         vq_loss_weight=0.1,  # TODO
         replay_buffer_size_vqvae=int(1e6), # TODO
         priority=False,
@@ -48,14 +50,19 @@ hopper_dqn_default_config = dict(
         rl_reconst_loss_weight_min=0.2,
         priority_vqvae=False,
         priority_IS_weight_vqvae=False,
+        priority_type_vqvae='reward', # 'return'
         priority_vqvae_min=0.2,
         cont_reconst_l1_loss=False,
         cont_reconst_smooth_l1_loss=False,
         vavae_pretrain_only=True,   # if  vavae_pretrain_only=True
         recompute_latent_action=False,
+        distribution_head_for_cont_action=True,
+        n_atom=51,
         model=dict(
             obs_shape=11,
             action_shape=int(64),  # num of num_embeddings: K
+            # action_shape=int(256),  # num of num_embeddings: K
+
             # encoder_hidden_size_list=[128, 128, 64],  # small net
             encoder_hidden_size_list=[256, 256, 128],  # middle net
             # encoder_hidden_size_list=[512, 512, 256],  # large net
@@ -136,7 +143,7 @@ def train(args):
     # main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_vqvae-cont-smoothl1loss' + '_seed' + f'{args.seed}'+'_3M'
     # main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_rl-reconst-reweight' + '_seed' + f'{args.seed}'+'_3M'
     # main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_vqvae1e4' + '_seed' + f'{args.seed}'+'_3M'
-    main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_pretrainonly' + '_seed' + f'{args.seed}'+'_3M'
+    main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_pretrainonly_atom51' + '_seed' + f'{args.seed}'+'_3M'
 
 
 
