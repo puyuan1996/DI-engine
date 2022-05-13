@@ -43,15 +43,14 @@ hopper_dqn_default_config = dict(
         # TODO: weight RL loss according to the reconstruct loss, because in 
         # In the area with large reconstruction loss, the action reconstruction is inaccurate, that is, the (\hat{x}, r) does not match, 
         # and the corresponding Q value is inaccurate. The update should be reduced to avoid wrong gradient.
-        rl_reconst_loss_weight=True,
+        rl_reconst_loss_weight=False,
+        # rl_reconst_loss_weight=True,
         rl_reconst_loss_weight_min=0.2,
-        # priority_vqvae=True,
-        # priority_IS_weight_vqvae=True,
-        # cont_reconst_l1_loss=True,
         priority_vqvae=False,
         priority_IS_weight_vqvae=False,
         priority_vqvae_min=0.2,
         cont_reconst_l1_loss=False,
+        cont_reconst_smooth_l1_loss=True,
         model=dict(
             obs_shape=11,
             action_shape=int(64),  # num of num_embeddings: K
@@ -132,8 +131,8 @@ create_config = hopper_dqn_create_config
 
 def train(args):
     # main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_vqvae-reward-priority-min0.2' + '_seed' + f'{args.seed}'+'_3M'
-    # main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_vqvae-cont-l1loss' + '_seed' + f'{args.seed}'+'_3M'
-    main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_rl-reconst-reweight' + '_seed' + f'{args.seed}'+'_3M'
+    main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_vqvae-cont-smoothl1loss' + '_seed' + f'{args.seed}'+'_3M'
+    # main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_rl-reconst-reweight' + '_seed' + f'{args.seed}'+'_3M'
 
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=int(3e6))
 

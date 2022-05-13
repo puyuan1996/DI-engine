@@ -187,6 +187,8 @@ class DQNVQVAEPolicy(Policy):
             is_ema_target=self._cfg.is_ema_target,
             eps_greedy_nearest=self._cfg.eps_greedy_nearest,
             cont_reconst_l1_loss=self._cfg.cont_reconst_l1_loss,
+            cont_reconst_smooth_l1_loss=self._cfg.cont_reconst_smooth_l1_loss,
+
         )
         self._vqvae_model = to_device(self._vqvae_model, self._device)
         # NOTE:

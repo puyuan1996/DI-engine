@@ -160,6 +160,7 @@ class ActionVQVAE(nn.Module):
             is_ema_target: bool = False,
             eps_greedy_nearest: bool = False,
             cont_reconst_l1_loss: bool = False,
+            cont_reconst_smooth_l1_loss: bool = False,
     ) -> None:
         super(ActionVQVAE, self).__init__()
 
@@ -170,6 +171,8 @@ class ActionVQVAE(nn.Module):
         self.embedding_num = embedding_num
         self.act = nn.ReLU()
         self.cont_reconst_l1_loss = cont_reconst_l1_loss
+        self.cont_reconst_smooth_l1_loss = cont_reconst_smooth_l1_loss
+
 
         # Encoder
         if isinstance(self.action_shape, int):  # continuous action
@@ -249,6 +252,9 @@ class ActionVQVAE(nn.Module):
                 if  self.cont_reconst_l1_loss:
                     recons_loss = F.l1_loss(recons_action, target_action)
                     recons_loss_none_reduction = F.l1_loss(recons_action, target_action, reduction='none').mean(-1)
+                elif self.cont_reconst_smooth_l1_loss:
+                    recons_loss = F.smooth_l1_loss(recons_action, target_action)
+                    recons_loss_none_reduction = F.smooth_l1_loss(recons_action, target_action, reduction='none').mean(-1)
                 else:
                     recons_loss = F.mse_loss(recons_action, target_action)
                     recons_loss_none_reduction = F.mse_loss(recons_action, target_action, reduction='none').mean(-1)
@@ -257,8 +263,9 @@ class ActionVQVAE(nn.Module):
                 if  self.cont_reconst_l1_loss:
                     recons_loss_cont = F.l1_loss(recons_action['action_args'], target_action['action_args'].view(-1,target_action['action_args'].shape[-1]))
                     recons_loss_cont_none_reduction = F.l1_loss(recons_action['action_args'], target_action['action_args'].view(-1,target_action['action_args'].shape[-1]), reduction='none').mean(-1)
-
-
+                elif  self.cont_reconst_smooth_l1_loss:
+                    recons_loss_cont = F.smooth_l1_loss(recons_action['action_args'], target_action['action_args'].view(-1,target_action['action_args'].shape[-1]))
+                    recons_loss_cont_none_reduction = F.smooth_l1_loss(recons_action['action_args'], target_action['action_args'].view(-1,target_action['action_args'].shape[-1]), reduction='none').mean(-1)
                 else:
                     recons_loss_cont = F.mse_loss(recons_action['action_args'], target_action['action_args'].view(-1,target_action['action_args'].shape[-1]))
                     recons_loss_cont_none_reduction = F.mse_loss(recons_action['action_args'], target_action['action_args'].view(-1,target_action['action_args'].shape[-1]), reduction='none').mean(-1)
