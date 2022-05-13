@@ -188,56 +188,57 @@ def serial_pipeline_dqn_vqvae(
         # ====================
         # VAE phase
         # ====================
-        if iter % cfg.policy.learn.rl_vae_update_circle in range(cfg.policy.learn.rl_vae_update_circle - 1,
-                                                                 cfg.policy.learn.rl_vae_update_circle):
-            for i in range(cfg.policy.learn.update_per_collect_vae):
-                # Learner will train ``update_per_collect`` times in one iteration.
-                # TODO(pu):
-                # history+recent
-                # train_data_history = replay_buffer.sample(
-                #     int(cfg.policy.learn.vqvae_batch_size / 2), learner.train_iter
-                # )
-                # train_data_recent = replay_buffer_vqvae.sample(
-                #     int(cfg.policy.learn.vqvae_batch_size / 2), learner.train_iter
-                # )
-                # train_data = train_data_history + train_data_recent
-                
-                # recent
-                # add replay_buffer_vqvae.clear()  # TODO(pu)
-                # train_data_recent = replay_buffer_vqvae.sample(
-                #     int(cfg.policy.learn.vqvae_batch_size / 2), learner.train_iter
-                # )
-                # train_data = train_data_recent
+        if not cfg.policy.vavae_pretrain_only:
+            if iter % cfg.policy.learn.rl_vae_update_circle in range(cfg.policy.learn.rl_vae_update_circle - 1,
+                                                                    cfg.policy.learn.rl_vae_update_circle):
+                for i in range(cfg.policy.learn.update_per_collect_vae):
+                    # Learner will train ``update_per_collect`` times in one iteration.
+                    # TODO(pu):
+                    # history+recent
+                    # train_data_history = replay_buffer.sample(
+                    #     int(cfg.policy.learn.vqvae_batch_size / 2), learner.train_iter
+                    # )
+                    # train_data_recent = replay_buffer_vqvae.sample(
+                    #     int(cfg.policy.learn.vqvae_batch_size / 2), learner.train_iter
+                    # )
+                    # train_data = train_data_history + train_data_recent
+                    
+                    # recent
+                    # add replay_buffer_vqvae.clear()  # TODO(pu)
+                    # train_data_recent = replay_buffer_vqvae.sample(
+                    #     int(cfg.policy.learn.vqvae_batch_size / 2), learner.train_iter
+                    # )
+                    # train_data = train_data_recent
 
-                
-                # history
-                # train_data_history = replay_buffer.sample(
-                #     int(cfg.policy.learn.vqvae_batch_size), learner.train_iter
-                # )
-                # train_data = train_data_history
+                    
+                    # history
+                    # train_data_history = replay_buffer.sample(
+                    #     int(cfg.policy.learn.vqvae_batch_size), learner.train_iter
+                    # )
+                    # train_data = train_data_history
 
-                # replay_buffer_vqvae reward priority
-                train_data_vqvae = replay_buffer_vqvae.sample(
-                    int(cfg.policy.learn.vqvae_batch_size), learner.train_iter
-                )
-                train_data = train_data_vqvae
-
-                if train_data is not None:
-                    for item in train_data:
-                        item['rl_phase'] = False
-                        item['vae_phase'] = True
-                if train_data is None:
-                    # It is possible that replay buffer's data count is too few to train ``update_per_collect`` times
-                    logging.warning(
-                        "Replay buffer's data can only train for {} steps. ".format(i) +
-                        "You can modify data collect config, e.g. increasing n_sample, n_episode."
+                    # replay_buffer_vqvae reward priority
+                    train_data_vqvae = replay_buffer_vqvae.sample(
+                        int(cfg.policy.learn.vqvae_batch_size), learner.train_iter
                     )
-                    break
-                learner.train(train_data, collector.envstep)
-                if learner.policy.get_attribute('priority_vqvae'):
-                    replay_buffer_vqvae.update(learner.priority_info)
+                    train_data = train_data_vqvae
 
-            # replay_buffer_vqvae.clear()  # TODO(pu)
+                    if train_data is not None:
+                        for item in train_data:
+                            item['rl_phase'] = False
+                            item['vae_phase'] = True
+                    if train_data is None:
+                        # It is possible that replay buffer's data count is too few to train ``update_per_collect`` times
+                        logging.warning(
+                            "Replay buffer's data can only train for {} steps. ".format(i) +
+                            "You can modify data collect config, e.g. increasing n_sample, n_episode."
+                        )
+                        break
+                    learner.train(train_data, collector.envstep)
+                    if learner.policy.get_attribute('priority_vqvae'):
+                        replay_buffer_vqvae.update(learner.priority_info)
+
+                # replay_buffer_vqvae.clear()  # TODO(pu)
 
         if collector.envstep > max_env_step:
             # NOTE: save visualized latent action and embedding_table

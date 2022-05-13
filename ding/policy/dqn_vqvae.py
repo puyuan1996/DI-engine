@@ -349,14 +349,15 @@ class DQNVQVAEPolicy(Policy):
                 # result = self._vqvae_model.inference_without_obs({'action': data['action']})
                 # data['latent_action'] = result['quantized_index'].clone().detach()
 
-                if self._cfg.rl_reconst_loss_weight:
-                    result = self._vqvae_model.train(data)
-                    reconstruction_loss_none_reduction = result['recons_loss_none_reduction']
-                    data['latent_action'] = result['quantized_index'].clone().detach()
-                else:
-                    quantized_index = self._vqvae_model.encode({'action': data['action']})
-                    data['latent_action'] = quantized_index.clone().detach()
-                    # print(torch.unique(data['latent_action']))
+                if self._cfg.recompute_latent_action:
+                    if self._cfg.rl_reconst_loss_weight:
+                        result = self._vqvae_model.train(data)
+                        reconstruction_loss_none_reduction = result['recons_loss_none_reduction']
+                        data['latent_action'] = result['quantized_index'].clone().detach()
+                    else:
+                        quantized_index = self._vqvae_model.encode({'action': data['action']})
+                        data['latent_action'] = quantized_index.clone().detach()
+                        # print(torch.unique(data['latent_action']))
 
                 if self._cuda:
                     data = to_device(data, self._device)
