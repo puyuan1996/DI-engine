@@ -174,7 +174,7 @@ class DTPolicy(DQNPolicy):
         type='dt',
         # (bool) Whether to use cuda for network.
         cuda=False,
-        # (bool) Whether the RL algorithm is on-policy or off-policy.
+        # # (bool) Whether the RL algorithm is on-policy or off-policy.
         on_policy=False,
         # (bool) Whether use priority(priority sample, IS weight, update priority)
         priority=False,
@@ -249,7 +249,7 @@ class DTPolicy(DQNPolicy):
 
         self.stop_value = self._cfg.stop_value
         self.env_name = self._cfg.env_name
-        dataset = self._cfg.dataset  # medium / medium-replay / medium-expert
+        # dataset = self._cfg.dataset  # medium / medium-replay / medium-expert
         self.rtg_scale = self._cfg.rtg_target  # normalize returns to go
         self.rtg_target = self._cfg.rtg_target  # max target reward_to_go
         self.max_eval_ep_len = self._cfg.max_eval_ep_len  # max len of one episode
