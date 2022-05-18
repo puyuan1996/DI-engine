@@ -13,9 +13,15 @@ from ding.policy import create_policy, PolicyFactory
 from ding.utils import set_pkg_seed
 from .utils import random_collect
 import copy
+from dizoo.mujoco.config.hopper_sac_data_generation_default_config_pu import main_config, create_config
+from ding.utils.data import create_dataset
+from torch.utils.data import DataLoader
+from ding.torch_utils import Adam, to_device, to_tensor
 
 
-def serial_pipeline_dqn_vqvae(
+expert_main_config, expert_create_config = main_config, create_config
+
+def serial_pipeline_dqn_vqvae_expert(
         input_cfg: Union[str, Tuple[dict, dict]],
         seed: int = 0,
         env_setting: Optional[List[Any]] = None,
@@ -90,26 +96,25 @@ def serial_pipeline_dqn_vqvae(
 
     # Accumulate plenty of data at the beginning of training.
     if cfg.policy.get('random_collect_size', 0) > 0:
-        # random_collect(cfg.policy, policy, collector, collector_env, commander, replay_buffer)
-        if cfg.policy.get('transition_with_policy_data', False):
-            collector.reset_policy(policy.collect_mode)
-        else:
-            action_space = collector_env.action_space
-            random_policy = PolicyFactory.get_random_policy(policy.collect_mode, action_space=action_space)
-            collector.reset_policy(random_policy)
 
-        collect_kwargs = commander.step()
-        new_data = collector.collect(n_sample=cfg.policy.random_collect_size, policy_kwargs=collect_kwargs)
-        for item in new_data:
-            item['warm_up'] = True
-        replay_buffer.push(new_data, cur_collector_envstep=0)
-        collector.reset_policy(policy.collect_mode)
+        expert_config = copy.deepcopy([expert_main_config, expert_create_config])
+        expert_input_cfg = expert_config
+        if isinstance(input_cfg, str):
+            expert_cfg, expert_create_cfg = read_config(expert_input_cfg)
+        else:
+            expert_cfg, expert_create_cfg = expert_input_cfg
+        expert_create_cfg.policy.type = expert_create_cfg.policy.type + '_command'
+        expert_cfg = compile_config(expert_cfg, seed=cfg.seed, auto=True, create_cfg=expert_create_cfg)
+
+        # Dataset
+        dataset = create_dataset(expert_cfg)
+        dataloader = DataLoader(dataset, cfg.policy.learn.vqvae_batch_size, shuffle=True, collate_fn=lambda x: x)
 
         # ====================
         # warm_up phase: train VAE
         # ====================
         # Learn policy from collected data
-        for i in range(cfg.policy.learn.warm_up_update):
+        for i in range(cfg.policy.warmup_update_epoches):
             # NOTE: save visualized latent action and embedding_table
             # if i == 0:
             #     policy.visualize_latent(
@@ -117,21 +122,20 @@ def serial_pipeline_dqn_vqvae(
             #     )
             #     policy.visualize_embedding_table(name='warmup-start_' + f'{cfg.env.env_id}_s{cfg.seed}')
             # Learner will train ``update_per_collect`` times in one iteration.
-            train_data = replay_buffer.sample(cfg.policy.learn.vqvae_batch_size, learner.train_iter)
-            if train_data is None:
-                # It is possible that replay buffer's data count is too few to train ``update_per_collect`` times
-                logging.warning(
-                    "Replay buffer's data can only train for {} steps. ".format(i) +
-                    "You can modify data collect config, e.g. increasing n_sample, n_episode."
-                )
-                break
-            learner.train(train_data, collector.envstep)
+            for i, train_data in enumerate(dataloader):
+                # print(i)
+                # train_data = replay_buffer.sample(cfg.policy.learn.vqvae_batch_size, learner.train_iter)
+                if train_data is None:
+                    # It is possible that replay buffer's data count is too few to train ``update_per_collect`` times
+                    logging.warning(
+                        "Replay buffer's data can only train for {} steps. ".format(i) +
+                        "You can modify data collect config, e.g. increasing n_sample, n_episode."
+                    )
+                    break
+                for item in train_data:
+                    item['warm_up'] = True
+                learner.train(train_data, collector.envstep)
 
-            if learner.policy.get_attribute('priority'):
-                replay_buffer.update(learner.priority_info)
-            if learner.policy.get_attribute('warm_up_stop'):
-                break
-        replay_buffer.clear()  # TODO(pu): NOTE
 
     # NOTE: for the case collector_env_num>1, because after the random collect phase,  self._traj_buffer[env_id] may be not empty. Only
     # if the condition "timestep.done or len(self._traj_buffer[env_id]) == self._traj_len" is satisfied, the self._traj_buffer will be clear.
@@ -139,7 +143,7 @@ def serial_pipeline_dqn_vqvae(
     collector.reset(policy.collect_mode)
 
     # latents = to_device(torch.arange(64), 'cuda')
-    # recons_action = learner.policy._vqvae_model.decode(latents)['recons_action']
+    # recons_action = policy._vqvae_model.decode(latents)['recons_action']
     # print(recons_action.max(0), recons_action.min(0),recons_action.mean(0), recons_action.std(0))
 
     for iter in range(max_iterations):

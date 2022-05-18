@@ -1,7 +1,7 @@
 from easydict import EasyDict
 
 hopper_sac_config = dict(
-    exp_name='hopper_sac_seed0',
+    exp_name='hopper_sac_action_bins_seed0',
     env=dict(
         env_id='Hopper-v3',
         norm_obs=dict(use_norm=False, ),
@@ -41,7 +41,7 @@ hopper_sac_config = dict(
             unroll_len=1,
         ),
         command=dict(),
-        eval=dict(),
+        eval=dict(evaluator=dict(eval_freq=50000, )),
         other=dict(replay_buffer=dict(replay_buffer_size=1000000, ), ),
     ),
 )

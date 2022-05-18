@@ -228,6 +228,7 @@ def collect_episodic_demo_data(
         assert state_dict_path is not None
         state_dict = torch.load(state_dict_path, map_location='cpu')
     policy.collect_mode.load_state_dict(state_dict)
+    
     collector = EpisodeSerialCollector(cfg.policy.collect.collector, collector_env, collect_demo_policy)
 
     if hasattr(cfg.policy.other, 'eps'):
@@ -258,6 +259,30 @@ def episode_to_transitions(data_path: str, expert_data_path: str, nstep: int) ->
         _dict = pickle.load(f)  # class is list; length is cfg.reward_model.collect_count
     post_process_data = []
     for i in range(len(_dict)):
+        data = get_nstep_return_data(_dict[i], nstep)
+        post_process_data.extend(data)
+    offline_data_save_type(
+        post_process_data,
+        expert_data_path,
+    )
+
+def episode_to_transitions_pure_expert(data_path: str, expert_data_path: str, nstep: int) -> None:
+    r"""
+    Overview:
+        Transfer episoded data into nstep transitions
+    Arguments:
+        - data_path (:obj:str): data path that stores the pkl file
+        - expert_data_path (:obj:`str`): File path of the expert demo data will be written to.
+        - nstep (:obj:`int`): {s_{t}, a_{t}, s_{t+n}}.
+
+    """
+    with open(data_path, 'rb') as f:
+        _dict = pickle.load(f)  # class is list; length is cfg.reward_model.collect_count
+    post_process_data = []
+    for i in range(len(_dict)):
+        episode_rewards = torch.stack([_dict[i][j]['reward'] for j in range(_dict[i].__len__())],axis=0)
+        if episode_rewards.sum()<3500:
+            continue
         data = get_nstep_return_data(_dict[i], nstep)
         post_process_data.extend(data)
     offline_data_save_type(

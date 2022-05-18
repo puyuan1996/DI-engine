@@ -19,8 +19,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from ding.envs.common import affine_transform
 
-@POLICY_REGISTRY.register('dqn-vqvae')
-class DQNVQVAEPolicy(Policy):
+@POLICY_REGISTRY.register('dqn-vqvae-episode')
+class DQNVQVAEEPISODEPolicy(Policy):
     r"""
     Overview:
         Policy class of DQN-VQVAE algorithm.
@@ -77,7 +77,7 @@ class DQNVQVAEPolicy(Policy):
     """
 
     config = dict(
-        type='dqn-vqvae',
+        type='dqn-vqvae-episode',
         cuda=False,
         on_policy=False,
         priority=False,
@@ -335,9 +335,15 @@ class DQNVQVAEPolicy(Policy):
                     # then scale to [0.2, 1], to make sure all data can be used to update vqvae
                     reward_normalization = (data['reward'][0] - data['reward'][0].min())/(data['reward'][0].max() - data['reward'][0].min()+1e-8)
                     reward_normalization =  (1-self._cfg.priority_vqvae_min)* reward_normalization + self._cfg.priority_vqvae_min
+                elif self._cfg.priority_type_vqvae=='return':
+                    # TODO: data['return'] is the cumulative undiscounted reward
+                    # first max-min normalization, transform to [0, 1] priority should be non negtive (>=0)
+                    # then scale to [0.2, 1], to make sure all data can be used to update vqvae
+                    return_normalization = (data['return'] - data['return'].min())/(data['return'].max() - data['return'].min()+1e-8)
+                    return_normalization =  (1-self._cfg.priority_vqvae_min)* return_normalization + self._cfg.priority_vqvae_min
 
                 return {
-                    'priority': reward_normalization.tolist(), 
+                    'priority': return_normalization.tolist(), 
                     'cur_lr': self._optimizer.defaults['lr'],
                     # 'td_error': td_error_per_sample,
                     **loss_dict,
@@ -650,6 +656,8 @@ class DQNVQVAEPolicy(Policy):
             And the user can customize the this data processing procecure by overriding this two methods and collector \
             itself.
         """
+        for item in data:
+            item['return'] = torch.stack([data[i]['reward'] for i in range(len(data))]).sum(0)
         data = get_nstep_return_data(data, self._nstep, gamma=self._gamma)
         return get_train_sample(data, self._unroll_len)
 
@@ -666,6 +674,7 @@ class DQNVQVAEPolicy(Policy):
         Returns:
             - transition (:obj:`dict`): Dict type transition data.
         """
+
         if 'latent_action' in policy_output.keys():
             transition = {
                 'obs': obs,

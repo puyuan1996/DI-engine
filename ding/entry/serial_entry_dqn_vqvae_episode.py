@@ -15,7 +15,7 @@ from .utils import random_collect
 import copy
 
 
-def serial_pipeline_dqn_vqvae(
+def serial_pipeline_dqn_vqvae_episode(
         input_cfg: Union[str, Tuple[dict, dict]],
         seed: int = 0,
         env_setting: Optional[List[Any]] = None,
@@ -99,7 +99,8 @@ def serial_pipeline_dqn_vqvae(
             collector.reset_policy(random_policy)
 
         collect_kwargs = commander.step()
-        new_data = collector.collect(n_sample=cfg.policy.random_collect_size, policy_kwargs=collect_kwargs)
+        # NOTE
+        new_data = collector.collect(n_episode=cfg.policy.random_collect_size, policy_kwargs=collect_kwargs)
         for item in new_data:
             item['warm_up'] = True
         replay_buffer.push(new_data, cur_collector_envstep=0)

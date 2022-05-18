@@ -58,10 +58,14 @@ def train(args):
     import matplotlib.pyplot as plt
     fig = plt.figure()
     ax = fig.add_subplot(111)
-    ax.set_title('Hopper-v3 dqn episode0_infos_xvelocity')
-    plt.plot(episode0_infos_xvelocity)
+    # ax.set_title('Hopper-v3 dqn episode0_infos_xvelocity')
+    # plt.plot(episode0_infos_xvelocity)
+    # plt.show()
+    # plt.savefig(f'hopper-v3_dqn_episode0_infos_xvelocity.png')
+    ax.set_title('Hopper-v3 dqn episode0_rewards')
+    plt.plot(episode0_rewards)
     plt.show()
-    plt.savefig(f'hopper-v3_dqn_episode0_infos_xvelocity.png')
+    plt.savefig(f'hopper-v3_dqn_episode0_rewards.png')
 
     # dataloader = DataLoader(dataset, cfg.policy.learn.batch_size, shuffle=True, collate_fn=lambda x: x)
     # for i, train_data in enumerate(dataloader):

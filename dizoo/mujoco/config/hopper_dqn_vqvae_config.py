@@ -33,12 +33,12 @@ hopper_dqn_default_config = dict(
         # is_ema=True,  # use EMA
         original_action_shape=3,
         random_collect_size=int(5e4),
-        # random_collect_size=int(1),  # debug
+        # random_collect_size=int(10),  # debug
         vqvae_embedding_dim=64,  # ved: D
         vqvae_hidden_dim=[256],  # vhd
         # vqvae_embedding_dim=128,  # ved: D
         # vqvae_hidden_dim=[512],  # vhd
-        vq_loss_weight=0.1,  # TODO
+        vq_loss_weight=1,  # TODO
         replay_buffer_size_vqvae=int(1e6), # TODO
         priority=False,
         priority_IS_weight=False,
@@ -56,8 +56,10 @@ hopper_dqn_default_config = dict(
         cont_reconst_smooth_l1_loss=False,
         vavae_pretrain_only=True,   # if  vavae_pretrain_only=True
         recompute_latent_action=False,
-        distribution_head_for_cont_action=True,
+        categorical_head_for_cont_action=False,  # categorical distribution
         n_atom=51,
+        gaussian_head_for_cont_action=False, # gaussian  distribution
+        embedding_table_onehot=False,
         model=dict(
             obs_shape=11,
             action_shape=int(64),  # num of num_embeddings: K
@@ -73,7 +75,7 @@ hopper_dqn_default_config = dict(
             reconst_loss_stop_value=1e-6, # TODO
             constrain_action=False,  # TODO
             warm_up_update=int(1e4),
-            # warm_up_update=int(1), # debug
+            # warm_up_update=int(10), # debug
             rl_vae_update_circle=1,  # train rl 1 iter, vae 1 iter
             update_per_collect_rl=20,
             update_per_collect_vae=20,
@@ -143,8 +145,9 @@ def train(args):
     # main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_vqvae-cont-smoothl1loss' + '_seed' + f'{args.seed}'+'_3M'
     # main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_rl-reconst-reweight' + '_seed' + f'{args.seed}'+'_3M'
     # main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_vqvae1e4' + '_seed' + f'{args.seed}'+'_3M'
-    main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_pretrainonly_atom51' + '_seed' + f'{args.seed}'+'_3M'
-
+    # main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_pretrainonly_atom51_softmax' + '_seed' + f'{args.seed}'+'_3M'
+    # main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_pretrainonly_gaussianhead' + '_seed' + f'{args.seed}'+'_3M'
+    main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_pretrainonly_embedding-ont-hot' + '_seed' + f'{args.seed}'+'_3M'
 
 
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=int(3e6))
@@ -154,6 +157,7 @@ if __name__ == "__main__":
     import argparse
     from ding.entry import serial_pipeline_dqn_vqvae
     for seed in [0,1,2]:
+    # for seed in [0]:
         parser = argparse.ArgumentParser()
         parser.add_argument('--seed', '-s', type=int, default=seed)
         args = parser.parse_args()
