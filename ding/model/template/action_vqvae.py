@@ -176,6 +176,7 @@ class ActionVQVAE(nn.Module):
             n_atom: int = 51,
             gaussian_head_for_cont_action: bool = False,
             embedding_table_onehot: bool = False,
+            vqvae_return_weight: bool =False,
     ) -> None:
         super(ActionVQVAE, self).__init__()
 
@@ -191,6 +192,7 @@ class ActionVQVAE(nn.Module):
         self.n_atom = n_atom
         self.gaussian_head_for_cont_action=gaussian_head_for_cont_action
         self.embedding_table_onehot = embedding_table_onehot
+        self.vqvae_return_weight = vqvae_return_weight
 
         # Encoder
         if isinstance(self.action_shape, int):  # continuous action
@@ -281,7 +283,8 @@ class ActionVQVAE(nn.Module):
     def _recons_action(
         self,
         action_decoding: torch.Tensor,
-        target_action: Union[torch.Tensor, Dict[str, torch.Tensor]] = None
+        target_action: Union[torch.Tensor, Dict[str, torch.Tensor]] = None,
+        weight: Union[torch.Tensor, Dict[str, torch.Tensor]] = None
     ) -> Tuple[Union[torch.Tensor, Dict[str, torch.Tensor]], torch.Tensor]:
         sigma=None # debug
         if isinstance(self.action_shape, int):  # continuous action
@@ -338,7 +341,10 @@ class ActionVQVAE(nn.Module):
                     recons_loss = F.smooth_l1_loss(recons_action, target_action)
                     recons_loss_none_reduction = F.smooth_l1_loss(recons_action, target_action, reduction='none').mean(-1)
                 else:
-                    recons_loss = F.mse_loss(recons_action, target_action)
+                    if self.vqvae_return_weight and weight is not None:
+                        recons_loss = (weight.reshape(-1,1) * F.mse_loss(recons_action, target_action, reduction='none')).mean()
+                    else:
+                        recons_loss = F.mse_loss(recons_action, target_action)
                     recons_loss_none_reduction = F.mse_loss(recons_action, target_action, reduction='none').mean(-1)
 
             elif isinstance(self.action_shape, dict):  # hybrid action
@@ -362,13 +368,16 @@ class ActionVQVAE(nn.Module):
 
             return recons_action, recons_loss, recons_loss_none_reduction, sigma
 
-    def train(self, data: Dict) -> Dict[str, torch.Tensor]:
+    def train(self, data: Dict, warmup: bool=False) -> Dict[str, torch.Tensor]:
         action_embedding = self._get_action_embedding(data)
         encoding = self.encoder(action_embedding)
         quantized_index, quantized_embedding, vq_loss, embedding_loss, commitment_loss = self.vq_layer.train(encoding)
         action_decoding = self.decoder(quantized_embedding)
-        recons_action, recons_loss, recons_loss_none_reduction, sigma = self._recons_action(action_decoding, data['action'])
-
+        if self.vqvae_return_weight and not warmup:
+            recons_action, recons_loss, recons_loss_none_reduction, sigma = self._recons_action(action_decoding, data['action'], data['return_normalization'])
+        else:
+            recons_action, recons_loss, recons_loss_none_reduction, sigma = self._recons_action(action_decoding, data['action'])
+        
         total_vqvae_loss = recons_loss + self.vq_loss_weight * vq_loss
         return {
             'quantized_index': quantized_index,

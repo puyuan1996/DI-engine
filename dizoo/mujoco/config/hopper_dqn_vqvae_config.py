@@ -46,20 +46,20 @@ hopper_dqn_default_config = dict(
         # In the area with large reconstruction loss, the action reconstruction is inaccurate, that is, the (\hat{x}, r) does not match, 
         # and the corresponding Q value is inaccurate. The update should be reduced to avoid wrong gradient.
         rl_reconst_loss_weight=False,
-        # rl_reconst_loss_weight=True,
         rl_reconst_loss_weight_min=0.2,
+        vqvae_return_weight=False, 
         priority_vqvae=False,
         priority_IS_weight_vqvae=False,
         priority_type_vqvae='reward', # 'return'
         priority_vqvae_min=0.2,
         cont_reconst_l1_loss=False,
         cont_reconst_smooth_l1_loss=False,
-        vavae_pretrain_only=True,   # if  vavae_pretrain_only=True
+        vavae_pretrain_only=True,  # NOTE
         recompute_latent_action=False,
         categorical_head_for_cont_action=False,  # categorical distribution
         n_atom=51,
         gaussian_head_for_cont_action=False, # gaussian  distribution
-        embedding_table_onehot=False,
+        embedding_table_onehot=True,
         model=dict(
             obs_shape=11,
             action_shape=int(64),  # num of num_embeddings: K

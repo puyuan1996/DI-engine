@@ -192,6 +192,7 @@ class DQNVQVAEEPISODEPolicy(Policy):
             n_atom=self._cfg.n_atom,
             gaussian_head_for_cont_action=self._cfg.gaussian_head_for_cont_action,
             embedding_table_onehot=self._cfg.embedding_table_onehot,
+            vqvae_return_weight=self._cfg.vqvae_return_weight,
         )
         self._vqvae_model = to_device(self._vqvae_model, self._device)
         # NOTE:
@@ -245,7 +246,7 @@ class DQNVQVAEEPISODEPolicy(Policy):
             # train vae
             # ====================
             # result = self._vqvae_model.train_without_obs(data)
-            result = self._vqvae_model.train(data)
+            result = self._vqvae_model.train(data, warmup=True)
  
             if self._cfg.gaussian_head_for_cont_action:
                 # debug
@@ -306,7 +307,27 @@ class DQNVQVAEEPISODEPolicy(Policy):
             if data['vae_phase'][0].item() is True:
                 if self._cuda:
                     data = to_device(data, self._device)
-
+                
+                if self._cfg.priority_type_vqvae=='reward':
+                    # TODO: data['reward'] is nstep reward, take the true reward 
+                    # first max-min normalization, transform to [0, 1] priority should be non negtive (>=0)
+                    # then scale to [0.2, 1], to make sure all data can be used to update vqvae
+                    reward_normalization = (data['reward'][0] - data['reward'][0].min())/(data['reward'][0].max() - data['reward'][0].min()+1e-8)
+                    reward_normalization =  (1-self._cfg.priority_vqvae_min)* reward_normalization + self._cfg.priority_vqvae_min
+                elif self._cfg.priority_type_vqvae=='return':
+                    # TODO: data['return'] is the cumulative undiscounted reward
+                    # first max-min normalization, transform to [0, 1] priority should be non negtive (>=0)
+                    # then scale to [0.2, 1], to make sure all data can be used to update vqvae
+                    return_normalization = (data['return'] - data['return'].min())/(data['return'].max() - data['return'].min()+1e-8)
+                    return_normalization =  (1-self._cfg.priority_vqvae_min)* return_normalization + self._cfg.priority_vqvae_min
+                if self._cfg.vqvae_return_weight:
+                    # TODO: data['return'] is the cumulative undiscounted reward
+                    # first max-min normalization, transform to [0, 1] priority should be non negtive (>=0)
+                    # then scale to [0.2, 1], to make sure all data can be used to update vqvae
+                    return_normalization = (data['return'] - data['return'].min())/(data['return'].max() - data['return'].min()+1e-8)
+                    return_normalization =  (1-self._cfg.priority_vqvae_min)* return_normalization + self._cfg.priority_vqvae_min
+                    data['return_normalization'] = return_normalization
+                
                 # result = self._vqvae_model.train_without_obs(data)
                 result = self._vqvae_model.train(data)
 
@@ -329,18 +350,7 @@ class DQNVQVAEEPISODEPolicy(Policy):
                 # NOTE:visualize_latent, now it's only for env hopper and gym_hybrid
                 # quantized_index = self.visualize_latent(save_histogram=False)
                 # cos_similarity = self.visualize_embedding_table(save_dis_map=False)
-                if self._cfg.priority_type_vqvae=='reward':
-                    # TODO: data['reward'] is nstep reward, take the true reward 
-                    # first max-min normalization, transform to [0, 1] priority should be non negtive (>=0)
-                    # then scale to [0.2, 1], to make sure all data can be used to update vqvae
-                    reward_normalization = (data['reward'][0] - data['reward'][0].min())/(data['reward'][0].max() - data['reward'][0].min()+1e-8)
-                    reward_normalization =  (1-self._cfg.priority_vqvae_min)* reward_normalization + self._cfg.priority_vqvae_min
-                elif self._cfg.priority_type_vqvae=='return':
-                    # TODO: data['return'] is the cumulative undiscounted reward
-                    # first max-min normalization, transform to [0, 1] priority should be non negtive (>=0)
-                    # then scale to [0.2, 1], to make sure all data can be used to update vqvae
-                    return_normalization = (data['return'] - data['return'].min())/(data['return'].max() - data['return'].min()+1e-8)
-                    return_normalization =  (1-self._cfg.priority_vqvae_min)* return_normalization + self._cfg.priority_vqvae_min
+
 
                 return {
                     'priority': return_normalization.tolist(), 

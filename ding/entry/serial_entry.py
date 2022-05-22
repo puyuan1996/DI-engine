@@ -97,6 +97,7 @@ def serial_pipeline(
         # Evaluate policy performance
         if evaluator.should_eval(learner.train_iter):
             stop, reward = evaluator.eval(learner.save_checkpoint, learner.train_iter, collector.envstep)
+            """plot action histogram"""
             from ding.entry import collect_episodic_demo_data
             collect_episodic_demo_data(
                 copy.deepcopy(collect_cfg),

@@ -1,5 +1,5 @@
 from easydict import EasyDict
-num_actuators=4
+num_actuators=8
 from itertools import product
 action_mask = list(product(*[list(range(2)) for dim in range(num_actuators)] ))
 
@@ -80,7 +80,7 @@ create_config = gym_hybrid_hppo_create_config
 #     serial_pipeline_onpolicy([main_config, create_config], seed=0)
 
 def train(args):
-    main_config.exp_name = 'data_hardmove_n4/hppo' + '_seed' + f'{args.seed}'+'_3M'
+    main_config.exp_name = 'data_hardmove_n8/hppo' + '_seed' + f'{args.seed}'+'_3M'
 
     serial_pipeline_onpolicy([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,max_env_step=int(3e6))
 

@@ -49,7 +49,10 @@ hopper_dqn_default_config = dict(
         rl_reconst_loss_weight=False,
         # rl_reconst_loss_weight=True,
         rl_reconst_loss_weight_min=0.2,
-        priority_vqvae=True,  # NOTE
+        # vqvae_return_weight=False,  # NOTE
+        # priority_vqvae=True,  # NOTE
+        vqvae_return_weight=True,  # NOTE
+        priority_vqvae=False,  # NOTE
         priority_IS_weight_vqvae=False,
         priority_type_vqvae='return',
         # priority_type_vqvae='reward',
@@ -79,8 +82,10 @@ hopper_dqn_default_config = dict(
             warm_up_update=int(1e4),
             # warm_up_update=int(10), # debug
             rl_vae_update_circle=1,  # train rl 1 iter, vae 1 iter
-            update_per_collect_rl=20,
-            update_per_collect_vae=20,
+            # update_per_collect_rl=20,
+            # update_per_collect_vae=20,
+            update_per_collect_rl=200,
+            update_per_collect_vae=200,
             rl_batch_size=512,
             vqvae_batch_size=512,
             learning_rate=3e-4,
@@ -145,7 +150,8 @@ create_config = hopper_dqn_create_config
 
 
 def train(args):
-    main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_vqvae-return-priority-min0' + '_seed' + f'{args.seed}'+'_3M'
+    # main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_vqvae-return-priority-min0_upcr200' + '_seed' + f'{args.seed}'+'_3M'
+    main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_vqvae-return-weight-min0_upcr200' + '_seed' + f'{args.seed}'+'_3M'
     # main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_vqvae-cont-smoothl1loss' + '_seed' + f'{args.seed}'+'_3M'
     # main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_rl-reconst-reweight' + '_seed' + f'{args.seed}'+'_3M'
     # main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_vqvae1e4' + '_seed' + f'{args.seed}'+'_3M'
@@ -160,8 +166,8 @@ if __name__ == "__main__":
     import copy
     import argparse
     from ding.entry import serial_pipeline_dqn_vqvae_episode
-    for seed in [0,1,2]:
-    # for seed in [0]:
+    # for seed in [0,1,2]:
+    for seed in [2]:
         parser = argparse.ArgumentParser()
         parser.add_argument('--seed', '-s', type=int, default=seed)
         args = parser.parse_args()

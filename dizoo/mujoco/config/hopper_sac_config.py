@@ -6,7 +6,7 @@ hopper_sac_config = dict(
         env_id='Hopper-v3',
         norm_obs=dict(use_norm=False, ),
         norm_reward=dict(use_norm=False, ),
-        collector_env_num=1,
+        collector_env_num=8,
         evaluator_env_num=8,
         use_act_scale=True,
         n_evaluator_episode=8,
