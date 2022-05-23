@@ -13,7 +13,7 @@ from ding.policy import create_policy, PolicyFactory
 from ding.utils import set_pkg_seed
 from .utils import random_collect
 import copy
-from dizoo.mujoco.config.hopper_sac_data_generation_default_config_pu import main_config, create_config
+from dizoo.mujoco.config.hopper_sac_data_generation_config_vqvae import main_config, create_config
 from ding.utils.data import create_dataset
 from torch.utils.data import DataLoader
 from ding.torch_utils import Adam, to_device, to_tensor

@@ -668,6 +668,7 @@ class DQNVQVAEEPISODEPolicy(Policy):
         """
         for item in data:
             item['return'] = torch.stack([data[i]['reward'] for i in range(len(data))]).sum(0)
+            
         data = get_nstep_return_data(data, self._nstep, gamma=self._gamma)
         return get_train_sample(data, self._unroll_len)
 

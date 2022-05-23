@@ -55,7 +55,7 @@ hopper_dqn_default_config = dict(
         cont_reconst_l1_loss=False,
         cont_reconst_smooth_l1_loss=False,
         vavae_pretrain_only=True,  # NOTE
-        recompute_latent_action=False,
+        recompute_latent_action=False,  # NOTE: if vavae_pretrain_only=True, recompute_latent_action=False
         categorical_head_for_cont_action=False,  # categorical distribution
         n_atom=51,
         gaussian_head_for_cont_action=False, # gaussian  distribution
@@ -93,7 +93,7 @@ hopper_dqn_default_config = dict(
             grad_clip_value=0.5,
 
             # add noise in original continuous action
-            noise=False,  # TODO
+            noise=False,  # NOTE: if vavae_pretrain_only=True, noise=False
             # noise=True,
             noise_sigma=0.1,
             noise_range=dict(

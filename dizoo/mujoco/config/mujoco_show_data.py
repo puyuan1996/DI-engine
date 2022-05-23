@@ -1,5 +1,5 @@
-# from dizoo.mujoco.config.halfcheetah_sac_data_generation_default_config_pu import main_config, create_config
-from dizoo.mujoco.config.hopper_sac_data_generation_default_config_pu import main_config, create_config
+# from dizoo.mujoco.config.halfcheetah_sac_data_generation_config_vqvae import main_config, create_config
+from dizoo.mujoco.config.hopper_sac_data_generation_config_vqvae import main_config, create_config
 
 from ding.entry import serial_pipeline_offline
 import os
@@ -20,24 +20,23 @@ def train(args):
         cfg, create_cfg = input_cfg
     create_cfg.policy.type = create_cfg.policy.type + '_command'
     cfg = compile_config(cfg, seed=args.seed, auto=True, create_cfg=create_cfg)
-    cfg.policy.collect.data_path = '/home/puyuan/hopper_sac_seed0/expert_data_100eps.pkl'
+    cfg.policy.collect.data_path = '/home/puyuan/hopper_sac_seed0/expert_data_1000eps_seed0.pkl'
+    
     # Dataset
     dataset = create_dataset(cfg)
     print('num_episodes', dataset.__len__())
     print(dataset.__getitem__(0)[0]['action'])
-    print([len(dataset.__getitem__(i)) for i in range(dataset.__len__())])
-
     episodes_len = np.array([len(dataset.__getitem__(i)) for i in range(dataset.__len__())])
-    # print('episodes_len',episodes_len)
+    print('episodes_len', episodes_len)
     index_of_len1000 = np.argwhere(episodes_len==1000).reshape(-1) 
+    print('index_of_len1000', index_of_len1000)
     return_of_len1000 = torch.stack([torch.stack([dataset.__getitem__(episode)[i]['reward'] for i in range(dataset.__getitem__(episode).__len__())],axis=0).sum(0) for episode in list(index_of_len1000)],axis=0)
-    # print('return_of_len1000',return_of_len1000)
+    print('return_of_len1000', return_of_len1000)
 
 
-    episode_actions = torch.stack([dataset.__getitem__(11)[i]['action'] for i in range(dataset.__getitem__(11).__len__())],axis=0)
-    episode_rewards = torch.stack([dataset.__getitem__(11)[i]['reward'] for i in range(dataset.__getitem__(11).__len__())],axis=0) 
-    episode_obss = torch.stack([dataset.__getitem__(11)[i]['obs'] for i in range(dataset.__getitem__(11).__len__())],axis=0) 
-
+    # episode_actions = torch.stack([dataset.__getitem__(11)[i]['action'] for i in range(dataset.__getitem__(11).__len__())],axis=0)
+    # episode_rewards = torch.stack([dataset.__getitem__(11)[i]['reward'] for i in range(dataset.__getitem__(11).__len__())],axis=0) 
+    # episode_obss = torch.stack([dataset.__getitem__(11)[i]['obs'] for i in range(dataset.__getitem__(11).__len__())],axis=0) 
 
     """plot episode rewards"""
     # fig = plt.figure()
@@ -107,78 +106,86 @@ def train(args):
     # episode_actions_numpy return=1091
     # episode_actions_disc: num_bins = 20 return=11, num_bins = 200 return=165, num_bins = 2000 return=285, num_bins = 20000 return=773, num_bins = 200000 return=1091,
 
-    episode_actions = torch.stack([dataset.__getitem__(83)[i]['action'] for i in range(dataset.__getitem__(83).__len__())],axis=0)
+    for index in list(index_of_len1000)[:5]:
+        episode_actions = torch.stack([dataset.__getitem__(index)[i]['action'] for i in range(dataset.__getitem__(index).__len__())],axis=0)
+        episode_rewards = torch.stack([dataset.__getitem__(index)[i]['reward'] for i in range(dataset.__getitem__(index).__len__())],axis=0)
+        print('episode_rewards', episode_rewards.sum())
+        episode_obss = torch.stack([dataset.__getitem__(index)[i]['obs'] for i in range(dataset.__getitem__(index).__len__())],axis=0) 
 
-    num_bins = 20000
-    HIST_BINS = np.linspace(-1, 1, num_bins)
-    episode_actions_numpy = episode_actions.cpu().numpy()
-    episode_actions_dim0_ind = np.digitize(episode_actions_numpy[:,0], HIST_BINS)
-    episode_actions_dim1_ind = np.digitize(episode_actions_numpy[:,1], HIST_BINS)
-    episode_actions_dim2_ind = np.digitize(episode_actions_numpy[:,2], HIST_BINS)
+        num_bins = 20000
+        HIST_BINS = np.linspace(-1, 1, num_bins)
+        episode_actions_numpy = episode_actions.cpu().numpy()
+        episode_actions_dim0_ind = np.digitize(episode_actions_numpy[:,0], HIST_BINS)
+        episode_actions_dim1_ind = np.digitize(episode_actions_numpy[:,1], HIST_BINS)
+        episode_actions_dim2_ind = np.digitize(episode_actions_numpy[:,2], HIST_BINS)
 
-    episode_actions_ind = np.stack([episode_actions_dim0_ind,episode_actions_dim1_ind,episode_actions_dim2_ind]).transpose()
-    episode_actions_disc =   -1 + 2/num_bins * (episode_actions_ind-1)
+        episode_actions_ind = np.stack([episode_actions_dim0_ind,episode_actions_dim1_ind,episode_actions_dim2_ind]).transpose()
+        episode_actions_disc =   -1 + 2/num_bins * (episode_actions_ind-1)
 
+        """8 envs, using env manager"""
+        # from functools import partial
+        # from ding.envs import create_env_manager, get_vec_env_setting
+        # env_setting = None
+        # env_fn = None if env_setting is None else env_setting[0]
+        # if env_setting is None:
+        #     env_fn, _, evaluator_env_cfg = get_vec_env_setting(cfg.env)
+        # else:
+        #     env_fn, _, evaluator_env_cfg = env_setting
+        # evaluator_env = create_env_manager(cfg.env.manager, [partial(env_fn, cfg=c) for c in evaluator_env_cfg])
+        # evaluator_env.seed(args.seed, dynamic_seed=False)
+        # env = evaluator_env
+        # env.launch()
+        
+        """one env, not using env manager"""
+        env = gym.make('Hopper-v3')
+        args.seed=0
+        env.seed(args.seed)
+        # env.seed(args.seed, dynamic_seed=False)
+        from ding.utils import set_pkg_seed
+        set_pkg_seed(args.seed, use_cuda=cfg.policy.cuda)
 
-    from functools import partial
-    from ding.envs import create_env_manager, get_vec_env_setting
-    env_setting = None
-    env_fn = None if env_setting is None else env_setting[0]
-    if env_setting is None:
-        env_fn, _, evaluator_env_cfg = get_vec_env_setting(cfg.env)
-    else:
-        env_fn, _, evaluator_env_cfg = env_setting
-    evaluator_env = create_env_manager(cfg.env.manager, [partial(env_fn, cfg=c) for c in evaluator_env_cfg])
-    evaluator_env.seed(args.seed, dynamic_seed=False)
-    env = evaluator_env
-    env.launch()
-    
-    """one env, not using env manager"""
-    # env = gym.make('Hopper-v3')
-    # args.seed=0
-    # env.seed(args.seed)
-    # # env.seed(args.seed, dynamic_seed=False)
-    # from ding.utils import set_pkg_seed
-    # set_pkg_seed(args.seed, use_cuda=cfg.policy.cuda)
+        total_return = []
+        total_length = []
+        episode_cnt = 1
+        for eps_id in range(episode_cnt):
+            # observation = env.reset()  # one env
 
-    total_return = []
-    total_length = []
-    episode_cnt = 1
-    for eps_id in range(episode_cnt):
-        # observation = env.reset()  # one env
+            env.reset()
+            obs = env.ready_obs
 
-        env.reset()
-        obs = env.ready_obs
+            done = False
+            eps_length = 0
+            eps_return = 0
+            while not done:
+                # action = env.action_space.sample()
+                # action = episode_actions_disc[eps_length]
+                action = episode_actions_numpy[eps_length]
 
-        done = False
-        eps_length = 0
-        eps_return = 0
-        while not done:
-            # action = env.action_space.sample()
-            # action = episode_actions_disc[eps_length]
-            action = episode_actions_numpy[eps_length]
-            action = {i:action for i in range(8)}
-            timesteps = env.step(action)
-            observation, reward, done, info = timesteps[0]
+                """8 envs, using env manager"""
+                # action = {i:action for i in range(8)}
+                # timesteps = env.step(action)
+                # observation, reward, done, info = timesteps[0]
 
-            # observation, reward, done, info = env.step(action) # one env
-            # env.render()
-            eps_return += reward
-            eps_length += 1
-            if done:
-                # print(observation.shape)
-                total_return.append(eps_return)
-                total_length.append(eps_length)
-                # print("observation:", observation, "reward:", reward, "done:", done, "info:", info, )
-                print("eps: {} done. ".format(eps_id), "eps_length:", eps_length, "eps_return:", eps_return,
-                    "final_reward:",
-                    reward, "info:", info, )
-                break
-    print("return mean:", np.mean(total_return), 'std:', np.std(total_return), 'max:', np.max(total_return), 'min:',
-        np.min(total_return))
-    print("length mean:", np.mean(total_length), 'std:', np.std(total_length), 'max:', np.max(total_length), 'min:',
-        np.min(total_length))
-    env.close()
+                """one env, not using env manager"""
+                observation, reward, done, info = env.step(action)
+                # env.render()
+                eps_return += reward
+                eps_length += 1
+                if done:
+                    # print(observation.shape)
+                    total_return.append(eps_return)
+                    total_length.append(eps_length)
+                    # print("observation:", observation, "reward:", reward, "done:", done, "info:", info, )
+                    print("eps: {} done. ".format(eps_id), "eps_length:", eps_length, "eps_return:", eps_return,
+                        "final_reward:",
+                        reward, "info:", info, )
+                    break
+
+        print("return mean:", np.mean(total_return), 'std:', np.std(total_return), 'max:', np.max(total_return), 'min:',
+            np.min(total_return))
+        print("length mean:", np.mean(total_length), 'std:', np.std(total_length), 'max:', np.max(total_length), 'min:',
+            np.min(total_length))
+        env.close()
 
     # episodes_len = np.array([len(dataset.__getitem__(i)) for i in range(dataset.__len__())])
     # print('episodes_len',episodes_len)

@@ -59,12 +59,13 @@ hopper_dqn_default_config = dict(
         priority_vqvae_min=0.,
         cont_reconst_l1_loss=False,
         cont_reconst_smooth_l1_loss=False,
-        vavae_pretrain_only=False,   # if  vavae_pretrain_only=True
+        vavae_pretrain_only=False, # NOTE
         recompute_latent_action=False,
         categorical_head_for_cont_action=False,  # categorical distribution
         n_atom=51,
         gaussian_head_for_cont_action=False, # gaussian  distribution
         embedding_table_onehot=False,
+        vqvae_expert_only=True,
         model=dict(
             obs_shape=11,
             action_shape=int(64),  # num of num_embeddings: K
@@ -150,8 +151,9 @@ create_config = hopper_dqn_create_config
 
 
 def train(args):
+    main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_vqvae-lt3500-only' + '_seed' + f'{args.seed}'+'_3M'
     # main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_vqvae-return-priority-min0_upcr200' + '_seed' + f'{args.seed}'+'_3M'
-    main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_vqvae-return-weight-min0_upcr200' + '_seed' + f'{args.seed}'+'_3M'
+    # main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_vqvae-return-weight-min0_upcr200' + '_seed' + f'{args.seed}'+'_3M'
     # main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_vqvae-cont-smoothl1loss' + '_seed' + f'{args.seed}'+'_3M'
     # main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_rl-reconst-reweight' + '_seed' + f'{args.seed}'+'_3M'
     # main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_vqvae1e4' + '_seed' + f'{args.seed}'+'_3M'
@@ -159,15 +161,14 @@ def train(args):
     # main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_pretrainonly_gaussianhead' + '_seed' + f'{args.seed}'+'_3M'
     # main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_pretrainonly_embedding-ont-hot' + '_seed' + f'{args.seed}'+'_3M'
 
-
     serial_pipeline_dqn_vqvae_episode([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=int(3e6))
 
 if __name__ == "__main__":
     import copy
     import argparse
     from ding.entry import serial_pipeline_dqn_vqvae_episode
-    # for seed in [0,1,2]:
-    for seed in [2]:
+    for seed in [0,1,2]:
+    # for seed in [0]:
         parser = argparse.ArgumentParser()
         parser.add_argument('--seed', '-s', type=int, default=seed)
         args = parser.parse_args()

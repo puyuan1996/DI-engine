@@ -103,7 +103,7 @@ def serial_pipeline_dqn_vqvae_episode(
         new_data = collector.collect(n_episode=cfg.policy.random_collect_size, policy_kwargs=collect_kwargs)
         for item in new_data:
             item['warm_up'] = True
-        replay_buffer.push(new_data, cur_collector_envstep=0)
+        replay_buffer_vqvae.push(new_data, cur_collector_envstep=0)
         collector.reset_policy(policy.collect_mode)
 
         # ====================
@@ -118,7 +118,7 @@ def serial_pipeline_dqn_vqvae_episode(
             #     )
             #     policy.visualize_embedding_table(name='warmup-start_' + f'{cfg.env.env_id}_s{cfg.seed}')
             # Learner will train ``update_per_collect`` times in one iteration.
-            train_data = replay_buffer.sample(cfg.policy.learn.vqvae_batch_size, learner.train_iter)
+            train_data = replay_buffer_vqvae.sample(cfg.policy.learn.vqvae_batch_size, learner.train_iter)
             if train_data is None:
                 # It is possible that replay buffer's data count is too few to train ``update_per_collect`` times
                 logging.warning(
@@ -129,10 +129,10 @@ def serial_pipeline_dqn_vqvae_episode(
             learner.train(train_data, collector.envstep)
 
             if learner.policy.get_attribute('priority'):
-                replay_buffer.update(learner.priority_info)
+                replay_buffer_vqvae.update(learner.priority_info)
             if learner.policy.get_attribute('warm_up_stop'):
                 break
-        replay_buffer.clear()  # TODO(pu): NOTE
+        # replay_buffer_vqvae.clear()  # TODO(pu): NOTE
 
     # NOTE: for the case collector_env_num>1, because after the random collect phase,  self._traj_buffer[env_id] may be not empty. Only
     # if the condition "timestep.done or len(self._traj_buffer[env_id]) == self._traj_len" is satisfied, the self._traj_buffer will be clear.
@@ -155,18 +155,21 @@ def serial_pipeline_dqn_vqvae_episode(
         if evaluator.should_eval(learner.train_iter):
             stop, reward = evaluator.eval(learner.save_checkpoint, learner.train_iter, collector.envstep)
             if stop:
-                # NOTE: save visualized latent action and embedding_table
-                # policy.visualize_latent(
-                #     save_histogram=True, name=f'iter{iter}_{cfg.env.env_id}_s{cfg.seed}'
-                # )
-                # policy.visualize_embedding_table(name=f'iter{iter}_{cfg.env.env_id}_s{cfg.seed}')
                 break
         # Collect data by default config n_sample/n_episode
         new_data = collector.collect(train_iter=learner.train_iter, policy_kwargs=collect_kwargs)
+        new_data_vqvae_tmp = copy.deepcopy(new_data)
         for item in new_data:
             item['warm_up'] = False
+        
+        if cfg.policy.vqvae_expert_only:
+            new_data_vqvae = [item for item in new_data_vqvae_tmp if item['return']>=3500]
+        else:
+            new_data_vqvae = new_data_vqvae_tmp
+        for item in new_data_vqvae:
+            item['warm_up'] = False
         replay_buffer.push(new_data, cur_collector_envstep=collector.envstep)
-        replay_buffer_vqvae.push(copy.deepcopy(new_data), cur_collector_envstep=collector.envstep)
+        replay_buffer_vqvae.push(new_data_vqvae, cur_collector_envstep=collector.envstep)
 
         # ====================
         # RL phase
@@ -246,11 +249,6 @@ def serial_pipeline_dqn_vqvae_episode(
                 # replay_buffer_vqvae.clear()  # TODO(pu)
 
         if collector.envstep > max_env_step:
-            # NOTE: save visualized latent action and embedding_table
-            # policy.visualize_latent(
-            #     save_histogram=True, name=f'iter{iter}_{cfg.env.env_id}_s{cfg.seed}'
-            # )
-            # policy.visualize_embedding_table(name=f'iter{iter}_{cfg.env.env_id}_s{cfg.seed}')
             break
 
     # Learner's after_run hook.

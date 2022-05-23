@@ -97,7 +97,8 @@ def serial_pipeline(
         # Evaluate policy performance
         if evaluator.should_eval(learner.train_iter):
             stop, reward = evaluator.eval(learner.save_checkpoint, learner.train_iter, collector.envstep)
-            """plot action histogram"""
+            """
+            ### plot action histogram
             from ding.entry import collect_episodic_demo_data
             collect_episodic_demo_data(
                 copy.deepcopy(collect_cfg),
@@ -125,7 +126,7 @@ def serial_pipeline(
                 plt.show()
                 # plt.savefig(f'/home/puyuan//DI-engine/hopper_sac_action_bins_seed{cfg.seed}/hopper-v3_sac_episode_actions_{action_dim}dim_histogram_iter{learner.train_iter}.png')
                 tb_logger.add_histogram(f'hopper-v3_sac_episode_actions_{action_dim}dim_histogram_{cfg.seed}', episode_actions[:,action_dim], learner.train_iter)
-
+            """
             if stop:
                 break
         # Collect data by default config n_sample/n_episode

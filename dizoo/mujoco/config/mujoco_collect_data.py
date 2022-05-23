@@ -1,4 +1,6 @@
-from dizoo.mujoco.config.hopper_sac_data_generation_default_config_pu import main_config, create_config
+from dizoo.mujoco.config.hopper_sac_data_generation_config_vqvae import main_config, create_config
+# from dizoo.mujoco.config.hopper_td3_data_generation_config_vqvae import main_config, create_config
+
 from ding.entry import collect_episodic_demo_data, eval, episode_to_transitions, episode_to_transitions_pure_expert
 import torch
 import copy
@@ -7,7 +9,7 @@ import copy
 def eval_ckpt(args):
     config = copy.deepcopy([main_config, create_config])
     # eval(config, seed=args.seed, load_path=main_config.policy.learn.learner.hook.load_ckpt_before_run, replay_path='/home/puyuan/hopper_sac_seed0/')
-    eval(config, seed=args.seed, load_path=main_config.policy.learn.learner.hook.load_ckpt_before_run)
+    eval(config, seed=args.seed, load_path=main_config.policy.learn.learner.load_path)
 
 
 def generate(args):
@@ -30,7 +32,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # eval_ckpt(args)
-    # generate(args)
+    generate(args)
     # episode_to_transitions(data_path=main_config.policy.collect.save_path, expert_data_path=main_config.policy.collect.save_path_transitions, nstep=3)
-    episode_to_transitions_pure_expert(data_path=main_config.policy.collect.save_path, expert_data_path='/home/puyuan/hopper_sac_seed0/expert_data_transitions_lt3500.pkl', nstep=3)
+    episode_to_transitions_pure_expert(data_path=main_config.policy.collect.save_path, expert_data_path='/home/puyuan/hopper_sac_seed0/expert_data_transitions_lt3500_seed0.pkl', nstep=3)
+    # episode_to_transitions_pure_expert(data_path=main_config.policy.collect.save_path, expert_data_path='/home/puyuan/hopper_td3_seed0/expert_data_transitions_lt3500.pkl', nstep=3)
 
