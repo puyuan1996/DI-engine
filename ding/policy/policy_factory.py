@@ -1,6 +1,8 @@
 from typing import Dict, Any, Callable
 from collections import namedtuple
+from easydict import EasyDict
 import torch
+
 from ding.torch_utils import to_device
 import gym
 import numpy as np
@@ -41,15 +43,15 @@ class PolicyFactory:
                     actions[env_id] = {'action': action}
                 elif isinstance(data[env_id], dict) and 'global_state' in data[env_id].keys():
                     # for smac
-                    logit = np.ones_like(data[env_id]['action_mask'])
+                    logit = torch.ones_like(data[env_id]['action_mask'])
                     logit[data[env_id]['action_mask'] == 0.0] = -1e8
                     dist = torch.distributions.categorical.Categorical(logits=torch.Tensor(logit))
                     actions[env_id] = {'action': np.array(dist.sample()), 'logit': np.array(logit)}
                 elif isinstance(action_space, list):
                     # for gfootball
                     actions[env_id] = {
-                        'action': np.array([action_space_agent.sample() for action_space_agent in action_space]),
-                        'logit': np.ones([len(action_space), action_space[0].n])
+                        'action': torch.as_tensor([action_space_agent.sample() for action_space_agent in action_space]),
+                        'logit': torch.ones([len(action_space), action_space[0].n])
                     }
                 else:
                     if isinstance(action_space[0], gym.spaces.Discrete) and isinstance(action_space[1], gym.spaces.Box):
@@ -96,3 +98,11 @@ class PolicyFactory:
             return random_collect_function(
                 forward, policy.process_transition, policy.get_train_sample, reset, policy.get_attribute
             )
+
+
+def get_random_policy(cfg: EasyDict, policy: 'Policy.collect_mode', env: 'BaseEnvManager'):  # noqa
+    if cfg.policy.get('transition_with_policy_data', False):
+        return policy
+    else:
+        action_space = env.action_space
+        return PolicyFactory.get_random_policy(policy, action_space=action_space)
