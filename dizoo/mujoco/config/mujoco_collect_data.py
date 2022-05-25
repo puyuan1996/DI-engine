@@ -32,8 +32,10 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # eval_ckpt(args)
-    generate(args)
-    # episode_to_transitions(data_path=main_config.policy.collect.save_path, expert_data_path=main_config.policy.collect.save_path_transitions, nstep=3)
-    episode_to_transitions_pure_expert(data_path=main_config.policy.collect.save_path, expert_data_path='/home/puyuan/hopper_sac_seed0/expert_data_transitions_lt3500_seed0.pkl', nstep=3)
-    # episode_to_transitions_pure_expert(data_path=main_config.policy.collect.save_path, expert_data_path='/home/puyuan/hopper_td3_seed0/expert_data_transitions_lt3500.pkl', nstep=3)
+    # generate(args)
+    episode_to_transitions(data_path=main_config.policy.collect.save_path, expert_data_path='/home/puyuan/hopper_sac_seed0/expert_data_transitions_2000eps.pkl', nstep=3)
+    # episode_to_transitions_pure_expert(data_path=main_config.policy.collect.save_path, expert_data_path='/home/puyuan/hopper_sac_seed0/expert_data_transitions_lt3500_seed0.pkl', nstep=3)
+    episode_to_transitions_pure_expert(data_path=main_config.policy.collect.save_path, expert_data_path='/home/puyuan/hopper_sac_seed0/expert_data_transitions_2000eps_lt3500.pkl', nstep=3)
+    
+    # episode_to_transitions_pure_expert(data_path=main_config.policy.collect.save_path, expert_data_path='/home/puyuan/hopper_td3_seed0/expert_data_transitions_lt3500_seed0.pkl', nstep=3)
 

@@ -8,6 +8,8 @@ from .dqn_vqvae_episode import DQNVQVAEEPISODEPolicy
 
 from .rainbow_vqvae import RainbowDQNVQVAEPolicy
 from .sql_vqvae import SQLVQVAEPolicy
+from .sql_vqvae_episode import SQLVQVAEEPISODEPolicy
+
 
 
 from .c51 import C51Policy
@@ -250,7 +252,9 @@ class RainbowDQNVQVAECommandModePolicy(RainbowDQNVQVAEPolicy, EpsCommandModePoli
 class SQLVQVAECommandModePolicy(SQLVQVAEPolicy, EpsCommandModePolicy):
     pass
 
-
+@POLICY_REGISTRY.register('sql_vqvae_episode_command')
+class SQLVQVAEEPISODECommandModePolicy(SQLVQVAEEPISODEPolicy, EpsCommandModePolicy):
+    pass
 
 @POLICY_REGISTRY.register('td3_bc_command')
 class TD3BCCommandModePolicy(TD3BCPolicy, DummyCommandModePolicy):

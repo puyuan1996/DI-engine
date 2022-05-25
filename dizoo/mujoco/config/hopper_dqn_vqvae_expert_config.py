@@ -54,16 +54,18 @@ hopper_dqn_default_config = dict(
         priority_vqvae_min=0.2,
         cont_reconst_l1_loss=False,
         cont_reconst_smooth_l1_loss=False,
-        vavae_pretrain_only=True,   # if  vavae_pretrain_only=True
-        recompute_latent_action=False,
+        vavae_pretrain_only=True,   # NOTE
+        recompute_latent_action=False, # TODO: if vavae_pretrain_only=True
         categorical_head_for_cont_action=False,  # categorical distribution
         n_atom=51,
         gaussian_head_for_cont_action=False, # gaussian  distribution
         warmup_update_epoches=20,
+        embedding_table_onehot=False,
+        # vqvae_expert_only=False,
         model=dict(
             obs_shape=11,
-            # action_shape=int(64),  # num of num_embeddings: K
-            action_shape=int(128),  # num of num_embeddings: K
+            action_shape=int(64),  # num of num_embeddings: K
+            # action_shape=int(128),  # num of num_embeddings: K
 
             # encoder_hidden_size_list=[128, 128, 64],  # small net
             encoder_hidden_size_list=[256, 256, 128],  # middle net
@@ -78,6 +80,8 @@ hopper_dqn_default_config = dict(
             # warm_up_update=int(10), # debug
             rl_vae_update_circle=1,  # train rl 1 iter, vae 1 iter
             update_per_collect_rl=20,
+            # update_per_collect_rl=100,
+            # update_per_collect_rl=256,
             update_per_collect_vae=20,
             rl_batch_size=512,
             vqvae_batch_size=512,
@@ -85,15 +89,18 @@ hopper_dqn_default_config = dict(
             learning_rate_vae=3e-4,
             # Frequency of target network update.
             # target_update_theta=0.001, # TODO
-            target_update_freq=500,
+            target_update_freq=100,
+            # target_update_freq=500,
 
-            rl_clip_grad=True,
+
+            # rl_clip_grad=True,
+            rl_clip_grad=False,
             vqvae_clip_grad=True,
             grad_clip_type='clip_norm',
             grad_clip_value=0.5,
 
             # add noise in original continuous action
-            noise=False,  # TODO
+            noise=False,  # TODO: if vavae_pretrain_only=True
             # noise=True,
             noise_sigma=0.1,
             noise_range=dict(
@@ -118,7 +125,9 @@ hopper_dqn_default_config = dict(
                 type='exp',
                 start=1,
                 end=0.05,
+                # decay=int(1e6),
                 decay=int(1e5),
+
             ),
             replay_buffer=dict(replay_buffer_size=int(1e6), ),
         ),
@@ -133,7 +142,6 @@ hopper_dqn_create_config = dict(
         import_names=['dizoo.mujoco.envs.mujoco_env'],
     ),
     env_manager=dict(type='subprocess'),
-    # env_manager=dict(type='base'),
     policy=dict(type='dqn_vqvae'),
 )
 hopper_dqn_create_config = EasyDict(hopper_dqn_create_config)
@@ -141,14 +149,17 @@ create_config = hopper_dqn_create_config
 
 
 def train(args):
-    main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k128_pretrainonly_expert_lt3500' + '_seed' + f'{args.seed}'+'_3M'
+    main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_pretrainonly_expert_1000eps_lt3500_tuf100_norlclip' + '_seed' + f'{args.seed}'+'_3M'
+    # main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_pretrainonly_expert_1000eps_lt3500_ed1e6_upcr100' + '_seed' + f'{args.seed}'+'_3M'
+    # main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_pretrainonly_expert_1000eps_lt3500_ed1e6' + '_seed' + f'{args.seed}'+'_5M'
+    # main_config.exp_name = 'data_hopper/dqnvqvae_noema_largenet_k64_pretrainonly_expert_1000eps_lt3500' + '_seed' + f'{args.seed}'+'_3M'
     serial_pipeline_dqn_vqvae_expert([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=int(3e6))
 
 if __name__ == "__main__":
     import copy
     import argparse
     from ding.entry import serial_pipeline_dqn_vqvae_expert
-    for seed in [1,2]:
+    for seed in [0]:
     # for seed in [1,2]:
         parser = argparse.ArgumentParser()
         parser.add_argument('--seed', '-s', type=int, default=seed)

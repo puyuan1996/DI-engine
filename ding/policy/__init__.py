@@ -3,6 +3,9 @@ from .dqn import DQNPolicy
 from .dqn_vqvae import DQNVQVAEPolicy
 from .dqn_vqvae_episode import DQNVQVAEEPISODEPolicy
 
+from .sql_vqvae import SQLVQVAEPolicy
+from .sql_vqvae_episode import SQLVQVAEEPISODEPolicy
+
 from .rainbow_vqvae import RainbowDQNVQVAEPolicy
 
 from .iqn import IQNPolicy

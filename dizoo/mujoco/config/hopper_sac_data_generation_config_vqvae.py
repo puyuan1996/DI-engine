@@ -5,7 +5,7 @@ hopper_sac_data_genearation_default_config = dict(
         env_id='Hopper-v3',
         norm_obs=dict(use_norm=False, ),
         norm_reward=dict(use_norm=False, ),
-        collector_env_num=1,
+        collector_env_num=8,
         evaluator_env_num=8,
         use_act_scale=True,
         n_evaluator_episode=8,
@@ -47,13 +47,12 @@ hopper_sac_data_genearation_default_config = dict(
             unroll_len=1,
             # save
             # save_path='/home/puyuan/hopper_sac_seed0/expert_iteration_200000.pkl',
-            save_path='/home/puyuan/hopper_sac_seed0/expert_data_1000eps_seed0.pkl',
-            save_path_transitions='/home/puyuan/hopper_sac_seed0/expert_data_transitions_1000eps_seed0.pkl',
+            save_path='/home/puyuan/hopper_sac_seed0/expert_data_1000eps.pkl',
+            save_path_transitions='/home/puyuan/hopper_sac_seed0/expert_data_transitions_1000eps.pkl',
             # load
             data_type='naive',
-            # data_path='/home/puyuan/hopper_sac_seed0/expert_data_transitions_1000eps_lt3500.pkl'
-            # data_path='/home/puyuan/hopper_sac_seed0/expert_data_100eps.pkl'
-            data_path='/home/puyuan/hopper_sac_seed0/expert_data_1000eps_seed0.pkl',
+            data_path='/home/puyuan/hopper_sac_seed0/expert_data_transitions_1000eps_lt3500.pkl'
+            # data_path='/home/puyuan/hopper_sac_seed0/expert_data_2000eps.pkl',
         ),
         command=dict(),
         eval=dict(),

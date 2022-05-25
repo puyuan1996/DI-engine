@@ -1,5 +1,5 @@
-# from dizoo.mujoco.config.hopper_dqn_vqvae_data_generation_config import main_config, create_config
-from dizoo.mujoco.config.hopper_dqn_data_generation_config import main_config, create_config
+from dizoo.mujoco.config.hopper_dqn_vqvae_data_generation_config import main_config, create_config
+# from dizoo.mujoco.config.hopper_dqn_data_generation_config import main_config, create_config
 
 from ding.entry import serial_pipeline_offline
 import os

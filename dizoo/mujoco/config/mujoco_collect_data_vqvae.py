@@ -8,7 +8,6 @@ import copy
 
 def eval_ckpt(args):
     config = copy.deepcopy([main_config, create_config])
-    # eval(config, seed=args.seed, load_path=main_config.policy.learn.learner.hook.load_ckpt_before_run)
     eval(config, seed=args.seed, load_path=main_config.policy.learn.learner.model_path)
     # eval(config, seed=args.seed, load_path=main_config.policy.learn.learner.hook.load_ckpt_before_run, replay_path='/home/puyuan/hopper_dqn_vqvae_seed0/')
 
@@ -30,6 +29,6 @@ if __name__ == "__main__":
     parser.add_argument('--seed', '-s', type=int, default=0)
     args = parser.parse_args()
 
-    # eval_ckpt(args)
+    eval_ckpt(args)
     generate(args)
 

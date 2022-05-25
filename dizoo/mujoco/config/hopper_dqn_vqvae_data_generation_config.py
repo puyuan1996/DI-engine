@@ -3,7 +3,7 @@ from ding.entry import serial_pipeline_dqn_vqvae
 
 nstep = 3
 hopper_dqn_default_config = dict(
-    exp_name='data_hopper/dqn_noema_middlenet_k64_upcr20_vqloss01_noise_history_seed1_3M',
+    exp_name='dqnvqvae_noema_middlenet_k64_pretrainonly_expert_lt3500_seed1_3M',
     env=dict(
         env_id='Hopper-v3',
         norm_obs=dict(use_norm=False, ),
@@ -11,19 +11,18 @@ hopper_dqn_default_config = dict(
         # (bool) Scale output action into legal range.
         use_act_scale=True,
         # Env number respectively for collector and evaluator.
-        # collector_env_num=8,
-        # evaluator_env_num=8,
-        # n_evaluator_episode=8,
-        collector_env_num=2,
-        evaluator_env_num=2,
-        n_evaluator_episode=2,
+        collector_env_num=8,
+        evaluator_env_num=8,
+        n_evaluator_episode=8,
+        # collector_env_num=2,
+        # evaluator_env_num=2,
+        # n_evaluator_episode=2,
         # stop_value=12000,
         stop_value=int(1e6),
     ),
     policy=dict(
         # Whether to use cuda for network.
         cuda=True,
-        priority=False,
         random_collect_size=int(5e4),
         original_action_shape=3,
         vqvae_embedding_dim=64,  # ved: D
@@ -46,6 +45,32 @@ hopper_dqn_default_config = dict(
         discount_factor=0.99,
         # How many steps in td error.
         nstep=nstep,
+        replay_buffer_size_vqvae=int(1e6), # TODO
+        priority=False,
+        priority_IS_weight=False,
+        # TODO: weight RL loss according to the reconstruct loss, because in 
+        # In the area with large reconstruction loss, the action reconstruction is inaccurate, that is, the (\hat{x}, r) does not match, 
+        # and the corresponding Q value is inaccurate. The update should be reduced to avoid wrong gradient.
+        rl_reconst_loss_weight=False,
+        # rl_reconst_loss_weight=True,
+        rl_reconst_loss_weight_min=0.2,
+        # vqvae_return_weight=False,  # NOTE
+        # priority_vqvae=True,  # NOTE
+        vqvae_return_weight=False,  # NOTE
+        priority_vqvae=False,  # NOTE
+        priority_IS_weight_vqvae=False,
+        priority_type_vqvae='return',
+        # priority_type_vqvae='reward',
+        priority_vqvae_min=0.,
+        cont_reconst_l1_loss=False,
+        cont_reconst_smooth_l1_loss=False,
+        vavae_pretrain_only=False, # NOTE
+        recompute_latent_action=False,
+        categorical_head_for_cont_action=False,  # categorical distribution
+        n_atom=51,
+        gaussian_head_for_cont_action=False, # gaussian  distribution
+        embedding_table_onehot=False,
+        vqvae_expert_only=False,
         # learn_mode config
         learn=dict(
             reconst_loss_stop_value=1e-06,
@@ -77,13 +102,10 @@ hopper_dqn_default_config = dict(
             max=0.5,
             ),
             learner=dict(
-                model_path='/home/puyuan/DI-engine/data_hopper/dqn_noema_middlenet_k64_upcr20_vqloss01_noise_history_seed1_3M/ckpt/ckpt_best.pth.tar',
-                # load_path='/home/puyuan/DI-engine/data_hopper/dqn_noema_middlenet_k64_upcr20_vqloss01_noise_history_seed1_3M/ckpt/iteration_3102260.pth.tar',
-                # hook=dict(
-                #     load_ckpt_before_run='/home/puyuan/DI-engine/data_hopper/dqn_noema_middlenet_k64_upcr20_vqloss01_noise_history_seed1_3M/ckpt/ckpt_best.pth.tar',
-                #     # load_ckpt_before_run='/home/puyuan/DI-engine/data_hopper/dqn_noema_middlenet_k64_upcr20_vqloss01_noise_history_seed1_3M/ckpt/iteration_3102260.pth.tar',
-                #     save_ckpt_after_run=False,
-                # )
+                model_path='/home/puyuan/DI-engine/data_hopper/dqnvqvae_noema_middlenet_k64_pretrainonly_expert_lt3500_seed1_3M/ckpt/ckpt_best.pth.tar',
+                # model_path='/home/puyuan/DI-engine/data_hopper/dqnvqvae_noema_middlenet_k64_pretrainonly_expert_lt3500_seed1_3M/ckpt/iteration_236440.pth.tar',
+                # model_path='/home/puyuan/DI-engine/data_hopper/dqnvqvae_noema_middlenet_k64_pretrainonly_expert_lt3500_seed1_3M/ckpt/iteration_100000.pth.tar',
+
             ),
         ),
         # collect_mode config
@@ -95,10 +117,12 @@ hopper_dqn_default_config = dict(
             unroll_len=1,
 
             # save
-            save_path='/home/puyuan/hopper_dqn_vqvae_seed0/expert_data.pkl',
+            # save_path='/home/puyuan/DI-engine/data_show/dqnvqvae_noema_middlenet_k64_pretrainonly_expert_lt3500_seed1_3M/data_iteration_236440.pkl',
+            # save_path='/home/puyuan/DI-engine/data_show/dqnvqvae_noema_middlenet_k64_pretrainonly_expert_lt3500_seed1_3M/data_iteration_100000.pkl',
+            save_path='/home/puyuan/DI-engine/data_show/dqnvqvae_noema_middlenet_k64_pretrainonly_expert_lt3500_seed1_3M/data_best.pkl',
             # load
             data_type='naive',
-            data_path='/home/puyuan/hopper_dqn_vqvae_seed0/expert_data.pkl'
+            data_path='/home/puyuan/DI-engine/data_show/dqnvqvae_noema_middlenet_k64_pretrainonly_expert_lt3500_seed1_3M/data_iteration_236440.pkl'
         ),
         # command_mode config
         other=dict(
@@ -110,7 +134,7 @@ hopper_dqn_default_config = dict(
                 end=0.05,
                 decay=int(1e5),
             ),
-            replay_buffer=dict(replay_buffer_size=int(2), ) # TODO
+            replay_buffer=dict(replay_buffer_size=int(8), ) # TODO
         ),
     ),
 )

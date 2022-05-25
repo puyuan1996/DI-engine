@@ -43,7 +43,8 @@ hopper_dqn_default_config = dict(
             batch_size=512,
             learning_rate=3e-4,
             # Frequency of target network update.
-            target_update_theta=0.001,
+            # target_update_theta=0.001,
+            target_update_freq=100,
             update_per_collect=20,
 
             # rl_clip_grad=True,

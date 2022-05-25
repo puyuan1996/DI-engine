@@ -1,8 +1,8 @@
 from easydict import EasyDict
 
 nstep = 3
-hopper_dqn_default_config = dict(
-    exp_name='hopper_dqn_vqvae_seed0',
+hopper_sql_default_config = dict(
+    exp_name='hopper_sql_vqvae_seed0',
     env=dict(
         env_id='Hopper-v3',
         norm_obs=dict(use_norm=False, ),
@@ -41,7 +41,7 @@ hopper_dqn_default_config = dict(
         # vqvae_hidden_dim=[512],  # vhd
         vq_loss_weight=1,  # TODO
         replay_buffer_size_vqvae=int(1e6), # TODO
-
+        
         cont_reconst_l1_loss=False,
         cont_reconst_smooth_l1_loss=False,
         categorical_head_for_cont_action=False,  # categorical distribution
@@ -74,26 +74,27 @@ hopper_dqn_default_config = dict(
         model=dict(
             obs_shape=11,
             action_shape=int(64),  # num of num_embeddings: K
-            # action_shape=int(256),  # num of num_embeddings: K
-
             # encoder_hidden_size_list=[128, 128, 64],  # small net
             encoder_hidden_size_list=[256, 256, 128],  # middle net
             # encoder_hidden_size_list=[512, 512, 256],  # large net
             # Whether to use dueling head.
-            dueling=True,
+            # dueling=True,
         ),
         learn=dict(
             reconst_loss_stop_value=1e-6, # TODO
+            alpha=0.12, # SQL
             constrain_action=False,  # TODO
             warm_up_update=int(1e4),
-            # warm_up_update=int(10), # debug
+            # warm_up_update=int(1), # debug
             rl_vae_update_circle=1,  # train rl 1 iter, vae 1 iter
             update_per_collect_rl=200,  # for n_episode=8
             update_per_collect_vae=200,
+            
             rl_batch_size=512,
             vqvae_batch_size=512,
             learning_rate=3e-4,
             learning_rate_vae=3e-4,
+            # Frequency of target network update.
             # Frequency of target network update.
             # target_update_theta=0.001, # TODO
             # target_update_freq=500,
@@ -133,47 +134,37 @@ hopper_dqn_default_config = dict(
                 end=0.05,
                 decay=int(1e5),
             ),
-            replay_buffer=dict(replay_buffer_size=int(1e6), ),
+            replay_buffer=dict(replay_buffer_size=int(1e6), )
         ),
     ),
 )
-hopper_dqn_default_config = EasyDict(hopper_dqn_default_config)
-main_config = hopper_dqn_default_config
+hopper_sql_default_config = EasyDict(hopper_sql_default_config)
+main_config = hopper_sql_default_config
 
-hopper_dqn_create_config = dict(
+hopper_sql_create_config = dict(
     env=dict(
         type='mujoco',
         import_names=['dizoo.mujoco.envs.mujoco_env'],
     ),
     env_manager=dict(type='subprocess'),
     # env_manager=dict(type='base'),
-    policy=dict(type='dqn_vqvae_episode'),
+    policy=dict(type='sql_vqvae_episode'),
     collector=dict(type='episode', get_train_sample=True)
 )
-hopper_dqn_create_config = EasyDict(hopper_dqn_create_config)
-create_config = hopper_dqn_create_config
+hopper_sql_create_config = EasyDict(hopper_sql_create_config)
+create_config = hopper_sql_create_config
 
 
 def train(args):
-    # main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_vqvae-lt3500-only' + '_seed' + f'{args.seed}'+'_3M'
-    # main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_vqvae-return-priority-min0_upcr200' + '_seed' + f'{args.seed}'+'_3M'
-    main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_vqvae-return-weight-min0_upcr200' + '_seed' + f'{args.seed}'+'_3M'
-    # main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_rl-reconst-weight-min02' + '_seed' + f'{args.seed}'+'_3M'
-    # main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_vqvae-return-priority-min0_rl-reconst-weight-min02' + '_seed' + f'{args.seed}'+'_3M'
-    # main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_vqvae-cont-smoothl1loss' + '_seed' + f'{args.seed}'+'_3M'
-    # main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_vqvae1e4' + '_seed' + f'{args.seed}'+'_3M'
-    # main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_pretrainonly_atom51_softmax' + '_seed' + f'{args.seed}'+'_3M'
-    # main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_pretrainonly_gaussianhead' + '_seed' + f'{args.seed}'+'_3M'
-    # main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_pretrainonly_embedding-ont-hot' + '_seed' + f'{args.seed}'+'_3M'
-
+    main_config.exp_name = 'data_hopper/sqlvqvae_noema_middlenet_k64_vqvae-lt3500-only' + '_seed' + f'{args.seed}'+'_3M'
     serial_pipeline_dqn_vqvae_episode([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=int(3e6))
 
 if __name__ == "__main__":
     import copy
     import argparse
     from ding.entry import serial_pipeline_dqn_vqvae_episode
+
     for seed in [0,1,2]:
-    # for seed in [0]:
         parser = argparse.ArgumentParser()
         parser.add_argument('--seed', '-s', type=int, default=seed)
         args = parser.parse_args()

@@ -47,18 +47,16 @@ hopper_td3_data_genearation_default_config = dict(
             n_sample=1,
             unroll_len=1,
             ### save 
-            # save_path='/home/puyuan/hopper_td3_seed0/expert_iteration_200000.pkl',
-            save_path='/home/puyuan/hopper_td3_seed0/expert_data_100eps.pkl',
-            # save_path_transitions='/home/puyuan/hopper_td3_seed0/expert_data_transitions_100eps.pkl',
+            save_path='/home/puyuan/hopper_td3_seed0/expert_data_1000eps_seed0.pkl',
+            save_path_transitions='/home/puyuan/hopper_td3_seed0/expert_data_transitions_seed0.pkl',
             ### load
             data_type='naive',
-            # data_path='/home/puyuan/hopper_td3_seed0/expert_data_transitions_1000eps_lt3500.pkl'
-            data_path='/home/puyuan/hopper_td3_seed0/expert_data_100eps.pkl'
-            # data_path='/home/puyuan/hopper_td3_seed0/expert_data_1000eps.pkl',
+            # data_path='/home/puyuan/hopper_td3_seed0/expert_data_transitions_1000eps_lt3500_seed0.pkl'
+            data_path='/home/puyuan/hopper_td3_seed0/expert_data_1000eps_seed0.pkl'
         ),
         command=dict(),
         eval=dict(),
-        other=dict(replay_buffer=dict(replay_buffer_size=100, ), ),
+        other=dict(replay_buffer=dict(replay_buffer_size=1000, ), ),
     ),
 )
 

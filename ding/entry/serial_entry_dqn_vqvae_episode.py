@@ -163,7 +163,7 @@ def serial_pipeline_dqn_vqvae_episode(
             item['warm_up'] = False
         
         if cfg.policy.vqvae_expert_only:
-            new_data_vqvae = [item for item in new_data_vqvae_tmp if item['return']>=3500]
+            new_data_vqvae = [item for item in new_data_vqvae_tmp if item['return']>=cfg.policy.lt_return]  # NOTE: TODO
         else:
             new_data_vqvae = new_data_vqvae_tmp
         for item in new_data_vqvae:

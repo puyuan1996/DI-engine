@@ -59,7 +59,7 @@ hopper_dqn_default_config = dict(
         categorical_head_for_cont_action=False,  # categorical distribution
         n_atom=51,
         gaussian_head_for_cont_action=False, # gaussian  distribution
-        embedding_table_onehot=True,
+        embedding_table_onehot=False,
         model=dict(
             obs_shape=11,
             action_shape=int(64),  # num of num_embeddings: K
@@ -147,7 +147,9 @@ def train(args):
     # main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_vqvae1e4' + '_seed' + f'{args.seed}'+'_3M'
     # main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_pretrainonly_atom51_softmax' + '_seed' + f'{args.seed}'+'_3M'
     # main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_pretrainonly_gaussianhead' + '_seed' + f'{args.seed}'+'_3M'
-    main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_pretrainonly_embedding-ont-hot' + '_seed' + f'{args.seed}'+'_3M'
+    # main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_pretrainonly_embedding-ont-hot' + '_seed' + f'{args.seed}'+'_3M'
+    main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_pretrainonly' + '_seed' + f'{args.seed}'+'_3M'
+
 
 
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=int(3e6))
