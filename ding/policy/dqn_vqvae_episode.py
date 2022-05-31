@@ -245,7 +245,6 @@ class DQNVQVAEEPISODEPolicy(Policy):
             # ====================
             # train vae
             # ====================
-            # result = self._vqvae_model.train_without_obs(data)
             result = self._vqvae_model.train(data, warmup=True)
  
             if self._cfg.gaussian_head_for_cont_action:

@@ -34,7 +34,9 @@ hopper_sql_default_config = dict(
         original_action_shape=3,
         # random_collect_size=int(5e4),
         random_collect_size=int(1000),  # n_episode
+        warm_up_update=int(1e4),
         # random_collect_size=int(10),  # debug
+        # warm_up_update=int(1), # debug
         vqvae_embedding_dim=64,  # ved: D
         vqvae_hidden_dim=[256],  # vhd
         # vqvae_embedding_dim=128,  # ved: D
@@ -60,7 +62,7 @@ hopper_sql_default_config = dict(
         rl_reconst_loss_weight_min=0.2,
 
         # vqvae priority
-        vqvae_return_weight=True,  # NOTE: return weight
+        vqvae_return_weight=False,  # NOTE: return weight
         priority_vqvae=False,  # NOTE: return priority
         priority_IS_weight_vqvae=False, # NOTE: return priority
         priority_type_vqvae='return',
@@ -68,8 +70,8 @@ hopper_sql_default_config = dict(
 
         vavae_pretrain_only=False, # NOTE
         recompute_latent_action=True, # NOTE: if train vqvae dynamicall, not only pretrain, should set this key to True
-        vqvae_expert_only=False, # NOTE
-        lt_return=3500,  # according to different env
+        vqvae_expert_only=True, # NOTE
+        lt_return=0,  # according to different env
 
         model=dict(
             obs_shape=11,
@@ -84,8 +86,7 @@ hopper_sql_default_config = dict(
             reconst_loss_stop_value=1e-6, # TODO
             alpha=0.12, # SQL
             constrain_action=False,  # TODO
-            warm_up_update=int(1e4),
-            # warm_up_update=int(1), # debug
+
             rl_vae_update_circle=1,  # train rl 1 iter, vae 1 iter
             update_per_collect_rl=200,  # for n_episode=8
             update_per_collect_vae=200,
@@ -156,7 +157,7 @@ create_config = hopper_sql_create_config
 
 
 def train(args):
-    main_config.exp_name = 'data_hopper/sqlvqvae_noema_middlenet_k64_vqvae-lt3500-only' + '_seed' + f'{args.seed}'+'_3M'
+    main_config.exp_name = 'data_hopper/sqlvqvae_noema_middlenet_k64_vqvae-lt0' + '_seed' + f'{args.seed}' +'_3M'
     serial_pipeline_dqn_vqvae_episode([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=int(3e6))
 
 if __name__ == "__main__":

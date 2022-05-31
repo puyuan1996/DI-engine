@@ -83,6 +83,9 @@ class SQLVQVAEEPISODEPolicy(Policy):
             Init the optimizer, algorithm config, main and target models.
         """
         self._priority = self._cfg.priority
+        self._priority_IS_weight = self._cfg.priority_IS_weight
+        self._priority_vqvae = self._cfg.priority_vqvae
+        self._priority_IS_weight_vqvae = self._cfg.priority_IS_weight_vqvae
         # Optimizer
         # NOTE:
         if self._cfg.learn.rl_clip_grad is True:
@@ -167,8 +170,8 @@ class SQLVQVAEEPISODEPolicy(Policy):
             # ====================
             # train vae
             # ====================
-            result = self._vqvae_model.train(data)
-
+            result = self._vqvae_model.train(data, warmup=True)
+ 
             if self._cfg.gaussian_head_for_cont_action:
                 # debug
                 sigma = result['sigma']

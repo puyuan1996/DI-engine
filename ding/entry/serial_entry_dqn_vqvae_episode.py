@@ -110,7 +110,7 @@ def serial_pipeline_dqn_vqvae_episode(
         # warm_up phase: train VAE
         # ====================
         # Learn policy from collected data
-        for i in range(cfg.policy.learn.warm_up_update):
+        for i in range(cfg.policy.warm_up_update):
             # NOTE: save visualized latent action and embedding_table
             # if i == 0:
             #     policy.visualize_latent(

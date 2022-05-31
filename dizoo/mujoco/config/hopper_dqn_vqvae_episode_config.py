@@ -35,6 +35,8 @@ hopper_dqn_default_config = dict(
         # random_collect_size=int(5e4),
         random_collect_size=int(1000),  # n_episode
         # random_collect_size=int(10),  # debug
+        warm_up_update=int(1e4),
+        # warm_up_update=int(10), # debug
         vqvae_embedding_dim=64,  # ved: D
         vqvae_hidden_dim=[256],  # vhd
         # vqvae_embedding_dim=128,  # ved: D
@@ -85,8 +87,7 @@ hopper_dqn_default_config = dict(
         learn=dict(
             reconst_loss_stop_value=1e-6, # TODO
             constrain_action=False,  # TODO
-            warm_up_update=int(1e4),
-            # warm_up_update=int(10), # debug
+
             rl_vae_update_circle=1,  # train rl 1 iter, vae 1 iter
             update_per_collect_rl=200,  # for n_episode=8
             update_per_collect_vae=200,
