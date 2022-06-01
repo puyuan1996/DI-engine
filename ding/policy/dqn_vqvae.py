@@ -10,7 +10,6 @@ from ding.utils import POLICY_REGISTRY
 from ding.utils.data import default_collate, default_decollate
 from .base_policy import Policy
 from .common_utils import default_preprocess_learn
-# from ding.model.template.vqvae import VQVAE
 from ding.model.template.action_vqvae import ActionVQVAE
 
 from ding.utils import RunningMeanStd
@@ -244,7 +243,6 @@ class DQNVQVAEPolicy(Policy):
             # ====================
             # train vae
             # ====================
-            # result = self._vqvae_model.train_without_obs(data)
             result = self._vqvae_model.train(data)
  
             if self._cfg.gaussian_head_for_cont_action:
@@ -270,11 +268,6 @@ class DQNVQVAEPolicy(Policy):
             self._optimizer_vqvae.zero_grad()
             result['total_vqvae_loss'].backward()
             self._optimizer_vqvae.step()
-            # loss_dict['critic_loss'] = torch.Tensor([0]).item()
-            # loss_dict['total_loss'] = torch.Tensor([0]).item()
-            # q_value_dict = {}
-            # q_value_dict['q_value'] = torch.Tensor([0]).item()
-            # td_error_per_sample = torch.Tensor([0]).item()
 
             # NOTE:visualize_latent, now it's only for env hopper and gym_hybrid
             # quantized_index = self.visualize_latent(save_histogram=False)
@@ -307,7 +300,6 @@ class DQNVQVAEPolicy(Policy):
                 if self._cuda:
                     data = to_device(data, self._device)
 
-                # result = self._vqvae_model.train_without_obs(data)
                 result = self._vqvae_model.train(data)
 
                 loss_dict['total_vqvae_loss'] = result['total_vqvae_loss'].item()
@@ -322,10 +314,6 @@ class DQNVQVAEPolicy(Policy):
                 total_grad_norm_vqvae = self._optimizer_vqvae.get_grad()
                 self._optimizer_vqvae.step()
 
-                # q_value_dict = {}
-                # q_value_dict['q_value'] = torch.Tensor([0]).item()
-                # td_error_per_sample = torch.Tensor([0]).item()
-                
                 # NOTE:visualize_latent, now it's only for env hopper and gym_hybrid
                 # quantized_index = self.visualize_latent(save_histogram=False)
                 # cos_similarity = self.visualize_embedding_table(save_dis_map=False)
@@ -358,9 +346,6 @@ class DQNVQVAEPolicy(Policy):
 
                 # Representation shift correction (RSC)
                 # update all latent action
-                # result = self._vqvae_model.inference_without_obs({'action': data['action']})
-                # data['latent_action'] = result['quantized_index'].clone().detach()
-
                 if self._cfg.recompute_latent_action:
                     if self._cfg.rl_reconst_loss_weight:
                         result = self._vqvae_model.train(data)
@@ -388,14 +373,13 @@ class DQNVQVAEPolicy(Policy):
                     # Max q value action (main model)
                     if self._cfg.learn.constrain_action is True:
                         # TODO(pu)
-                        quantized_index = self.visualize_latent(save_histogram=False)  # NOTE:visualize_latent
+                        quantized_index = self.visualize_latent(save_histogram=False)  # NOTE: visualize_latent
                         constrain_action = torch.unique(torch.from_numpy(quantized_index))
                         next_q_value = self._learn_model.forward(data['next_obs'])['logit']
                         target_q_action = torch.argmax(next_q_value[:, constrain_action], dim=-1)
-                        # target_q_action = self._learn_model.forward(data['next_obs'])['action']
                     else:
                         target_q_action = self._learn_model.forward(data['next_obs'])['action']
-                        # print(torch.unique( target_q_action))
+                        # print(torch.unique(target_q_action))
 
                 # TODO: weight RL loss according to the reconstruct loss, because in 
                 # In the area with large reconstruction loss, the action reconstruction is inaccurate, that is, the (\hat{x}, r) does not match, 
@@ -576,11 +560,13 @@ class DQNVQVAEPolicy(Policy):
             if self._cuda:
                 output = to_device(output, self._device)
 
+            # backup
             # TODO(pu): decode into original hybrid actions, here data is obs
             # this is very important to generate self.obs_encoding using in decode phase
             # output['action'] = self._vqvae_model.decode_with_obs(output['action'], data})['recons_action']
 
             if self._cfg.action_space == 'hybrid':
+                # backup
                 # recons_action = self._vqvae_model.decode_without_obs(output['action'])
                 # output['action'] = {
                 #     'action_type': recons_action['recons_action']['disc'],
@@ -610,6 +596,8 @@ class DQNVQVAEPolicy(Policy):
             else:
                 # output['action']  = self._vqvae_model.decode_with_obs(output['action'])
                 output['action'] = self._vqvae_model.decode(output['action'])['recons_action']
+                
+                # debug
                 # latents = to_device(torch.arange(64), 'cuda')
                 # recons_action = self._vqvae_model.decode(latents)['recons_action']
                 # print(recons_action.max(0), recons_action.min(0),recons_action.mean(0), recons_action.std(0))
@@ -720,8 +708,6 @@ class DQNVQVAEPolicy(Policy):
         with torch.no_grad():
             output = self._eval_model.forward(data)
             # here output['action'] is the out of DQN, is discrete action
-            # output['latent_action'] = output['action']  # TODO(pu)
-            # print('k', output['action'])
             output['latent_action'] = copy.deepcopy(output['action'])
 
             # TODO(pu): decode into original hybrid actions, here data is obs
@@ -845,6 +831,7 @@ class DQNVQVAEPolicy(Policy):
         else:
             return np.array(dis)
 
+# debug
 # import matplotlib.pyplot as plt
 # fig = plt.figure()
 # ax = fig.add_subplot(111)

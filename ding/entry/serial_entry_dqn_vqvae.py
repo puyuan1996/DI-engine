@@ -58,7 +58,7 @@ def serial_pipeline_dqn_vqvae(
     set_pkg_seed(cfg.seed, use_cuda=cfg.policy.cuda)
     policy = create_policy(cfg.policy, model=model, enable_field=['learn', 'collect', 'eval', 'command'])
 
-    # TODO(pu):load model
+    # if load model
     # policy.collect_mode.load_state_dict(torch.load(cfg.policy.learned_model_path, map_location='cuda'))
 
     # Create worker components: learner, collector, evaluator, replay buffer, commander.
@@ -138,6 +138,7 @@ def serial_pipeline_dqn_vqvae(
     # For our alg., the data in self._traj_buffer[env_id], latent_action=False, cannot be used in rl_vae phase.
     collector.reset(policy.collect_mode)
 
+    # debug
     # latents = to_device(torch.arange(64), 'cuda')
     # recons_action = learner.policy._vqvae_model.decode(latents)['recons_action']
     # print(recons_action.max(0), recons_action.min(0),recons_action.mean(0), recons_action.std(0))
@@ -198,6 +199,7 @@ def serial_pipeline_dqn_vqvae(
                 for i in range(cfg.policy.learn.update_per_collect_vae):
                     # Learner will train ``update_per_collect`` times in one iteration.
                     # TODO(pu):
+
                     # history+recent
                     # train_data_history = replay_buffer.sample(
                     #     int(cfg.policy.learn.vqvae_batch_size / 2), learner.train_iter
@@ -208,7 +210,7 @@ def serial_pipeline_dqn_vqvae(
                     # train_data = train_data_history + train_data_recent
                     
                     # recent
-                    # add replay_buffer_vqvae.clear()  # TODO(pu)
+                    # add replay_buffer_vqvae.clear()
                     # train_data_recent = replay_buffer_vqvae.sample(
                     #     int(cfg.policy.learn.vqvae_batch_size / 2), learner.train_iter
                     # )
@@ -242,14 +244,8 @@ def serial_pipeline_dqn_vqvae(
                     if learner.policy.get_attribute('priority_vqvae'):
                         replay_buffer_vqvae.update(learner.priority_info)
 
-                # replay_buffer_vqvae.clear()  # TODO(pu)
 
         if collector.envstep > max_env_step:
-            # NOTE: save visualized latent action and embedding_table
-            # policy.visualize_latent(
-            #     save_histogram=True, name=f'iter{iter}_{cfg.env.env_id}_s{cfg.seed}'
-            # )
-            # policy.visualize_embedding_table(name=f'iter{iter}_{cfg.env.env_id}_s{cfg.seed}')
             break
 
     # Learner's after_run hook.

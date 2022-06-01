@@ -13,8 +13,8 @@ hopper_dqn_default_config = dict(
         collector_env_num=8,
         evaluator_env_num=8,
         n_evaluator_episode=8,
-        # stop_value=3000,
-        stop_value=int(1e6),  # max env steps 
+        # stop_value=4000,
+        stop_value=int(1e6),  # stop according to max env steps 
     ),
     policy=dict(
         # Whether to use cuda for network.
@@ -26,29 +26,29 @@ hopper_dqn_default_config = dict(
         nstep=nstep,
         # learn_mode config
         action_space='continuous',  # 'hybrid'
-        eps_greedy_nearest=False, # TODO
+        eps_greedy_nearest=False,  # TODO(pu): delete this key
         is_ema_target=False,
 
-        is_ema=False,  # no use EMA # TODO
-        # is_ema=True,  # use EMA
-        original_action_shape=3,
-        # random_collect_size=int(5e4),
+        is_ema=False,  # no use EMA 
+        # is_ema=True,  # use EMA TODO(pu): test ema
+        original_action_shape=3,  # related to the environment
         random_collect_size=int(1000),  # n_episode
-        # random_collect_size=int(10),  # debug
         warm_up_update=int(1e4),
-        # warm_up_update=int(10), # debug
+        # debug
+        # warm_up_update=int(10),
+        # random_collect_size=int(10),
+
         vqvae_embedding_dim=64,  # ved: D
         vqvae_hidden_dim=[256],  # vhd
-        # vqvae_embedding_dim=128,  # ved: D
-        # vqvae_hidden_dim=[512],  # vhd
-        vq_loss_weight=1,  # TODO
-        replay_buffer_size_vqvae=int(1e6), # TODO
+        vq_loss_weight=1,
+        replay_buffer_size_vqvae=int(1e6),
 
+        # optinal design
         cont_reconst_l1_loss=False,
         cont_reconst_smooth_l1_loss=False,
         categorical_head_for_cont_action=False,  # categorical distribution
         n_atom=51,
-        gaussian_head_for_cont_action=False, # gaussian  distribution
+        gaussian_head_for_cont_action=False, # gaussian distribution
         embedding_table_onehot=False,
 
         # rl priority
@@ -58,26 +58,30 @@ hopper_dqn_default_config = dict(
         # In the area with large reconstruction loss, the action reconstruction is inaccurate, that is, the (\hat{x}, r) does not match, 
         # and the corresponding Q value is inaccurate. The update should be reduced to avoid wrong gradient.
         rl_reconst_loss_weight=False,
-        # rl_reconst_loss_weight=True,
         rl_reconst_loss_weight_min=0.2,
 
         # vqvae priority
         vqvae_return_weight=False,  # NOTE: return weight
-        priority_vqvae=False,  # NOTE: return priority
-        priority_IS_weight_vqvae=False, # NOTE: return priority
+
+        priority_vqvae=True,  # NOTE: return priority
+        priority_IS_weight_vqvae=True, # NOTE: return priority
         priority_type_vqvae='return',
         priority_vqvae_min=0.,
 
+        # vavae_pretrain_only=True, # NOTE
+        # recompute_latent_action=False, # NOTE: if only pretrain vqvae , i.e. vavae_pretrain_only=True, should set this key to False
+        
         vavae_pretrain_only=False, # NOTE
-        recompute_latent_action=True, # NOTE: if train vqvae dynamicall, not only pretrain, should set this key to True
+        recompute_latent_action=True, # NOTE: if train vqvae dynamically, i.e. vavae_pretrain_only=False, should set this key to True
+        
         vqvae_expert_only=True, # NOTE
-        lt_return=2000,  # according to different env
+        lt_return=0,  # according to different env
+        lt_return_start=0,
 
         model=dict(
-            obs_shape=11,
+            obs_shape=11,  # related to the environment
             action_shape=int(64),  # num of num_embeddings: K
-            # action_shape=int(256),  # num of num_embeddings: K
-
+            # action_shape=int(128),  # num of num_embeddings: K
             # encoder_hidden_size_list=[128, 128, 64],  # small net
             encoder_hidden_size_list=[256, 256, 128],  # middle net
             # encoder_hidden_size_list=[512, 512, 256],  # large net
@@ -85,20 +89,20 @@ hopper_dqn_default_config = dict(
             dueling=True,
         ),
         learn=dict(
-            reconst_loss_stop_value=1e-6, # TODO
-            constrain_action=False,  # TODO
+            reconst_loss_stop_value=1e-6,  # TODO(pu)
+            constrain_action=False, # TODO(pu): delete this key
 
             rl_vae_update_circle=1,  # train rl 1 iter, vae 1 iter
-            update_per_collect_rl=200,  # for n_episode=8
+            update_per_collect_rl=200,  # for collector n_episode=8
             update_per_collect_vae=200,
+            
             rl_batch_size=512,
             vqvae_batch_size=512,
             learning_rate=3e-4,
             learning_rate_vae=3e-4,
             # Frequency of target network update.
-            # target_update_theta=0.001, # TODO
             target_update_freq=500,
-            # target_update_freq=100,
+            # target_update_freq=1000,
 
             rl_clip_grad=True,
             vqvae_clip_grad=True,
@@ -106,8 +110,8 @@ hopper_dqn_default_config = dict(
             grad_clip_value=0.5,
 
             # add noise in original continuous action
-            # noise=False,  # TODO: if vavae_pretrain_only=True
-            noise=True,
+            # noise=False,  # NOTE: if vavae_pretrain_only=True
+            noise=True,  # NOTE: if vavae_pretrain_only=False
             noise_sigma=0.1,
             noise_range=dict(
             min=-0.5,
@@ -118,7 +122,6 @@ hopper_dqn_default_config = dict(
         collect=dict(
             # You can use either "n_sample" or "n_episode" in collector.collect.
             # Get "n_sample" samples per collect.
-            # n_sample=256, # NOTE
             n_episode=8,
             # Cut trajectories into pieces with length "unroll_len".
             unroll_len=1,
@@ -156,25 +159,15 @@ create_config = hopper_dqn_create_config
 
 
 def train(args):
-    main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_vqvae-lt2000-only_tuf500' + '_seed' + f'{args.seed}'+'_3M'
-    # main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_vqvae-return-priority-min0_tuf500' + '_seed' + f'{args.seed}'+'_3M'
-    # main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_vqvae-return-weight-min0_upcr200' + '_seed' + f'{args.seed}'+'_3M'
-    # main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_rl-reconst-weight-min02' + '_seed' + f'{args.seed}'+'_3M'
-    # main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_vqvae-return-priority-min0_rl-reconst-weight-min02' + '_seed' + f'{args.seed}'+'_3M'
-    # main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_vqvae-cont-smoothl1loss' + '_seed' + f'{args.seed}'+'_3M'
-    # main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_vqvae1e4' + '_seed' + f'{args.seed}'+'_3M'
-    # main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_pretrainonly_atom51_softmax' + '_seed' + f'{args.seed}'+'_3M'
-    # main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_pretrainonly_gaussianhead' + '_seed' + f'{args.seed}'+'_3M'
-    # main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_pretrainonly_embedding-ont-hot' + '_seed' + f'{args.seed}'+'_3M'
-
+    main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_vqvae-lt0-only_tuf500' + '_seed' + f'{args.seed}'+'_3M'
     serial_pipeline_dqn_vqvae_episode([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=int(3e6))
 
 if __name__ == "__main__":
     import copy
     import argparse
     from ding.entry import serial_pipeline_dqn_vqvae_episode
-    for seed in [0,1,2]:
-    # for seed in [0]:
+    # for seed in [0,1,2]:
+    for seed in [0]:
         parser = argparse.ArgumentParser()
         parser.add_argument('--seed', '-s', type=int, default=seed)
         args = parser.parse_args()

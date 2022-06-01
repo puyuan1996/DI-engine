@@ -72,6 +72,8 @@ hopper_sql_default_config = dict(
         recompute_latent_action=True, # NOTE: if train vqvae dynamicall, not only pretrain, should set this key to True
         vqvae_expert_only=True, # NOTE
         lt_return=3500,  # according to different env
+        lt_return_start=0,
+
 
         model=dict(
             obs_shape=11,

@@ -20,7 +20,7 @@ def train(args):
     create_cfg.policy.type = create_cfg.policy.type + '_command'
     cfg = compile_config(cfg, seed=args.seed, auto=True, create_cfg=create_cfg)
 
-        # Dataset
+    # Dataset
     dataset = create_dataset(cfg)
     print('num_episodes', dataset.__len__())
     # print(dataset.__getitem__(0))

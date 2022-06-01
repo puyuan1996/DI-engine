@@ -13,13 +13,12 @@ hopper_dqn_default_config = dict(
         collector_env_num=8,
         evaluator_env_num=8,
         n_evaluator_episode=8,
-        # stop_value=3000,
-        stop_value=int(1e6),  # max env steps
+        # stop_value=4000,
+        stop_value=int(1e6),  # stop according to max env steps 
         each_dim_disc_size=4,  # n: discrete size of each dim in origin continuous action
     ),
     policy=dict(
-        model_path='/home/puyuan/DI-engine/data_hopper/dqn_middlenet_k64_upc20_seed0_3M/ckpt/ckpt_best.pth.tar',
-
+        # model_path='/home/puyuan/DI-engine/data_hopper/dqn_middlenet_k64_upc20_seed0_3M/ckpt/ckpt_best.pth.tar',
         # Whether to use cuda for network.
         cuda=True,
         priority=False,
@@ -28,9 +27,9 @@ hopper_dqn_default_config = dict(
         # How many steps in td error.
         nstep=nstep,
         # learn_mode config
-        # original_action_shape=3,  # m
         model=dict(
             obs_shape=11,
+            # NOTE：original_action_shape m=3, 
             action_shape=int(64),  # num of num_embeddings: K = n**m e.g. 4**3=64
             # encoder_hidden_size_list=[128, 128, 64],  # small net
             encoder_hidden_size_list=[256, 256, 128],  # middle net
@@ -43,13 +42,8 @@ hopper_dqn_default_config = dict(
             batch_size=512,
             learning_rate=3e-4,
             # Frequency of target network update.
-            # target_update_theta=0.001,
             target_update_freq=100,
             update_per_collect=20,
-
-            # rl_clip_grad=True,
-            # grad_clip_type='clip_norm',
-            # grad_clip_value=0.5,
         ),
         # collect_mode config
         collect=dict(
@@ -84,7 +78,6 @@ hopper_dqn_create_config = dict(
         import_names=['dizoo.mujoco.envs.mujoco_env_disc'],
     ),
     env_manager=dict(type='subprocess'),
-    # env_manager=dict(type='base'),
     policy=dict(type='dqn'),
 )
 hopper_dqn_create_config = EasyDict(hopper_dqn_create_config)

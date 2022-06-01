@@ -76,7 +76,9 @@ def serial_pipeline_dqn_vqvae_episode(
     )
     replay_buffer = create_buffer(cfg.policy.other.replay_buffer, tb_logger=tb_logger, exp_name=cfg.exp_name)
     cfg.policy.other.replay_buffer.replay_buffer_size = cfg.policy.replay_buffer_size_vqvae
+    replay_buffer_vqvae_warmup = create_buffer(cfg.policy.other.replay_buffer, tb_logger=tb_logger, exp_name=cfg.exp_name)
     replay_buffer_vqvae = create_buffer(cfg.policy.other.replay_buffer, tb_logger=tb_logger, exp_name=cfg.exp_name)
+
 
     commander = BaseSerialCommander(
         cfg.policy.other.commander, learner, collector, evaluator, replay_buffer, policy.command_mode
@@ -103,8 +105,20 @@ def serial_pipeline_dqn_vqvae_episode(
         new_data = collector.collect(n_episode=cfg.policy.random_collect_size, policy_kwargs=collect_kwargs)
         for item in new_data:
             item['warm_up'] = True
-        replay_buffer_vqvae.push(new_data, cur_collector_envstep=0)
+        replay_buffer_vqvae_warmup.push(new_data, cur_collector_envstep=0)
         collector.reset_policy(policy.collect_mode)
+
+        """start data to train vqvae"""
+        if cfg.policy.vqvae_expert_only:
+            new_data_vqvae_tmp = copy.deepcopy(new_data)
+            for item in new_data_vqvae_tmp:
+                item['warm_up'] = False
+            new_data_vqvae = [item for item in new_data_vqvae_tmp if item['return']>=cfg.policy.lt_return_start]  # NOTE: TODO
+            if len(new_data_vqvae)>0:
+                print(f'iter-0: ', f'nums of transitions that <return>={cfg.policy.lt_return_start}>: {len(new_data_vqvae)}')
+            if len(new_data_vqvae)>0:
+                replay_buffer_vqvae.push(new_data_vqvae, cur_collector_envstep=collector.envstep)
+
 
         # ====================
         # warm_up phase: train VAE
@@ -118,7 +132,8 @@ def serial_pipeline_dqn_vqvae_episode(
             #     )
             #     policy.visualize_embedding_table(name='warmup-start_' + f'{cfg.env.env_id}_s{cfg.seed}')
             # Learner will train ``update_per_collect`` times in one iteration.
-            train_data = replay_buffer_vqvae.sample(cfg.policy.learn.vqvae_batch_size, learner.train_iter)
+            train_data = replay_buffer_vqvae_warmup.sample(cfg.policy.learn.vqvae_batch_size, learner.train_iter)
+
             if train_data is None:
                 # It is possible that replay buffer's data count is too few to train ``update_per_collect`` times
                 logging.warning(
@@ -129,10 +144,10 @@ def serial_pipeline_dqn_vqvae_episode(
             learner.train(train_data, collector.envstep)
 
             if learner.policy.get_attribute('priority'):
-                replay_buffer_vqvae.update(learner.priority_info)
+                replay_buffer_vqvae_warmup.update(learner.priority_info)
             if learner.policy.get_attribute('warm_up_stop'):
                 break
-        # replay_buffer_vqvae.clear()  # TODO(pu): NOTE
+        replay_buffer_vqvae_warmup.clear()  # TODO(pu): NOTE
 
     # NOTE: for the case collector_env_num>1, because after the random collect phase,  self._traj_buffer[env_id] may be not empty. Only
     # if the condition "timestep.done or len(self._traj_buffer[env_id]) == self._traj_len" is satisfied, the self._traj_buffer will be clear.
@@ -161,17 +176,20 @@ def serial_pipeline_dqn_vqvae_episode(
         new_data_vqvae_tmp = copy.deepcopy(new_data)
         for item in new_data:
             item['warm_up'] = False
+        replay_buffer.push(new_data, cur_collector_envstep=collector.envstep)
         
+        """prepare data to train vqvae """
         if cfg.policy.vqvae_expert_only:
             new_data_vqvae = [item for item in new_data_vqvae_tmp if item['return']>=cfg.policy.lt_return]  # NOTE: TODO
             if len(new_data_vqvae)>0:
                 print(f'iter-{iter}: ', f'nums of transitions that <return>={cfg.policy.lt_return}>: {len(new_data_vqvae)}')
         else:
             new_data_vqvae = new_data_vqvae_tmp
-        for item in new_data_vqvae:
-            item['warm_up'] = False
-        replay_buffer.push(new_data, cur_collector_envstep=collector.envstep)
-        replay_buffer_vqvae.push(new_data_vqvae, cur_collector_envstep=collector.envstep)
+        if len(new_data_vqvae)>0:
+            for item in new_data_vqvae:
+                item['warm_up'] = False
+        if len(new_data_vqvae)>0:
+            replay_buffer_vqvae.push(new_data_vqvae, cur_collector_envstep=collector.envstep)
 
         # ====================
         # RL phase

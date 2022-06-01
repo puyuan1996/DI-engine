@@ -1,6 +1,6 @@
 from easydict import EasyDict
 
-halfcheetah_sac_data_genearation_default_config = dict(
+halfcheetah_sac_data_genearation_config_vqvae = dict(
     env=dict(
         env_id='HalfCheetah-v3',
         norm_obs=dict(use_norm=False, ),
@@ -42,21 +42,16 @@ halfcheetah_sac_data_genearation_default_config = dict(
             learner=dict(
                 # load_path='/home/puyuan/halfcheetah_sac_seed0/ckpt/iteration_100000.pth.tar',
                 load_path='/home/puyuan/halfcheetah_sac_seed0/ckpt/ckpt_best.pth.tar',
-                hook=dict(
-                    # load_ckpt_before_run='/home/puyuan/halfcheetah_sac_seed0/ckpt/iteration_100000.pth.tar',
-                    load_ckpt_before_run='/home/puyuan/halfcheetah_sac_seed0/ckpt/ckpt_best.pth.tar',
-                    save_ckpt_after_run=False,
-                )
             ),
         ),
         collect=dict(
             # n_sample=1,
             n_sample=10000,  # TODO
             unroll_len=1,
-            # save
+            # save path
             save_path='/home/puyuan/halfcheetah_sac_seed0/data_iteration_100000.pkl',
             # save_path='/home/puyuan/halfcheetah_sac_seed0/expert_data.pkl',
-            # load
+            # load path
             data_type='naive',
             data_path='/home/puyuan/halfcheetah_sac_seed0/data_iteration_100000.pkl',
             # data_path='/home/puyuan/halfcheetah_sac_seed0/expert_data.pkl'
@@ -67,8 +62,8 @@ halfcheetah_sac_data_genearation_default_config = dict(
     ),
 )
 
-halfcheetah_sac_data_genearation_default_config = EasyDict(halfcheetah_sac_data_genearation_default_config)
-main_config = halfcheetah_sac_data_genearation_default_config
+halfcheetah_sac_data_genearation_config_vqvae = EasyDict(halfcheetah_sac_data_genearation_config_vqvae)
+main_config = halfcheetah_sac_data_genearation_config_vqvae
 
 halfcheetah_sac_data_genearation_default_create_config = dict(
     env=dict(

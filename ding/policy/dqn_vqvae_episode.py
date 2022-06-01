@@ -10,7 +10,6 @@ from ding.utils import POLICY_REGISTRY
 from ding.utils.data import default_collate, default_decollate
 from .base_policy import Policy
 from .common_utils import default_preprocess_learn
-# from ding.model.template.vqvae import VQVAE
 from ding.model.template.action_vqvae import ActionVQVAE
 
 from ding.utils import RunningMeanStd

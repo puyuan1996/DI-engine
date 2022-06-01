@@ -62,11 +62,12 @@ class MujocoEnv(BaseEnv):
         obs = self._env.reset()
         obs = to_ndarray(obs).astype('float32')
 
-        # NOTE: disc_to_cont
-        self.m=self._action_space.shape[0]
-        self.n=self._cfg.each_dim_disc_size
-        self.K=self.n**self.m
+        # NOTE: disc_to_cont: transform discrete action index to original continuous action
+        self.m = self._action_space.shape[0]
+        self.n = self._cfg.each_dim_disc_size
+        self.K =  self.n ** self.m
         self.disc_to_cont = list(product(*[list(range(self.n)) for dim in range(self.m)] ))
+
         return obs
 
     def close(self) -> None:
@@ -80,8 +81,9 @@ class MujocoEnv(BaseEnv):
         np.random.seed(self._seed)
 
     def step(self, action: Union[np.ndarray, list]) -> BaseEnvTimestep:
-        # NOTE: disc_to_cont
-        action = [-1+2/self.n*k for k in  self.disc_to_cont[int(action)]]
+
+        # NOTE: disc_to_cont: transform discrete action index to original continuous action
+        action = [-1 + 2 / self.n * k for k in  self.disc_to_cont[int(action)]]
         action = to_ndarray(action)
 
         if self._save_replay:

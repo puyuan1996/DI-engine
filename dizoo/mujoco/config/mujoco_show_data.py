@@ -100,7 +100,6 @@ def train(args):
     #     print(index_of_len1000_)
     #     episode_actions = torch.stack([dataset.__getitem__(index_of_len1000_)[i]['action'] for i in range(dataset.__getitem__(index_of_len1000_).__len__())],axis=0)
 
-
     # episode 83: saved return=3617.5715, 
     # episode_actions_numpy return=1091
     # episode_actions_disc: num_bins = 20 return=11, num_bins = 200 return=165, num_bins = 2000 return=285, num_bins = 20000 return=773, num_bins = 200000 return=1091,
@@ -192,19 +191,6 @@ def train(args):
             # print("length mean:", np.mean(total_length), 'std:', np.std(total_length), 'max:', np.max(total_length), 'min:',
             #     np.min(total_length))
             env.close()
-
-    # episodes_len = np.array([len(dataset.__getitem__(i)) for i in range(dataset.__len__())])
-    # print('episodes_len',episodes_len)
-    # index_of_len1000 = np.argwhere(episodes_len==1000).reshape(-1) 
-    # return_of_len1000 = torch.stack([torch.stack([dataset.__getitem__(episode)[i]['reward'] for i in range(dataset.__getitem__(episode).__len__())],axis=0).sum(0) for episode in list(index_of_len1000)],axis=0)
-    # print('return_of_len1000',return_of_len1000)
-    # # stacked action of the first collected episode
-    # # length 1000, return 3631
-    # episode_action_8 = torch.stack([dataset.__getitem__(8)[i]['action'] for i in range(dataset.__getitem__(8).__len__())],axis=0)
-    # episode_reward_8 = torch.stack([dataset.__getitem__(8)[i]['reward'] for i in range(dataset.__getitem__(8).__len__())],axis=0)
-    # print(episode_reward_8.max(),episode_reward_8.min(),episode_reward_8.mean(),episode_reward_8.std())
-    # print(episode_action_8.max(0),episode_action_8.min(0),episode_action_8.mean(0),episode_action_8.std(0))
-
 
 if __name__ == "__main__":
     import argparse

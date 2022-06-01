@@ -199,7 +199,13 @@ class BaseLearner(object):
         self.call_hook('before_iter')
 
         # Forward
-        log_vars = self._policy.forward(data)
+        # log_vars = self._policy.forward(data)
+        try:
+            log_vars = self._policy.forward(data)
+        except Exception as error:
+            print('+'*20)
+            print('data[0]:',data[0])
+            print('+'*20)
 
         # Update replay buffer's priority info
         if isinstance(log_vars, dict):

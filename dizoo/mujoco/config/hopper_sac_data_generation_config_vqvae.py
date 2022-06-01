@@ -36,23 +36,17 @@ hopper_sac_data_genearation_default_config = dict(
             auto_alpha=False,
             learner=dict(
                 load_path='/home/puyuan/hopper_sac_seed0/ckpt/ckpt_best.pth.tar',
-                # hook=dict(
-                #     load_ckpt_before_run='/home/puyuan/hopper_sac_seed0/ckpt/ckpt_best.pth.tar',
-                #     save_ckpt_after_run=False,
-                # )
             ),
         ),
         collect=dict(
             n_sample=1,
             unroll_len=1,
-            # save
-            # save_path='/home/puyuan/hopper_sac_seed0/expert_iteration_200000.pkl',
+            # save path
             save_path='/home/puyuan/hopper_sac_seed0/expert_data_1000eps.pkl',
             save_path_transitions='/home/puyuan/hopper_sac_seed0/expert_data_transitions_1000eps.pkl',
-            # load
+            # load path
             data_type='naive',
             data_path='/home/puyuan/hopper_sac_seed0/expert_data_transitions_1000eps_lt3500.pkl'
-            # data_path='/home/puyuan/hopper_sac_seed0/expert_data_2000eps.pkl',
         ),
         command=dict(),
         eval=dict(),
