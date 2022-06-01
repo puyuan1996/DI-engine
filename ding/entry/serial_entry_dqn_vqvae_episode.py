@@ -164,6 +164,8 @@ def serial_pipeline_dqn_vqvae_episode(
         
         if cfg.policy.vqvae_expert_only:
             new_data_vqvae = [item for item in new_data_vqvae_tmp if item['return']>=cfg.policy.lt_return]  # NOTE: TODO
+            if len(new_data_vqvae)>0:
+                print(f'iter-{iter}: ', f'nums of transitions that <return>={cfg.policy.lt_return}>: {len(new_data_vqvae)}')
         else:
             new_data_vqvae = new_data_vqvae_tmp
         for item in new_data_vqvae:

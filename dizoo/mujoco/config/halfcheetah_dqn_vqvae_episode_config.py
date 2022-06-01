@@ -96,8 +96,8 @@ halfcheetah_dqn_default_config = dict(
             learning_rate_vae=3e-4,
             # Frequency of target network update.
             # target_update_theta=0.001, # TODO
-            # target_update_freq=500,
-            target_update_freq=100,
+            target_update_freq=500,
+            # target_update_freq=100,
             
             rl_clip_grad=True,
             vqvae_clip_grad=True,
@@ -157,7 +157,7 @@ create_config = halfcheetah_dqn_create_config
 import copy
 
 def train(args):
-    main_config.exp_name = 'data_halfcheetah/dqnvqvae_noema_middlenet_k64_vqvae-lt10000-only' + '_seed' + f'{args.seed}'+'_3M'
+    main_config.exp_name = 'data_halfcheetah/dqnvqvae_noema_middlenet_k64_vqvae-lt10000-only_tuf500' + '_seed' + f'{args.seed}'+'_3M'
     serial_pipeline_dqn_vqvae_episode([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=int(3e6))
 
 if __name__ == "__main__":

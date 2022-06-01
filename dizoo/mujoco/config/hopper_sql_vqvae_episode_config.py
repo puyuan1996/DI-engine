@@ -71,7 +71,7 @@ hopper_sql_default_config = dict(
         vavae_pretrain_only=False, # NOTE
         recompute_latent_action=True, # NOTE: if train vqvae dynamicall, not only pretrain, should set this key to True
         vqvae_expert_only=True, # NOTE
-        lt_return=0,  # according to different env
+        lt_return=3500,  # according to different env
 
         model=dict(
             obs_shape=11,
@@ -90,6 +90,9 @@ hopper_sql_default_config = dict(
             rl_vae_update_circle=1,  # train rl 1 iter, vae 1 iter
             update_per_collect_rl=200,  # for n_episode=8
             update_per_collect_vae=200,
+
+            # update_per_collect_rl=625,  # for n_episode=8
+            # update_per_collect_vae=625,
             
             rl_batch_size=512,
             vqvae_batch_size=512,
@@ -98,8 +101,8 @@ hopper_sql_default_config = dict(
             # Frequency of target network update.
             # Frequency of target network update.
             # target_update_theta=0.001, # TODO
-            # target_update_freq=500,
-            target_update_freq=100,
+            target_update_freq=500,
+            # target_update_freq=100,
 
             rl_clip_grad=True,
             vqvae_clip_grad=True,
@@ -157,7 +160,7 @@ create_config = hopper_sql_create_config
 
 
 def train(args):
-    main_config.exp_name = 'data_hopper/sqlvqvae_noema_middlenet_k64_vqvae-lt0' + '_seed' + f'{args.seed}' +'_3M'
+    main_config.exp_name = 'data_hopper/sqlvqvae_noema_middlenet_k64_vqvae-lt3500_upcr200_tuf500' + '_seed' + f'{args.seed}' +'_3M'
     serial_pipeline_dqn_vqvae_episode([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=int(3e6))
 
 if __name__ == "__main__":
@@ -166,6 +169,8 @@ if __name__ == "__main__":
     from ding.entry import serial_pipeline_dqn_vqvae_episode
 
     for seed in [0,1,2]:
+    # for seed in [1,2,0]:
+
         parser = argparse.ArgumentParser()
         parser.add_argument('--seed', '-s', type=int, default=seed)
         args = parser.parse_args()

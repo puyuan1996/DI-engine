@@ -62,7 +62,7 @@ hopper_dqn_default_config = dict(
         rl_reconst_loss_weight_min=0.2,
 
         # vqvae priority
-        vqvae_return_weight=True,  # NOTE: return weight
+        vqvae_return_weight=False,  # NOTE: return weight
         priority_vqvae=False,  # NOTE: return priority
         priority_IS_weight_vqvae=False, # NOTE: return priority
         priority_type_vqvae='return',
@@ -70,8 +70,8 @@ hopper_dqn_default_config = dict(
 
         vavae_pretrain_only=False, # NOTE
         recompute_latent_action=True, # NOTE: if train vqvae dynamicall, not only pretrain, should set this key to True
-        vqvae_expert_only=False, # NOTE
-        lt_return=3500,  # according to different env
+        vqvae_expert_only=True, # NOTE
+        lt_return=2000,  # according to different env
 
         model=dict(
             obs_shape=11,
@@ -97,8 +97,8 @@ hopper_dqn_default_config = dict(
             learning_rate_vae=3e-4,
             # Frequency of target network update.
             # target_update_theta=0.001, # TODO
-            # target_update_freq=500,
-            target_update_freq=100,
+            target_update_freq=500,
+            # target_update_freq=100,
 
             rl_clip_grad=True,
             vqvae_clip_grad=True,
@@ -156,9 +156,9 @@ create_config = hopper_dqn_create_config
 
 
 def train(args):
-    # main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_vqvae-lt3500-only' + '_seed' + f'{args.seed}'+'_3M'
-    # main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_vqvae-return-priority-min0_upcr200' + '_seed' + f'{args.seed}'+'_3M'
-    main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_vqvae-return-weight-min0_upcr200' + '_seed' + f'{args.seed}'+'_3M'
+    main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_vqvae-lt2000-only_tuf500' + '_seed' + f'{args.seed}'+'_3M'
+    # main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_vqvae-return-priority-min0_tuf500' + '_seed' + f'{args.seed}'+'_3M'
+    # main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_vqvae-return-weight-min0_upcr200' + '_seed' + f'{args.seed}'+'_3M'
     # main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_rl-reconst-weight-min02' + '_seed' + f'{args.seed}'+'_3M'
     # main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_vqvae-return-priority-min0_rl-reconst-weight-min02' + '_seed' + f'{args.seed}'+'_3M'
     # main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_vqvae-cont-smoothl1loss' + '_seed' + f'{args.seed}'+'_3M'
