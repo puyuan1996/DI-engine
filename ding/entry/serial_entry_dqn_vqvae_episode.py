@@ -108,17 +108,27 @@ def serial_pipeline_dqn_vqvae_episode(
         replay_buffer_vqvae_warmup.push(new_data, cur_collector_envstep=0)
         collector.reset_policy(policy.collect_mode)
 
-        """start data to train vqvae"""
+        """prepare start data to train vqvae"""
         if cfg.policy.vqvae_expert_only:
             new_data_vqvae_tmp = copy.deepcopy(new_data)
             for item in new_data_vqvae_tmp:
                 item['warm_up'] = False
+                # these samples are only used to train vqvae, we give a fake (-1) latent action to avoid errors
+                # when concatenating with samples with integer latent action
+                item['latent_action'] = -1
+
             new_data_vqvae = [item for item in new_data_vqvae_tmp if item['return']>=cfg.policy.lt_return_start]  # NOTE: TODO
             if len(new_data_vqvae)>0:
-                print(f'iter-0: ', f'nums of transitions that <return>={cfg.policy.lt_return_start}>: {len(new_data_vqvae)}')
-            if len(new_data_vqvae)>0:
-                replay_buffer_vqvae.push(new_data_vqvae, cur_collector_envstep=collector.envstep)
-
+                print('='*20)
+                print(f'iter-start: ', f'nums of transitions that [return>={cfg.policy.lt_return_start}]: {len(new_data_vqvae)}')
+                print('='*20)
+            else:
+                print('='*20)
+                print(f'iter-start: ', f'nums of transitions that [return>={cfg.policy.lt_return_start}]: 0, we use the \
+                    all random samples as the start data in replay_buffer_vqvae')
+                print('='*20)
+                new_data_vqvae = new_data_vqvae_tmp
+            replay_buffer_vqvae.push(new_data_vqvae, cur_collector_envstep=collector.envstep)
 
         # ====================
         # warm_up phase: train VAE
@@ -180,16 +190,16 @@ def serial_pipeline_dqn_vqvae_episode(
         
         """prepare data to train vqvae """
         if cfg.policy.vqvae_expert_only:
-            new_data_vqvae = [item for item in new_data_vqvae_tmp if item['return']>=cfg.policy.lt_return]  # NOTE: TODO
+            # TODO(pu): better implementation
+            # only use the samples whose return>cfg.policy.lt_return to train vqvae
+            new_data_vqvae = [item for item in new_data_vqvae_tmp if item['return']>=cfg.policy.lt_return]
             if len(new_data_vqvae)>0:
-                print(f'iter-{iter}: ', f'nums of transitions that <return>={cfg.policy.lt_return}>: {len(new_data_vqvae)}')
+                print(f'iter-{iter}: ', f'nums of transitions whose return>={cfg.policy.lt_return}: {len(new_data_vqvae)}')
         else:
             new_data_vqvae = new_data_vqvae_tmp
-        if len(new_data_vqvae)>0:
-            for item in new_data_vqvae:
-                item['warm_up'] = False
-        if len(new_data_vqvae)>0:
-            replay_buffer_vqvae.push(new_data_vqvae, cur_collector_envstep=collector.envstep)
+        for item in new_data_vqvae:
+            item['warm_up'] = False
+        replay_buffer_vqvae.push(new_data_vqvae, cur_collector_envstep=collector.envstep)
 
         # ====================
         # RL phase
@@ -265,8 +275,6 @@ def serial_pipeline_dqn_vqvae_episode(
                     learner.train(train_data, collector.envstep)
                     if learner.policy.get_attribute('priority_vqvae'):
                         replay_buffer_vqvae.update(learner.priority_info)
-
-                # replay_buffer_vqvae.clear()  # TODO(pu)
 
         if collector.envstep > max_env_step:
             break

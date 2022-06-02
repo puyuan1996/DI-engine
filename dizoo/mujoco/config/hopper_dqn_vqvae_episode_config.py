@@ -150,7 +150,6 @@ hopper_dqn_create_config = dict(
         import_names=['dizoo.mujoco.envs.mujoco_env'],
     ),
     env_manager=dict(type='subprocess'),
-    # env_manager=dict(type='base'),
     policy=dict(type='dqn_vqvae_episode'),
     collector=dict(type='episode', get_train_sample=True)
 )
@@ -159,15 +158,15 @@ create_config = hopper_dqn_create_config
 
 
 def train(args):
-    main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_vqvae-lt0-only_tuf500' + '_seed' + f'{args.seed}'+'_3M'
+    main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_vqvae-lt0_tuf500' + '_seed' + f'{args.seed}'+'_3M'
     serial_pipeline_dqn_vqvae_episode([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=int(3e6))
 
 if __name__ == "__main__":
     import copy
     import argparse
     from ding.entry import serial_pipeline_dqn_vqvae_episode
-    # for seed in [0,1,2]:
-    for seed in [0]:
+    for seed in [0,1,2]:
+    # for seed in [0]:
         parser = argparse.ArgumentParser()
         parser.add_argument('--seed', '-s', type=int, default=seed)
         args = parser.parse_args()

@@ -71,13 +71,7 @@ def default_collate(batch: Sequence,
             out = elem.new(storage)
         if elem.shape == (1, ) and cat_1dim:
             # reshape (B, 1) -> (B)
-            # return torch.cat(batch, 0, out=out)
-            try:
-                return torch.cat(batch, 0, out=out)
-            except Exception as error:
-                print('+'*20)
-                print('batch:', batch)
-                print('+'*20)
+            return torch.cat(batch, 0, out=out)
             # return torch.stack(batch, 0, out=out)
         else:
             return torch.stack(batch, 0, out=out)
