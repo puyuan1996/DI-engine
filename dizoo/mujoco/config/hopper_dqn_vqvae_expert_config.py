@@ -64,13 +64,17 @@ hopper_dqn_default_config = dict(
         # vqvae priority
         vqvae_return_weight=False,  # NOTE: return weight
 
-        priority_vqvae=True,  # NOTE: return priority
-        priority_IS_weight_vqvae=True, # NOTE: return priority
+        priority_vqvae=False,  # NOTE: return priority
+        priority_IS_weight_vqvae=False, # NOTE: return priority
         priority_type_vqvae='return',
-        priority_vqvae_min=0.,
+        priority_vqvae_min=0,
 
+        # vavae_pretrain_only=False, # NOTE
+        # recompute_latent_action=True, # NOTE: if train vqvae dynamically, i.e. vavae_pretrain_only=False, should set this key to True
+        
         vavae_pretrain_only=True, # NOTE
-        recompute_latent_action=False, # NOTE: if train vqvae dynamically, i.e. vavae_pretrain_only=False, should set this key to True
+        recompute_latent_action=False, # NOTE: if only pretrain vqvae, i.e. vavae_pretrain_only=True, should set this key to False
+
         warmup_update_epoches=20,
 
         model=dict(
@@ -103,8 +107,8 @@ hopper_dqn_default_config = dict(
             grad_clip_value=0.5,
 
             # add noise in original continuous action
-            # noise=False,  # NOTE: if vavae_pretrain_only=True
-            noise=True,  # NOTE: if vavae_pretrain_only=False
+            noise=False,  # NOTE: if vavae_pretrain_only=True
+            # noise=True,  # NOTE: if vavae_pretrain_only=False
             noise_sigma=0.1,
             noise_range=dict(
             min=-0.5,

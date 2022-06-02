@@ -64,8 +64,8 @@ halfcheetah_dqn_default_config = dict(
         # vqvae priority
         vqvae_return_weight=False,  # NOTE: return weight
 
-        priority_vqvae=True,  # NOTE: return priority
-        priority_IS_weight_vqvae=True, # NOTE: return priority
+        priority_vqvae=False,  # NOTE: return priority
+        priority_IS_weight_vqvae=False, # NOTE: return priority
         priority_type_vqvae='return',
         priority_vqvae_min=0.,
 
