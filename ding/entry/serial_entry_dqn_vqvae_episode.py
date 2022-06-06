@@ -115,7 +115,7 @@ def serial_pipeline_dqn_vqvae_episode(
                 item['warm_up'] = False
                 # these samples are only used to train vqvae, we give a fake (-1) latent action to avoid errors
                 # when concatenating with samples with integer latent action
-                item['latent_action'] = -1
+                item['latent_action'] = torch.tensor([-1])
 
             new_data_vqvae = [item for item in new_data_vqvae_tmp if item['return']>=cfg.policy.lt_return_start]  # NOTE: TODO
             if len(new_data_vqvae)>0:
@@ -226,7 +226,7 @@ def serial_pipeline_dqn_vqvae_episode(
         # ====================
         # VAE phase
         # ====================
-        if not cfg.policy.vavae_pretrain_only:
+        if not cfg.policy.vqvae_pretrain_only:
             if iter % cfg.policy.learn.rl_vae_update_circle in range(cfg.policy.learn.rl_vae_update_circle - 1,
                                                                     cfg.policy.learn.rl_vae_update_circle):
                 for i in range(cfg.policy.learn.update_per_collect_vae):
