@@ -3,6 +3,7 @@ from ding.rl_utils import get_epsilon_greedy_fn
 from .base_policy import CommandModePolicy
 
 from .dqn import DQNPolicy
+from .dqn_ma import MADQNPolicy
 from .dqn_vqvae import DQNVQVAEPolicy
 from .dqn_vqvae_episode import DQNVQVAEEPISODEPolicy
 
@@ -94,6 +95,11 @@ class DummyCommandModePolicy(CommandModePolicy):
 
     def _get_setting_eval(self, command_info: dict) -> dict:
         return {}
+
+
+@POLICY_REGISTRY.register('dqn_ma_command')
+class MADQNCommandModePolicy(MADQNPolicy, EpsCommandModePolicy):
+    pass
 
 
 @POLICY_REGISTRY.register('dqn_command')
