@@ -12,4 +12,5 @@ from .her_reward_model import HerRewardModel
 from .rnd_reward_model import RndRewardModel
 from .guided_cost_reward_model import GuidedCostRewardModel
 from .ngu_reward_model import RndNGURewardModel, EpisodicNGURewardModel
+from .ngu_reward_model_gfootball import RndNGUGfootballRewardModel, EpisodicNGUGfootballRewardModel
 from .icm_reward_model import ICMRewardModel

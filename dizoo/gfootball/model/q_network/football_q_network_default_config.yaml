@@ -55,7 +55,7 @@ model:
                 head_num: 2
                 mlp_num: 2
                 # TODO
-                layer_num: 3
+                layer_num: 1
                 dropout_ratio: 1
             spatial:
                 resblock_num: 4

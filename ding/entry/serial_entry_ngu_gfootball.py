@@ -81,6 +81,8 @@ def serial_pipeline_ngu_gfootball(
     commander = BaseSerialCommander(
         cfg.policy.other.commander, learner, collector, evaluator, replay_buffer, policy.command_mode
     )
+
+    # for gfootball
     rnd_reward_model = create_reward_model(cfg.rnd_reward_model, policy.collect_mode.get_attribute('device'), tb_logger)
     episodic_reward_model = create_reward_model(
         cfg.episodic_reward_model, policy.collect_mode.get_attribute('device'), tb_logger
@@ -116,32 +118,47 @@ def serial_pipeline_ngu_gfootball(
         iter_ += 1
 
         # Evaluate policy performance
-        # if evaluator.should_eval(learner.train_iter):
-        #     stop, reward = evaluator.eval(learner.save_checkpoint, learner.train_iter, collector.envstep)
-        #     if stop:
-        #         break
+        if evaluator.should_eval(learner.train_iter):
+            stop, reward = evaluator.eval(learner.save_checkpoint, learner.train_iter, collector.envstep)
+            if stop:
+                break
         # Collect data by default config n_sample/n_episode
         new_data = collector.collect(train_iter=learner.train_iter, policy_kwargs=None)
+        replay_buffer.push(new_data, cur_collector_envstep=collector.envstep)
 
-        # gfootball related
-        # obs in data_reward_model is encoding from trained model.
-        new_data_reward_model = copy.deepcopy(new_data)
-        with torch.no_grad():
-            if cfg.policy.cuda:
-                new_data_reward_model = to_device(new_data_reward_model, policy.collect_mode.get_attribute('device'))
-            batch_size = len(new_data_reward_model)
-            timesteps = len(new_data_reward_model[0]['obs']['processed_obs'])
-            for bs in range(batch_size):
-                obs_tmp = []
-                for timestep in range(timesteps):
-                    obs_tmp.append(model.encoder(new_data_reward_model[bs]['obs']['processed_obs'][timestep]))
-                new_data_reward_model[bs]['obs'] = obs_tmp
+        # # collect data for reward_model training
+        # rnd_reward_model.collect_data(new_data)
+        # episodic_reward_model.collect_data(new_data)
+
+        # for gfootball
+        # obs in data_reward_model is encoding from trained encoder.
+        # for rnd reward model
+        new_data_reward_model_rnd = copy.deepcopy(new_data)
+        if cfg.policy.cuda:
+            new_data_reward_model_rnd = to_device(new_data_reward_model_rnd, policy.collect_mode.get_attribute('device'))
+        batch_size = len(new_data_reward_model_rnd)
+        timesteps = len(new_data_reward_model_rnd[0]['obs']['processed_obs'])
+        for bs in range(batch_size):
+            obs_tmp = []
+            for timestep in range(timesteps):
+                obs_tmp.append(rnd_reward_model.encoder(new_data_reward_model_rnd[bs]['obs']['processed_obs'][timestep]).view(-1))
+            new_data_reward_model_rnd[bs]['obs'] = obs_tmp
+
+        # for episodic reward model
+        new_data_reward_model_episodic = copy.deepcopy(new_data)
+        if cfg.policy.cuda:
+            new_data_reward_model_episodic = to_device(new_data_reward_model_episodic, policy.collect_mode.get_attribute('device'))
+        batch_size = len(new_data_reward_model_episodic)
+        timesteps = len(new_data_reward_model_episodic[0]['obs']['processed_obs'])
+        for bs in range(batch_size):
+            obs_tmp = []
+            for timestep in range(timesteps):
+                obs_tmp.append(episodic_reward_model.encoder(new_data_reward_model_episodic[bs]['obs']['processed_obs'][timestep]).view(-1))
+            new_data_reward_model_episodic[bs]['obs'] = obs_tmp
 
         # collect data for reward_model training
-        rnd_reward_model.collect_data(new_data_reward_model)
-        episodic_reward_model.collect_data(new_data_reward_model)
-
-        replay_buffer.push(new_data, cur_collector_envstep=collector.envstep)
+        rnd_reward_model.collect_data(new_data_reward_model_rnd)
+        episodic_reward_model.collect_data(new_data_reward_model_episodic)
 
         # update reward_model
         rnd_reward_model.train()
@@ -162,25 +179,36 @@ def serial_pipeline_ngu_gfootball(
                     "You can modify data collect config, e.g. increasing n_sample, n_episode."
                 )
                 break
-
-            # gfootball related
-            train_data_reward_model = copy.deepcopy(train_data)
-            # obs in data_reward_model is encoding from trained model.
+            
+            # use the newest reward model to estimate intrinsic reward
             with torch.no_grad():
+                # for rnd reward model
+                train_data_reward_model_rnd = copy.deepcopy(train_data)
                 if cfg.policy.cuda:
-                    train_data_reward_model = to_device(train_data_reward_model, policy.collect_mode.get_attribute('device'))
-                batch_size = len(train_data_reward_model)
-                timesteps = len(train_data_reward_model[0]['obs']['processed_obs'])
+                    train_data_reward_model_rnd = to_device(train_data_reward_model_rnd, policy.collect_mode.get_attribute('device'))
+                batch_size = len(train_data_reward_model_rnd)
+                timesteps = len(train_data_reward_model_rnd[0]['obs']['processed_obs'])
                 for bs in range(batch_size):
                     obs_tmp = []
                     for timestep in range(timesteps):
-                        obs_tmp.append(model.encoder(train_data_reward_model[bs]['obs']['processed_obs'][timestep]))
-                    train_data_reward_model[bs]['obs'] = obs_tmp
+                        obs_tmp.append(rnd_reward_model.encoder(train_data_reward_model_rnd[bs]['obs']['processed_obs'][timestep]).view(-1))
+                    train_data_reward_model_rnd[bs]['obs'] = obs_tmp
 
+                # for episodic reward model
+                train_data_reward_model_episodic = copy.deepcopy(train_data)
+                if cfg.policy.cuda:
+                    train_data_reward_model_episodic = to_device(train_data_reward_model_episodic, policy.collect_mode.get_attribute('device'))
+                batch_size = len(train_data_reward_model_episodic)
+                timesteps = len(train_data_reward_model_episodic[0]['obs']['processed_obs'])
+                for bs in range(batch_size):
+                    obs_tmp = []
+                    for timestep in range(timesteps):
+                        obs_tmp.append(episodic_reward_model.encoder(train_data_reward_model_episodic[bs]['obs']['processed_obs'][timestep]).view(-1))
+                    train_data_reward_model_episodic[bs]['obs'] = obs_tmp
 
             # calculate the inter-episodic and episodic intrinsic reward
-            rnd_reward = rnd_reward_model.estimate(train_data_reward_model)
-            episodic_reward = episodic_reward_model.estimate(train_data_reward_model)
+            rnd_reward = rnd_reward_model.estimate(train_data_reward_model_rnd)
+            episodic_reward = episodic_reward_model.estimate(train_data_reward_model_episodic)
 
             # update train_data reward using the augmented reward
             train_data_augmented, estimate_cnt = episodic_reward_model.fusion_reward(

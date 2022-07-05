@@ -1,16 +1,16 @@
 from easydict import EasyDict
 
 # debug
-# collector_env_num = 2
-# evaluator_env_num = 2
+# collector_env_num = 3
+# evaluator_env_num = 3
 
-collector_env_num = 5
-evaluator_env_num = 5
+collector_env_num = 3
+evaluator_env_num = 3
 
 nstep = 5
 
 gfootball_ngu_main_config = dict(
-    exp_name='data_gfootball/gfootball_easy_ngu_seed0_rbs1e3_bs32',
+    exp_name='data_gfootball/gfootball_easy_ngu_seed0_rbs1e3',
     # exp_name='data_gfootball/gfootball_medium_ngu_seed0_rbs1e3_bs32',
     env=dict(
         collector_env_num=collector_env_num,
@@ -25,16 +25,18 @@ gfootball_ngu_main_config = dict(
     ),
     rnd_reward_model=dict(
         intrinsic_reward_type='add',
-        learning_rate=5e-4,
+        learning_rate=1e-3,
         obs_shape=1312,
         action_shape=19,
-        batch_size=320,  # transitions
-        update_per_collect=10,  # 32*100/320=10
+        # debug
+        # batch_size=10,  # transitions
+        batch_size=1500,  # transitions
+        update_per_collect=1,  # TODO(pu)
+        clear_buffer_per_iters=1,
         only_use_last_five_frames_for_icm_rnd=False,
-        clear_buffer_per_iters=10,
         nstep=nstep,
         hidden_size_list=[128, 128, 64],
-        type='rnd-ngu',
+        type='rnd-ngu-gfootball',
     ),
     episodic_reward_model=dict(
         # means if using rescale trick to the last non-zero reward
@@ -51,16 +53,18 @@ gfootball_ngu_main_config = dict(
         # please refer to ngu_reward_model for details.
         last_nonzero_reward_weight=100,
         intrinsic_reward_type='add',
-        learning_rate=5e-4,
+        learning_rate=1e-3,
         obs_shape=1312,
         action_shape=19,
-        batch_size=320,  # transitions
-        update_per_collect=10,  # 32*100/64=50
+        # debug
+        # batch_size=10,  # transitions
+        batch_size=1500,  # transitions
+        update_per_collect=1,
+        clear_buffer_per_iters=1,
         only_use_last_five_frames_for_icm_rnd=False,
-        clear_buffer_per_iters=10,
         nstep=nstep,
         hidden_size_list=[128, 128, 64],
-        type='episodic',
+        type='episodic-ngu-gfootball',
     ),
     policy=dict(
         il_model_path=None,
@@ -72,6 +76,9 @@ gfootball_ngu_main_config = dict(
         priority_IS_weight=True,
         nstep=nstep,
         discount_factor=0.997,
+        # debug
+        # burnin_step=2,
+        # learn_unroll_len=8,
         burnin_step=20,
         # (int) the whole sequence length to unroll the RNN network minus
         # the timesteps of burnin part,
@@ -85,7 +92,7 @@ gfootball_ngu_main_config = dict(
             # we will set update_per_collect=8 in most environments.
             # debug
             # update_per_collect=2,
-            # batch_size=4,
+            # batch_size=2,
             update_per_collect=16,
             batch_size=32,
             learning_rate=0.0005,
@@ -99,7 +106,7 @@ gfootball_ngu_main_config = dict(
             # In each collect phase, we collect a total of <n_sample> sequence samples.
             # debug
             # n_sample=2,
-            n_sample=32,
+            n_sample=16,
             traj_len_inf=True,
             env_num=collector_env_num,
         ),
@@ -132,15 +139,14 @@ gfootball_ngu_create_config = dict(
     # env_manager=dict(type='subprocess'),
     env_manager=dict(type='base'),
     policy=dict(type='ngu'),
-    rnd_reward_model=dict(type='rnd-ngu'),
-    episodic_reward_model=dict(type='episodic'),
+    rnd_reward_model=dict(type='rnd-ngu-gfootball'),
+    episodic_reward_model=dict(type='episodic-ngu-gfootball'),
 )
 gfootball_ngu_create_config = EasyDict(gfootball_ngu_create_config)
 create_config = gfootball_ngu_create_config
 
 if __name__ == '__main__':
-    # or you can enter `ding -m serial -c gfootball_ngu_config.py -s 0`
     from ding.entry import serial_pipeline_ngu_gfootball
     from dizoo.gfootball.model.q_network.football_q_network import FootballNGU
-    football_ngu = FootballNGU(env_name='football')
+    football_ngu = FootballNGU(collector_env_num=collector_env_num, env_name='football')
     serial_pipeline_ngu_gfootball((main_config, create_config), model=football_ngu, seed=0, max_env_step=10e6)
