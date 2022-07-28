@@ -42,8 +42,9 @@ class ExponentialMovingAverage(nn.Module):
 class VectorQuantizer(nn.Module):
     """
     Overview:
+        The Variational AutoEncoder (VQ-VAE)
         Reference:
-        [1] https://github.com/deepmind/sonnet/blob/v2/sonnet/src/nets/vqvae.py
+            [1] https://github.com/deepmind/sonnet/blob/v2/sonnet/src/nets/vqvae.py
     """
 
     def __init__(
@@ -78,7 +79,7 @@ class VectorQuantizer(nn.Module):
     def train(self, encoding: torch.Tensor, eps=0.05) -> torch.Tensor:
         """
         Overview:
-            input the encoding of actions, caculate the vqvae loss
+            input the encoding of actions, calculate the vqvae loss
         Arguments:
             - encoding shape: (B,D)
         """
@@ -159,6 +160,12 @@ class VectorQuantizer(nn.Module):
 
 
 class ActionVQVAE(nn.Module):
+    """
+        Overview:
+            The ``ActionVQVAE`` used to do action representation learning.
+        Interfaces:
+            ``__init__``, ``train``, ``train_with_obs``, ``encode``, ``decode``.
+    """
 
     def __init__(
             self,
@@ -291,6 +298,11 @@ class ActionVQVAE(nn.Module):
             )
 
     def _get_action_embedding(self, data: Dict) -> torch.Tensor:
+        """
+         Overview:
+             maps the given action to ``action_embedding``. If action is continuous, use the original action,
+             if is hybrid action, use the concatenate(``action_args``, one_hot(``action_type``)).
+        """
         if isinstance(self.action_shape, int):  # continuous action
             action_embedding = data['action']
         elif isinstance(self.action_shape, dict):  # hybrid action
@@ -304,6 +316,11 @@ class ActionVQVAE(nn.Module):
             target_action: Union[torch.Tensor, Dict[str, torch.Tensor]] = None,
             weight: Union[torch.Tensor, Dict[str, torch.Tensor]] = None
     ) -> Tuple[Union[torch.Tensor, Dict[str, torch.Tensor]], torch.Tensor]:
+        """
+         Overview:
+             maps the given action_decoding to original action ``recons_action``
+             and calculate the ``recons_loss`` if given `` target_action``.
+        """
         sigma = None  # debug
         if isinstance(self.action_shape, int):
             # continuous action
@@ -408,6 +425,10 @@ class ActionVQVAE(nn.Module):
             return recons_action, recons_loss, recons_loss_none_reduction, sigma
 
     def train(self, data: Dict, warmup: bool = False) -> Dict[str, torch.Tensor]:
+        """
+         Overview:
+             The train method when don't use obs regularization.
+        """
         action_embedding = self._get_action_embedding(data)
         encoding = self.encoder(action_embedding)
         quantized_index, quantized_embedding, vq_loss, embedding_loss, commitment_loss = self.vq_layer.train(encoding)
@@ -437,7 +458,7 @@ class ActionVQVAE(nn.Module):
     def train_with_obs(self, data: Dict, warmup: bool = False) -> Dict[str, torch.Tensor]:
         """
          Overview:
-             The train method. Maps the given action and obs onto the latent action space.
+             The train method when use obs regularization.
          Arguments:
              - data (:obj:`Dict`): Dict containing keyword:
                  - action (:obj:`torch.Tensor`): the original action
@@ -446,9 +467,7 @@ class ActionVQVAE(nn.Module):
          Returns:
              - outputs (:obj:`Dict`): Dict containing keyword:
                  - quantized_index (:obj:`torch.Tensor`): the latent action.
-         Shapes:
-             - action (:obj:`torch.Tensor`): :math:`(B, A)`, where B is batch size and A is ``action_shape``
-             - obs (:obj:`torch.Tensor`): :math:`(B, O)`, where B is batch size and O is ``obs_shape``
+                 and loss statistics
          """
         action_embedding = self._get_action_embedding(data)
 
