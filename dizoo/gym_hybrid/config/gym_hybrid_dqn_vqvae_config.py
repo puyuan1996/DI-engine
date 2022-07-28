@@ -1,10 +1,12 @@
 from easydict import EasyDict
 import os
+import os
+os.environ['DISPLAY'] = ':1'
 
 module_path = os.path.dirname(__file__)
 
 nstep = 3
-num_actuators = 4
+num_actuators = 10
 gym_hybrid_dqn_default_config = dict(
     env=dict(
         collector_env_num=8,
@@ -14,15 +16,16 @@ gym_hybrid_dqn_default_config = dict(
         # (bool) Scale output action into legal range [-1, 1].
         act_scale=True,
         # env_id='Moving-v0',
-        env_id='Sliding-v0',
-        # env_id='HardMove-v0',
+        # env_id='Sliding-v0',
+        env_id='HardMove-v0',
         num_actuators=num_actuators,  # only for 'HardMove-v0'
         # stop_value=2,
         stop_value=int(1e6),  # stop according to max env steps
+        save_replay_gif=True,
     ),
     policy=dict(
         # TODO(pu)
-        # learned_model_path=module_path + '/learned_model_path/ckpt_best.pth.tar',
+        model_path='/home/puyuan/DI-engine/data_hardmove_n10/dqn_noema_middlenet_k64_vhd1024_seed2/ckpt/ckpt_best.pth.tar',
 
         # Whether to use cuda for network.
         cuda=True,
@@ -39,28 +42,28 @@ gym_hybrid_dqn_default_config = dict(
         is_ema=False,  # no use EMA
         # is_ema=True,  # use EMA TODO(pu): test ema
         # for 'Moving-v0', 'Sliding-v0'
-        original_action_shape=dict(
-            action_type_shape=3,
-            action_args_shape=2,
-        ),
-        # for 'HardMove-v0'
         # original_action_shape=dict(
-        #         action_type_shape=int(2** num_actuators),  # 2**4=16, 2**6=64, 2**8=256, 2**10=1024
-        #         action_args_shape=int(num_actuators), # 4,6,8,10
-        #     ),
+        #     action_type_shape=3,
+        #     action_args_shape=2,
+        # ),
+        # for 'HardMove-v0'
+        original_action_shape=dict(
+                action_type_shape=int(2** num_actuators),  # 2**4=16, 2**6=64, 2**8=256, 2**10=1024
+                action_args_shape=int(num_actuators), # 4,6,8,10
+            ),
         random_collect_size=int(5e4),
         warm_up_update=int(1e4),
         # debug
         # warm_up_update=int(0),
         # random_collect_size=int(0),
         vqvae_embedding_dim=64,  # ved: D
-        vqvae_hidden_dim=[256],  # vhd
+        vqvae_hidden_dim=[1024],  # vhd
         vq_loss_weight=1,  # TODO
         replay_buffer_size_vqvae=int(1e6),
 
-        obs_regularization=True,
-        # obs_regularization=False,
-        predict_loss_weight=1,  # TODO
+        # obs_regularization=True,
+        obs_regularization=False,
+        predict_loss_weight=0.01,  # TODO
 
         vqvae_pretrain_only=False,
         # NOTE: if train vqvae dynamically, i.e. vqvae_pretrain_only=False, should set this key to True
@@ -96,11 +99,11 @@ gym_hybrid_dqn_default_config = dict(
         priority_vqvae_min=0,
         model=dict(
             obs_shape=10,
-            action_shape=int(16),  # num of num_embeddings: K
-            encoder_hidden_size_list=[128, 128, 64],  # small net
+            # action_shape=int(16),  # num of num_embeddings: K
+            # encoder_hidden_size_list=[128, 128, 64],  # small net
             # for hardmove
-            # action_shape=int(64),  # num of num_embeddings: K
-            # encoder_hidden_size_list=[256, 256, 128],  # middle net
+            action_shape=int(64),  # num of num_embeddings: K
+            encoder_hidden_size_list=[256, 256, 128],  # middle net
             # Whether to use dueling head.
             dueling=True,
         ),
@@ -173,17 +176,18 @@ create_config = gym_hybrid_dqn_create_config
 
 
 def train(args):
+    main_config.exp_name = 'debug'
     # main_config.exp_name = 'data_moving/dqn_obs_noema_smallnet_k16' + '_seed' + f'{args.seed}'
     # main_config.exp_name = 'data_moving/dqn_noema_smallnet_k16_nowarmup' + '_seed' + f'{args.seed}'
 
-    main_config.exp_name = 'data_sliding/dqn_obs_noema_smallnet_k16' + '_seed' + f'{args.seed}'
+    # main_config.exp_name = 'data_sliding/dqn_obs_noema_smallnet_k16' + '_seed' + f'{args.seed}'
     # main_config.exp_name = 'data_sliding/dqn_noema_smallnet_k16' + '_seed' + f'{args.seed}'
 
-    # main_config.exp_name = 'data_hardmove_n10/dqn_noema_middlenet_k64_vhd512' + '_seed' + f'{args.seed}'
-    # main_config.exp_name = 'data_hardmove_n4/dqn_noema_middlenet_k64_vhd256' + '_seed' + f'{args.seed}'
+    # main_config.exp_name = 'data_hardmove_n10/dqn_noema_middlenet_k64_vhd1024_plw0.01' + '_seed' + f'{args.seed}'
+    # main_config.exp_name = 'data_hardmove_n4/dqn_obs_noema_middlenet_k64_vhd256' + '_seed' + f'{args.seed}'
 
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,
-                              max_env_step=int(1e6))
+                              max_env_step=int(4e6))
 
 
 if __name__ == "__main__":
@@ -192,7 +196,7 @@ if __name__ == "__main__":
     from ding.entry import serial_pipeline_dqn_vqvae
 
     # for seed in [0,1,2]:
-    for seed in [0]:
+    for seed in [2]:
         parser = argparse.ArgumentParser()
         parser.add_argument('--seed', '-s', type=int, default=seed)
         args = parser.parse_args()

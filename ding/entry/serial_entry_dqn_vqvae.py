@@ -58,8 +58,9 @@ def serial_pipeline_dqn_vqvae(
     set_pkg_seed(cfg.seed, use_cuda=cfg.policy.cuda)
     policy = create_policy(cfg.policy, model=model, enable_field=['learn', 'collect', 'eval', 'command'])
 
-    # if load model
-    # policy.collect_mode.load_state_dict(torch.load(cfg.policy.learned_model_path, map_location='cuda'))
+    # load pretrained model
+    if cfg.policy.model_path is not None:
+        policy.learn_mode.load_state_dict(torch.load(cfg.policy.model_path, map_location='cpu'))
 
     # Create worker components: learner, collector, evaluator, replay buffer, commander.
     tb_logger = SummaryWriter(os.path.join('./{}/log/'.format(cfg.exp_name), 'serial'))
@@ -88,49 +89,49 @@ def serial_pipeline_dqn_vqvae(
     # Learner's before_run hook.
     learner.call_hook('before_run')
 
-    # Accumulate plenty of data at the beginning of training.
-    if cfg.policy.get('random_collect_size', 0) > 0:
-        # random_collect(cfg.policy, policy, collector, collector_env, commander, replay_buffer)
-        if cfg.policy.get('transition_with_policy_data', False):
-            collector.reset_policy(policy.collect_mode)
-        else:
-            action_space = collector_env.action_space
-            random_policy = PolicyFactory.get_random_policy(policy.collect_mode, action_space=action_space)
-            collector.reset_policy(random_policy)
+    # # Accumulate plenty of data at the beginning of training.
+    # if cfg.policy.get('random_collect_size', 0) > 0:
+    #     # random_collect(cfg.policy, policy, collector, collector_env, commander, replay_buffer)
+    #     if cfg.policy.get('transition_with_policy_data', False):
+    #         collector.reset_policy(policy.collect_mode)
+    #     else:
+    #         action_space = collector_env.action_space
+    #         random_policy = PolicyFactory.get_random_policy(policy.collect_mode, action_space=action_space)
+    #         collector.reset_policy(random_policy)
 
-        collect_kwargs = commander.step()
-        new_data = collector.collect(n_sample=cfg.policy.random_collect_size, policy_kwargs=collect_kwargs)
-        for item in new_data:
-            item['warm_up'] = True
-        replay_buffer.push(new_data, cur_collector_envstep=0)
-        collector.reset_policy(policy.collect_mode)
+    #     collect_kwargs = commander.step()
+    #     new_data = collector.collect(n_sample=cfg.policy.random_collect_size, policy_kwargs=collect_kwargs)
+    #     for item in new_data:
+    #         item['warm_up'] = True
+    #     replay_buffer.push(new_data, cur_collector_envstep=0)
+    #     collector.reset_policy(policy.collect_mode)
 
-        # ====================
-        # warm_up phase: train VAE
-        # ====================
-        # Learn policy from collected data
-        for i in range(cfg.policy.warm_up_update):
-            # Learner will train ``update_per_collect`` times in one iteration.
-            train_data = replay_buffer.sample(cfg.policy.learn.vqvae_batch_size, learner.train_iter)
-            if train_data is None:
-                # It is possible that replay buffer's data count is too few to train ``update_per_collect`` times
-                logging.warning(
-                    "Replay buffer's data can only train for {} steps. ".format(i) +
-                    "You can modify data collect config, e.g. increasing n_sample, n_episode."
-                )
-                break
-            learner.train(train_data, collector.envstep)
+    #     # ====================
+    #     # warm_up phase: train VAE
+    #     # ====================
+    #     # Learn policy from collected data
+    #     for i in range(cfg.policy.warm_up_update):
+    #         # Learner will train ``update_per_collect`` times in one iteration.
+    #         train_data = replay_buffer.sample(cfg.policy.learn.vqvae_batch_size, learner.train_iter)
+    #         if train_data is None:
+    #             # It is possible that replay buffer's data count is too few to train ``update_per_collect`` times
+    #             logging.warning(
+    #                 "Replay buffer's data can only train for {} steps. ".format(i) +
+    #                 "You can modify data collect config, e.g. increasing n_sample, n_episode."
+    #             )
+    #             break
+    #         learner.train(train_data, collector.envstep)
 
-            if learner.policy.get_attribute('priority'):
-                replay_buffer.update(learner.priority_info)
-            if learner.policy.get_attribute('warm_up_stop'):
-                break
-        replay_buffer.clear()  # TODO(pu): NOTE
+    #         if learner.policy.get_attribute('priority'):
+    #             replay_buffer.update(learner.priority_info)
+    #         if learner.policy.get_attribute('warm_up_stop'):
+    #             break
+    #     replay_buffer.clear()  # TODO(pu): NOTE
 
-    # NOTE: for the case collector_env_num>1, because after the random collect phase,  self._traj_buffer[env_id] may be not empty. Only
-    # if the condition "timestep.done or len(self._traj_buffer[env_id]) == self._traj_len" is satisfied, the self._traj_buffer will be clear.
-    # For our alg., the data in self._traj_buffer[env_id], latent_action=False, cannot be used in rl_vae phase.
-    collector.reset(policy.collect_mode)
+    # # NOTE: for the case collector_env_num>1, because after the random collect phase,  self._traj_buffer[env_id] may be not empty. Only
+    # # if the condition "timestep.done or len(self._traj_buffer[env_id]) == self._traj_len" is satisfied, the self._traj_buffer will be clear.
+    # # For our alg., the data in self._traj_buffer[env_id], latent_action=False, cannot be used in rl_vae phase.
+    # collector.reset(policy.collect_mode)
 
     # debug
     # latents = to_device(torch.arange(64), 'cuda')
@@ -144,6 +145,7 @@ def serial_pipeline_dqn_vqvae(
             stop, reward = evaluator.eval(learner.save_checkpoint, learner.train_iter, collector.envstep)
             if stop:
                 break
+        break
         # Collect data by default config n_sample/n_episode
         new_data = collector.collect(train_iter=learner.train_iter, policy_kwargs=collect_kwargs)
         for item in new_data:
