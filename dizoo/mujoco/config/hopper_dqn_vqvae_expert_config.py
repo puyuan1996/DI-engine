@@ -44,7 +44,7 @@ hopper_dqn_default_config = dict(
         vq_loss_weight=1,  # TODO
         replay_buffer_size_vqvae=int(1e6),
 
-        # optinal design
+        # optional design
         cont_reconst_l1_loss=False,
         cont_reconst_smooth_l1_loss=False,
         categorical_head_for_cont_action=False,  # categorical distribution

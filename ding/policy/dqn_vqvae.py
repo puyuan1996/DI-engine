@@ -18,6 +18,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from ding.envs.common import affine_transform
 
+
 @POLICY_REGISTRY.register('dqn-vqvae')
 class DQNVQVAEPolicy(Policy):
     r"""
@@ -142,7 +143,6 @@ class DQNVQVAEPolicy(Policy):
         self._priority_vqvae = self._cfg.priority_vqvae
         self._priority_IS_weight_vqvae = self._cfg.priority_IS_weight_vqvae
         # Optimizer
-        # NOTE:
         if self._cfg.learn.rl_clip_grad is True:
             self._optimizer = Adam(
                 self._model.parameters(),
@@ -164,12 +164,6 @@ class DQNVQVAEPolicy(Policy):
             update_type='assign',
             update_kwargs={'freq': self._cfg.learn.target_update_freq}
         )
-        # self._target_model = model_wrap(
-        #     self._target_model,
-        #     wrapper_name='target',
-        #     update_type='momentum',
-        #     update_kwargs={'theta': self._cfg.learn.target_update_theta}
-        # )
 
         self._learn_model = model_wrap(self._model, wrapper_name='argmax_sample')
         self._learn_model.reset()
@@ -178,8 +172,8 @@ class DQNVQVAEPolicy(Policy):
         self._forward_learn_cnt = 0  # count iterations
         self._vqvae_model = ActionVQVAE(
             self._cfg.original_action_shape,
-            self._cfg.model.action_shape,  #K
-            self._cfg.vqvae_embedding_dim,  #D
+            self._cfg.model.action_shape,  # K
+            self._cfg.vqvae_embedding_dim,  # D
             self._cfg.vqvae_hidden_dim,
             self._cfg.vq_loss_weight,
             is_ema=self._cfg.is_ema,
@@ -191,16 +185,18 @@ class DQNVQVAEPolicy(Policy):
             n_atom=self._cfg.n_atom,
             gaussian_head_for_cont_action=self._cfg.gaussian_head_for_cont_action,
             embedding_table_onehot=self._cfg.embedding_table_onehot,
+            obs_regularization=self._cfg.obs_regularization,
+            obs_shape=self._cfg.model.obs_shape,
+            predict_loss_weight=self._cfg.predict_loss_weight,
         )
         self._vqvae_model = to_device(self._vqvae_model, self._device)
-        # NOTE:
         if self._cfg.learn.vqvae_clip_grad is True:
-                self._optimizer_vqvae = Adam(
+            self._optimizer_vqvae = Adam(
                 self._vqvae_model.parameters(),
                 lr=self._cfg.learn.learning_rate_vae,
                 grad_clip_type=self._cfg.learn.grad_clip_type,
                 clip_value=self._cfg.learn.grad_clip_value
-        )
+            )
         else:
             self._optimizer_vqvae = Adam(
                 self._vqvae_model.parameters(),
@@ -227,7 +223,7 @@ class DQNVQVAEPolicy(Policy):
             - necessary: ``cur_lr``, ``total_loss``, ``priority``
             - optional: ``action_distribution``
         """
-        ### warmup phase: train VAE ###
+        # warmup phase: train VQVAE
         if 'warm_up' in data[0].keys() and data[0]['warm_up'] is True:
             loss_dict = {}
             data = default_preprocess_learn(
@@ -243,8 +239,12 @@ class DQNVQVAEPolicy(Policy):
             # ====================
             # train vae
             # ====================
-            result = self._vqvae_model.train(data)
- 
+            if self._cfg.obs_regularization:
+                data['true_residual'] = data['next_obs'] - data['obs']
+                result = self._vqvae_model.train_with_obs(data)
+            else:
+                result = self._vqvae_model.train(data)
+
             if self._cfg.gaussian_head_for_cont_action:
                 # debug
                 sigma = result['sigma']
@@ -259,6 +259,8 @@ class DQNVQVAEPolicy(Policy):
             loss_dict['vq_loss'] = result['vq_loss'].item()
             loss_dict['embedding_loss'] = result['embedding_loss'].item()
             loss_dict['commitment_loss'] = result['commitment_loss'].item()
+            if self._cfg.obs_regularization:
+                loss_dict['predict_loss'] = result['predict_loss'].item()
 
             # print(loss_dict['reconstruction_loss'])
             if loss_dict['reconstruction_loss'] < self._cfg.learn.reconst_loss_stop_value:
@@ -281,7 +283,7 @@ class DQNVQVAEPolicy(Policy):
                 # '[histogram]latent_action': quantized_index,
                 # '[histogram]cos_similarity': cos_similarity,
             }
-        ### VQVAE+RL phase ###
+        # VQVAE+RL phase
         else:
             self._forward_learn_cnt += 1
             loss_dict = {}
@@ -300,13 +302,19 @@ class DQNVQVAEPolicy(Policy):
                 if self._cuda:
                     data = to_device(data, self._device)
 
-                result = self._vqvae_model.train(data)
+                if self._cfg.obs_regularization:
+                    data['true_residual'] = data['next_obs'] - data['obs']
+                    result = self._vqvae_model.train_with_obs(data)
+                else:
+                    result = self._vqvae_model.train(data)
 
                 loss_dict['total_vqvae_loss'] = result['total_vqvae_loss'].item()
                 loss_dict['reconstruction_loss'] = result['recons_loss'].item()
                 loss_dict['vq_loss'] = result['vq_loss'].item()
                 loss_dict['embedding_loss'] = result['embedding_loss'].item()
                 loss_dict['commitment_loss'] = result['commitment_loss'].item()
+                if self._cfg.obs_regularization:
+                    loss_dict['predict_loss'] = result['predict_loss'].item()
 
                 # vae update
                 self._optimizer_vqvae.zero_grad()
@@ -317,15 +325,8 @@ class DQNVQVAEPolicy(Policy):
                 # NOTE:visualize_latent, now it's only for env hopper and gym_hybrid
                 # quantized_index = self.visualize_latent(save_histogram=False)
                 # cos_similarity = self.visualize_embedding_table(save_dis_map=False)
-                if self._cfg.priority_type_vqvae=='reward':
-                    # TODO: data['reward'] is nstep reward, take the true reward 
-                    # first max-min normalization, transform to [0, 1] priority should be non negtive (>=0)
-                    # then scale to [0.2, 1], to make sure all data can be used to update vqvae
-                    reward_normalization = (data['reward'][0] - data['reward'][0].min())/(data['reward'][0].max() - data['reward'][0].min()+1e-8)
-                    reward_normalization =  (1-self._cfg.priority_vqvae_min)* reward_normalization + self._cfg.priority_vqvae_min
 
                 return {
-                    'priority': reward_normalization.tolist(), 
                     'cur_lr': self._optimizer.defaults['lr'],
                     # 'td_error': td_error_per_sample,
                     **loss_dict,
@@ -352,7 +353,7 @@ class DQNVQVAEPolicy(Policy):
                         reconstruction_loss_none_reduction = result['recons_loss_none_reduction']
                         data['latent_action'] = result['quantized_index'].clone().detach()
                     else:
-                        quantized_index = self._vqvae_model.encode({'action': data['action']})
+                        quantized_index = self._vqvae_model.encode(data)
                         data['latent_action'] = quantized_index.clone().detach()
                         # print(torch.unique(data['latent_action']))
 
@@ -387,11 +388,14 @@ class DQNVQVAEPolicy(Policy):
                 if self._cfg.rl_reconst_loss_weight:
                     # TODO:
                     # fist max-min normalization, transform to [0, 1]
-                    reconstruction_loss_none_reduction_normalization = (reconstruction_loss_none_reduction - reconstruction_loss_none_reduction.min())/(reconstruction_loss_none_reduction.max() - reconstruction_loss_none_reduction.min()+1e-8)
+                    reconstruction_loss_none_reduction_normalization = (
+                                                                                   reconstruction_loss_none_reduction - reconstruction_loss_none_reduction.min()) / (
+                                                                                   reconstruction_loss_none_reduction.max() - reconstruction_loss_none_reduction.min() + 1e-8)
                     # then scale to [0.2, 1], to make sure all data can be used to calculate gradients
                     # reconstruction_loss_weight = (1-self._cfg.rl_reconst_loss_weight_min) * reconstruction_loss_none_reduction_normalization + self._cfg.rl_reconst_loss_weight_min
                     # then scale to [1, 0.2], to make sure all data can be used to calculate gradients
-                    reconstruction_loss_weight = -(1-self._cfg.rl_reconst_loss_weight_min) * reconstruction_loss_none_reduction_normalization + 1
+                    reconstruction_loss_weight = -(
+                                1 - self._cfg.rl_reconst_loss_weight_min) * reconstruction_loss_none_reduction_normalization + 1
                     data['weight'] = reconstruction_loss_weight
 
                 # NOTE: RL learn policy in latent action space, so here using data['latent_action']
@@ -454,68 +458,9 @@ class DQNVQVAEPolicy(Policy):
             # '[histogram]latent_action',
             # '[histogram]cos_similarity',
         ]
+        if self._cfg.obs_regularization:
+            ret.append('predict_loss')
         return ret
-
-    def _state_dict_learn(self) -> Dict[str, Any]:
-        """
-        Overview:
-            Return the state_dict of learn mode, usually including model and optimizer.
-        Returns:
-            - state_dict (:obj:`Dict[str, Any]`): the dict of current policy learn state, for saving and restoring.
-        """
-        return {
-            'model': self._learn_model.state_dict(),
-            'target_model': self._target_model.state_dict(),
-            'optimizer': self._optimizer.state_dict(),
-            'vqvae_model': self._vqvae_model.state_dict(),
-        }
-
-    def _load_state_dict_learn(self, state_dict: Dict[str, Any]) -> None:
-        """
-        Overview:
-            Load the state_dict variable into policy learn mode.
-        Arguments:
-            - state_dict (:obj:`Dict[str, Any]`): the dict of policy learn state saved before.
-
-        .. tip::
-            If you want to only load some parts of model, you can simply set the ``strict`` argument in \
-            load_state_dict to ``False``, or refer to ``ding.torch_utils.checkpoint_helper`` for more \
-            complicated operation.
-        """
-        self._learn_model.load_state_dict(state_dict['model'])
-        self._target_model.load_state_dict(state_dict['target_model'])
-        self._optimizer.load_state_dict(state_dict['optimizer'])
-        self._vqvae_model.load_state_dict(state_dict['vqvae_model'])
-    
-    def _load_state_dict_collect(self, state_dict: Dict[str, Any]) -> None:
-        """
-        Overview:
-            Load the state_dict variable into policy learn mode.
-        Arguments:
-            - state_dict (:obj:`Dict[str, Any]`): the dict of policy learn state saved before.
-
-        .. tip::
-            If you want to only load some parts of model, you can simply set the ``strict`` argument in \
-            load_state_dict to ``False``, or refer to ``ding.torch_utils.checkpoint_helper`` for more \
-            complicated operation.
-        """
-        self._learn_model.load_state_dict(state_dict['model'])
-        self._vqvae_model.load_state_dict(state_dict['vqvae_model'])
-
-    def _load_state_dict_eval(self, state_dict: Dict[str, Any]) -> None:
-        """
-        Overview:
-            Load the state_dict variable into policy learn mode.
-        Arguments:
-            - state_dict (:obj:`Dict[str, Any]`): the dict of policy learn state saved before.
-
-        .. tip::
-            If you want to only load some parts of model, you can simply set the ``strict`` argument in \
-            load_state_dict to ``False``, or refer to ``ding.torch_utils.checkpoint_helper`` for more \
-            complicated operation.
-        """
-        self._learn_model.load_state_dict(state_dict['model'])
-        self._vqvae_model.load_state_dict(state_dict['vqvae_model'])
 
     def _init_collect(self) -> None:
         """
@@ -560,19 +505,9 @@ class DQNVQVAEPolicy(Policy):
             if self._cuda:
                 output = to_device(output, self._device)
 
-            # backup
-            # TODO(pu): decode into original hybrid actions, here data is obs
-            # this is very important to generate self.obs_encoding using in decode phase
-            # output['action'] = self._vqvae_model.decode_with_obs(output['action'], data})['recons_action']
-
             if self._cfg.action_space == 'hybrid':
-                # backup
-                # recons_action = self._vqvae_model.decode_without_obs(output['action'])
-                # output['action'] = {
-                #     'action_type': recons_action['recons_action']['disc'],
-                #     'action_args': recons_action['recons_action']['cont']
-                # }
-                recons_action = self._vqvae_model.decode(output['action'])
+                # TODO(pu): decode into original hybrid actions, here data is obs
+                recons_action = self._vqvae_model.decode({'quantized_index': output['action'], 'obs': data})
                 output['action'] = {
                     'action_type': recons_action['recons_action']['action_type'],
                     'action_args': recons_action['recons_action']['action_args']
@@ -594,9 +529,9 @@ class DQNVQVAEPolicy(Policy):
                         action = action.clamp(self.action_range['min'], self.action_range['max'])
                     output['action']['action_args'] = action
             else:
-                # output['action']  = self._vqvae_model.decode_with_obs(output['action'])
-                output['action'] = self._vqvae_model.decode(output['action'])['recons_action']
-                
+                output['action'] = self._vqvae_model.decode({'quantized_index': output['action'], 'obs': data})[
+                    'recons_action']
+
                 # debug
                 # latents = to_device(torch.arange(64), 'cuda')
                 # recons_action = self._vqvae_model.decode(latents)['recons_action']
@@ -620,6 +555,115 @@ class DQNVQVAEPolicy(Policy):
             output = to_device(output, 'cpu')
         output = default_decollate(output)
         return {i: d for i, d in zip(data_id, output)}
+
+    def _init_eval(self) -> None:
+        r"""
+        Overview:
+            Evaluate mode init method. Called by ``self.__init__``, initialize eval_model.
+        """
+        self._eval_model = model_wrap(self._model, wrapper_name='argmax_sample')
+        self._eval_model.reset()
+
+    def _forward_eval(self, data: Dict[int, Any]) -> Dict[int, Any]:
+        """
+        Overview:
+            Forward computation graph of eval mode(evaluate policy performance), at most cases, it is similar to \
+            ``self._forward_collect``.
+        Arguments:
+            - data (:obj:`Dict[str, Any]`): Dict type data, stacked env data for predicting policy_output(action), \
+                values are torch.Tensor or np.ndarray or dict/list combinations, keys are env_id indicated by integer.
+        Returns:
+            - output (:obj:`Dict[int, Any]`): The dict of predicting action for the interaction with env.
+        ArgumentsKeys:
+            - necessary: ``obs``
+        ReturnsKeys
+            - necessary: ``action``
+        """
+        data_id = list(data.keys())
+        data = default_collate(list(data.values()))
+        if self._cuda:
+            data = to_device(data, self._device)
+        self._eval_model.eval()
+        with torch.no_grad():
+            output = self._eval_model.forward(data)
+            # here output['action'] is the out of DQN, is discrete action
+            output['latent_action'] = copy.deepcopy(output['action'])
+
+            if self._cfg.action_space == 'hybrid':
+                recons_action = self._vqvae_model.decode({'quantized_index': output['action'], 'obs': data})
+                output['action'] = {
+                    'action_type': recons_action['recons_action']['action_type'],
+                    'action_args': recons_action['recons_action']['action_args']
+                }
+            else:
+                output['action'] = self._vqvae_model.decode({'quantized_index': output['action'], 'obs': data})[
+                    'recons_action']
+
+        if self._cuda:
+            output = to_device(output, 'cpu')
+        output = default_decollate(output)
+        return {i: d for i, d in zip(data_id, output)}
+
+    def _state_dict_learn(self) -> Dict[str, Any]:
+        """
+        Overview:
+            Return the state_dict of learn mode, usually including model and optimizer.
+        Returns:
+            - state_dict (:obj:`Dict[str, Any]`): the dict of current policy learn state, for saving and restoring.
+        """
+        return {
+            'model': self._learn_model.state_dict(),
+            'target_model': self._target_model.state_dict(),
+            'optimizer': self._optimizer.state_dict(),
+            'vqvae_model': self._vqvae_model.state_dict(),
+        }
+
+    def _load_state_dict_learn(self, state_dict: Dict[str, Any]) -> None:
+        """
+        Overview:
+            Load the state_dict variable into policy learn mode.
+        Arguments:
+            - state_dict (:obj:`Dict[str, Any]`): the dict of policy learn state saved before.
+
+        .. tip::
+            If you want to only load some parts of model, you can simply set the ``strict`` argument in \
+            load_state_dict to ``False``, or refer to ``ding.torch_utils.checkpoint_helper`` for more \
+            complicated operation.
+        """
+        self._learn_model.load_state_dict(state_dict['model'])
+        self._target_model.load_state_dict(state_dict['target_model'])
+        self._optimizer.load_state_dict(state_dict['optimizer'])
+        self._vqvae_model.load_state_dict(state_dict['vqvae_model'])
+
+    def _load_state_dict_collect(self, state_dict: Dict[str, Any]) -> None:
+        """
+        Overview:
+            Load the state_dict variable into policy learn mode.
+        Arguments:
+            - state_dict (:obj:`Dict[str, Any]`): the dict of policy learn state saved before.
+
+        .. tip::
+            If you want to only load some parts of model, you can simply set the ``strict`` argument in \
+            load_state_dict to ``False``, or refer to ``ding.torch_utils.checkpoint_helper`` for more \
+            complicated operation.
+        """
+        self._learn_model.load_state_dict(state_dict['model'])
+        self._vqvae_model.load_state_dict(state_dict['vqvae_model'])
+
+    def _load_state_dict_eval(self, state_dict: Dict[str, Any]) -> None:
+        """
+        Overview:
+            Load the state_dict variable into policy learn mode.
+        Arguments:
+            - state_dict (:obj:`Dict[str, Any]`): the dict of policy learn state saved before.
+
+        .. tip::
+            If you want to only load some parts of model, you can simply set the ``strict`` argument in \
+            load_state_dict to ``False``, or refer to ``ding.torch_utils.checkpoint_helper`` for more \
+            complicated operation.
+        """
+        self._learn_model.load_state_dict(state_dict['model'])
+        self._vqvae_model.load_state_dict(state_dict['vqvae_model'])
 
     def _get_train_sample(self, data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """
@@ -677,63 +721,6 @@ class DQNVQVAEPolicy(Policy):
             }
         return transition
 
-    def _init_eval(self) -> None:
-        r"""
-        Overview:
-            Evaluate mode init method. Called by ``self.__init__``, initialize eval_model.
-        """
-        self._eval_model = model_wrap(self._model, wrapper_name='argmax_sample')
-        self._eval_model.reset()
-
-    def _forward_eval(self, data: Dict[int, Any]) -> Dict[int, Any]:
-        """
-        Overview:
-            Forward computation graph of eval mode(evaluate policy performance), at most cases, it is similar to \
-            ``self._forward_collect``.
-        Arguments:
-            - data (:obj:`Dict[str, Any]`): Dict type data, stacked env data for predicting policy_output(action), \
-                values are torch.Tensor or np.ndarray or dict/list combinations, keys are env_id indicated by integer.
-        Returns:
-            - output (:obj:`Dict[int, Any]`): The dict of predicting action for the interaction with env.
-        ArgumentsKeys:
-            - necessary: ``obs``
-        ReturnsKeys
-            - necessary: ``action``
-        """
-        data_id = list(data.keys())
-        data = default_collate(list(data.values()))
-        if self._cuda:
-            data = to_device(data, self._device)
-        self._eval_model.eval()
-        with torch.no_grad():
-            output = self._eval_model.forward(data)
-            # here output['action'] is the out of DQN, is discrete action
-            output['latent_action'] = copy.deepcopy(output['action'])
-
-            # TODO(pu): decode into original hybrid actions, here data is obs
-            # this is very important to generate self.obs_encoding using in decode phase
-            # output['action'] = self._vqvae_model.decode_with_obs(output['action'], data})['recons_action']
-
-            if self._cfg.action_space == 'hybrid':
-                # recons_action = self._vqvae_model.decode_without_obs(output['action'])
-                # output['action'] = {
-                #     'action_type': recons_action['recons_action']['disc'],
-                #     'action_args': recons_action['recons_action']['cont']
-                # }
-                recons_action = self._vqvae_model.decode(output['action'])
-                output['action'] = {
-                    'action_type': recons_action['recons_action']['action_type'],
-                    'action_args': recons_action['recons_action']['action_args']
-                }
-            else:
-                # output['action'] = self._vqvae_model.decode_without_obs(output['action'])['recons_action']
-                output['action'] = self._vqvae_model.decode(output['action'])['recons_action']
-
-        if self._cuda:
-            output = to_device(output, 'cpu')
-        output = default_decollate(output)
-        return {i: d for i, d in zip(data_id, output)}
-
     def default_model(self) -> Tuple[str, List[str]]:
         """
         Overview:
@@ -755,7 +742,7 @@ class DQNVQVAEPolicy(Policy):
             )
             cnt = int((2 / granularity)) ** 3
             action_samples = np.array([xx.ravel(), yy.ravel(), zz.ravel()]).reshape(cnt, 3)
-        elif self.cfg.action_space == 'hybrid':  
+        elif self.cfg.action_space == 'hybrid':
             # hybrid action, now only for gym_hybrid env: 3 dim discrete, 2 dim cont
             xx, yy = np.meshgrid(np.arange(-1, 1, granularity), np.arange(-1, 1, granularity))
             cnt = int((2 / granularity)) ** 2

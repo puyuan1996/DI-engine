@@ -9,6 +9,7 @@ from ding.torch_utils import one_hot, to_tensor
 from ding.model.common import RegressionHead, ReparameterizationHead, DiscreteHead, MultiHead, \
     FCEncoder, ConvEncoder
 
+
 class ExponentialMovingAverage(nn.Module):
 
     def __init__(self, decay: float, shape: Tuple[int]) -> None:
@@ -17,7 +18,7 @@ class ExponentialMovingAverage(nn.Module):
         self.shape = shape
         self.reset()
 
-    #@torch.no_grad
+    # @torch.no_grad
     def update(self, value: torch.Tensor) -> None:
         # i.e. self.hidden = (1.0 - self.decay) * value + self.decay * self.hidden
         self.count.add_(1)
@@ -40,19 +41,20 @@ class ExponentialMovingAverage(nn.Module):
 
 class VectorQuantizer(nn.Module):
     """
-    Reference:
-    [1] https://github.com/deepmind/sonnet/blob/v2/sonnet/src/nets/vqvae.py
+    Overview:
+        Reference:
+        [1] https://github.com/deepmind/sonnet/blob/v2/sonnet/src/nets/vqvae.py
     """
 
     def __init__(
-        self,
-        embedding_num: int,
-        embedding_size: int = 128,
-        beta: float = 0.25,
-        is_ema: bool = False,
-        is_ema_target: bool = False,
-        eps_greedy_nearest: bool = False,
-        embedding_table_onehot: bool =False,
+            self,
+            embedding_num: int,
+            embedding_size: int = 128,
+            beta: float = 0.25,
+            is_ema: bool = False,
+            is_ema_target: bool = False,
+            eps_greedy_nearest: bool = False,
+            embedding_table_onehot: bool = False,
     ):
         super(VectorQuantizer, self).__init__()
         self.K = embedding_num
@@ -69,9 +71,8 @@ class VectorQuantizer(nn.Module):
         else:
             self.embedding.weight.data.uniform_(-1 / self.K, 1 / self.K)
 
-
         if self.is_ema:
-            self.ema_N = ExponentialMovingAverage(0.99, (self.K, ))
+            self.ema_N = ExponentialMovingAverage(0.99, (self.K,))
             self.ema_m = ExponentialMovingAverage(0.99, (self.K, self.D))
 
     def train(self, encoding: torch.Tensor, eps=0.05) -> torch.Tensor:
@@ -83,10 +84,10 @@ class VectorQuantizer(nn.Module):
         """
         device = encoding.device
         encoding_shape = encoding.shape
-        if len(encoding_shape)==3:
+        if len(encoding_shape) == 3:
             # for multi-agent case, e.g. gobigger, 
             # if encoding shape is (B,A,D), where B is batch_size, A is agent_num, D is encoding_dim
-            encoding = encoding.view(-1, encoding_shape[-1]) 
+            encoding = encoding.view(-1, encoding_shape[-1])
         quantized_index = self.encode(encoding)
         # print('torch.unique(quantized_index):', torch.unique(quantized_index))
         if self.eps_greedy_nearest:
@@ -176,45 +177,61 @@ class ActionVQVAE(nn.Module):
             n_atom: int = 51,
             gaussian_head_for_cont_action: bool = False,
             embedding_table_onehot: bool = False,
-            vqvae_return_weight: bool =False,
+            vqvae_return_weight: bool = False,
+            obs_regularization: bool = False,
+            obs_shape: int = None,
+            predict_loss_weight: float = 1,
     ) -> None:
         super(ActionVQVAE, self).__init__()
 
         self.action_shape = action_shape
+        self.obs_shape = obs_shape
+        self.obs_regularization = obs_regularization
         self.hidden_dims = hidden_dims
         self.vq_loss_weight = vq_loss_weight
+        self.predict_loss_weight = predict_loss_weight
         self.embedding_size = embedding_size
         self.embedding_num = embedding_num
         self.act = nn.ReLU()
         self.cont_reconst_l1_loss = cont_reconst_l1_loss
         self.cont_reconst_smooth_l1_loss = cont_reconst_smooth_l1_loss
-        self.categorical_head_for_cont_action=categorical_head_for_cont_action
+        self.categorical_head_for_cont_action = categorical_head_for_cont_action
         self.n_atom = n_atom
-        self.gaussian_head_for_cont_action=gaussian_head_for_cont_action
+        self.gaussian_head_for_cont_action = gaussian_head_for_cont_action
         self.embedding_table_onehot = embedding_table_onehot
         self.vqvae_return_weight = vqvae_return_weight
 
-        # Encoder
+        """Encoder"""
+        # action encode head
         if isinstance(self.action_shape, int):  # continuous action
-            action_encoder = nn.Sequential(nn.Linear(self.action_shape, self.hidden_dims[0]), self.act)
+            self.encode_action_head = nn.Sequential(nn.Linear(self.action_shape, self.hidden_dims[0]), self.act)
         elif isinstance(self.action_shape, dict):  # hybrid action
             # input action: concat(continuous action, one-hot encoding of discrete action)
-            action_encoder = nn.Sequential(
+            self.encode_action_head = nn.Sequential(
                 nn.Linear(
                     self.action_shape['action_type_shape'] + self.action_shape['action_args_shape'], self.hidden_dims[0]
                 ), self.act
             )
-        self.encoder = [
-            action_encoder,
-            nn.Linear(self.hidden_dims[0], self.hidden_dims[0]), self.act,
-            nn.Linear(self.hidden_dims[0], self.embedding_size)
-        ]
-        self.encoder = nn.Sequential(*self.encoder)
+        if self.obs_regularization:
+            # encode: obs head
+            self.encode_obs_head = nn.Sequential(nn.Linear(self.obs_shape, self.hidden_dims[0]), self.act)
+
+            # decode: residual prediction head
+            self.decode_prediction_head_layer1 = nn.Sequential(nn.Linear(self.hidden_dims[0], self.hidden_dims[0]),
+                                                               nn.ReLU())
+            self.decode_prediction_head_layer2 = nn.Linear(self.hidden_dims[0], self.obs_shape)
+
+        self.encode_common = nn.Sequential(nn.Linear(self.hidden_dims[0], self.hidden_dims[0]), nn.ReLU())
+        self.encode_mu_head = nn.Linear(self.hidden_dims[0], self.embedding_size)
+
+        modules = [self.encode_action_head, self.encode_common, self.encode_mu_head]
+        self.encoder = nn.Sequential(*modules)
 
         # VQ layer
-        self.vq_layer = VectorQuantizer(embedding_num, embedding_size, beta, is_ema, is_ema_target, eps_greedy_nearest, embedding_table_onehot)
+        self.vq_layer = VectorQuantizer(embedding_num, embedding_size, beta, is_ema, is_ema_target, eps_greedy_nearest,
+                                        embedding_table_onehot)
 
-        # Decoder
+        """Decoder"""
         self.decoder = nn.Sequential(
             *[
                 nn.Linear(self.embedding_size, self.hidden_dims[0]),
@@ -223,11 +240,13 @@ class ActionVQVAE(nn.Module):
                 self.act,
             ]
         )
+        self.decode_action_head = nn.Sequential(nn.Linear(self.embedding_size, hidden_dims[0]), self.act)
+        self.decode_common = nn.Sequential(nn.Linear(hidden_dims[0], hidden_dims[0]), nn.ReLU())
 
         if isinstance(self.action_shape, int):  # continuous action
             if self.categorical_head_for_cont_action:
                 # self.recons_action_head = nn.Sequential(nn.Linear(self.hidden_dims[0], self.action_shape*self.n_atom), nn.Tanh())
-                self.recons_action_head = nn.Sequential(nn.Linear(self.hidden_dims[0], self.action_shape*self.n_atom))
+                self.recons_action_head = nn.Sequential(nn.Linear(self.hidden_dims[0], self.action_shape * self.n_atom))
             elif self.gaussian_head_for_cont_action:
                 self.recons_action_head = ReparameterizationHead(
                     self.hidden_dims[0],
@@ -248,7 +267,7 @@ class ActionVQVAE(nn.Module):
                 #     nn.Linear(self.hidden_dims[0], self.action_shape['action_args_shape']*self.n_atom), nn.Tanh()
                 # )
                 self.recons_action_cont_head = nn.Sequential(
-                    nn.Linear(self.hidden_dims[0], self.action_shape['action_args_shape']*self.n_atom))
+                    nn.Linear(self.hidden_dims[0], self.action_shape['action_args_shape'] * self.n_atom))
             elif self.gaussian_head_for_cont_action:
                 self.recons_action_cont_head = ReparameterizationHead(
                     self.hidden_dims[0],
@@ -262,7 +281,6 @@ class ActionVQVAE(nn.Module):
                 self.recons_action_cont_head = nn.Sequential(
                     nn.Linear(self.hidden_dims[0], self.action_shape['action_args_shape']), nn.Tanh()
                 )
-            
 
             # self.recons_action_disc_head = nn.Sequential(
             #     nn.Linear(self.hidden_dims[0], self.action_shape['action_type_shape']), nn.ReLU()
@@ -281,13 +299,14 @@ class ActionVQVAE(nn.Module):
         return action_embedding
 
     def _recons_action(
-        self,
-        action_decoding: torch.Tensor,
-        target_action: Union[torch.Tensor, Dict[str, torch.Tensor]] = None,
-        weight: Union[torch.Tensor, Dict[str, torch.Tensor]] = None
+            self,
+            action_decoding: torch.Tensor,
+            target_action: Union[torch.Tensor, Dict[str, torch.Tensor]] = None,
+            weight: Union[torch.Tensor, Dict[str, torch.Tensor]] = None
     ) -> Tuple[Union[torch.Tensor, Dict[str, torch.Tensor]], torch.Tensor]:
-        sigma=None # debug
-        if isinstance(self.action_shape, int):  # continuous action
+        sigma = None  # debug
+        if isinstance(self.action_shape, int):
+            # continuous action
             if self.categorical_head_for_cont_action:
                 support = torch.linspace(-1, 1, self.n_atom).to(action_decoding.device)  # TODO
                 recons_action_logits = self.recons_action_head(action_decoding).view(-1, self.action_shape, self.n_atom)
@@ -305,10 +324,12 @@ class ActionVQVAE(nn.Module):
             else:
                 recons_action = self.recons_action_head(action_decoding)
 
-        elif isinstance(self.action_shape, dict):  # hybrid action
+        elif isinstance(self.action_shape, dict):
+            # hybrid action
             if self.categorical_head_for_cont_action:
                 support = torch.linspace(-1, 1, self.n_atom).to(action_decoding.device)  # TODO
-                recons_action_logits = self.recons_action_cont_head(action_decoding).view(-1, self.action_shape['action_args_shape'], self.n_atom)
+                recons_action_logits = self.recons_action_cont_head(action_decoding).view(-1, self.action_shape[
+                    'action_args_shape'], self.n_atom)
                 recons_action_probs = F.softmax(recons_action_logits, dim=-1)  # TODO
                 recons_action_cont = torch.sum(recons_action_probs * support, dim=-1)
                 # recons_action_logits: tanh 
@@ -334,54 +355,77 @@ class ActionVQVAE(nn.Module):
             return recons_action, sigma
         else:
             if isinstance(self.action_shape, int):  # continuous action
-                if  self.cont_reconst_l1_loss:
+                if self.cont_reconst_l1_loss:
                     recons_loss = F.l1_loss(recons_action, target_action)
                     recons_loss_none_reduction = F.l1_loss(recons_action, target_action, reduction='none').mean(-1)
                 elif self.cont_reconst_smooth_l1_loss:
                     recons_loss = F.smooth_l1_loss(recons_action, target_action)
-                    recons_loss_none_reduction = F.smooth_l1_loss(recons_action, target_action, reduction='none').mean(-1)
+                    recons_loss_none_reduction = F.smooth_l1_loss(recons_action, target_action, reduction='none').mean(
+                        -1)
                 else:
                     if self.vqvae_return_weight and weight is not None:
-                        recons_loss = (weight.reshape(-1,1) * F.mse_loss(recons_action, target_action, reduction='none')).mean()
+                        recons_loss = (weight.reshape(-1, 1) * F.mse_loss(recons_action, target_action,
+                                                                          reduction='none')).mean()
                     else:
                         recons_loss = F.mse_loss(recons_action, target_action)
                     recons_loss_none_reduction = F.mse_loss(recons_action, target_action, reduction='none').mean(-1)
 
             elif isinstance(self.action_shape, dict):  # hybrid action
-                if  self.cont_reconst_l1_loss:
-                    recons_loss_cont = F.l1_loss(recons_action['action_args'], target_action['action_args'].view(-1,target_action['action_args'].shape[-1]))
-                    recons_loss_cont_none_reduction = F.l1_loss(recons_action['action_args'], target_action['action_args'].view(-1,target_action['action_args'].shape[-1]), reduction='none').mean(-1)
-                elif  self.cont_reconst_smooth_l1_loss:
-                    recons_loss_cont = F.smooth_l1_loss(recons_action['action_args'], target_action['action_args'].view(-1,target_action['action_args'].shape[-1]))
-                    recons_loss_cont_none_reduction = F.smooth_l1_loss(recons_action['action_args'], target_action['action_args'].view(-1,target_action['action_args'].shape[-1]), reduction='none').mean(-1)
+                if self.cont_reconst_l1_loss:
+                    recons_loss_cont = F.l1_loss(recons_action['action_args'],
+                                                 target_action['action_args']
+                                                 .view(-1, target_action['action_args'].shape[-1]))
+                    recons_loss_cont_none_reduction = F.l1_loss(recons_action['action_args'],
+                                                                target_action['action_args']
+                                                                .view(-1, target_action['action_args'].shape[-1]),
+                                                                reduction='none').mean(-1)
+                elif self.cont_reconst_smooth_l1_loss:
+                    recons_loss_cont = F.smooth_l1_loss(recons_action['action_args'],
+                                                        target_action['action_args']
+                                                        .view(-1, target_action['action_args'].shape[-1]))
+                    recons_loss_cont_none_reduction = F.smooth_l1_loss(recons_action['action_args'],
+                                                                       target_action['action_args']
+                                                                       .view(-1,
+                                                                             target_action['action_args'].shape[-1]),
+                                                                       reduction='none').mean(-1)
                 else:
-                    recons_loss_cont = F.mse_loss(recons_action['action_args'], target_action['action_args'].view(-1,target_action['action_args'].shape[-1]))
-                    recons_loss_cont_none_reduction = F.mse_loss(recons_action['action_args'], target_action['action_args'].view(-1,target_action['action_args'].shape[-1]), reduction='none').mean(-1)
+                    recons_loss_cont = F.mse_loss(recons_action['action_args'], target_action['action_args']
+                                                  .view(-1, target_action['action_args'].shape[-1]))
+                    recons_loss_cont_none_reduction = F.mse_loss(recons_action['action_args'],
+                                                                 target_action['action_args']
+                                                                 .view(-1, target_action['action_args'].shape[-1]),
+                                                                 reduction='none').mean(-1)
 
                 recons_loss_disc = F.cross_entropy(recons_action['logit'], target_action['action_type'].view(-1))
-                recons_loss_disc_none_reduction = F.cross_entropy(recons_action['logit'], target_action['action_type'].view(-1), reduction='none').mean(-1)
+                recons_loss_disc_none_reduction = F.cross_entropy(recons_action['logit'],
+                                                                  target_action['action_type'].view(-1),
+                                                                  reduction='none').mean(-1)
 
-                # here view(-1) is to be compatiable with multi_agent case, e.g. gobigger
+                # here view(-1) is to be compatible with multi_agent case, e.g. gobigger
                 recons_loss = recons_loss_cont + recons_loss_disc
                 recons_loss_none_reduction = recons_loss_cont_none_reduction + recons_loss_disc_none_reduction
 
-
             return recons_action, recons_loss, recons_loss_none_reduction, sigma
 
-    def train(self, data: Dict, warmup: bool=False) -> Dict[str, torch.Tensor]:
+    def train(self, data: Dict, warmup: bool = False) -> Dict[str, torch.Tensor]:
         action_embedding = self._get_action_embedding(data)
         encoding = self.encoder(action_embedding)
         quantized_index, quantized_embedding, vq_loss, embedding_loss, commitment_loss = self.vq_layer.train(encoding)
         action_decoding = self.decoder(quantized_embedding)
         if self.vqvae_return_weight and not warmup:
-            recons_action, recons_loss, recons_loss_none_reduction, sigma = self._recons_action(action_decoding, data['action'], data['return_normalization'])
+            recons_action, recons_loss, recons_loss_none_reduction, sigma \
+                = self._recons_action(action_decoding,
+                                      data['action'], data[
+                                          'return_normalization'])
         else:
-            recons_action, recons_loss, recons_loss_none_reduction, sigma = self._recons_action(action_decoding, data['action'])
-        
+            recons_action, recons_loss, recons_loss_none_reduction, sigma \
+                = self._recons_action(action_decoding,
+                                      data['action'])
+
         total_vqvae_loss = recons_loss + self.vq_loss_weight * vq_loss
         return {
             'quantized_index': quantized_index,
-            'recons_loss_none_reduction': recons_loss_none_reduction, # use for rl priority in dqn_vqvae
+            'recons_loss_none_reduction': recons_loss_none_reduction,  # use for rl priority in dqn_vqvae
             'sigma': sigma,
             'total_vqvae_loss': total_vqvae_loss,
             'recons_loss': recons_loss,
@@ -390,16 +434,131 @@ class ActionVQVAE(nn.Module):
             'commitment_loss': commitment_loss
         }
 
+    def train_with_obs(self, data: Dict, warmup: bool = False) -> Dict[str, torch.Tensor]:
+        """
+         Overview:
+             The train method. Maps the given action and obs onto the latent action space.
+         Arguments:
+             - data (:obj:`Dict`): Dict containing keyword:
+                 - action (:obj:`torch.Tensor`): the original action
+                 - obs (:obj:`torch.Tensor`): observation
+                 - true_residual (:obj:`torch.Tensor`): the true observation residual, i.e. o_{t+1}-o_{t}
+         Returns:
+             - outputs (:obj:`Dict`): Dict containing keyword:
+                 - quantized_index (:obj:`torch.Tensor`): the latent action.
+         Shapes:
+             - action (:obj:`torch.Tensor`): :math:`(B, A)`, where B is batch size and A is ``action_shape``
+             - obs (:obj:`torch.Tensor`): :math:`(B, O)`, where B is batch size and O is ``obs_shape``
+         """
+        action_embedding = self._get_action_embedding(data)
+
+        # encode
+        action_embedding = self.encode_action_head(action_embedding)
+        obs_embedding = self.encode_obs_head(data['obs'])
+        action_obs_embedding_dot = action_embedding * obs_embedding
+        action_obs_embedding = self.encode_common(action_obs_embedding_dot)
+        encoding = self.encode_mu_head(action_obs_embedding)
+
+        quantized_index, quantized_embedding, vq_loss, embedding_loss, commitment_loss = self.vq_layer.train(encoding)
+
+        # decode
+        action_decoding = self.decode_action_head(quantized_embedding)
+        action_obs_decoding = action_decoding * obs_embedding
+
+        action_obs_decoding_common = self.decode_common(action_obs_decoding)
+
+        prediction_residual_tmp = self.decode_prediction_head_layer1(action_obs_decoding_common)
+        prediction_residual = self.decode_prediction_head_layer2(prediction_residual_tmp)
+
+        if self.vqvae_return_weight and not warmup:
+            recons_action, recons_loss, recons_loss_none_reduction, sigma \
+                = self._recons_action(action_obs_decoding_common,
+                                      data['action'], data[
+                                          'return_normalization'])
+        else:
+            recons_action, recons_loss, recons_loss_none_reduction, sigma \
+                = self._recons_action(action_obs_decoding_common,
+                                      data['action'])
+        predict_loss = F.mse_loss(prediction_residual, data['true_residual'])
+
+        total_vqvae_loss = recons_loss + self.vq_loss_weight * vq_loss + self.predict_loss_weight * predict_loss
+        return {
+            'quantized_index': quantized_index,
+            'recons_loss_none_reduction': recons_loss_none_reduction,  # use as rl priority in dqn_vqvae
+            'sigma': sigma,
+            'total_vqvae_loss': total_vqvae_loss,
+            'recons_loss': recons_loss,
+            'vq_loss': vq_loss,
+            'embedding_loss': embedding_loss,
+            'commitment_loss': commitment_loss,
+            'predict_loss': predict_loss
+        }
+
     def encode(self, data: Dict) -> torch.Tensor:
+        """
+         Overview:
+             Maps the given action and obs onto the latent action space.
+         Arguments:
+             - data (:obj:`Dict`): Dict containing keyword:
+                 - action (:obj:`torch.Tensor`): the original action
+                 - obs (:obj:`torch.Tensor`): observation
+         Returns:
+             - outputs (:obj:`Dict`): Dict containing keyword:
+                 - quantized_index (:obj:`torch.Tensor`): the latent action.
+         Shapes:
+             - action (:obj:`torch.Tensor`): :math:`(B, A)`, where B is batch size and A is ``action_shape``
+             - obs (:obj:`torch.Tensor`): :math:`(B, O)`, where B is batch size and O is ``obs_shape``
+         """
         with torch.no_grad():
             action_embedding = self._get_action_embedding(data)
-            encoding = self.encoder(action_embedding)
+            if self.obs_regularization:
+                action_embedding = self.encode_action_head(action_embedding)
+                obs_embedding = self.encode_obs_head(data['obs'])
+
+                action_obs_embedding_dot = action_embedding * obs_embedding
+                action_obs_embedding = self.encode_common(action_obs_embedding_dot)
+                encoding = self.encode_mu_head(action_obs_embedding)
+            else:
+                encoding = self.encoder(action_embedding)
+
             quantized_index = self.vq_layer.encode(encoding)
             return quantized_index
 
-    def decode(self, quantized_index: torch.Tensor) -> Dict:
+    def decode(self, data) -> Dict:
+        """
+        Overview:
+            Maps the given quantized_index (latent action) and obs onto the original action space.
+            Using the method ``self.encode_obs_head(obs)`` to get the obs_encoding.
+        Arguments:
+            - data (:obj:`Dict`): Dict containing keyword:
+                - quantized_index (:obj:`torch.Tensor`): the sampled latent action
+                - obs (:obj:`torch.Tensor`): observation
+        Returns:
+            - outputs (:obj:`Dict`): Dict containing keyword:
+                - recons_action (:obj:`torch.Tensor`): reconstruction_action.
+                - prediction_residual (:obj:`torch.Tensor`): prediction_residual.
+        Shapes:
+            - quantized_index (:obj:`torch.Tensor`): :math:`(B, L)`, where B is batch size and L is ``latent_action_size``
+            - obs (:obj:`torch.Tensor`): :math:`(B, O)`, where B is batch size and O is ``obs_shape``
+        """
+
         with torch.no_grad():
-            quantized_embedding = self.vq_layer.decode(quantized_index)
-            action_decoding = self.decoder(quantized_embedding)
-            recons_action, sigma = self._recons_action(action_decoding)
-            return {'recons_action': recons_action}
+            quantized_embedding = self.vq_layer.decode(data['quantized_index'])
+            if self.obs_regularization:
+                obs_encoding = self.encode_obs_head(data['obs'])
+                action_decoding = self.decode_action_head(quantized_embedding)
+                action_obs_decoding = action_decoding * obs_encoding
+
+                action_obs_decoding_common = self.decode_common(action_obs_decoding)
+
+                recons_action, sigma = self._recons_action(action_obs_decoding_common)
+
+                prediction_residual_tmp = self.decode_prediction_head_layer1(action_obs_decoding_common)
+                prediction_residual = self.decode_prediction_head_layer2(prediction_residual_tmp)
+
+                return {'recons_action': recons_action, 'prediction_residual': prediction_residual}
+
+            else:
+                action_decoding = self.decoder(quantized_embedding)
+                recons_action, sigma = self._recons_action(action_decoding)
+                return {'recons_action': recons_action}

@@ -110,12 +110,6 @@ def serial_pipeline_dqn_vqvae(
         # ====================
         # Learn policy from collected data
         for i in range(cfg.policy.warm_up_update):
-            # NOTE: save visualized latent action and embedding_table
-            # if i == 0:
-            #     policy.visualize_latent(
-            #         save_histogram=True, name='warmup-start_' + f'{cfg.env.env_id}_s{cfg.seed}'
-            #     )
-            #     policy.visualize_embedding_table(name='warmup-start_' + f'{cfg.env.env_id}_s{cfg.seed}')
             # Learner will train ``update_per_collect`` times in one iteration.
             train_data = replay_buffer.sample(cfg.policy.learn.vqvae_batch_size, learner.train_iter)
             if train_data is None:
@@ -144,22 +138,11 @@ def serial_pipeline_dqn_vqvae(
     # print(recons_action.max(0), recons_action.min(0),recons_action.mean(0), recons_action.std(0))
 
     for iter in range(max_iterations):
-        # NOTE: save visualized latent action and embedding_table
-        # if iter % 5000 == 0:
-        #     policy.visualize_latent(
-        #         save_histogram=True, name=f'iter{iter}_{cfg.env.env_id}_s{cfg.seed}'
-        #     )
-        #     policy.visualize_embedding_table(name=f'iter{iter}_{cfg.env.env_id}_s{cfg.seed}')
         collect_kwargs = commander.step()
         # Evaluate policy performance
         if evaluator.should_eval(learner.train_iter):
             stop, reward = evaluator.eval(learner.save_checkpoint, learner.train_iter, collector.envstep)
             if stop:
-                # NOTE: save visualized latent action and embedding_table
-                # policy.visualize_latent(
-                #     save_histogram=True, name=f'iter{iter}_{cfg.env.env_id}_s{cfg.seed}'
-                # )
-                # policy.visualize_embedding_table(name=f'iter{iter}_{cfg.env.env_id}_s{cfg.seed}')
                 break
         # Collect data by default config n_sample/n_episode
         new_data = collector.collect(train_iter=learner.train_iter, policy_kwargs=collect_kwargs)
@@ -193,37 +176,10 @@ def serial_pipeline_dqn_vqvae(
         # ====================
         # VAE phase
         # ====================
-        if not cfg.policy.vavae_pretrain_only:
+        if not cfg.policy.vqvae_pretrain_only:
             if iter % cfg.policy.learn.rl_vae_update_circle in range(cfg.policy.learn.rl_vae_update_circle - 1,
-                                                                    cfg.policy.learn.rl_vae_update_circle):
+                                                                     cfg.policy.learn.rl_vae_update_circle):
                 for i in range(cfg.policy.learn.update_per_collect_vae):
-                    # Learner will train ``update_per_collect`` times in one iteration.
-                    # TODO(pu):
-
-                    # history+recent
-                    # train_data_history = replay_buffer.sample(
-                    #     int(cfg.policy.learn.vqvae_batch_size / 2), learner.train_iter
-                    # )
-                    # train_data_recent = replay_buffer_vqvae.sample(
-                    #     int(cfg.policy.learn.vqvae_batch_size / 2), learner.train_iter
-                    # )
-                    # train_data = train_data_history + train_data_recent
-                    
-                    # recent
-                    # add replay_buffer_vqvae.clear()
-                    # train_data_recent = replay_buffer_vqvae.sample(
-                    #     int(cfg.policy.learn.vqvae_batch_size / 2), learner.train_iter
-                    # )
-                    # train_data = train_data_recent
-
-                    
-                    # history
-                    # train_data_history = replay_buffer.sample(
-                    #     int(cfg.policy.learn.vqvae_batch_size), learner.train_iter
-                    # )
-                    # train_data = train_data_history
-
-                    # replay_buffer_vqvae reward priority
                     train_data_vqvae = replay_buffer_vqvae.sample(
                         int(cfg.policy.learn.vqvae_batch_size), learner.train_iter
                     )
@@ -243,7 +199,6 @@ def serial_pipeline_dqn_vqvae(
                     learner.train(train_data, collector.envstep)
                     if learner.policy.get_attribute('priority_vqvae'):
                         replay_buffer_vqvae.update(learner.priority_info)
-
 
         if collector.envstep > max_env_step:
             break
