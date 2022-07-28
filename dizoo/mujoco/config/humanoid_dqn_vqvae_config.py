@@ -2,10 +2,10 @@ from easydict import EasyDict
 from ding.entry import serial_pipeline_dqn_vqvae
 
 nstep = 3
-walker2d_dqn_default_config = dict(
-    exp_name='walker2d_dqn_vqvae_seed0_3M',
+humanoid_dqn_default_config = dict(
+    exp_name='humanoid_dqn_vqvae_seed0_3M',
     env=dict(
-        env_id='Walker2d-v3',
+        env_id='Humanoid-v3',
         norm_obs=dict(use_norm=False, ),
         norm_reward=dict(use_norm=False, ),
         # (bool) Scale output action into legal range.
@@ -15,7 +15,7 @@ walker2d_dqn_default_config = dict(
         evaluator_env_num=5,
         n_evaluator_episode=5,
         # stop_value=5000,
-        stop_value=int(1e6),
+        stop_value=int(1e6),  # stop according to max env steps
     ),
     policy=dict(
         # Whether to use cuda for network.
@@ -32,7 +32,7 @@ walker2d_dqn_default_config = dict(
 
         is_ema=False,  # no use EMA
         # is_ema=True,  # use EMA TODO(pu): test ema
-        original_action_shape=6,  # related to the environment
+        original_action_shape=17,  # related to the environment
         random_collect_size=int(5e4),  # transitions
         warm_up_update=int(1e4),
         # debug
@@ -40,8 +40,8 @@ walker2d_dqn_default_config = dict(
         # warm_up_update=int(10),
 
         vqvae_embedding_dim=64,  # ved: D
-        vqvae_hidden_dim=[256],  # vhd
-        # vqvae_hidden_dim=[512],  # vhd
+        # vqvae_hidden_dim=[256],  # vhd
+        vqvae_hidden_dim=[512],  # vhd
         # vqvae_hidden_dim=[1024],  # vhd
         vq_loss_weight=1,
         replay_buffer_size_vqvae=int(1e6),
@@ -84,7 +84,7 @@ walker2d_dqn_default_config = dict(
         priority_type_vqvae='return',
         priority_vqvae_min=0.,
         model=dict(
-            obs_shape=17,  # related to the environment
+            obs_shape=376,  # related to the environment
             action_shape=int(64),  # num of num_embeddings: K
             # encoder_hidden_size_list=[128, 128, 64],  # small net
             encoder_hidden_size_list=[256, 256, 128],  # middle net
@@ -93,9 +93,6 @@ walker2d_dqn_default_config = dict(
             dueling=True,
         ),
         learn=dict(
-            # NOTE: only halfcheetah, set this key True
-            ignore_done=True,
-
             reconst_loss_stop_value=1e-6,  # TODO(pu)
             constrain_action=False,  # TODO(pu): delete this key
 
@@ -147,10 +144,10 @@ walker2d_dqn_default_config = dict(
         ),
     ),
 )
-walker2d_dqn_default_config = EasyDict(walker2d_dqn_default_config)
-main_config = walker2d_dqn_default_config
+humanoid_dqn_default_config = EasyDict(humanoid_dqn_default_config)
+main_config = humanoid_dqn_default_config
 
-walker2d_dqn_create_config = dict(
+humanoid_dqn_create_config = dict(
     env=dict(
         type='mujoco',
         import_names=['dizoo.mujoco.envs.mujoco_env'],
@@ -158,13 +155,13 @@ walker2d_dqn_create_config = dict(
     env_manager=dict(type='subprocess'),
     policy=dict(type='dqn_vqvae'),
 )
-walker2d_dqn_create_config = EasyDict(walker2d_dqn_create_config)
-create_config = walker2d_dqn_create_config
+humanoid_dqn_create_config = EasyDict(humanoid_dqn_create_config)
+create_config = humanoid_dqn_create_config
 
 
 import copy
 def train(args):
-    main_config.exp_name = 'data_walker2d/dqn_obs_noema_middlenet_k64' + '_seed' + f'{args.seed}' + '_3M'
+    main_config.exp_name = 'data_humanoid/humanoid_obs_noema_middlenet_k64_vhd512' + 'seed' + f'{args.seed}'
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,
                               max_env_step=int(3e6))
 

@@ -93,7 +93,8 @@ halfcheetah_dqn_default_config = dict(
             dueling=True,
         ),
         learn=dict(
-            ignore_done=True,  # NOTE
+            # NOTE: only halfcheetah, set this key True
+            ignore_done=True,
 
             reconst_loss_stop_value=1e-6,  # TODO(pu)
             constrain_action=False,  # TODO(pu): delete this key
@@ -131,6 +132,7 @@ halfcheetah_dqn_default_config = dict(
             # Cut trajectories into pieces with length "unroll_len".
             unroll_len=1,
         ),
+        eval=dict(evaluator=dict(eval_freq=1000, )),
         # command_mode config
         other=dict(
             # Epsilon greedy with decay.
@@ -160,8 +162,6 @@ halfcheetah_dqn_create_config = EasyDict(halfcheetah_dqn_create_config)
 create_config = halfcheetah_dqn_create_config
 
 import copy
-
-
 def train(args):
     main_config.exp_name = 'data_halfcheetah/dqn_obs_noema_middlenet_k64' + '_seed' + f'{args.seed}' + '_3M'
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,

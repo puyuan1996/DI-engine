@@ -62,12 +62,13 @@ gym_hybrid_dqn_default_config = dict(
         # obs_regularization=False,
         predict_loss_weight=1,  # TODO
 
-        vavae_pretrain_only=False,  # NOTE
+        vqvae_pretrain_only=False,
+        # NOTE: if train vqvae dynamically, i.e. vqvae_pretrain_only=False, should set this key to True
         recompute_latent_action=True,
-        # NOTE: if train vqvae dynamically, i.e. vavae_pretrain_only=False, should set this key to True
 
-        # vavae_pretrain_only=True,  # NOTE
-        # recompute_latent_action=False, # NOTE: if only pretrain vqvae, i.e. vavae_pretrain_only=True, should set this key to False
+        # vqvae_pretrain_only=True,
+        # NOTE: if only pretrain vqvae, i.e. vqvae_pretrain_only=True, should set this key to False
+        # recompute_latent_action=False,
 
         # optional design
         cont_reconst_l1_loss=False,
@@ -97,8 +98,9 @@ gym_hybrid_dqn_default_config = dict(
             obs_shape=10,
             action_shape=int(16),  # num of num_embeddings: K
             encoder_hidden_size_list=[128, 128, 64],  # small net
+            # for hardmove
+            # action_shape=int(64),  # num of num_embeddings: K
             # encoder_hidden_size_list=[256, 256, 128],  # middle net
-            # encoder_hidden_size_list=[512, 512, 256],  # large net
             # Whether to use dueling head.
             dueling=True,
         ),
@@ -124,8 +126,8 @@ gym_hybrid_dqn_default_config = dict(
             grad_clip_value=0.5,
 
             # add noise in original continuous action
-            noise=False,  # NOTE: if vavae_pretrain_only=True
-            # noise=True,  # NOTE: if vavae_pretrain_only=False
+            noise=False,  # NOTE: if vqvae_pretrain_only=True
+            # noise=True,  # NOTE: if vqvae_pretrain_only=False
             noise_sigma=0.1,
             noise_range=dict(
                 min=-0.5,
@@ -164,7 +166,6 @@ gym_hybrid_dqn_create_config = dict(
         import_names=['dizoo.gym_hybrid.envs.gym_hybrid_env'],
     ),
     env_manager=dict(type='subprocess'),
-    # env_manager=dict(type='base'),
     policy=dict(type='dqn_vqvae'),
 )
 gym_hybrid_dqn_create_config = EasyDict(gym_hybrid_dqn_create_config)
@@ -172,14 +173,14 @@ create_config = gym_hybrid_dqn_create_config
 
 
 def train(args):
-    # main_config.exp_name = 'data_moving/dqn_obs_noema_smallnet_k16_upcr20' + '_seed' + f'{args.seed}'
-    # main_config.exp_name = 'data_moving/dqn_noema_smallnet_k16_upcr20_nowarmup' + '_seed' + f'{args.seed}'
+    # main_config.exp_name = 'data_moving/dqn_obs_noema_smallnet_k16' + '_seed' + f'{args.seed}'
+    # main_config.exp_name = 'data_moving/dqn_noema_smallnet_k16_nowarmup' + '_seed' + f'{args.seed}'
 
-    main_config.exp_name = 'data_sliding/dqn_obs_noema_smallnet_k16_upcr20' + '_seed' + f'{args.seed}'
-    # main_config.exp_name = 'data_sliding/dqn_noema_smallnet_k16_upcr20' + '_seed' + f'{args.seed}'
+    main_config.exp_name = 'data_sliding/dqn_obs_noema_smallnet_k16' + '_seed' + f'{args.seed}'
+    # main_config.exp_name = 'data_sliding/dqn_noema_smallnet_k16' + '_seed' + f'{args.seed}'
 
-    # main_config.exp_name = 'data_hardmove_n10/dqn_noema_middlenet_k64_noise_history_vhd512' + '_seed' + f'{args.seed}'
-    # main_config.exp_name = 'data_hardmove_n4/dqn_noema_middlenet_k64_pretrainonly_vhd256' + '_seed' + f'{args.seed}'
+    # main_config.exp_name = 'data_hardmove_n10/dqn_noema_middlenet_k64_vhd512' + '_seed' + f'{args.seed}'
+    # main_config.exp_name = 'data_hardmove_n4/dqn_noema_middlenet_k64_vhd256' + '_seed' + f'{args.seed}'
 
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,
                               max_env_step=int(1e6))
