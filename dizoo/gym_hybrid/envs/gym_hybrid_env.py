@@ -22,6 +22,9 @@ class GymHybridEnv(BaseEnv):
         self._act_scale = cfg.act_scale
         self._init_flag = False
         self._replay_path = None
+        self._save_replay = cfg.save_replay_gif
+        if self._save_replay:
+            self._frames = []
 
     def reset(self) -> np.ndarray:
         if not self._init_flag:
@@ -74,10 +77,21 @@ class GymHybridEnv(BaseEnv):
                 # we have already done the clip(-1,1) operation
                 action['action_args'][1] = affine_transform(action['action_args'][1], min_val=-1, max_val=1)
                 action = [action['action_type'], action['action_args']]
+        if self._save_replay:
+            self._frames.append(self._env.render(mode='rgb_array'))
         obs, rew, done, info = self._env.step(action)
         self._final_eval_reward += rew
         if done:
             info['final_eval_reward'] = self._final_eval_reward
+            if self._save_replay:
+                if self._env_id == 'HardMove-v0':
+                    self._env_id=f'hardmove_n{self._cfg.num_actuators}'
+                path = os.path.join(
+                    self._replay_path, '{}_episode_{}.gif'.format(self._env_id, self._save_replay_count)
+                )
+                self.display_frames_as_gif(self._frames, path)
+                self._save_replay_count += 1
+
         obs = to_ndarray(obs)
         if isinstance(obs, list):  # corner case
             for i in range(len(obs)):
@@ -121,3 +135,14 @@ class GymHybridEnv(BaseEnv):
     @property
     def reward_space(self) -> gym.spaces.Space:
         return self._reward_space
+
+    @staticmethod
+    def display_frames_as_gif(frames: list, path: str) -> None:
+        patch = plt.imshow(frames[0])
+        plt.axis('off')
+
+        def animate(i):
+            patch.set_data(frames[i])
+
+        anim = animation.FuncAnimation(plt.gcf(), animate, frames=len(frames), interval=5)
+        anim.save(path, writer='imagemagick', fps=20)
