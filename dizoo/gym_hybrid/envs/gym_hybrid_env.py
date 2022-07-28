@@ -1,9 +1,12 @@
 from typing import Any, List, Dict, Union, Optional
 import time
 import gym
+import os
 import gym_hybrid
 import copy
 import numpy as np
+from matplotlib import animation
+import matplotlib.pyplot as plt
 from easydict import EasyDict
 from ding.envs import BaseEnv, BaseEnvTimestep
 from ding.envs.common import affine_transform
@@ -21,8 +24,10 @@ class GymHybridEnv(BaseEnv):
         assert self._env_id in self.default_env_id
         self._act_scale = cfg.act_scale
         self._init_flag = False
-        self._replay_path = None
+        # self._replay_path = None
         self._save_replay = cfg.save_replay_gif
+        self._replay_path = cfg.replay_path
+        self._save_replay_count = 0
         if self._save_replay:
             self._frames = []
 
@@ -32,14 +37,6 @@ class GymHybridEnv(BaseEnv):
                 self._env = gym.make(self._env_id, num_actuators=self._cfg.num_actuators)
             else:
                 self._env = gym.make(self._env_id)
-            if self._replay_path is not None:
-                self._env = gym.wrappers.RecordVideo(
-                    self._env,
-                    video_folder=self._replay_path,
-                    episode_trigger=lambda episode_id: True,
-                    name_prefix='rl-video-{}'.format(id(self))
-                )
-                self._env.metadata["render.modes"] = ["human", "rgb_array"]
             self._observation_space = self._env.observation_space
             self._action_space = self._env.action_space
             self._reward_space = gym.spaces.Box(
@@ -85,7 +82,7 @@ class GymHybridEnv(BaseEnv):
             info['final_eval_reward'] = self._final_eval_reward
             if self._save_replay:
                 if self._env_id == 'HardMove-v0':
-                    self._env_id=f'hardmove_n{self._cfg.num_actuators}'
+                    self._env_id = f'hardmove_n{self._cfg.num_actuators}'
                 path = os.path.join(
                     self._replay_path, '{}_episode_{}.gif'.format(self._env_id, self._save_replay_count)
                 )
@@ -135,6 +132,13 @@ class GymHybridEnv(BaseEnv):
     @property
     def reward_space(self) -> gym.spaces.Space:
         return self._reward_space
+
+    def enable_save_replay(self, replay_path: Optional[str] = None) -> None:
+        if replay_path is None:
+            replay_path = './video'
+        self._save_replay = True
+        self._replay_path = replay_path
+        self._save_replay_count = 0
 
     @staticmethod
     def display_frames_as_gif(frames: list, path: str) -> None:

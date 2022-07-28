@@ -1,17 +1,20 @@
 from easydict import EasyDict
 import os
 import os
+
 os.environ['DISPLAY'] = ':1'
 
 module_path = os.path.dirname(__file__)
 
 nstep = 3
+collector_env_num = 8
+evaluator_env_num = 8
 num_actuators = 10
 gym_hybrid_dqn_default_config = dict(
     env=dict(
-        collector_env_num=8,
-        evaluator_env_num=8,
-        n_evaluator_episode=8,
+        collector_env_num=collector_env_num,
+        evaluator_env_num=evaluator_env_num,
+        n_evaluator_episode=evaluator_env_num,
 
         # (bool) Scale output action into legal range [-1, 1].
         act_scale=True,
@@ -22,10 +25,11 @@ gym_hybrid_dqn_default_config = dict(
         # stop_value=2,
         stop_value=int(1e6),  # stop according to max env steps
         save_replay_gif=True,
+        replay_path='/Users/puyuan/code/DI-engine/data_hardmove_n10/dqn_noema_middlenet_k64_vhd1024_seed2',
     ),
     policy=dict(
         # TODO(pu)
-        model_path='/home/puyuan/DI-engine/data_hardmove_n10/dqn_noema_middlenet_k64_vhd1024_seed2/ckpt/ckpt_best.pth.tar',
+        model_path='/Users/puyuan/code/DI-engine/data_hardmove_n10/dqn_noema_middlenet_k64_vhd1024_seed2/ckpt/ckpt_best.pth.tar',
 
         # Whether to use cuda for network.
         cuda=True,
@@ -48,9 +52,9 @@ gym_hybrid_dqn_default_config = dict(
         # ),
         # for 'HardMove-v0'
         original_action_shape=dict(
-                action_type_shape=int(2** num_actuators),  # 2**4=16, 2**6=64, 2**8=256, 2**10=1024
-                action_args_shape=int(num_actuators), # 4,6,8,10
-            ),
+            action_type_shape=int(2 ** num_actuators),  # 2**4=16, 2**6=64, 2**8=256, 2**10=1024
+            action_args_shape=int(num_actuators),  # 4,6,8,10
+        ),
         random_collect_size=int(5e4),
         warm_up_update=int(1e4),
         # debug
@@ -168,7 +172,8 @@ gym_hybrid_dqn_create_config = dict(
         type='gym_hybrid',
         import_names=['dizoo.gym_hybrid.envs.gym_hybrid_env'],
     ),
-    env_manager=dict(type='subprocess'),
+    # env_manager=dict(type='subprocess'),
+    env_manager=dict(type='base'),
     policy=dict(type='dqn_vqvae'),
 )
 gym_hybrid_dqn_create_config = EasyDict(gym_hybrid_dqn_create_config)
@@ -176,14 +181,13 @@ create_config = gym_hybrid_dqn_create_config
 
 
 def train(args):
-    main_config.exp_name = 'debug'
     # main_config.exp_name = 'data_moving/dqn_obs_noema_smallnet_k16' + '_seed' + f'{args.seed}'
     # main_config.exp_name = 'data_moving/dqn_noema_smallnet_k16_nowarmup' + '_seed' + f'{args.seed}'
 
     # main_config.exp_name = 'data_sliding/dqn_obs_noema_smallnet_k16' + '_seed' + f'{args.seed}'
     # main_config.exp_name = 'data_sliding/dqn_noema_smallnet_k16' + '_seed' + f'{args.seed}'
 
-    # main_config.exp_name = 'data_hardmove_n10/dqn_noema_middlenet_k64_vhd1024_plw0.01' + '_seed' + f'{args.seed}'
+    main_config.exp_name = 'data_hardmove_n10/dqn_noema_middlenet_k64_vhd1024_plw1' + '_seed' + f'{args.seed}'
     # main_config.exp_name = 'data_hardmove_n4/dqn_obs_noema_middlenet_k64_vhd256' + '_seed' + f'{args.seed}'
 
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,
