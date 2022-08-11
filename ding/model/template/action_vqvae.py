@@ -42,7 +42,7 @@ class ExponentialMovingAverage(nn.Module):
 class VectorQuantizer(nn.Module):
     """
     Overview:
-        The Variational AutoEncoder (VQ-VAE)
+        The Variational AutoEncoder (VQ-VAE).
         Reference:
             [1] https://github.com/deepmind/sonnet/blob/v2/sonnet/src/nets/vqvae.py
     """

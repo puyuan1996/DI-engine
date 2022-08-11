@@ -24,12 +24,15 @@ gym_hybrid_dqn_default_config = dict(
         num_actuators=num_actuators,  # only for 'HardMove-v0'
         # stop_value=2,
         stop_value=int(1e6),  # stop according to max env steps
-        save_replay_gif=True,
-        replay_path='/Users/puyuan/code/DI-engine/data_hardmove_n10/dqn_noema_middlenet_k64_vhd1024_seed2',
+        save_replay_gif=False,
+        replay_path=None,
+        # save_replay_gif=True,
+        # replay_path='/Users/puyuan/code/DI-engine/data_hardmove_n10/dqn_noema_middlenet_k64_vhd1024_seed2',
     ),
     policy=dict(
         # TODO(pu)
-        model_path='/Users/puyuan/code/DI-engine/data_hardmove_n10/dqn_noema_middlenet_k64_vhd1024_seed2/ckpt/ckpt_best.pth.tar',
+        # model_path='/Users/puyuan/code/DI-engine/data_hardmove_n10/dqn_noema_middlenet_k64_vhd1024_seed2/ckpt/ckpt_best.pth.tar',
+        model_path=None,
 
         # Whether to use cuda for network.
         cuda=True,
@@ -62,12 +65,12 @@ gym_hybrid_dqn_default_config = dict(
         # random_collect_size=int(0),
         vqvae_embedding_dim=64,  # ved: D
         vqvae_hidden_dim=[1024],  # vhd
-        vq_loss_weight=1,  # TODO
+        vq_loss_weight=0.1,  # TODO
         replay_buffer_size_vqvae=int(1e6),
 
         # obs_regularization=True,
         obs_regularization=False,
-        predict_loss_weight=0.01,  # TODO
+        predict_loss_weight=0.,  # TODO
 
         vqvae_pretrain_only=False,
         # NOTE: if train vqvae dynamically, i.e. vqvae_pretrain_only=False, should set this key to True
@@ -83,7 +86,7 @@ gym_hybrid_dqn_default_config = dict(
         categorical_head_for_cont_action=False,  # categorical distribution
         n_atom=51,
         gaussian_head_for_cont_action=False,  # gaussian distribution
-        embedding_table_onehot=False,
+        embedding_table_onehot=True,
 
         # rl priority
         priority=False,
@@ -96,7 +99,6 @@ gym_hybrid_dqn_default_config = dict(
 
         # vqvae priority
         vqvae_return_weight=False,  # NOTE: return weight
-
         priority_vqvae=False,  # NOTE: return priority
         priority_IS_weight_vqvae=False,  # NOTE: return priority
         priority_type_vqvae='return',
@@ -129,6 +131,10 @@ gym_hybrid_dqn_default_config = dict(
 
             rl_clip_grad=True,
             vqvae_clip_grad=True,
+            # rl_weight_decay=1e-4,
+            # vqvae_weight_decay=1e-4,
+            rl_weight_decay=None,
+            vqvae_weight_decay=None,
             grad_clip_type='clip_norm',
             grad_clip_value=0.5,
 
@@ -172,8 +178,8 @@ gym_hybrid_dqn_create_config = dict(
         type='gym_hybrid',
         import_names=['dizoo.gym_hybrid.envs.gym_hybrid_env'],
     ),
-    # env_manager=dict(type='subprocess'),
-    env_manager=dict(type='base'),
+    env_manager=dict(type='subprocess'),
+    # env_manager=dict(type='base'),
     policy=dict(type='dqn_vqvae'),
 )
 gym_hybrid_dqn_create_config = EasyDict(gym_hybrid_dqn_create_config)
@@ -187,11 +193,14 @@ def train(args):
     # main_config.exp_name = 'data_sliding/dqn_obs_noema_smallnet_k16' + '_seed' + f'{args.seed}'
     # main_config.exp_name = 'data_sliding/dqn_noema_smallnet_k16' + '_seed' + f'{args.seed}'
 
-    main_config.exp_name = 'data_hardmove_n10/dqn_noema_middlenet_k64_vhd1024_plw1' + '_seed' + f'{args.seed}'
+    # main_config.exp_name = 'data_hardmove_n10/dqn_obs_noema_middlenet_k64_vhd1024_plw0_vlw0.1' + '_seed' + f'{args.seed}'
+    main_config.exp_name = 'data_hardmove_n10/dqn_noobs_noema_middlenet_k64_vhd1024_vlw0.1_embedding-table-one-hot' + '_seed' + f'{args.seed}'
+    # main_config.exp_name = 'data_hardmove_n10/dqn_noema_middlenet_k64_vhd1024_wd1e-4_noise' + '_seed' + f'{args.seed}'
+    # main_config.exp_name = 'data_hardmove_n10/dqn_noema_middlenet_k64_vhd1024_wd0_embedding-table-one-hot_noise' + '_seed' + f'{args.seed}'
     # main_config.exp_name = 'data_hardmove_n4/dqn_obs_noema_middlenet_k64_vhd256' + '_seed' + f'{args.seed}'
 
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,
-                              max_env_step=int(4e6))
+                              max_env_step=int(3e6))
 
 
 if __name__ == "__main__":
@@ -199,8 +208,8 @@ if __name__ == "__main__":
     import argparse
     from ding.entry import serial_pipeline_dqn_vqvae
 
-    # for seed in [0,1,2]:
-    for seed in [2]:
+    # for seed in [2]:
+    for seed in [2,1,0]:
         parser = argparse.ArgumentParser()
         parser.add_argument('--seed', '-s', type=int, default=seed)
         args = parser.parse_args()

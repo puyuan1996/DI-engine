@@ -144,12 +144,23 @@ class DQNVQVAEPolicy(Policy):
         self._priority_IS_weight_vqvae = self._cfg.priority_IS_weight_vqvae
         # Optimizer
         if self._cfg.learn.rl_clip_grad is True:
-            self._optimizer = Adam(
+            if self._cfg.learn.rl_weight_decay is not None:
+                self._optimizer = Adam(
                 self._model.parameters(),
                 lr=self._cfg.learn.learning_rate,
+                weight_decay=self._cfg.learn.rl_weight_decay,
+                optim_type='adamw',
                 grad_clip_type=self._cfg.learn.grad_clip_type,
                 clip_value=self._cfg.learn.grad_clip_value
             )
+            else:
+                self._optimizer = Adam(
+                    self._model.parameters(),
+                    lr=self._cfg.learn.learning_rate,
+                    grad_clip_type=self._cfg.learn.grad_clip_type,
+                    clip_value=self._cfg.learn.grad_clip_value
+                )
+
         else:
             self._optimizer = Adam(self._model.parameters(), lr=self._cfg.learn.learning_rate)
 
@@ -191,12 +202,22 @@ class DQNVQVAEPolicy(Policy):
         )
         self._vqvae_model = to_device(self._vqvae_model, self._device)
         if self._cfg.learn.vqvae_clip_grad is True:
-            self._optimizer_vqvae = Adam(
-                self._vqvae_model.parameters(),
-                lr=self._cfg.learn.learning_rate_vae,
-                grad_clip_type=self._cfg.learn.grad_clip_type,
-                clip_value=self._cfg.learn.grad_clip_value
-            )
+            if self._cfg.learn.rl_weight_decay is not None:
+                self._optimizer_vqvae = Adam(
+                    self._vqvae_model.parameters(),
+                    lr=self._cfg.learn.learning_rate_vae,
+                    weight_decay=self._cfg.learn.vqvae_weight_decay,
+                    optim_type='adamw',
+                    grad_clip_type=self._cfg.learn.grad_clip_type,
+                    clip_value=self._cfg.learn.grad_clip_value
+                )
+            else:
+                self._optimizer_vqvae = Adam(
+                    self._vqvae_model.parameters(),
+                    lr=self._cfg.learn.learning_rate_vae,
+                    grad_clip_type=self._cfg.learn.grad_clip_type,
+                    clip_value=self._cfg.learn.grad_clip_value
+                )
         else:
             self._optimizer_vqvae = Adam(
                 self._vqvae_model.parameters(),

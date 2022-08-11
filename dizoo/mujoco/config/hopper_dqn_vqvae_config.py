@@ -17,6 +17,8 @@ hopper_dqn_default_config = dict(
         stop_value=int(1e6),  # stop according to max env steps 
     ),
     policy=dict(
+        model_path=None,
+
         # Whether to use cuda for network.
         cuda=True,
 
@@ -41,12 +43,12 @@ hopper_dqn_default_config = dict(
 
         vqvae_embedding_dim=64,  # ved: D
         vqvae_hidden_dim=[256],  # vhd
-        vq_loss_weight=1,
+        vq_loss_weight=0.1,
         replay_buffer_size_vqvae=int(1e6),
 
-        obs_regularization=True,
-        # obs_regularization=False,
-        predict_loss_weight=1,  # TODO
+        # obs_regularization=True,
+        obs_regularization=False,
+        predict_loss_weight=0,  # TODO
 
         # vqvae_pretrain_only=True,
         # NOTE: if only pretrain vqvae , i.e. vqvae_pretrain_only=True, should set this key to False
@@ -103,6 +105,8 @@ hopper_dqn_default_config = dict(
 
             rl_batch_size=512,
             vqvae_batch_size=512,
+            # rl_batch_size=256,
+            # vqvae_batch_size=256,
             learning_rate=3e-4,
             learning_rate_vae=3e-4,
             # Frequency of target network update.
@@ -112,6 +116,10 @@ hopper_dqn_default_config = dict(
             vqvae_clip_grad=True,
             grad_clip_type='clip_norm',
             grad_clip_value=0.5,
+            # rl_weight_decay=1e-4,
+            # vqvae_weight_decay=1e-4,
+            rl_weight_decay=None,
+            vqvae_weight_decay=None,
 
             # add noise in original continuous action
             noise=False,  # NOTE: if vqvae_pretrain_only=True
@@ -162,7 +170,9 @@ create_config = hopper_dqn_create_config
 
 def train(args):
     # main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_pretrainonly' + '_seed' + f'{args.seed}'+'_3M'
-    main_config.exp_name = 'data_hopper/dqn_obs_noema_middlenet_k64_' + '_seed' + f'{args.seed}' + '_3M'
+    # main_config.exp_name = 'data_hopper/dqn_obs_noema_middlenet_k64_plw0' + '_seed' + f'{args.seed}' + '_3M'
+    main_config.exp_name = 'data_hopper/dqn_noobs_noema_middlenet_k64_vlw0.1' + '_seed' + f'{args.seed}' + '_3M'
+
 
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,
                               max_env_step=int(3e6))
@@ -173,8 +183,8 @@ if __name__ == "__main__":
     import argparse
     from ding.entry import serial_pipeline_dqn_vqvae
 
-    # for seed in [0,1,2]:
-    for seed in [0]:
+    for seed in [0,1,2]:
+    # for seed in [0]:
         parser = argparse.ArgumentParser()
         parser.add_argument('--seed', '-s', type=int, default=seed)
         args = parser.parse_args()
