@@ -44,11 +44,17 @@ hopper_dqn_default_config = dict(
         vqvae_embedding_dim=64,  # ved: D
         vqvae_hidden_dim=[256],  # vhd
         vq_loss_weight=0.1,
+        recons_loss_cont_weight=1,
+        # mask_pretanh=True,
+        mask_pretanh=False,
         replay_buffer_size_vqvae=int(1e6),
+        auxiliary_loss=False,
+        augment_extreme_action=True,
+
 
         # obs_regularization=True,
         obs_regularization=False,
-        predict_loss_weight=0,  # TODO
+        predict_loss_weight=1,  # TODO
 
         # vqvae_pretrain_only=True,
         # NOTE: if only pretrain vqvae , i.e. vqvae_pretrain_only=True, should set this key to False
@@ -83,9 +89,11 @@ hopper_dqn_default_config = dict(
         priority_IS_weight_vqvae=False,  # NOTE: return priority
         priority_type_vqvae='return',
         priority_vqvae_min=0.,
+        latent_action_shape=int(64),  # num of num_embeddings: K, i.e. shape of latent action
         model=dict(
             obs_shape=11,
-            action_shape=int(64),  # num of num_embeddings: K
+            # TODO:
+            action_shape=int(64+2**3),  # Q dim
             # action_shape=int(128),  # num of num_embeddings: K
             # encoder_hidden_size_list=[128, 128, 64],  # small net
             encoder_hidden_size_list=[256, 256, 128],  # middle net
@@ -111,6 +119,7 @@ hopper_dqn_default_config = dict(
             learning_rate_vae=3e-4,
             # Frequency of target network update.
             target_update_freq=500,
+            target_update_theta=0.001,
 
             rl_clip_grad=True,
             vqvae_clip_grad=True,
@@ -171,8 +180,8 @@ create_config = hopper_dqn_create_config
 def train(args):
     # main_config.exp_name = 'data_hopper/dqnvqvae_noema_middlenet_k64_pretrainonly' + '_seed' + f'{args.seed}'+'_3M'
     # main_config.exp_name = 'data_hopper/dqn_obs_noema_middlenet_k64_plw0' + '_seed' + f'{args.seed}' + '_3M'
-    main_config.exp_name = 'data_hopper/dqn_noobs_noema_middlenet_k64_vlw0.1' + '_seed' + f'{args.seed}' + '_3M'
-
+    main_config.exp_name = 'data_hopper/dqn_noobs_noema_middlenet_k64_vlw0.1_augment_extreme_action' + '_seed' + f'{args.seed}' + '_3M'
+    # main_config.exp_name = 'data_hopper/dqn_obs_noema_middlenet_k64_vlw0.1_plw1' + '_seed' + f'{args.seed}' + '_3M'
 
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,
                               max_env_step=int(3e6))
@@ -184,7 +193,6 @@ if __name__ == "__main__":
     from ding.entry import serial_pipeline_dqn_vqvae
 
     for seed in [0,1,2]:
-    # for seed in [0]:
         parser = argparse.ArgumentParser()
         parser.add_argument('--seed', '-s', type=int, default=seed)
         args = parser.parse_args()

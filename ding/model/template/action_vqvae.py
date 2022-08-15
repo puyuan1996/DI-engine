@@ -188,6 +188,8 @@ class ActionVQVAE(nn.Module):
             obs_regularization: bool = False,
             obs_shape: int = None,
             predict_loss_weight: float = 1,
+            mask_pretanh: bool = False,
+            recons_loss_cont_weight: float = 1,
     ) -> None:
         super(ActionVQVAE, self).__init__()
 
@@ -207,6 +209,8 @@ class ActionVQVAE(nn.Module):
         self.gaussian_head_for_cont_action = gaussian_head_for_cont_action
         self.embedding_table_onehot = embedding_table_onehot
         self.vqvae_return_weight = vqvae_return_weight
+        self.mask_pretanh = mask_pretanh
+        self.recons_loss_cont_weight = recons_loss_cont_weight
 
         """Encoder"""
         # action encode head
@@ -285,9 +289,14 @@ class ActionVQVAE(nn.Module):
                     norm_type=None
                 )
             else:
-                self.recons_action_cont_head = nn.Sequential(
-                    nn.Linear(self.hidden_dims[0], self.action_shape['action_args_shape']), nn.Tanh()
-                )
+                if self.mask_pretanh:
+                    self.recons_action_cont_head_pretanh = nn.Sequential(
+                        nn.Linear(self.hidden_dims[0], self.action_shape['action_args_shape'])
+                    )
+                else:
+                    self.recons_action_cont_head = nn.Sequential(
+                        nn.Linear(self.hidden_dims[0], self.action_shape['action_args_shape']), nn.Tanh()
+                    )
 
             # self.recons_action_disc_head = nn.Sequential(
             #     nn.Linear(self.hidden_dims[0], self.action_shape['action_type_shape']), nn.ReLU()
@@ -322,6 +331,7 @@ class ActionVQVAE(nn.Module):
              and calculate the ``recons_loss`` if given `` target_action``.
         """
         sigma = None  # debug
+        mask=None
         if isinstance(self.action_shape, int):
             # continuous action
             if self.categorical_head_for_cont_action:
@@ -358,14 +368,21 @@ class ActionVQVAE(nn.Module):
                 recons_action_sample = dist.rsample()
                 recons_action_cont = torch.tanh(recons_action_sample)
             else:
-                recons_action_cont = self.recons_action_cont_head(action_decoding)
+                if self.mask_pretanh:
+                    x = self.recons_action_cont_head_pretanh(action_decoding)
+                    mask = x.ge(-1.2) & x.le(1.2)  # TODO
+                    recons_action_cont = torch.tanh(x)
+                else:
+                    recons_action_cont = self.recons_action_cont_head(action_decoding)
+        
 
             recons_action_disc_logit = self.recons_action_disc_head(action_decoding)
             recons_action_disc = torch.argmax(recons_action_disc_logit, dim=-1)
             recons_action = {
                 'action_args': recons_action_cont,
                 'action_type': recons_action_disc,
-                'logit': recons_action_disc_logit
+                'logit': recons_action_disc_logit,
+                'mask': mask
             }
 
         if target_action is None:
@@ -406,8 +423,15 @@ class ActionVQVAE(nn.Module):
                                                                              target_action['action_args'].shape[-1]),
                                                                        reduction='none').mean(-1)
                 else:
-                    recons_loss_cont = F.mse_loss(recons_action['action_args'], target_action['action_args']
-                                                  .view(-1, target_action['action_args'].shape[-1]))
+                    if self.mask_pretanh:
+                        # statistic the percent of mask
+                        mask_percent = 1 - mask.sum().item() / (recons_action['action_args'].shape[0] * recons_action['action_args'].shape[1])
+                        print('mask_percent:',mask_percent)
+                        recons_loss_cont = F.mse_loss(recons_action['action_args'].masked_select(mask), target_action['action_args']
+                                                  .view(-1, target_action['action_args'].shape[-1]).masked_select(mask))
+                    else:
+                        recons_loss_cont = F.mse_loss(recons_action['action_args'], target_action['action_args']
+                                                    .view(-1, target_action['action_args'].shape[-1]))
                     recons_loss_cont_none_reduction = F.mse_loss(recons_action['action_args'],
                                                                  target_action['action_args']
                                                                  .view(-1, target_action['action_args'].shape[-1]),
@@ -419,7 +443,9 @@ class ActionVQVAE(nn.Module):
                                                                   reduction='none').mean(-1)
 
                 # here view(-1) is to be compatible with multi_agent case, e.g. gobigger
-                recons_loss = recons_loss_cont + recons_loss_disc
+                # TODO(pu): relative weight
+                # recons_loss_cont_weight = 0.1
+                recons_loss = self.recons_loss_cont_weight * recons_loss_cont + recons_loss_disc
                 recons_loss_none_reduction = recons_loss_cont_none_reduction + recons_loss_disc_none_reduction
 
             return recons_action, recons_loss, recons_loss_none_reduction, sigma

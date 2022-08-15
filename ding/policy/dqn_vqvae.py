@@ -169,11 +169,17 @@ class DQNVQVAEPolicy(Policy):
 
         # use model_wrapper for specialized demands of different modes
         self._target_model = copy.deepcopy(self._model)
+        # self._target_model = model_wrap(
+        #     self._target_model,
+        #     wrapper_name='target',
+        #     update_type='assign',
+        #     update_kwargs={'freq': self._cfg.learn.target_update_freq}
+        # )
         self._target_model = model_wrap(
             self._target_model,
             wrapper_name='target',
-            update_type='assign',
-            update_kwargs={'freq': self._cfg.learn.target_update_freq}
+            update_type='momentum',
+            update_kwargs={'theta': self._cfg.learn.target_update_theta}
         )
 
         self._learn_model = model_wrap(self._model, wrapper_name='argmax_sample')
@@ -183,7 +189,7 @@ class DQNVQVAEPolicy(Policy):
         self._forward_learn_cnt = 0  # count iterations
         self._vqvae_model = ActionVQVAE(
             self._cfg.original_action_shape,
-            self._cfg.model.action_shape,  # K
+            self._cfg.latent_action_shape,  # K
             self._cfg.vqvae_embedding_dim,  # D
             self._cfg.vqvae_hidden_dim,
             self._cfg.vq_loss_weight,
@@ -199,6 +205,8 @@ class DQNVQVAEPolicy(Policy):
             obs_regularization=self._cfg.obs_regularization,
             obs_shape=self._cfg.model.obs_shape,
             predict_loss_weight=self._cfg.predict_loss_weight,
+            mask_pretanh=self._cfg.mask_pretanh,
+            recons_loss_cont_weight = self._cfg.recons_loss_cont_weight
         )
         self._vqvae_model = to_device(self._vqvae_model, self._device)
         if self._cfg.learn.vqvae_clip_grad is True:
@@ -430,6 +438,15 @@ class DQNVQVAEPolicy(Policy):
                     data_n, self._gamma, nstep=self._nstep, value_gamma=value_gamma
                 )
 
+                # TODO(pu):td3_bc loss
+                if self._cfg.auxiliary_loss:
+                    alpha=2.5
+                    self.alpha = alpha
+                    auxiliary_loss = q_value.mean()
+                    # add behavior cloning loss weight(\lambda)
+                    lmbda = self.alpha / q_value.abs().mean().detach()
+                    loss = lmbda * auxiliary_loss + loss
+
                 # ====================
                 # Q-learning update
                 # ====================
@@ -549,8 +566,37 @@ class DQNVQVAEPolicy(Policy):
                         action = action.clamp(self.action_range['min'], self.action_range['max'])
                     output['action']['action_args'] = action
             else:
-                output['action'] = self._vqvae_model.decode({'quantized_index': output['action'], 'obs': data})[
-                    'recons_action']
+                if not self._cfg.augment_extreme_action:
+                    output['action'] = self._vqvae_model.decode({'quantized_index': output['action'], 'obs': data})[
+                        'recons_action']
+                else:
+                    output_action = torch.zeros([output['action'].shape[0], self._cfg.original_action_shape])
+                    if self._cuda:
+                        output_action = to_device(output_action, self._device)
+                    # the latent of extreme_action 
+                    mask = output['action'].ge(self._cfg.latent_action_shape) & output['action'].le(self._cfg.model.action_shape)  # TODO
+
+                    # the usual latent of vqvae learned action
+                    output_action[~mask] = self._vqvae_model.decode({'quantized_index': output['action'].masked_select(~mask), 'obs': data.masked_select(~mask.unsqueeze(-1)).view(-1,self._cfg.model.obs_shape)})[
+                        'recons_action']
+
+                    if mask.sum() > 0:
+                        # the latent of extreme_action 
+                        extreme_action_index = output['action'].masked_select(mask) - self._cfg.latent_action_shape
+                        from itertools import product
+                        # NOTE: disc_to_cont: transform discrete action index to original continuous action
+                        self.m = self._cfg.original_action_shape
+                        self.n = 2
+                        self.K =  self.n ** self.m
+                        self.disc_to_cont = list(product(*[list(range(self.n)) for dim in range(self.m)] ))
+                        # NOTE: disc_to_cont: transform discrete action index to original continuous action
+                        extreme_action = torch.tensor([[-1. if k==0 else 1.for k in  self.disc_to_cont[int(one_extreme_action_index)]] for one_extreme_action_index in extreme_action_index])
+                        if self._cuda:
+                            extreme_action = to_device(extreme_action, self._device)
+                        output_action[mask] = extreme_action
+
+                    output['action'] = output_action
+                    
 
                 # debug
                 # latents = to_device(torch.arange(64), 'cuda')
@@ -616,8 +662,37 @@ class DQNVQVAEPolicy(Policy):
                     'action_args': recons_action['recons_action']['action_args']
                 }
             else:
-                output['action'] = self._vqvae_model.decode({'quantized_index': output['action'], 'obs': data})[
-                    'recons_action']
+                if not self._cfg.augment_extreme_action:
+                    output['action'] = self._vqvae_model.decode({'quantized_index': output['action'], 'obs': data})[
+                        'recons_action']
+                else:
+                    output_action = torch.zeros([output['action'].shape[0], self._cfg.original_action_shape])
+                    if self._cuda:
+                        output_action = to_device(output_action, self._device)
+                    # the latent of extreme_action 
+                    mask = output['action'].ge(self._cfg.latent_action_shape) & output['action'].le(self._cfg.model.action_shape)  # TODO
+
+                    # the usual latent of vqvae learned action
+                    output_action[~mask] = self._vqvae_model.decode({'quantized_index': output['action'].masked_select(~mask), 'obs': data.masked_select(~mask.unsqueeze(-1)).view(-1,self._cfg.model.obs_shape)})[
+                        'recons_action']
+
+                    if mask.sum() > 0:
+                        # the latent of extreme_action 
+                        extreme_action_index = output['action'].masked_select(mask) - self._cfg.latent_action_shape
+                        from itertools import product
+                        # NOTE: disc_to_cont: transform discrete action index to original continuous action
+                        self.m = self._cfg.original_action_shape
+                        self.n = 2
+                        self.K =  self.n ** self.m
+                        self.disc_to_cont = list(product(*[list(range(self.n)) for dim in range(self.m)] ))
+                        # NOTE: disc_to_cont: transform discrete action index to original continuous action
+                        extreme_action = torch.tensor([[-1. if k==0 else 1.for k in  self.disc_to_cont[int(one_extreme_action_index)]] for one_extreme_action_index in extreme_action_index])
+                        if self._cuda:
+                            extreme_action = to_device(extreme_action, self._device)
+                        output_action[mask] = extreme_action
+
+                    output['action'] = output_action
+                    
 
         if self._cuda:
             output = to_device(output, 'cpu')
@@ -791,7 +866,7 @@ class DQNVQVAEPolicy(Policy):
             fig = plt.figure()
 
             # Fixing bin edges
-            HIST_BINS = np.linspace(0, self._cfg.model.action_shape - 1, self._cfg.model.action_shape)
+            HIST_BINS = np.linspace(0, self._cfg.latent_action_shape - 1, self._cfg.latent_action_shape)
 
             # the histogram of the data
             n, bins, patches = plt.hist(

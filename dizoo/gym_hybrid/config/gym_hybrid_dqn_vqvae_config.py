@@ -65,8 +65,15 @@ gym_hybrid_dqn_default_config = dict(
         # random_collect_size=int(0),
         vqvae_embedding_dim=64,  # ved: D
         vqvae_hidden_dim=[1024],  # vhd
-        vq_loss_weight=0.1,  # TODO
+        vq_loss_weight=1,  # TODO
+        recons_loss_cont_weight=1,
+        # mask_pretanh=True,
+        mask_pretanh=False,
         replay_buffer_size_vqvae=int(1e6),
+        auxiliary_loss=False,
+        augment_extreme_action=True,
+
+
 
         # obs_regularization=True,
         obs_regularization=False,
@@ -128,6 +135,9 @@ gym_hybrid_dqn_default_config = dict(
             learning_rate_vae=3e-4,
             # Frequency of target network update.
             target_update_freq=500,
+            # target_update_theta=0.0001,
+            target_update_theta=0.001,
+
 
             rl_clip_grad=True,
             vqvae_clip_grad=True,
@@ -193,11 +203,10 @@ def train(args):
     # main_config.exp_name = 'data_sliding/dqn_obs_noema_smallnet_k16' + '_seed' + f'{args.seed}'
     # main_config.exp_name = 'data_sliding/dqn_noema_smallnet_k16' + '_seed' + f'{args.seed}'
 
-    # main_config.exp_name = 'data_hardmove_n10/dqn_obs_noema_middlenet_k64_vhd1024_plw0_vlw0.1' + '_seed' + f'{args.seed}'
-    main_config.exp_name = 'data_hardmove_n10/dqn_noobs_noema_middlenet_k64_vhd1024_vlw0.1_embedding-table-one-hot' + '_seed' + f'{args.seed}'
+    main_config.exp_name = 'data_hardmove_n10/dqn_noobs_noema_middlenet_k64_vhd1024_vlw1_softtarget1e-3_embedding-table-one-hot' + '_seed' + f'{args.seed}'
+    # main_config.exp_name = 'data_hardmove_n10/dqn_noobs_noema_middlenet_k64_vhd1024_vlw0.1_embedding-table-one-hot' + '_seed' + f'{args.seed}'
     # main_config.exp_name = 'data_hardmove_n10/dqn_noema_middlenet_k64_vhd1024_wd1e-4_noise' + '_seed' + f'{args.seed}'
     # main_config.exp_name = 'data_hardmove_n10/dqn_noema_middlenet_k64_vhd1024_wd0_embedding-table-one-hot_noise' + '_seed' + f'{args.seed}'
-    # main_config.exp_name = 'data_hardmove_n4/dqn_obs_noema_middlenet_k64_vhd256' + '_seed' + f'{args.seed}'
 
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,
                               max_env_step=int(3e6))
@@ -208,8 +217,8 @@ if __name__ == "__main__":
     import argparse
     from ding.entry import serial_pipeline_dqn_vqvae
 
-    # for seed in [2]:
-    for seed in [2,1,0]:
+    # for seed in [2,0]:
+    for seed in [0,1,2]:
         parser = argparse.ArgumentParser()
         parser.add_argument('--seed', '-s', type=int, default=seed)
         args = parser.parse_args()
