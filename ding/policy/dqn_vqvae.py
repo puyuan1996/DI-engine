@@ -169,18 +169,18 @@ class DQNVQVAEPolicy(Policy):
 
         # use model_wrapper for specialized demands of different modes
         self._target_model = copy.deepcopy(self._model)
-        # self._target_model = model_wrap(
-        #     self._target_model,
-        #     wrapper_name='target',
-        #     update_type='assign',
-        #     update_kwargs={'freq': self._cfg.learn.target_update_freq}
-        # )
         self._target_model = model_wrap(
             self._target_model,
             wrapper_name='target',
-            update_type='momentum',
-            update_kwargs={'theta': self._cfg.learn.target_update_theta}
+            update_type='assign',
+            update_kwargs={'freq': self._cfg.learn.target_update_freq}
         )
+        # self._target_model = model_wrap(
+        #     self._target_model,
+        #     wrapper_name='target',
+        #     update_type='momentum',
+        #     update_kwargs={'theta': self._cfg.learn.target_update_theta}
+        # )
 
         self._learn_model = model_wrap(self._model, wrapper_name='argmax_sample')
         self._learn_model.reset()
@@ -192,7 +192,7 @@ class DQNVQVAEPolicy(Policy):
             self._cfg.latent_action_shape,  # K
             self._cfg.vqvae_embedding_dim,  # D
             self._cfg.vqvae_hidden_dim,
-            self._cfg.vq_loss_weight,
+            vq_loss_weight=self._cfg.vq_loss_weight,  # TODO
             is_ema=self._cfg.is_ema,
             is_ema_target=self._cfg.is_ema_target,
             eps_greedy_nearest=self._cfg.eps_greedy_nearest,
@@ -438,14 +438,14 @@ class DQNVQVAEPolicy(Policy):
                     data_n, self._gamma, nstep=self._nstep, value_gamma=value_gamma
                 )
 
-                # TODO(pu):td3_bc loss
-                if self._cfg.auxiliary_loss:
+                # TODO(pu): td3_bc loss
+                if self._cfg.auxiliary_conservative_loss:
                     alpha=2.5
                     self.alpha = alpha
-                    auxiliary_loss = q_value.mean()
+                    auxiliary_conservative_loss = q_value.mean()
                     # add behavior cloning loss weight(\lambda)
                     lmbda = self.alpha / q_value.abs().mean().detach()
-                    loss = lmbda * auxiliary_loss + loss
+                    loss = lmbda * auxiliary_conservative_loss + loss
 
                 # ====================
                 # Q-learning update
@@ -566,6 +566,7 @@ class DQNVQVAEPolicy(Policy):
                         action = action.clamp(self.action_range['min'], self.action_range['max'])
                     output['action']['action_args'] = action
             else:
+                # continous action space
                 if not self._cfg.augment_extreme_action:
                     output['action'] = self._vqvae_model.decode({'quantized_index': output['action'], 'obs': data})[
                         'recons_action']
@@ -573,7 +574,7 @@ class DQNVQVAEPolicy(Policy):
                     output_action = torch.zeros([output['action'].shape[0], self._cfg.original_action_shape])
                     if self._cuda:
                         output_action = to_device(output_action, self._device)
-                    # the latent of extreme_action 
+                    # the latent of extreme_action, e.g. [64, 64+2**3) [64, 72)
                     mask = output['action'].ge(self._cfg.latent_action_shape) & output['action'].le(self._cfg.model.action_shape)  # TODO
 
                     # the usual latent of vqvae learned action
@@ -581,10 +582,11 @@ class DQNVQVAEPolicy(Policy):
                         'recons_action']
 
                     if mask.sum() > 0:
-                        # the latent of extreme_action 
+                        # the latent of extreme_action, e.g. [64, 64+2**3) [64, 72) -> [0, 8)
                         extreme_action_index = output['action'].masked_select(mask) - self._cfg.latent_action_shape
                         from itertools import product
-                        # NOTE: disc_to_cont: transform discrete action index to original continuous action
+                        # NOTE:
+                        # disc_to_cont: transform discrete action index to original continuous action
                         self.m = self._cfg.original_action_shape
                         self.n = 2
                         self.K =  self.n ** self.m

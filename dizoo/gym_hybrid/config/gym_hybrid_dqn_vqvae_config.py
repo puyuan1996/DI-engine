@@ -70,10 +70,8 @@ gym_hybrid_dqn_default_config = dict(
         # mask_pretanh=True,
         mask_pretanh=False,
         replay_buffer_size_vqvae=int(1e6),
-        auxiliary_loss=False,
-        augment_extreme_action=True,
-
-
+        auxiliary_conservative_loss=False,
+        augment_extreme_action=False,
 
         # obs_regularization=True,
         obs_regularization=False,
@@ -93,7 +91,7 @@ gym_hybrid_dqn_default_config = dict(
         categorical_head_for_cont_action=False,  # categorical distribution
         n_atom=51,
         gaussian_head_for_cont_action=False,  # gaussian distribution
-        embedding_table_onehot=True,
+        embedding_table_onehot=False,
 
         # rl priority
         priority=False,
@@ -110,6 +108,7 @@ gym_hybrid_dqn_default_config = dict(
         priority_IS_weight_vqvae=False,  # NOTE: return priority
         priority_type_vqvae='return',
         priority_vqvae_min=0,
+        latent_action_shape=int(64),  # num of num_embeddings: K, i.e. shape of latent action
         model=dict(
             obs_shape=10,
             # action_shape=int(16),  # num of num_embeddings: K
@@ -135,9 +134,7 @@ gym_hybrid_dqn_default_config = dict(
             learning_rate_vae=3e-4,
             # Frequency of target network update.
             target_update_freq=500,
-            # target_update_theta=0.0001,
             target_update_theta=0.001,
-
 
             rl_clip_grad=True,
             vqvae_clip_grad=True,
@@ -203,8 +200,8 @@ def train(args):
     # main_config.exp_name = 'data_sliding/dqn_obs_noema_smallnet_k16' + '_seed' + f'{args.seed}'
     # main_config.exp_name = 'data_sliding/dqn_noema_smallnet_k16' + '_seed' + f'{args.seed}'
 
-    main_config.exp_name = 'data_hardmove_n10/dqn_noobs_noema_middlenet_k64_vhd1024_vlw1_softtarget1e-3_embedding-table-one-hot' + '_seed' + f'{args.seed}'
-    # main_config.exp_name = 'data_hardmove_n10/dqn_noobs_noema_middlenet_k64_vhd1024_vlw0.1_embedding-table-one-hot' + '_seed' + f'{args.seed}'
+    # main_config.exp_name = 'data_hardmove_n10/dqn_noobs_noema_middlenet_k64_vhd1024_vlw1_softtarget1e-3_embedding-table-one-hot' + '_seed' + f'{args.seed}'
+    main_config.exp_name = 'data_hardmove_n10/dqn_noobs_noema_middlenet_k64_vhd1024_vlw1_softtarget1e-3' + '_seed' + f'{args.seed}'
     # main_config.exp_name = 'data_hardmove_n10/dqn_noema_middlenet_k64_vhd1024_wd1e-4_noise' + '_seed' + f'{args.seed}'
     # main_config.exp_name = 'data_hardmove_n10/dqn_noema_middlenet_k64_vhd1024_wd0_embedding-table-one-hot_noise' + '_seed' + f'{args.seed}'
 
@@ -217,7 +214,7 @@ if __name__ == "__main__":
     import argparse
     from ding.entry import serial_pipeline_dqn_vqvae
 
-    # for seed in [2,0]:
+    # for seed in [2]:
     for seed in [0,1,2]:
         parser = argparse.ArgumentParser()
         parser.add_argument('--seed', '-s', type=int, default=seed)
