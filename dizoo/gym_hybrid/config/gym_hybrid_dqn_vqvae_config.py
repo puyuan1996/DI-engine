@@ -65,6 +65,7 @@ gym_hybrid_dqn_default_config = dict(
         # random_collect_size=int(0),
         vqvae_embedding_dim=64,  # ved: D
         vqvae_hidden_dim=[1024],  # vhd
+        beta=0.25,
         vq_loss_weight=1,  # TODO
         recons_loss_cont_weight=1,
         # mask_pretanh=True,
@@ -201,7 +202,7 @@ def train(args):
     # main_config.exp_name = 'data_sliding/dqn_noema_smallnet_k16' + '_seed' + f'{args.seed}'
 
     # main_config.exp_name = 'data_hardmove_n10/dqn_noobs_noema_middlenet_k64_vhd1024_vlw1_softtarget1e-3_embedding-table-one-hot' + '_seed' + f'{args.seed}'
-    main_config.exp_name = 'data_hardmove_n10/dqn_noobs_noema_middlenet_k64_vhd1024_vlw1_softtarget1e-3' + '_seed' + f'{args.seed}'
+    main_config.exp_name = 'data_hardmove_n10/dqn_noobs_noema_middlenet_k64_vhd1024_beta0.25_vlw1_softtarget1e-3' + '_seed' + f'{args.seed}'
     # main_config.exp_name = 'data_hardmove_n10/dqn_noema_middlenet_k64_vhd1024_wd1e-4_noise' + '_seed' + f'{args.seed}'
     # main_config.exp_name = 'data_hardmove_n10/dqn_noema_middlenet_k64_vhd1024_wd0_embedding-table-one-hot_noise' + '_seed' + f'{args.seed}'
 

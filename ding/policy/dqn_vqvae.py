@@ -192,6 +192,7 @@ class DQNVQVAEPolicy(Policy):
             self._cfg.latent_action_shape,  # K
             self._cfg.vqvae_embedding_dim,  # D
             self._cfg.vqvae_hidden_dim,
+            beta=self._cfg.beta,
             vq_loss_weight=self._cfg.vq_loss_weight,  # TODO
             is_ema=self._cfg.is_ema,
             is_ema_target=self._cfg.is_ema_target,

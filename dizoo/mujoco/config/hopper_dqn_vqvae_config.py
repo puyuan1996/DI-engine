@@ -35,15 +35,16 @@ hopper_dqn_default_config = dict(
         # TODO(pu): test ema
         # is_ema=True,  # use EMA
         original_action_shape=3,
-        random_collect_size=int(5e4),  # transitions
-        warm_up_update=int(1e4),
+        # random_collect_size=int(5e4),  # transitions
+        # warm_up_update=int(1e4),
         # debug
-        # random_collect_size=int(10),  
-        # warm_up_update=int(10),
+        random_collect_size=int(10),  
+        warm_up_update=int(10),
 
         vqvae_embedding_dim=64,  # ved: D
         vqvae_hidden_dim=[256],  # vhd
-        vq_loss_weight=1,
+        beta=0.25,
+        vq_loss_weight=1,  # TODO
         recons_loss_cont_weight=1,
         # mask_pretanh=True,
         mask_pretanh=False,
@@ -93,7 +94,8 @@ hopper_dqn_default_config = dict(
         model=dict(
             obs_shape=11,
             # TODO:
-            action_shape=int(64+2**3),  # Q dim
+            # action_shape=int(64+2**3),  # Q dim
+            action_shape=int(64),  # Q dim
             # action_shape=int(128),  # num of num_embeddings: K
             # encoder_hidden_size_list=[128, 128, 64],  # small net
             encoder_hidden_size_list=[256, 256, 128],  # middle net
