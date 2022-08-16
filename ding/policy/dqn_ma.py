@@ -194,7 +194,7 @@ class MADQNPolicy(Policy):
         
         # loss_list = []
         """
-        NOTE: transform total disc action to each dim disc action, e.g. 24 -> (1,2,0)
+        NOTE: transform total disc action to each dim disc action, e.g. in hopper action_shape=3,  24 -> (1,2,0)
         """
         data_action_list = torch.tensor([self.disc_to_cont[i] for i in data['action']])
         if self._cuda:

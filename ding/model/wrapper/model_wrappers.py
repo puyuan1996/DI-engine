@@ -440,6 +440,30 @@ class MultiArgmaxSampleWrapper(IModelWrapper):
 
         return ans
 
+class MultiAverageArgmaxSampleWrapper(IModelWrapper):
+    r"""
+    Overview:
+        Used to help the model to sample argmax action
+    """
+
+    def forward(self, *args, **kwargs):
+        output_list = self._model.forward(*args, **kwargs)
+        assert isinstance(output_list, list), "model output must be list, but find {}".format(type(output_list))
+
+        ans={}
+        ans['logit'] = output_list
+        # get the average q value for each action
+        output_tensor = torch.stack([output['logit'] for output in output_list], dim=-1)
+        logit = output_tensor.mean(-1)
+
+        assert isinstance(logit, torch.Tensor) or isinstance(logit, list)
+        if isinstance(logit, torch.Tensor):
+            logit = [logit]
+        action = [l.argmax(dim=-1) for l in logit]
+        if len(action) == 1:
+            action, logit = action[0], logit[0]
+        ans['action'] = action
+        return ans
 
 class HybridArgmaxSampleWrapper(IModelWrapper):
     r"""
@@ -617,6 +641,60 @@ class MultiEpsGreedySampleWrapper(IModelWrapper):
             output['action'] = action
 
             ans.append(output)
+        return ans
+
+class MultiAverageEpsGreedySampleWrapper(IModelWrapper):
+    r"""
+    Overview:
+        Epsilon greedy sampler used in collector_model to help balance exploratin and exploitation.
+        The type of eps can vary from different algorithms, such as:
+        - float (i.e. python native scalar): for almost normal case
+        - Dict[str, float]: for algorithm NGU
+    Interfaces:
+        register
+    """
+
+    def forward(self, *args, **kwargs):
+        eps = kwargs.pop('eps')
+        output_list = self._model.forward(*args, **kwargs)
+        assert isinstance(output_list, list), "model output must be list, but find {}".format(type(output_list))
+        
+        ans={}
+        # get the average q value for each action
+        output_tensor = torch.stack([output['logit'] for output in output_list], dim=-1)
+        logit = output_tensor.mean(-1)
+
+        assert isinstance(logit, torch.Tensor) or isinstance(logit, list)
+        if isinstance(logit, torch.Tensor):
+            logit = [logit]
+        mask = None
+        action = []
+        if isinstance(eps, dict):
+            # for NGU policy, eps is a dict, each collect env has a different eps
+            for i, l in enumerate(logit[0]):
+                eps_tmp = eps[i]
+                if np.random.random() > eps_tmp:
+                    action.append(l.argmax(dim=-1))
+                else:
+                    if mask is not None:
+                        action.append(
+                            sample_action(prob=mask[0][i].float().unsqueeze(0)).to(logit[0].device).squeeze(0)
+                        )
+                    else:
+                        action.append(torch.randint(0, l.shape[-1], size=l.shape[:-1]).to(logit[0].device))
+            action = torch.stack(action, dim=-1)  # shape torch.size([env_num])
+        else:
+            for i, l in enumerate(logit):
+                if np.random.random() > eps:
+                    action.append(l.argmax(dim=-1))
+                else:
+                    if mask is not None:
+                        action.append(sample_action(prob=mask[i].float()))
+                    else:
+                        action.append(torch.randint(0, l.shape[-1], size=l.shape[:-1]))
+            if len(action) == 1:
+                action, logit = action[0], logit[0]
+        ans['action'] = action
         return ans
 
 
@@ -975,9 +1053,11 @@ wrapper_name_map = {
     'hidden_state': HiddenStateWrapper,
     'argmax_sample': ArgmaxSampleWrapper,
     'multi_argmax_sample': MultiArgmaxSampleWrapper,
+    'multi_average_argmax_sample': MultiAverageArgmaxSampleWrapper,
     'hybrid_argmax_sample': HybridArgmaxSampleWrapper,
     'eps_greedy_sample': EpsGreedySampleWrapper,
     'multi_eps_greedy_sample': MultiEpsGreedySampleWrapper,
+    'multi_average_eps_greedy_sample': MultiAverageEpsGreedySampleWrapper,
     'eps_greedy_multinomial_sample': EpsGreedyMultinomialSampleWrapper,
     'deterministic_sample': DeterministicSample,
     'reparam_sample': ReparamSample,

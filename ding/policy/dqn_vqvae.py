@@ -131,6 +131,19 @@ class DQNVQVAEPolicy(Policy):
             replay_buffer=dict(replay_buffer_size=10000, ),
         ),
     )
+    def default_model(self) -> Tuple[str, List[str]]:
+        """
+        Overview:
+            Return this algorithm default model setting for demonstration.
+        Returns:
+            - model_info (:obj:`Tuple[str, List[str]]`): model name and mode import_names
+
+        .. note::
+            The user can define and use customized network model but must obey the same inferface definition indicated \
+            by import_names path. For DQN, ``ding.model.template.q_learning.DQN``
+        """
+        # return 'dqn', ['ding.model.template.q_learning']
+        return 'dqn_ma_share_backbone', ['ding.model.template.q_learning']
 
     def _init_learn(self) -> None:
         """
@@ -182,7 +195,7 @@ class DQNVQVAEPolicy(Policy):
         #     update_kwargs={'theta': self._cfg.learn.target_update_theta}
         # )
 
-        self._learn_model = model_wrap(self._model, wrapper_name='argmax_sample')
+        self._learn_model = model_wrap(self._model, wrapper_name='multi_average_argmax_sample')
         self._learn_model.reset()
         self._target_model.reset()
 
@@ -394,50 +407,31 @@ class DQNVQVAEPolicy(Policy):
                 # ====================
                 self._learn_model.train()
                 self._target_model.train()
+
+                loss = torch.tensor([0.])
+                if self._cuda:
+                    loss = to_device(loss, self._device)
+
                 # Current q value (main model)
-                q_value = self._learn_model.forward(data['obs'])['logit']
+                q_value_list = self._learn_model.forward(data['obs'])['logit']
                 # Target q value
                 with torch.no_grad():
-                    target_q_value = self._target_model.forward(data['next_obs'])['logit']
-                    # print(torch.unique(data['next_obs'][:,0]))
-                    # print(torch.unique(target_q_value[:,0]))
-                    # Max q value action (main model)
-                    if self._cfg.learn.constrain_action is True:
-                        # TODO(pu)
-                        quantized_index = self.visualize_latent(save_histogram=False)  # NOTE: visualize_latent
-                        constrain_action = torch.unique(torch.from_numpy(quantized_index))
-                        next_q_value = self._learn_model.forward(data['next_obs'])['logit']
-                        target_q_action = torch.argmax(next_q_value[:, constrain_action], dim=-1)
-                    else:
-                        target_q_action = self._learn_model.forward(data['next_obs'])['action']
-                        # print(torch.unique(target_q_action))
+                    target_q_value_list = self._target_model.forward(data['next_obs'])
+                    # Max avarage q value action (main model)
+                    target_q_action = self._learn_model.forward(data['next_obs'])['action']
 
-                # TODO: weight RL loss according to the reconstruct loss, because in In the area with large
-                #  reconstruction loss, the action reconstruction is inaccurate, that is, the (\hat{x}, r) does not
-                #  match, and the corresponding Q value is inaccurate. The update should be reduced to avoid wrong
-                #  gradient.
-                if self._cfg.rl_reconst_loss_weight:
-                    # TODO:
-                    # fist max-min normalization, transform to [0, 1]
-                    reconstruction_loss_none_reduction_normalization = \
-                        (reconstruction_loss_none_reduction - reconstruction_loss_none_reduction.min()) \
-                        (reconstruction_loss_none_reduction.max() - reconstruction_loss_none_reduction.min() + 1e-8)
-                    # then scale to [1, 0.2], to make sure all data can be used to calculate gradients
-                    reconstruction_loss_weight = -(
-                            1 - self._cfg.rl_reconst_loss_weight_min) * reconstruction_loss_none_reduction_normalization + 1
-                    data['weight'] = reconstruction_loss_weight
-
-                # NOTE: RL learn policy in latent action space, so here using data['latent_action']
-                data_n = q_nstep_td_data(
-                    q_value, target_q_value, data['latent_action'].squeeze(-1), target_q_action, data['reward'],
-                    data['done'], data['weight']
-                )
-
-                value_gamma = data.get('value_gamma')
-
-                loss, td_error_per_sample = q_nstep_td_error(
-                    data_n, self._gamma, nstep=self._nstep, value_gamma=value_gamma
-                )
+                # get the average q value for each action
+                target_q_value_tensor = torch.stack([target_q_value['logit'] for target_q_value in target_q_value_list], dim=-1)
+                min_target_q_value = torch.min( target_q_value_tensor, dim=-1)[0]
+                for agent in range(self._cfg.model.ensemble_num): 
+                    # NOTE: RL learn policy in latent action space, so here using data['latent_action']
+                    data_n = q_nstep_td_data(
+                        q_value_list[agent]['logit'], min_target_q_value, data['latent_action'].squeeze(-1), target_q_action, data['reward'], data['done'], data['weight']
+                    )
+                    value_gamma = data.get('value_gamma')
+                    loss_agent, td_error_per_sample_agent = q_nstep_td_error(data_n, self._gamma, nstep=self._nstep, value_gamma=value_gamma)
+                    loss += loss_agent
+                    # loss_list.append(loss_agent)
 
                 # TODO(pu): td3_bc loss
                 if self._cfg.auxiliary_conservative_loss:
@@ -465,11 +459,20 @@ class DQNVQVAEPolicy(Policy):
                 loss_dict['critic_loss'] = loss.item()
 
                 q_value_dict = {}
-                q_value_dict['q_value'] = q_value.mean().item()
+                # get statistics for multi q value
+                q_value_tensor = torch.stack([q_value['logit'] for q_value in q_value_list], dim=-1).detach().cpu() # shape (B, A, Ensemble_num)
+                mean_q_value = torch.mean(q_value_tensor, dim=-1)  # shape (B, A)
+                min_q_value = torch.min(q_value_tensor, dim=-1)[0]  # shape (B, A)
+                max_q_value = torch.max(q_value_tensor, dim=-1)[0]  # shape (B, A)
+
+                q_value_dict['mean_q_value'] =  mean_q_value.mean().item()
+                q_value_dict['min_q_value'] =  min_q_value.mean().item()
+                q_value_dict['max_q_value'] =  max_q_value.mean().item()
+
 
                 return {
                     'cur_lr': self._optimizer.defaults['lr'],
-                    'td_error': td_error_per_sample.abs().mean(),
+                    # 'td_error': td_error_per_sample.abs().mean(),
                     **loss_dict,
                     **q_value_dict,
                     'total_grad_norm_rl': total_grad_norm_rl,
@@ -483,8 +486,11 @@ class DQNVQVAEPolicy(Policy):
             'priority',
             'cur_lr',
             'critic_loss',
-            'q_value',
-            'td_error',
+            # 'q_value',
+            'mean_q_value',
+            'min_q_value',
+            'max_q_value',
+            # 'td_error',
             'total_vqvae_loss',
             'reconstruction_loss',
             'embedding_loss',
@@ -509,7 +515,7 @@ class DQNVQVAEPolicy(Policy):
         self._unroll_len = self._cfg.collect.unroll_len
         self._gamma = self._cfg.discount_factor  # necessary for parallel
         self._nstep = self._cfg.nstep  # necessary for parallel
-        self._collect_model = model_wrap(self._model, wrapper_name='eps_greedy_sample')
+        self._collect_model = model_wrap(self._model, wrapper_name='multi_average_eps_greedy_sample')
         self._collect_model.reset()
         self._warm_up_stop = False
 
@@ -630,7 +636,7 @@ class DQNVQVAEPolicy(Policy):
         Overview:
             Evaluate mode init method. Called by ``self.__init__``, initialize eval_model.
         """
-        self._eval_model = model_wrap(self._model, wrapper_name='argmax_sample')
+        self._eval_model = model_wrap(self._model, wrapper_name='multi_average_argmax_sample')
         self._eval_model.reset()
 
     def _forward_eval(self, data: Dict[int, Any]) -> Dict[int, Any]:
@@ -819,18 +825,6 @@ class DQNVQVAEPolicy(Policy):
             }
         return transition
 
-    def default_model(self) -> Tuple[str, List[str]]:
-        """
-        Overview:
-            Return this algorithm default model setting for demonstration.
-        Returns:
-            - model_info (:obj:`Tuple[str, List[str]]`): model name and mode import_names
-
-        .. note::
-            The user can define and use customized network model but must obey the same inferface definition indicated \
-            by import_names path. For DQN, ``ding.model.template.q_learning.DQN``
-        """
-        return 'dqn', ['ding.model.template.q_learning']
 
     def visualize_latent(self, save_histogram=True, name=0, granularity=0.1):
         if self.cfg.action_space == 'continuous':
