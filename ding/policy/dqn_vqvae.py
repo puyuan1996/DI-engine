@@ -143,7 +143,9 @@ class DQNVQVAEPolicy(Policy):
             by import_names path. For DQN, ``ding.model.template.q_learning.DQN``
         """
         # return 'dqn', ['ding.model.template.q_learning']
-        return 'dqn_ma_share_backbone', ['ding.model.template.q_learning']
+        # return 'dqn_ma_share_backbone', ['ding.model.template.q_learning']
+        return 'dqn_ma_share_backbone_head', ['ding.model.template.q_learning']
+
 
     def _init_learn(self) -> None:
         """

@@ -91,7 +91,7 @@ hopper_dqn_default_config = dict(
         priority_vqvae_min=0.,
         latent_action_shape=int(64),  # num of num_embeddings: K, i.e. shape of latent action
         model=dict(
-            ensemble_num=10,  # TODO
+            ensemble_num=20,  # TODO
             obs_shape=11,
             # TODO:
             # action_shape=int(64+2**3),  # Q dim
@@ -180,7 +180,7 @@ create_config = hopper_dqn_create_config
 
 
 def train(args):
-    main_config.exp_name = 'data_hopper/dqn_ensemble10_noobs_noema_middlenet_k64_beta0.25_vlw1' + '_seed' + f'{args.seed}' + '_3M'
+    main_config.exp_name = 'data_hopper/debug_dqn_ensemble20_noobs_noema_middlenet_k64_beta0.25_vlw0.1' + '_seed' + f'{args.seed}' + '_3M'
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,
                               max_env_step=int(3e6))
 
