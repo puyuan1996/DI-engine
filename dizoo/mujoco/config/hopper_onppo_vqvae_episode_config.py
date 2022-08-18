@@ -1,8 +1,7 @@
 from easydict import EasyDict
 
-nstep = 3
 collector_env_num=8
-evaluator_env_num=3
+evaluator_env_num=8
 hopper_onppo_default_config = dict(
     exp_name='hopper_onppo_vqvae_seed0',
     env=dict(
@@ -30,9 +29,6 @@ hopper_onppo_default_config = dict(
 
         # Reward's future discount factor, aka. gamma.
         discount_factor=0.99,
-        # How many steps in td error.
-        nstep=nstep,
-        # learn_mode config
 
         original_action_space='continuous',  # 'hybrid'
         eps_greedy_nearest=False,  # TODO(pu): delete this key
@@ -41,11 +37,11 @@ hopper_onppo_default_config = dict(
         is_ema=False,  # no use EMA 
         # is_ema=True,  # use EMA TODO(pu): test ema
         original_action_shape=3,  # related to the environment
-        # random_collect_size=int(1000),  # n_episode
-        # warm_up_update=int(1e4),
+        random_collect_size=int(1000),  # n_episode
+        warm_up_update=int(1e4),
         # debug
-        random_collect_size=int(8),
-        warm_up_update=int(8),
+        # random_collect_size=int(8),
+        # warm_up_update=int(8),
 
         vqvae_embedding_dim=64,  # ved: D
         vqvae_hidden_dim=[256],  # vhd
@@ -99,17 +95,25 @@ hopper_onppo_default_config = dict(
         latent_action_shape=int(64),  # num of num_embeddings: K, i.e. shape of latent action
 
         model=dict(
+            action_space='discrete',
             obs_shape=11,  # related to the environment
             # TODO: augment_extreme_action=True,
             # action_shape=int(64+2**3),  # Q dim
             action_shape=int(64),  # num of num_embeddings: K
-            # action_shape=int(128),  # num of num_embeddings: K
-            # encoder_hidden_size_list=[128, 128, 64],  # small net
             encoder_hidden_size_list=[256, 256, 128],  # middle net
-            # encoder_hidden_size_list=[512, 512, 256],  # large net
+            actor_head_hidden_size= 128,
+            critic_head_hidden_size=128,
         ),
         learn=dict(
             ignore_done=False,
+
+            # ppo related
+            value_weight=0.5,
+            entropy_weight=0.001,
+            clip_ratio=0.2,
+            adv_norm=True,
+            value_norm=True,
+
 
             reconst_loss_stop_value=1e-6,  # TODO(pu)
             constrain_action=False, # TODO(pu): delete this key
@@ -118,8 +122,8 @@ hopper_onppo_default_config = dict(
             update_per_collect_rl=1,
             update_per_collect_vae=1,
 
-            epoch_per_collect_rl=20,
-            epoch_per_collect_vqvae=20,
+            epoch_per_collect_rl=10,
+            epoch_per_collect_vqvae=10,
             
             rl_batch_size=256,
             vqvae_batch_size=256,
@@ -155,6 +159,8 @@ hopper_onppo_default_config = dict(
             n_episode=8,
             # Cut trajectories into pieces with length "unroll_len".
             unroll_len=1,
+            discount_factor=0.99,
+            gae_lambda=0.95,
         ),
         eval=dict(evaluator=dict(eval_freq=1000, )),
         # command_mode config
@@ -188,7 +194,7 @@ create_config = hopper_onppo_create_config
 
 
 def train(args):
-    main_config.exp_name = 'data_hopper/debug_onppo_noobs_noema_middlenet_k64_beta0.25_vlw1' + '_seed' + f'{args.seed}'+'_3M'
+    main_config.exp_name = 'data_hopper/onppo_noobs_noema_middlenet_k64_beta0.25_vlw1_epcr10' + '_seed' + f'{args.seed}'+'_3M'
     serial_pipeline_onppo_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=int(3e6))
 
 if __name__ == "__main__":

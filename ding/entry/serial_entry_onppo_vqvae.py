@@ -147,7 +147,6 @@ def serial_pipeline_onppo_vqvae(
                 break
         # Collect data by default config n_sample/n_episode
         new_data = collector.collect(train_iter=learner.train_iter, policy_kwargs=collect_kwargs)
-        train_data = new_data
 
         for item in new_data:
             item['warm_up'] = False
@@ -162,6 +161,7 @@ def serial_pipeline_onppo_vqvae(
             for i in range(cfg.policy.learn.update_per_collect_rl):
                 # Learner will train ``update_per_collect`` times in one iteration.
                 # train_data = replay_buffer.sample(cfg.policy.learn.rl_batch_size, learner.train_iter)
+                train_data = copy.deepcopy(new_data)
                 if train_data is not None:
                     for item in train_data:
                         item['rl_phase'] = True
@@ -187,7 +187,7 @@ def serial_pipeline_onppo_vqvae(
                     #     int(cfg.policy.learn.vqvae_batch_size), learner.train_iter
                     # )
                     # train_data = train_data_vqvae
-
+                    train_data = copy.deepcopy(new_data)
                     if train_data is not None:
                         for item in train_data:
                             item['rl_phase'] = False
@@ -200,8 +200,8 @@ def serial_pipeline_onppo_vqvae(
                         )
                         break
                     learner.train(train_data, collector.envstep)
-                    if learner.policy.get_attribute('priority_vqvae'):
-                        replay_buffer_vqvae.update(learner.priority_info)
+                    # if learner.policy.get_attribute('priority_vqvae'):
+                    #     replay_buffer_vqvae.update(learner.priority_info)
 
         if collector.envstep > max_env_step:
             break

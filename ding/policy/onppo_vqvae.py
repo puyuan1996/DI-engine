@@ -380,7 +380,7 @@ class ONPPOVQVAEPolicy(Policy):
                         # cos_similarity = self.visualize_embedding_table(save_dis_map=False)
 
                         return_info= {
-                            'priority': return_normalization.tolist(), 
+                            # 'priority': return_normalization.tolist(), 
                             'cur_lr': self._optimizer.defaults['lr'],
                             # 'td_error': td_error_per_sample,
                             **loss_dict,
