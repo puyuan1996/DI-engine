@@ -6,6 +6,7 @@ from .dqn import DQNPolicy
 from .dqn_ma import MADQNPolicy
 from .dqn_vqvae import DQNVQVAEPolicy
 from .dqn_vqvae_episode import DQNVQVAEEPISODEPolicy
+from .onppo_vqvae import ONPPOVQVAEPolicy
 
 from .rainbow_vqvae import RainbowDQNVQVAEPolicy
 from .sql_vqvae import SQLVQVAEPolicy
@@ -279,6 +280,10 @@ class DQNVQVAECommandModePolicy(DQNVQVAEPolicy, EpsCommandModePolicy):
 
 @POLICY_REGISTRY.register('dqn_vqvae_episode_command')
 class DQNVQVAECommandModePolicy(DQNVQVAEEPISODEPolicy, EpsCommandModePolicy):
+    pass
+
+@POLICY_REGISTRY.register('onppo_vqvae_command')
+class ONPPOVQVAECommandModePolicy(ONPPOVQVAEPolicy, DummyCommandModePolicy):
     pass
 
 @POLICY_REGISTRY.register('rainbow_vqvae_command')

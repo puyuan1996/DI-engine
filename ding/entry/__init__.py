@@ -4,6 +4,7 @@ from .serial_entry import serial_pipeline
 from .serial_entry_td3_vae import serial_pipeline_td3_vae
 from .serial_entry_dqn_vqvae import serial_pipeline_dqn_vqvae
 from .serial_entry_dqn_vqvae_visualize import serial_pipeline_dqn_vqvae_visualize
+from .serial_entry_onppo_vqvae import serial_pipeline_onppo_vqvae
 from .serial_entry_dqn_vqvae_episode import serial_pipeline_dqn_vqvae_episode
 from .serial_entry_dqn_vqvae_expert import serial_pipeline_dqn_vqvae_expert
 from .serial_entry_onpolicy import serial_pipeline_onpolicy
