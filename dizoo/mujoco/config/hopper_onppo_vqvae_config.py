@@ -1,6 +1,7 @@
 from easydict import EasyDict
 
-collector_env_num=8
+collector_env_num=1
+# collector_env_num=8
 evaluator_env_num=8
 hopper_onppo_default_config = dict(
     exp_name='hopper_onppo_vqvae_seed0',
@@ -10,6 +11,7 @@ hopper_onppo_default_config = dict(
         norm_reward=dict(use_norm=False, ),
         # (bool) Scale output action into legal range.
         use_act_scale=True,
+        clip_rewards=False,
         # Env number respectively for collector and evaluator.
         collector_env_num=collector_env_num,
         evaluator_env_num=evaluator_env_num,
@@ -40,20 +42,19 @@ hopper_onppo_default_config = dict(
         random_collect_size=int(1000),  # n_episode
         warm_up_update=int(1e4),
         # debug
-        # random_collect_size=int(8),
-        # warm_up_update=int(8),
+        # random_collect_size=int(1),
+        # warm_up_update=int(1),
 
         vqvae_embedding_dim=64,  # ved: D
         vqvae_hidden_dim=[256],  # vhd
         beta=0.25,
-        vq_loss_weight=1,  # TODO
+        vq_loss_weight=0.1,  # TODO
         recons_loss_cont_weight=1,
         # mask_pretanh=True,
         mask_pretanh=False,
         replay_buffer_size_vqvae=int(1e6),
         auxiliary_conservative_loss=False,
         augment_extreme_action=False,
-
 
         # obs_regularization=True,
         obs_regularization=False,
@@ -72,7 +73,13 @@ hopper_onppo_default_config = dict(
         cont_reconst_l1_loss=False,
         cont_reconst_smooth_l1_loss=False,
         categorical_head_for_cont_action=False,  # categorical distribution
-        n_atom=51,
+
+        threshold_categorical_head_for_cont_action=True,  # thereshold categorical distribution
+        # threshold_categorical_head_for_cont_action=False,  # thereshold categorical distribution
+        categorical_head_for_cont_action_threshold=0.9,
+        threshold_phase=['eval'],  # ['eval', 'collect']
+        n_atom=11,
+
         gaussian_head_for_cont_action=False,  # gaussian distribution
         embedding_table_onehot=False,
 
@@ -92,8 +99,8 @@ hopper_onppo_default_config = dict(
         priority_IS_weight_vqvae=False,  # NOTE: return priority
         priority_type_vqvae='return',
         priority_vqvae_min=0.,
-        latent_action_shape=int(64),  # num of num_embeddings: K, i.e. shape of latent action
 
+        latent_action_shape=int(64),  # num of num_embeddings: K, i.e. shape of latent action
         model=dict(
             action_space='discrete',
             obs_shape=11,  # related to the environment
@@ -113,7 +120,6 @@ hopper_onppo_default_config = dict(
             clip_ratio=0.2,
             adv_norm=True,
             value_norm=True,
-
 
             reconst_loss_stop_value=1e-6,  # TODO(pu)
             constrain_action=False, # TODO(pu): delete this key
@@ -143,26 +149,29 @@ hopper_onppo_default_config = dict(
             vqvae_weight_decay=None,
 
             # add noise in original continuous action
-            noise=False,  # NOTE: if vqvae_pretrain_only=True
-            # noise=True,  # NOTE: if vqvae_pretrain_only=False
+            # noise=False,  # NOTE: if vqvae_pretrain_only=True
+            noise=True,  # NOTE: if vqvae_pretrain_only=False
             noise_sigma=0.1,
             noise_range=dict(
             min=-0.5,
             max=0.5,
             ),
+            noise_augment_extreme_action=True,
+            noise_augment_extreme_action_prob=0.1,
         ),
         # collect_mode config
         collect=dict(
             # You can use either "n_sample" or "n_episode" in collector.collect.
             # Get "n_sample" samples per collect.
             # TODO
-            n_episode=8,
+            # n_episode=8,
+            n_episode=collector_env_num,
             # Cut trajectories into pieces with length "unroll_len".
             unroll_len=1,
             discount_factor=0.99,
             gae_lambda=0.95,
         ),
-        eval=dict(evaluator=dict(eval_freq=1000, )),
+        eval=dict(evaluator=dict(eval_freq=5000, )),
         # command_mode config
         other=dict(
             # Epsilon greedy with decay.
@@ -194,7 +203,7 @@ create_config = hopper_onppo_create_config
 
 
 def train(args):
-    main_config.exp_name = 'data_hopper/onppo_noobs_noema_middlenet_k64_beta0.25_vlw1_epcr10' + '_seed' + f'{args.seed}'+'_3M'
+    main_config.exp_name = 'data_hopper/onppo_noobs_epcr10_aaea_noema_middlenet_k64_beta0.25_vlw01' + '_seed' + f'{args.seed}'+'_3M'
     serial_pipeline_onppo_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=int(3e6))
 
 if __name__ == "__main__":
@@ -202,7 +211,6 @@ if __name__ == "__main__":
     import argparse
     from ding.entry import serial_pipeline_onppo_vqvae
     for seed in [0,1,2]:
-    # for seed in [0]:
         parser = argparse.ArgumentParser()
         parser.add_argument('--seed', '-s', type=int, default=seed)
         args = parser.parse_args()

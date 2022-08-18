@@ -79,14 +79,12 @@ hopper_dqn_default_config = dict(
         # optional design
         cont_reconst_l1_loss=False,
         cont_reconst_smooth_l1_loss=False,
-
         categorical_head_for_cont_action=False,  # categorical distribution
 
         threshold_categorical_head_for_cont_action=True,  # thereshold categorical distribution
         # threshold_categorical_head_for_cont_action=False,  # thereshold categorical distribution
         categorical_head_for_cont_action_threshold=0.9,
         threshold_phase=['eval'],  # ['eval', 'collect']
-
         n_atom=11,
 
         gaussian_head_for_cont_action=False,  # gaussian distribution
@@ -109,6 +107,7 @@ hopper_dqn_default_config = dict(
         priority_IS_weight_vqvae=False,  # NOTE: return priority
         priority_type_vqvae='return',
         priority_vqvae_min=0.,
+        
         latent_action_shape=int(64),  # num of num_embeddings: K, i.e. shape of latent action
         model=dict(
             ensemble_num=20,  # TODO

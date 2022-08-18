@@ -395,9 +395,6 @@ class ONPPOVQVAEPolicy(Policy):
             # train RL
             # ====================
             else:
-
-
-
                 # ====================
                 # PPO forward
                 # ====================
@@ -661,7 +658,8 @@ class ONPPOVQVAEPolicy(Policy):
 
             if self._cfg.original_action_space == 'hybrid':
                 # TODO(pu): decode into original hybrid actions, here data is obs
-                recons_action = self._vqvae_model.decode({'quantized_index': output['action'], 'obs': data})
+                recons_action = self._vqvae_model.decode({'quantized_index': output['action'], 'obs': data,
+                                                          'threshold_phase': 'collect' in self._cfg.threshold_phase})
                 output['action'] = {
                     'action_type': recons_action['recons_action']['action_type'],
                     'action_args': recons_action['recons_action']['action_args']
@@ -685,7 +683,8 @@ class ONPPOVQVAEPolicy(Policy):
             else:
                 # continous action space
                 if not self._cfg.augment_extreme_action:
-                    output['action'] = self._vqvae_model.decode({'quantized_index': output['action'], 'obs': data})[
+                    output['action'] = self._vqvae_model.decode({'quantized_index': output['action'], 'obs': data,
+                                                                 'threshold_phase': 'collect' in self._cfg.threshold_phase})[
                         'recons_action']
                 else:
                     output_action = torch.zeros([output['action'].shape[0], self._cfg.original_action_shape])
@@ -695,7 +694,10 @@ class ONPPOVQVAEPolicy(Policy):
                     mask = output['action'].ge(self._cfg.latent_action_shape) & output['action'].le(self._cfg.model.action_shape)  # TODO
 
                     # the usual latent of vqvae learned action
-                    output_action[~mask] = self._vqvae_model.decode({'quantized_index': output['action'].masked_select(~mask), 'obs': data.masked_select(~mask.unsqueeze(-1)).view(-1,self._cfg.model.obs_shape)})[
+                    output_action[~mask] = self._vqvae_model.decode(
+                        {'quantized_index': output['action'].masked_select(~mask),
+                         'obs': data.masked_select(~mask.unsqueeze(-1)).view(-1, self._cfg.model.obs_shape),
+                         'threshold_phase': 'collect' in self._cfg.threshold_phase})[
                         'recons_action']
 
                     if mask.sum() > 0:
@@ -875,7 +877,8 @@ class ONPPOVQVAEPolicy(Policy):
             # output['action'] = self._vqvae_model.decode_with_obs(output['action'], data})['recons_action']
 
             if self._cfg.original_action_space == 'hybrid':
-                recons_action = self._vqvae_model.decode({'quantized_index': output['action'], 'obs': data})
+                recons_action = self._vqvae_model.decode({'quantized_index': output['action'], 'obs': data,
+                                                          'threshold_phase': 'eval' in self._cfg.threshold_phase})
                 output['action'] = {
                     'action_type': recons_action['recons_action']['action_type'],
                     'action_args': recons_action['recons_action']['action_args']
@@ -883,7 +886,8 @@ class ONPPOVQVAEPolicy(Policy):
             else:
                 # continuous action space
                 if not self._cfg.augment_extreme_action:
-                    output['action'] = self._vqvae_model.decode({'quantized_index': output['action'], 'obs': data})[
+                    output['action'] = self._vqvae_model.decode({'quantized_index': output['action'], 'obs': data,
+                                                                 'threshold_phase': 'eval' in self._cfg.threshold_phase})[
                         'recons_action']
                 else:
                     output_action = torch.zeros([output['action'].shape[0], self._cfg.original_action_shape])
@@ -893,7 +897,10 @@ class ONPPOVQVAEPolicy(Policy):
                     mask = output['action'].ge(self._cfg.latent_action_shape) & output['action'].le(self._cfg.model.action_shape)  # TODO
 
                     # the usual latent of vqvae learned action
-                    output_action[~mask] = self._vqvae_model.decode({'quantized_index': output['action'].masked_select(~mask), 'obs': data.masked_select(~mask.unsqueeze(-1)).view(-1,self._cfg.model.obs_shape)})[
+                    output_action[~mask] = self._vqvae_model.decode(
+                        {'quantized_index': output['action'].masked_select(~mask),
+                         'obs': data.masked_select(~mask.unsqueeze(-1)).view(-1, self._cfg.model.obs_shape),
+                         'threshold_phase': 'collect' in self._cfg.threshold_phase})[
                         'recons_action']
 
                     if mask.sum() > 0:
