@@ -184,18 +184,20 @@ class DQNVQVAEPolicy(Policy):
 
         # use model_wrapper for specialized demands of different modes
         self._target_model = copy.deepcopy(self._model)
-        self._target_model = model_wrap(
-            self._target_model,
-            wrapper_name='target',
-            update_type='assign',
-            update_kwargs={'freq': self._cfg.learn.target_update_freq}
-        )
-        # self._target_model = model_wrap(
-        #     self._target_model,
-        #     wrapper_name='target',
-        #     update_type='momentum',
-        #     update_kwargs={'theta': self._cfg.learn.target_update_theta}
-        # )
+        if not self._cfg.target_network_soft_update:
+            self._target_model = model_wrap(
+                self._target_model,
+                wrapper_name='target',
+                update_type='assign',
+                update_kwargs={'freq': self._cfg.learn.target_update_freq}
+            )
+        else:
+            self._target_model = model_wrap(
+                self._target_model,
+                wrapper_name='target',
+                update_type='momentum',
+                update_kwargs={'theta': self._cfg.learn.target_update_theta}
+            )
 
         self._learn_model = model_wrap(self._model, wrapper_name='multi_average_argmax_sample')
         self._learn_model.reset()
