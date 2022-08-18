@@ -51,8 +51,8 @@ hopper_dqn_default_config = dict(
         mask_pretanh=False,
         replay_buffer_size_vqvae=int(1e6),
         auxiliary_conservative_loss=False,
-        # augment_extreme_action=False,
-        augment_extreme_action=True,
+        augment_extreme_action=False,
+        # augment_extreme_action=True,
 
         # obs_regularization=True,
         obs_regularization=False,
@@ -70,8 +70,12 @@ hopper_dqn_default_config = dict(
         # optional design
         cont_reconst_l1_loss=False,
         cont_reconst_smooth_l1_loss=False,
+
         categorical_head_for_cont_action=False,  # categorical distribution
-        n_atom=51,
+        threshold_categorical_head_for_cont_action=True,  # categorical distribution
+        categorical_head_for_cont_action_threshold=0.9,
+        n_atom=11,
+
         gaussian_head_for_cont_action=False,  # gaussian distribution
         embedding_table_onehot=False,
 
@@ -183,7 +187,7 @@ create_config = hopper_dqn_create_config
 
 
 def train(args):
-    main_config.exp_name = 'data_hopper/dqn_sbh_ensemble20_aea_noobs_noema_middlenet_k64_beta0.25_vlw1' + '_seed' + f'{args.seed}' + '_3M'
+    main_config.exp_name = 'data_hopper/dqn_sbh_ensemble20_tch11-0.9_noobs_noema_middlenet_k64_beta0.25_vlw1' + '_seed' + f'{args.seed}' + '_3M'
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,
                               max_env_step=int(3e6))
 

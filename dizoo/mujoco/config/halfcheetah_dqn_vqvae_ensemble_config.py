@@ -95,7 +95,7 @@ halfcheetah_dqn_default_config = dict(
         model=dict(
             ensemble_num=20,  # TODO
             obs_shape=17,
-            # TODO:
+            # TODO: augment_extreme_action=True,
             action_shape=int(64+2**6),  # Q dim
             # action_shape=int(64),  # Q dim
             # action_shape=int(128),  # num of num_embeddings: K

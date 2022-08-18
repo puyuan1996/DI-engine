@@ -95,7 +95,7 @@ humanoid_dqn_default_config = dict(
         model=dict(
             ensemble_num=20,  # TODO
             obs_shape=376,
-            # TODO:
+            # TODO: augment_extreme_action=True,
             action_shape=int(64+2**17),  # Q dim
             # action_shape=int(64),  # Q dim
             # action_shape=int(128),  # num of num_embeddings: K

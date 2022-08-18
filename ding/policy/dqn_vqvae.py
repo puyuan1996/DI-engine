@@ -217,6 +217,8 @@ class DQNVQVAEPolicy(Policy):
             cont_reconst_l1_loss=self._cfg.cont_reconst_l1_loss,
             cont_reconst_smooth_l1_loss=self._cfg.cont_reconst_smooth_l1_loss,
             categorical_head_for_cont_action=self._cfg.categorical_head_for_cont_action,
+            threshold_categorical_head_for_cont_action=self._cfg.threshold_categorical_head_for_cont_action,
+            categorical_head_for_cont_action_threshold=self._cfg.categorical_head_for_cont_action_threshold,
             n_atom=self._cfg.n_atom,
             gaussian_head_for_cont_action=self._cfg.gaussian_head_for_cont_action,
             embedding_table_onehot=self._cfg.embedding_table_onehot,

@@ -181,6 +181,8 @@ class ActionVQVAE(nn.Module):
             cont_reconst_l1_loss: bool = False,
             cont_reconst_smooth_l1_loss: bool = False,
             categorical_head_for_cont_action: bool = False,
+            threshold_categorical_head_for_cont_action: bool = False,
+            categorical_head_for_cont_action_threshold: int = 0.9,
             n_atom: int = 51,
             gaussian_head_for_cont_action: bool = False,
             embedding_table_onehot: bool = False,
@@ -205,6 +207,8 @@ class ActionVQVAE(nn.Module):
         self.cont_reconst_l1_loss = cont_reconst_l1_loss
         self.cont_reconst_smooth_l1_loss = cont_reconst_smooth_l1_loss
         self.categorical_head_for_cont_action = categorical_head_for_cont_action
+        self.threshold_categorical_head_for_cont_action = threshold_categorical_head_for_cont_action
+        self.categorical_head_for_cont_action_threshold = categorical_head_for_cont_action_threshold
         self.n_atom = n_atom
         self.gaussian_head_for_cont_action = gaussian_head_for_cont_action
         self.embedding_table_onehot = embedding_table_onehot
@@ -255,7 +259,7 @@ class ActionVQVAE(nn.Module):
         self.decode_common = nn.Sequential(nn.Linear(hidden_dims[0], hidden_dims[0]), nn.ReLU())
 
         if isinstance(self.action_shape, int):  # continuous action
-            if self.categorical_head_for_cont_action:
+            if self.categorical_head_for_cont_action or self.threshold_categorical_head_for_cont_action:
                 # self.recons_action_head = nn.Sequential(nn.Linear(self.hidden_dims[0], self.action_shape*self.n_atom), nn.Tanh())
                 self.recons_action_head = nn.Sequential(nn.Linear(self.hidden_dims[0], self.action_shape * self.n_atom))
             elif self.gaussian_head_for_cont_action:
@@ -273,7 +277,7 @@ class ActionVQVAE(nn.Module):
         elif isinstance(self.action_shape, dict):  # hybrid action
             # input action: concat(continuous action, one-hot encoding of discrete action)
 
-            if self.categorical_head_for_cont_action:
+            if self.categorical_head_for_cont_action or self.threshold_categorical_head_for_cont_action:
                 # self.recons_action_cont_head = nn.Sequential(
                 #     nn.Linear(self.hidden_dims[0], self.action_shape['action_args_shape']*self.n_atom), nn.Tanh()
                 # )
@@ -341,6 +345,27 @@ class ActionVQVAE(nn.Module):
                 recons_action = torch.sum(recons_action_probs * support, dim=-1)
                 # recons_action_logits: tanh 
                 # recons_action = torch.mean(recons_action_logits * support, dim=-1)
+            elif self.threshold_categorical_head_for_cont_action:
+                support = torch.linspace(-1, 1, self.n_atom).to(action_decoding.device)  # shape: (self.n_atom)
+                recons_action_logits = self.recons_action_head(action_decoding).view(-1, self.action_shape, self.n_atom)
+                recons_action_probs = F.softmax(recons_action_logits, dim=-1)  # shape: (B,A, self.n_atom)
+                
+                recons_action = torch.sum(recons_action_probs * support, dim=-1) # shape: (B,A)
+                
+
+                recons_action_max = torch.max(recons_action_probs, dim=-1)[0]  # shape: (B,A)
+                recons_action_max_index = torch.max(recons_action_probs, dim=-1)[1] # shape: (B,A)
+
+                # TODO(pu): for construct some extreme action
+                # prob=[p1,p2,p3,p4], support=[s1,s2,s3,s4], if pi>threshold, then recons_action=support[i]
+                recons_action_lt_threshold_mask = recons_action_max.ge(self.categorical_head_for_cont_action_threshold)  # shape: (B,A)
+                if recons_action_lt_threshold_mask .sum()>0:
+                    recons_action_probs_lt_threshold = recons_action_max.masked_select(recons_action_lt_threshold_mask ) 
+                    recons_action_probs_index_lt_threshold = recons_action_max_index.masked_select(recons_action_lt_threshold_mask )  # shape: (B,A)
+
+                    # straight-through estimator for passing gradient from recons_action_probs_lt_threshold
+                    recons_action[recons_action_lt_threshold_mask] = (recons_action_probs_lt_threshold + (1-recons_action_probs_lt_threshold ).detach())*  support[recons_action_probs_index_lt_threshold]
+
             elif self.gaussian_head_for_cont_action:
                 mu_sigma_dict = self.recons_action_head(action_decoding)
                 (mu, sigma) = (mu_sigma_dict['mu'], mu_sigma_dict['sigma'])
