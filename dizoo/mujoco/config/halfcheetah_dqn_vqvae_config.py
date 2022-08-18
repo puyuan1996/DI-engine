@@ -132,7 +132,7 @@ halfcheetah_dqn_default_config = dict(
             # Cut trajectories into pieces with length "unroll_len".
             unroll_len=1,
         ),
-        eval=dict(evaluator=dict(eval_freq=1000, )),
+        eval=dict(evaluator=dict(eval_freq=5000, )),
         # command_mode config
         other=dict(
             # Epsilon greedy with decay.

@@ -1,10 +1,10 @@
 from easydict import EasyDict
 
 nstep = 3
-hopper_dqn_default_config = dict(
-    exp_name='hopper_dqn_vqvae_seed0',
+ant_dqn_default_config = dict(
+    exp_name='ant_dqn_vqvae_seed0',
     env=dict(
-        env_id='Hopper-v3',
+        env_id='Ant-v3',
         norm_obs=dict(use_norm=False, ),
         norm_reward=dict(use_norm=False, ),
         # (bool) Scale output action into legal range.
@@ -34,7 +34,7 @@ hopper_dqn_default_config = dict(
         is_ema=False,  # no use EMA
         # TODO(pu): test ema
         # is_ema=True,  # use EMA
-        original_action_shape=3,
+        original_action_shape=8,
         random_collect_size=int(5e4),  # transitions
         warm_up_update=int(1e4),
         # debug
@@ -45,7 +45,7 @@ hopper_dqn_default_config = dict(
         vqvae_hidden_dim=[256],  # vhd
         target_network_soft_update=False,
         beta=0.25,
-        vq_loss_weight=1,  # TODO
+        vq_loss_weight=0.1,  # TODO
         recons_loss_cont_weight=1,
         # mask_pretanh=True,
         mask_pretanh=False,
@@ -94,10 +94,10 @@ hopper_dqn_default_config = dict(
         latent_action_shape=int(64),  # num of num_embeddings: K, i.e. shape of latent action
         model=dict(
             ensemble_num=20,  # TODO
-            obs_shape=11,
+            obs_shape=111,
             # TODO:
-            # action_shape=int(64+2**3),  # Q dim
-            action_shape=int(64),  # Q dim
+            action_shape=int(64+2**8),  # Q dim
+            # action_shape=int(64),  # Q dim
             # action_shape=int(128),  # num of num_embeddings: K
             # encoder_hidden_size_list=[128, 128, 64],  # small net
             encoder_hidden_size_list=[256, 256, 128],  # middle net
@@ -152,7 +152,7 @@ hopper_dqn_default_config = dict(
             # Cut trajectories into pieces with length "unroll_len".
             unroll_len=1,
         ),
-        eval=dict(evaluator=dict(eval_freq=1000, )),
+        eval=dict(evaluator=dict(eval_freq=5000, )),
         # command_mode config
         other=dict(
             # Epsilon greedy with decay.
@@ -167,10 +167,10 @@ hopper_dqn_default_config = dict(
         ),
     ),
 )
-hopper_dqn_default_config = EasyDict(hopper_dqn_default_config)
-main_config = hopper_dqn_default_config
+ant_dqn_default_config = EasyDict(ant_dqn_default_config)
+main_config = ant_dqn_default_config
 
-hopper_dqn_create_config = dict(
+ant_dqn_create_config = dict(
     env=dict(
         type='mujoco',
         import_names=['dizoo.mujoco.envs.mujoco_env'],
@@ -178,12 +178,12 @@ hopper_dqn_create_config = dict(
     env_manager=dict(type='subprocess'),
     policy=dict(type='dqn_vqvae'),
 )
-hopper_dqn_create_config = EasyDict(hopper_dqn_create_config)
-create_config = hopper_dqn_create_config
+ant_dqn_create_config = EasyDict(ant_dqn_create_config)
+create_config = ant_dqn_create_config
 
 
 def train(args):
-    main_config.exp_name = 'data_hopper/dqn_sbh_ensemble20_aea_noobs_noema_middlenet_k64_beta0.25_vlw1' + '_seed' + f'{args.seed}' + '_3M'
+    main_config.exp_name = 'data_ant/dqn_sbh_ensemble20_aea_noobs_noema_middlenet_k64_beta0.25_vlw0.1' + '_seed' + f'{args.seed}' + '_3M'
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,
                               max_env_step=int(3e6))
 

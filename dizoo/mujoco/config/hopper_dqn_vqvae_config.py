@@ -104,6 +104,7 @@ hopper_dqn_default_config = dict(
             dueling=True,
         ),
         learn=dict(
+            # NOTE: only halfcheetah, set this key True
             ignore_done=False,
 
             reconst_loss_stop_value=1e-6,  # TODO(pu)
