@@ -71,6 +71,7 @@ halfcheetah_dqn_default_config = dict(
         cont_reconst_l1_loss=False,
         cont_reconst_smooth_l1_loss=False,
         categorical_head_for_cont_action=False,  # categorical distribution
+        threshold_categorical_head_for_cont_action=False,  # categorical distribution
         n_atom=51,
         gaussian_head_for_cont_action=False,  # gaussian distribution
         embedding_table_onehot=False,

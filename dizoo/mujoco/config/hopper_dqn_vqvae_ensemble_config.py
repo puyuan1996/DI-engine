@@ -45,7 +45,7 @@ hopper_dqn_default_config = dict(
         vqvae_hidden_dim=[256],  # vhd
         target_network_soft_update=False,
         beta=0.25,
-        vq_loss_weight=1,  # TODO
+        vq_loss_weight=0.1,  # TODO
         recons_loss_cont_weight=1,
         # mask_pretanh=True,
         mask_pretanh=False,
@@ -187,7 +187,7 @@ create_config = hopper_dqn_create_config
 
 
 def train(args):
-    main_config.exp_name = 'data_hopper/dqn_sbh_ensemble20_tch11-0.9_noobs_noema_middlenet_k64_beta0.25_vlw1' + '_seed' + f'{args.seed}' + '_3M'
+    main_config.exp_name = 'data_hopper/dqn_sbh_ensemble20_tch11-edge-0.9_noobs_noema_middlenet_k64_beta0.25_vlw0.1' + '_seed' + f'{args.seed}' + '_3M'
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,
                               max_env_step=int(3e6))
 
