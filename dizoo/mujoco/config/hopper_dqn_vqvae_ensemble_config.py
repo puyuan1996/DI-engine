@@ -73,7 +73,7 @@ hopper_dqn_default_config = dict(
 
         categorical_head_for_cont_action=False,  # categorical distribution
         threshold_categorical_head_for_cont_action=True,  # categorical distribution
-        categorical_head_for_cont_action_threshold=0.9,
+        categorical_head_for_cont_action_threshold=0.1,
         n_atom=11,
 
         gaussian_head_for_cont_action=False,  # gaussian distribution
@@ -82,6 +82,7 @@ hopper_dqn_default_config = dict(
         # rl priority
         priority=False,
         priority_IS_weight=False,
+
         # TODO: weight RL loss according to the reconstruct loss, because in In the area with large reconstruction
         #  loss, the action reconstruction is inaccurate, that is, the (\hat{x}, r) does not match,
         #  and the corresponding Q value is inaccurate. The update should be reduced to avoid wrong gradient.
@@ -187,7 +188,7 @@ create_config = hopper_dqn_create_config
 
 
 def train(args):
-    main_config.exp_name = 'data_hopper/dqn_sbh_ensemble20_tch11-edge-0.9_noobs_noema_middlenet_k64_beta0.25_vlw0.1' + '_seed' + f'{args.seed}' + '_3M'
+    main_config.exp_name = 'data_hopper/dqn_sbh_ensemble20_tch11-edge-0.1_noobs_noema_middlenet_k64_beta0.25_vlw0.1' + '_seed' + f'{args.seed}' + '_3M'
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,
                               max_env_step=int(3e6))
 

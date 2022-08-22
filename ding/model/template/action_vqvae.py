@@ -336,6 +336,8 @@ class ActionVQVAE(nn.Module):
         """
         sigma = None  # debug
         mask=None
+        recons_action_probs_left_mask_proportion=0
+        recons_action_probs_right_mask_proportion=0
         if isinstance(self.action_shape, int):
             # continuous action
             if self.categorical_head_for_cont_action:
@@ -352,10 +354,6 @@ class ActionVQVAE(nn.Module):
                 
                 recons_action = torch.sum(recons_action_probs * support, dim=-1) # shape: (B,A)
                 
-
-                recons_action_max = torch.max(recons_action_probs, dim=-1)[0]  # shape: (B,A)
-                recons_action_max_index = torch.max(recons_action_probs, dim=-1)[1] # shape: (B,A)
-
                 # TODO(pu): for construct some extreme action
                 # prob=[p1,p2,p3,p4], support=[s1,s2,s3,s4], if pi>threshold, then recons_action=support[i]
                 # shape: (B,A)
@@ -364,11 +362,15 @@ class ActionVQVAE(nn.Module):
 
                 if recons_action_left_lt_threshold_mask.sum()>0 or recons_action_right_lt_threshold_mask.sum()>0:
                     recons_action_probs_left_lt_threshold =  recons_action_probs[:,:,0].masked_select(recons_action_left_lt_threshold_mask ) 
-                    recons_action_probs_rigt_lt_threshold =  recons_action_probs[:,:,-1].masked_select(recons_action_left_lt_threshold_mask ) 
+                    recons_action_probs_right_lt_threshold =  recons_action_probs[:,:,-1].masked_select(recons_action_right_lt_threshold_mask ) 
 
                     # straight-through estimator for passing gradient from recons_action_probs_lt_threshold
                     recons_action[recons_action_left_lt_threshold_mask] = (recons_action_probs_left_lt_threshold + (1-recons_action_probs_left_lt_threshold ).detach())*  support[0]
                     recons_action[recons_action_right_lt_threshold_mask] = (recons_action_probs_right_lt_threshold + (1-recons_action_probs_right_lt_threshold ).detach())*  support[-1]
+
+                    # statistics
+                    recons_action_probs_left_mask_proportion = recons_action_left_lt_threshold_mask.sum()/ (recons_action_left_lt_threshold_mask.shape[0]* recons_action_left_lt_threshold_mask.shape[1])
+                    recons_action_probs_right_mask_proportion = recons_action_right_lt_threshold_mask.sum()/ (recons_action_right_lt_threshold_mask.shape[0]* recons_action_right_lt_threshold_mask.shape[1])
 
 
 
@@ -494,7 +496,7 @@ class ActionVQVAE(nn.Module):
                 recons_loss = self.recons_loss_cont_weight * recons_loss_cont + recons_loss_disc
                 recons_loss_none_reduction = recons_loss_cont_none_reduction + recons_loss_disc_none_reduction
 
-            return recons_action, recons_loss, recons_loss_none_reduction, sigma
+            return recons_action, recons_loss, recons_loss_none_reduction, sigma, recons_action_probs_left_mask_proportion, recons_action_probs_right_mask_proportion 
 
     def train(self, data: Dict, warmup: bool = False) -> Dict[str, torch.Tensor]:
         """
@@ -506,12 +508,12 @@ class ActionVQVAE(nn.Module):
         quantized_index, quantized_embedding, vq_loss, embedding_loss, commitment_loss = self.vq_layer.train(encoding)
         action_decoding = self.decoder(quantized_embedding)
         if self.vqvae_return_weight and not warmup:
-            recons_action, recons_loss, recons_loss_none_reduction, sigma \
+            recons_action, recons_loss, recons_loss_none_reduction, sigma, recons_action_probs_left_mask_proportion, recons_action_probs_right_mask_proportion  \
                 = self._recons_action(action_decoding,
                                       data['action'], data[
                                           'return_normalization'])
         else:
-            recons_action, recons_loss, recons_loss_none_reduction, sigma \
+            recons_action, recons_loss, recons_loss_none_reduction, sigma, recons_action_probs_left_mask_proportion, recons_action_probs_right_mask_proportion \
                 = self._recons_action(action_decoding,
                                       data['action'])
 
@@ -524,7 +526,9 @@ class ActionVQVAE(nn.Module):
             'recons_loss': recons_loss,
             'vq_loss': vq_loss,
             'embedding_loss': embedding_loss,
-            'commitment_loss': commitment_loss
+            'commitment_loss': commitment_loss,
+            'recons_action_probs_left_mask_proportion':recons_action_probs_left_mask_proportion, 
+            'recons_action_probs_right_mask_proportion':recons_action_probs_right_mask_proportion,
         }
 
     def train_with_obs(self, data: Dict, warmup: bool = False) -> Dict[str, torch.Tensor]:
@@ -562,12 +566,12 @@ class ActionVQVAE(nn.Module):
         prediction_residual = self.decode_prediction_head_layer2(prediction_residual_tmp)
 
         if self.vqvae_return_weight and not warmup:
-            recons_action, recons_loss, recons_loss_none_reduction, sigma \
+            recons_action, recons_loss, recons_loss_none_reduction, sigma, recons_action_probs_left_mask_proportion, recons_action_probs_right_mask_proportion \
                 = self._recons_action(action_obs_decoding_common,
                                       data['action'], data[
                                           'return_normalization'])
         else:
-            recons_action, recons_loss, recons_loss_none_reduction, sigma \
+            recons_action, recons_loss, recons_loss_none_reduction, sigma, recons_action_probs_left_mask_proportion, recons_action_probs_right_mask_proportion\
                 = self._recons_action(action_obs_decoding_common,
                                       data['action'])
         predict_loss = F.mse_loss(prediction_residual, data['true_residual'])
@@ -582,7 +586,9 @@ class ActionVQVAE(nn.Module):
             'vq_loss': vq_loss,
             'embedding_loss': embedding_loss,
             'commitment_loss': commitment_loss,
-            'predict_loss': predict_loss
+            'predict_loss': predict_loss,
+            'recons_action_probs_left_mask_proportion':recons_action_probs_left_mask_proportion, 
+            'recons_action_probs_right_mask_proportion':recons_action_probs_right_mask_proportion,
         }
 
     def encode(self, data: Dict) -> torch.Tensor:

@@ -3,6 +3,7 @@ import torch
 from ding.model.template import VQVAE, ActionVQVAE, VectorQuantizer
 from ding.model.template.action_vqvae import ExponentialMovingAverage
 from ding.torch_utils import is_differentiable
+import torch.nn.functional as F
 
 
 @pytest.mark.unittest
@@ -81,40 +82,49 @@ def test_action_vqvae():
     assert recons_action['action_args'].shape == (B, 8)
     assert recons_action['logit'].shape == (B, 6)
 
-# @pytest.mark.unittest
-# def test_vqvae():
-B, D = 3, 32
-model_actionvqvae = ActionVQVAE(
-    {
-        'action_type_shape': 6,
-        'action_args_shape': 8
-    },
-    4,
-    D,
-    is_ema=False,
-    is_ema_target=False,
-    eps_greedy_nearest=False
-)
-model_vqvae = VQVAE(
-    {
-        'action_type_shape': 6,
-        'action_args_shape': 8
-    },
-    4,
-    D,
-    is_ema=False,
-    is_ema_target=False,
-    eps_greedy_nearest=False
-)
-action = {'action_type': torch.randint(0, 6, size=(B, )), 'action_args': torch.tanh(torch.randn(B, 8))}
-inputs = {'action': action}
-print(action)
-output_actionvqvae = model_actionvqvae.train(inputs)
-output_vqvae = model_vqvae.train_without_obs(inputs)
+@pytest.mark.unittest
+def test_threshold_categorical_head_for_cont_action():
+    B=5
+    action_shape=3
+    n_atom=11
+    categorical_head_for_cont_action_threshold=0.5
+    recons_action_probs_left_mask_proportion = 0
+    recons_action_probs_right_mask_proportion = 0
+    support = torch.linspace(-1, 1, n_atom)  # shape: (n_atom)
+    recons_action_logits = torch.randn(B, action_shape, n_atom).requires_grad_(True)
+    recons_action_probs = F.softmax(recons_action_logits, dim=-1)  # shape: (B,A, n_atom)
+    
+    recons_action = torch.sum(recons_action_probs * support, dim=-1) # shape: (B,A)
 
-# print(output)
-index_actionvqvae = model_actionvqvae.encode(inputs)
-recons_action_actionvqvae = model_actionvqvae.decode(index_actionvqvae)['recons_action']
+    assert recons_action.shape == (B, action_shape)
+    print('recons_action_probs: ',recons_action_probs)
 
-index_vqvae = model_vqvae.inference_without_obs(inputs)['quantized_index']
-recons_action_vqvae = model_vqvae.decode_without_obs(index_vqvae)
+    # TODO(pu): for construct some extreme action
+    # prob=[p1,p2,p3,p4], support=[s1,s2,s3,s4], if pi>threshold, then recons_action=support[i]
+    # shape: (B,A)
+    recons_action_left_lt_threshold_mask = recons_action_probs[:,:,0].ge(categorical_head_for_cont_action_threshold) 
+    recons_action_right_lt_threshold_mask = recons_action_probs[:,:,-1].ge(categorical_head_for_cont_action_threshold)
+    assert recons_action_left_lt_threshold_mask.shape == (B, action_shape)
+    assert recons_action_right_lt_threshold_mask.shape == (B, action_shape)
+
+
+    if recons_action_left_lt_threshold_mask.sum()>0 or recons_action_right_lt_threshold_mask.sum()>0:
+        recons_action_probs_left_lt_threshold =  recons_action_probs[:,:,0].masked_select(recons_action_left_lt_threshold_mask ) 
+        recons_action_probs_right_lt_threshold =  recons_action_probs[:,:,-1].masked_select(recons_action_right_lt_threshold_mask ) 
+
+        # straight-through estimator for passing gradient from recons_action_probs_lt_threshold
+        recons_action[recons_action_left_lt_threshold_mask] = (recons_action_probs_left_lt_threshold + (1-recons_action_probs_left_lt_threshold ).detach())*  support[0]
+        recons_action[recons_action_right_lt_threshold_mask] = (recons_action_probs_right_lt_threshold + (1-recons_action_probs_right_lt_threshold ).detach())*  support[-1]
+
+        # statistics
+        recons_action_probs_left_mask_proportion = recons_action_left_lt_threshold_mask.sum()/ (recons_action_left_lt_threshold_mask.shape[0]* recons_action_left_lt_threshold_mask.shape[1])
+        recons_action_probs_right_mask_proportion = recons_action_right_lt_threshold_mask.sum()/ (recons_action_right_lt_threshold_mask.shape[0]* recons_action_right_lt_threshold_mask.shape[1])
+    
+    print('recons_action_probs_left_mask_proportion:',recons_action_probs_left_mask_proportion, 'recons_action_probs_right_mask_proportion:',recons_action_probs_right_mask_proportion)
+    fake_loss = recons_action.sum()
+    assert recons_action_logits.grad is None
+    fake_loss.backward()
+    assert recons_action_logits.grad.shape == (B, action_shape, n_atom)
+
+
+# test = test_threshold_categorical_head_for_cont_action()

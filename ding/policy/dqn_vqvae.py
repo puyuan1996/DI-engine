@@ -308,6 +308,9 @@ class DQNVQVAEPolicy(Policy):
             loss_dict['vq_loss'] = result['vq_loss'].item()
             loss_dict['embedding_loss'] = result['embedding_loss'].item()
             loss_dict['commitment_loss'] = result['commitment_loss'].item()
+            loss_dict['recons_action_probs_left_mask_proportion'] = float(result['recons_action_probs_left_mask_proportion'])
+            loss_dict['recons_action_probs_right_mask_proportion'] = float(result['recons_action_probs_right_mask_proportion'])
+
             if self._cfg.obs_regularization:
                 loss_dict['predict_loss'] = result['predict_loss'].item()
 
@@ -362,6 +365,8 @@ class DQNVQVAEPolicy(Policy):
                 loss_dict['vq_loss'] = result['vq_loss'].item()
                 loss_dict['embedding_loss'] = result['embedding_loss'].item()
                 loss_dict['commitment_loss'] = result['commitment_loss'].item()
+                loss_dict['recons_action_probs_left_mask_proportion'] = float(result['recons_action_probs_left_mask_proportion'])
+                loss_dict['recons_action_probs_right_mask_proportion'] = float(result['recons_action_probs_right_mask_proportion'])
                 if self._cfg.obs_regularization:
                     loss_dict['predict_loss'] = result['predict_loss'].item()
 
@@ -504,6 +509,9 @@ class DQNVQVAEPolicy(Policy):
             'vq_loss',
             'total_grad_norm_rl',
             'total_grad_norm_vqvae',
+            # mask statistics
+            'recons_action_probs_left_mask_proportion',
+            'recons_action_probs_right_mask_proportion',
             # 'predict_loss',
             # '[histogram]latent_action',
             # '[histogram]cos_similarity',
