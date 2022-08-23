@@ -157,6 +157,8 @@ class DQNVQVAEPolicy(Policy):
         self._priority_IS_weight = self._cfg.priority_IS_weight
         self._priority_vqvae = self._cfg.priority_vqvae
         self._priority_IS_weight_vqvae = self._cfg.priority_IS_weight_vqvae
+
+
         # Optimizer
         if self._cfg.learn.rl_clip_grad is True:
             if self._cfg.learn.rl_weight_decay is not None:
@@ -178,6 +180,13 @@ class DQNVQVAEPolicy(Policy):
 
         else:
             self._optimizer = Adam(self._model.parameters(), lr=self._cfg.learn.learning_rate)
+
+        if self._cfg.learn.rl_linear_lr_scheduler is True:
+            from torch.optim.lr_scheduler import LambdaLR
+            # rl_lambda = lambda step: (1e-5 / 3e-4 -1) * (1 / (3e6*20/256) ) * step + 1
+            rl_lambda = lambda step: (1e-5 / 3e-4 -1) * (1 / (3e6 * self._cfg.learn.update_per_collect_rl/self._cfg.collect.n_sample) ) * step + 1
+            self.rl_scheduler = LambdaLR(self._optimizer, lr_lambda=rl_lambda, last_epoch=-1)
+
 
         self._gamma = self._cfg.discount_factor
         self._nstep = self._cfg.nstep
@@ -219,6 +228,7 @@ class DQNVQVAEPolicy(Policy):
             categorical_head_for_cont_action=self._cfg.categorical_head_for_cont_action,
             threshold_categorical_head_for_cont_action=self._cfg.threshold_categorical_head_for_cont_action,
             categorical_head_for_cont_action_threshold=self._cfg.categorical_head_for_cont_action_threshold,
+            only_collect_eval_threhold=self._cfg.only_collect_eval_threhold,
             n_atom=self._cfg.n_atom,
             gaussian_head_for_cont_action=self._cfg.gaussian_head_for_cont_action,
             embedding_table_onehot=self._cfg.embedding_table_onehot,
@@ -251,9 +261,7 @@ class DQNVQVAEPolicy(Policy):
                 self._vqvae_model.parameters(),
                 lr=self._cfg.learn.learning_rate_vae,
             )
-        self._running_mean_std_predict_loss = RunningMeanStd(epsilon=1e-4)
-        self.c_percentage_bound_lower = -1 * torch.ones([6])
-        self.c_percentage_bound_upper = torch.ones([6])
+
 
     def _forward_learn(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -376,6 +384,7 @@ class DQNVQVAEPolicy(Policy):
                 total_grad_norm_vqvae = self._optimizer_vqvae.get_grad()
                 self._optimizer_vqvae.step()
 
+
                 # NOTE:visualize_latent, now it's only for env hopper and gym_hybrid
                 # quantized_index = self.visualize_latent(save_histogram=False)
                 # cos_similarity = self.visualize_embedding_table(save_dis_map=False)
@@ -462,6 +471,8 @@ class DQNVQVAEPolicy(Policy):
                 if self._cfg.learn.multi_gpu:
                     self.sync_gradients(self._learn_model)
                 self._optimizer.step()
+                if self._cfg.learn.rl_linear_lr_scheduler is True:
+                    self.rl_scheduler.step()
 
                 # =============
                 # after update
@@ -479,23 +490,36 @@ class DQNVQVAEPolicy(Policy):
                 q_value_dict['mean_q_value'] =  mean_q_value.mean().item()
                 q_value_dict['min_q_value'] =  min_q_value.mean().item()
                 q_value_dict['max_q_value'] =  max_q_value.mean().item()
+                if self._cfg.learn.rl_linear_lr_scheduler is True:
+                    return {
+                        # 'cur_lr': self._optimizer.defaults['lr'],
+                        'cur_lr': self._optimizer.param_groups[0]['lr'],
+                        'cur_scheduler_lr': self.rl_scheduler.get_last_lr()[0],
+                        # 'td_error': td_error_per_sample.abs().mean(),
+                        **loss_dict,
+                        **q_value_dict,
+                        'total_grad_norm_rl': total_grad_norm_rl,
+                        # 'rewrad_run': data['rewrad_run'].mean().item(),
+                        # 'rewrad_ctrl': data['rewrad_ctrl'].mean().item(),
+                    }
+                else:
+                    return {
+                        # 'cur_lr': self._optimizer.defaults['lr'],
+                        'cur_lr': self._optimizer.param_groups[0]['lr'],
+                        # 'td_error': td_error_per_sample.abs().mean(),
+                        **loss_dict,
+                        **q_value_dict,
+                        'total_grad_norm_rl': total_grad_norm_rl,
+                        # 'rewrad_run': data['rewrad_run'].mean().item(),
+                        # 'rewrad_ctrl': data['rewrad_ctrl'].mean().item(),
 
-
-                return {
-                    'cur_lr': self._optimizer.defaults['lr'],
-                    # 'td_error': td_error_per_sample.abs().mean(),
-                    **loss_dict,
-                    **q_value_dict,
-                    'total_grad_norm_rl': total_grad_norm_rl,
-                    # 'rewrad_run': data['rewrad_run'].mean().item(),
-                    # 'rewrad_ctrl': data['rewrad_ctrl'].mean().item(),
-
-                }
+                    }
 
     def _monitor_vars_learn(self) -> List[str]:
         ret = [
             'priority',
             'cur_lr',
+            'cur_scheduler_lr',
             'critic_loss',
             # 'q_value',
             'mean_q_value',

@@ -42,7 +42,8 @@ halfcheetah_dqn_default_config = dict(
         # warm_up_update=int(10),
 
         vqvae_embedding_dim=64,  # ved: D
-        vqvae_hidden_dim=[256],  # vhd
+        # vqvae_hidden_dim=[256],  # vhd
+        vqvae_hidden_dim=[512],  # vhd
         target_network_soft_update=False,
         beta=0.25,
         vq_loss_weight=0.1,  # TODO
@@ -72,7 +73,10 @@ halfcheetah_dqn_default_config = dict(
         cont_reconst_smooth_l1_loss=False,
         categorical_head_for_cont_action=False,  # categorical distribution
         threshold_categorical_head_for_cont_action=False,  # categorical distribution
-        n_atom=51,
+        categorical_head_for_cont_action_threshold=0.1,
+        only_collect_eval_threhold=False,
+        n_atom=11,
+
         gaussian_head_for_cont_action=False,  # gaussian distribution
         embedding_table_onehot=False,
 
@@ -136,6 +140,8 @@ halfcheetah_dqn_default_config = dict(
             rl_weight_decay=None,
             vqvae_weight_decay=None,
 
+            rl_linear_lr_scheduler=False,
+
             # add noise in original continuous action
             noise=False,  # NOTE: if vqvae_pretrain_only=True
             # noise=True,  # NOTE: if vqvae_pretrain_only=False
@@ -184,7 +190,7 @@ create_config = halfcheetah_dqn_create_config
 
 
 def train(args):
-    main_config.exp_name = 'data_halfcheetah/dqn_sbh_ensemble20_aea_noobs_noema_middlenet_k64_beta0.25_vlw0.1' + '_seed' + f'{args.seed}' + '_3M'
+    main_config.exp_name = 'data_halfcheetah/dqn_sbh_ensemble20_aea_noobs_noema_middlenet_k64_beta0.25_vlw0.1_vhd512' + '_seed' + f'{args.seed}' + '_3M'
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,
                               max_env_step=int(3e6))
 
