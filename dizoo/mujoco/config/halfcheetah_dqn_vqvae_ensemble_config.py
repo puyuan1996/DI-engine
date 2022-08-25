@@ -74,7 +74,7 @@ halfcheetah_dqn_default_config = dict(
         categorical_head_for_cont_action=False,  # categorical distribution
         threshold_categorical_head_for_cont_action=False,  # categorical distribution
         categorical_head_for_cont_action_threshold=0.1,
-        only_collect_eval_threhold=False,
+        threshold_phase=['eval'],  # ['eval', 'collect']
         n_atom=11,
 
         gaussian_head_for_cont_action=False,  # gaussian distribution
@@ -145,7 +145,7 @@ halfcheetah_dqn_default_config = dict(
             # add noise in original continuous action
             noise=False,  # NOTE: if vqvae_pretrain_only=True
             # noise=True,  # NOTE: if vqvae_pretrain_only=False
-            noise_sigma=0.1,
+            noise_sigma=0.2,
             noise_range=dict(
                 min=-0.5,
                 max=0.5,

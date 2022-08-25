@@ -228,7 +228,6 @@ class DQNVQVAEPolicy(Policy):
             categorical_head_for_cont_action=self._cfg.categorical_head_for_cont_action,
             threshold_categorical_head_for_cont_action=self._cfg.threshold_categorical_head_for_cont_action,
             categorical_head_for_cont_action_threshold=self._cfg.categorical_head_for_cont_action_threshold,
-            only_collect_eval_threhold=self._cfg.only_collect_eval_threhold,
             n_atom=self._cfg.n_atom,
             gaussian_head_for_cont_action=self._cfg.gaussian_head_for_cont_action,
             embedding_table_onehot=self._cfg.embedding_table_onehot,
@@ -543,7 +542,7 @@ class DQNVQVAEPolicy(Policy):
         if self._cfg.obs_regularization:
             ret.append('predict_loss')
         return ret
-
+        
     def _init_collect(self) -> None:
         """
         Overview:
@@ -589,7 +588,7 @@ class DQNVQVAEPolicy(Policy):
 
             if self._cfg.action_space == 'hybrid':
                 # TODO(pu): decode into original hybrid actions, here data is obs
-                recons_action = self._vqvae_model.decode({'quantized_index': output['action'], 'obs': data})
+                recons_action = self._vqvae_model.decode({'quantized_index': output['action'], 'obs': data, 'threshold_phase': 'collect' in self._cfg.threshold_phase})
                 output['action'] = {
                     'action_type': recons_action['recons_action']['action_type'],
                     'action_args': recons_action['recons_action']['action_args']
@@ -613,8 +612,11 @@ class DQNVQVAEPolicy(Policy):
             else:
                 # continous action space
                 if not self._cfg.augment_extreme_action:
-                    output['action'] = self._vqvae_model.decode({'quantized_index': output['action'], 'obs': data})[
+                    # TODO
+                    output['action'] = self._vqvae_model.decode({'quantized_index': output['action'], 'obs': data, 'threshold_phase': 'collect' in self._cfg.threshold_phase})[
                         'recons_action']
+                    # output = self._vqvae_model.decode({'quantized_index': output['action'], 'obs': data})
+                    # output['action'] = output['recons_action']
                 else:
                     output_action = torch.zeros([output['action'].shape[0], self._cfg.original_action_shape])
                     if self._cuda:
@@ -703,14 +705,14 @@ class DQNVQVAEPolicy(Policy):
             output['latent_action'] = copy.deepcopy(output['action'])
 
             if self._cfg.action_space == 'hybrid':
-                recons_action = self._vqvae_model.decode({'quantized_index': output['action'], 'obs': data})
+                recons_action = self._vqvae_model.decode({'quantized_index': output['action'], 'obs': data, 'threshold_phase': 'eval' in self._cfg.threshold_phase})
                 output['action'] = {
                     'action_type': recons_action['recons_action']['action_type'],
                     'action_args': recons_action['recons_action']['action_args']
                 }
             else:
                 if not self._cfg.augment_extreme_action:
-                    output['action'] = self._vqvae_model.decode({'quantized_index': output['action'], 'obs': data})[
+                    output['action'] = self._vqvae_model.decode({'quantized_index': output['action'], 'obs': data, 'threshold_phase': 'eval' in self._cfg.threshold_phase})[
                         'recons_action']
                 else:
                     output_action = torch.zeros([output['action'].shape[0], self._cfg.original_action_shape])

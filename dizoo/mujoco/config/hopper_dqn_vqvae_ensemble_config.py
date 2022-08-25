@@ -35,11 +35,11 @@ hopper_dqn_default_config = dict(
         # TODO(pu): test ema
         # is_ema=True,  # use EMA
         original_action_shape=3,
-        random_collect_size=int(5e4),  # transitions
-        warm_up_update=int(1e4),
+        # random_collect_size=int(5e4),  # transitions
+        # warm_up_update=int(1e4),
         # debug
-        # random_collect_size=int(10),  
-        # warm_up_update=int(10),
+        random_collect_size=int(1),  
+        warm_up_update=int(1),
 
         vqvae_embedding_dim=64,  # ved: D
         vqvae_hidden_dim=[256],  # vhd
@@ -74,7 +74,7 @@ hopper_dqn_default_config = dict(
         categorical_head_for_cont_action=False,  # categorical distribution
         threshold_categorical_head_for_cont_action=True,  # thereshold categorical distribution
         categorical_head_for_cont_action_threshold=0.9,
-        only_collect_eval_threhold=True,
+        threshold_phase=['eval'],  # ['eval', 'collect']
         n_atom=11,
 
         gaussian_head_for_cont_action=False,  # gaussian distribution
@@ -145,9 +145,9 @@ hopper_dqn_default_config = dict(
 
 
             # add noise in original continuous action
-            noise=False,  # NOTE: if vqvae_pretrain_only=True
-            # noise=True,  # NOTE: if vqvae_pretrain_only=False
-            noise_sigma=0.1,
+            # noise=False,  # NOTE: if vqvae_pretrain_only=True
+            noise=True,  # NOTE: if vqvae_pretrain_only=False
+            noise_sigma=0.2,
             noise_range=dict(
                 min=-0.5,
                 max=0.5,
@@ -192,7 +192,7 @@ create_config = hopper_dqn_create_config
 
 
 def train(args):
-    main_config.exp_name = 'data_hopper/debug_dqn_sbh_ensemble20_tch11-edge-ocet-0.9_noobs_noema_middlenet_k64_beta0.25_vlw0.1' + '_seed' + f'{args.seed}' + '_3M'
+    main_config.exp_name = 'data_hopper/debug_dqn_sbh_ensemble20_tch11-edge-eval-0.9_noise02_noobs_noema_middlenet_k64_beta0.25_vlw0.1' + '_seed' + f'{args.seed}' + '_3M'
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,
                               max_env_step=int(3e6))
 

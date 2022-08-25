@@ -183,7 +183,6 @@ class ActionVQVAE(nn.Module):
             categorical_head_for_cont_action: bool = False,
             threshold_categorical_head_for_cont_action: bool = False,
             categorical_head_for_cont_action_threshold: int = 0.9,
-            only_collect_eval_threhold: bool = False,
             n_atom: int = 51,
             gaussian_head_for_cont_action: bool = False,
             embedding_table_onehot: bool = False,
@@ -216,7 +215,6 @@ class ActionVQVAE(nn.Module):
         self.vqvae_return_weight = vqvae_return_weight
         self.mask_pretanh = mask_pretanh
         self.recons_loss_cont_weight = recons_loss_cont_weight
-        self.only_collect_eval_threhold = only_collect_eval_threhold 
 
         """Encoder"""
         # action encode head
@@ -329,7 +327,8 @@ class ActionVQVAE(nn.Module):
             self,
             action_decoding: torch.Tensor,
             target_action: Union[torch.Tensor, Dict[str, torch.Tensor]] = None,
-            weight: Union[torch.Tensor, Dict[str, torch.Tensor]] = None
+            weight: Union[torch.Tensor, Dict[str, torch.Tensor]] = None,
+            threshold_phase: bool = False,
     ) -> Tuple[Union[torch.Tensor, Dict[str, torch.Tensor]], torch.Tensor]:
         """
          Overview:
@@ -356,26 +355,30 @@ class ActionVQVAE(nn.Module):
                 
                 recons_action = torch.sum(recons_action_probs * support, dim=-1) # shape: (B,A)
                 
-                if target_action is None or self.only_collect_eval_threhold is False:
+                if target_action is None:
                     # collect or eval phase
-                    # TODO(pu): for construct some extreme action
-                    # prob=[p1,p2,p3,p4], support=[s1,s2,s3,s4], if pi>threshold, then recons_action=support[i]
-                    # shape: (B,A)
-                    recons_action_left_lt_threshold_mask = recons_action_probs[:,:,0].ge(self.categorical_head_for_cont_action_threshold) 
-                    recons_action_right_lt_threshold_mask = recons_action_probs[:,:,-1].ge(self.categorical_head_for_cont_action_threshold) 
 
-                    if recons_action_left_lt_threshold_mask.sum()>0 or recons_action_right_lt_threshold_mask.sum()>0:
-                        recons_action_probs_left_lt_threshold =  recons_action_probs[:,:,0].masked_select(recons_action_left_lt_threshold_mask ) 
-                        recons_action_probs_right_lt_threshold =  recons_action_probs[:,:,-1].masked_select(recons_action_right_lt_threshold_mask ) 
+                    if threshold_phase:
+                        # TODO(pu): for construct some extreme action
+                        # prob=[p1,p2,p3,p4], support=[s1,s2,s3,s4], if pi>threshold, then recons_action=support[i]
+                        # shape: (B,A)
+                        recons_action_left_lt_threshold_mask = recons_action_probs[:,:,0].ge(self.categorical_head_for_cont_action_threshold) 
+                        recons_action_right_lt_threshold_mask = recons_action_probs[:,:,-1].ge(self.categorical_head_for_cont_action_threshold) 
 
-                        # straight-through estimator for passing gradient from recons_action_probs_lt_threshold
-                        recons_action[recons_action_left_lt_threshold_mask] = (recons_action_probs_left_lt_threshold + (1-recons_action_probs_left_lt_threshold ).detach())*  support[0]
-                        recons_action[recons_action_right_lt_threshold_mask] = (recons_action_probs_right_lt_threshold + (1-recons_action_probs_right_lt_threshold ).detach())*  support[-1]
+                        if recons_action_left_lt_threshold_mask.sum()>0 or recons_action_right_lt_threshold_mask.sum()>0:
+                            recons_action_probs_left_lt_threshold =  recons_action_probs[:,:,0].masked_select(recons_action_left_lt_threshold_mask ) 
+                            recons_action_probs_right_lt_threshold =  recons_action_probs[:,:,-1].masked_select(recons_action_right_lt_threshold_mask ) 
 
-                        # statistics
-                        recons_action_probs_left_mask_proportion = recons_action_left_lt_threshold_mask.sum()/ (recons_action_left_lt_threshold_mask.shape[0]* recons_action_left_lt_threshold_mask.shape[1])
-                        recons_action_probs_right_mask_proportion = recons_action_right_lt_threshold_mask.sum()/ (recons_action_right_lt_threshold_mask.shape[0]* recons_action_right_lt_threshold_mask.shape[1])
+                            # straight-through estimator for passing gradient from recons_action_probs_lt_threshold
+                            recons_action[recons_action_left_lt_threshold_mask] = (recons_action_probs_left_lt_threshold + (1-recons_action_probs_left_lt_threshold ).detach())*  support[0]
+                            recons_action[recons_action_right_lt_threshold_mask] = (recons_action_probs_right_lt_threshold + (1-recons_action_probs_right_lt_threshold ).detach())*  support[-1]
 
+                            # statistics
+                            recons_action_probs_left_mask_proportion = recons_action_left_lt_threshold_mask.sum()/ (recons_action_left_lt_threshold_mask.shape[0]* recons_action_left_lt_threshold_mask.shape[1])
+                            recons_action_probs_right_mask_proportion = recons_action_right_lt_threshold_mask.sum()/ (recons_action_right_lt_threshold_mask.shape[0]* recons_action_right_lt_threshold_mask.shape[1])
+                            print('='*20)
+                            print('recons_action_probs_left_mask_proportion:', recons_action_probs_left_mask_proportion, 'recons_action_probs_right_mask_proportion:', recons_action_probs_right_mask_proportion)
+                            print('='*20)
 
 
                     # recons_action_max = torch.max(recons_action_probs, dim=-1)[0]  # shape: (B,A)
@@ -438,7 +441,7 @@ class ActionVQVAE(nn.Module):
             }
 
         if target_action is None:
-            return recons_action, sigma
+            return recons_action, sigma, recons_action_probs_left_mask_proportion, recons_action_probs_right_mask_proportion 
         else:
             if isinstance(self.action_shape, int):  # continuous action
                 if self.cont_reconst_l1_loss:
@@ -652,14 +655,19 @@ class ActionVQVAE(nn.Module):
 
                 action_obs_decoding_common = self.decode_common(action_obs_decoding)
 
-                recons_action, sigma = self._recons_action(action_obs_decoding_common)
+                recons_action, sigma, recons_action_probs_left_mask_proportion, recons_action_probs_right_mask_proportion = self._recons_action(action_obs_decoding_common, threshold_phase=data['threshold_phase'])
 
                 prediction_residual_tmp = self.decode_prediction_head_layer1(action_obs_decoding_common)
                 prediction_residual = self.decode_prediction_head_layer2(prediction_residual_tmp)
 
-                return {'recons_action': recons_action, 'prediction_residual': prediction_residual}
+                return {'recons_action': recons_action, 
+                'recons_action_probs_left_mask_proportion':recons_action_probs_left_mask_proportion, 
+                'recons_action_probs_right_mask_proportion':recons_action_probs_right_mask_proportion,
+                'prediction_residual': prediction_residual}
 
             else:
                 action_decoding = self.decoder(quantized_embedding)
-                recons_action, sigma = self._recons_action(action_decoding)
-                return {'recons_action': recons_action}
+                recons_action, sigma, recons_action_probs_left_mask_proportion, recons_action_probs_right_mask_proportion = self._recons_action(action_decoding, threshold_phase=data['threshold_phase'])
+                return {'recons_action': recons_action, 
+                'recons_action_probs_left_mask_proportion':recons_action_probs_left_mask_proportion, 
+                'recons_action_probs_right_mask_proportion':recons_action_probs_right_mask_proportion}
