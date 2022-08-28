@@ -654,17 +654,34 @@ class DQNVQVAEPolicy(Policy):
 
                 # NOTE: add noise in the original actions
                 if self._cfg.learn.noise:
-                    from ding.rl_utils.exploration import GaussianNoise
-                    action = output['action']
-                    gaussian_noise = GaussianNoise(mu=0.0, sigma=self._cfg.learn.noise_sigma)
-                    noise = gaussian_noise(output['action'].shape, output['action'].device)
-                    if self._cfg.learn.noise_range is not None:
-                        noise = noise.clamp(self._cfg.learn.noise_range['min'], self._cfg.learn.noise_range['max'])
-                    action += noise
-                    self.action_range = {'min': -1, 'max': 1}
-                    if self.action_range is not None:
-                        action = action.clamp(self.action_range['min'], self.action_range['max'])
-                    output['action'] = action
+                    if self._cfg.learn.noise_augment_extreme_action:
+                        if np.random.random() < self._cfg.learn.noise_augment_extreme_action_prob:
+                            halved_prob = torch.ones_like(output['action'])/2
+                            output['action'] = 2*torch.bernoulli(halved_prob)-1  # {-1,1}
+                        else:
+                            from ding.rl_utils.exploration import GaussianNoise
+                            action = output['action']
+                            gaussian_noise = GaussianNoise(mu=0.0, sigma=self._cfg.learn.noise_sigma)
+                            noise = gaussian_noise(output['action'].shape, output['action'].device)
+                            if self._cfg.learn.noise_range is not None:
+                                noise = noise.clamp(self._cfg.learn.noise_range['min'], self._cfg.learn.noise_range['max'])
+                            action += noise
+                            self.action_range = {'min': -1, 'max': 1}
+                            if self.action_range is not None:
+                                action = action.clamp(self.action_range['min'], self.action_range['max'])
+                            output['action'] = action
+                    else:
+                        from ding.rl_utils.exploration import GaussianNoise
+                        action = output['action']
+                        gaussian_noise = GaussianNoise(mu=0.0, sigma=self._cfg.learn.noise_sigma)
+                        noise = gaussian_noise(output['action'].shape, output['action'].device)
+                        if self._cfg.learn.noise_range is not None:
+                            noise = noise.clamp(self._cfg.learn.noise_range['min'], self._cfg.learn.noise_range['max'])
+                        action += noise
+                        self.action_range = {'min': -1, 'max': 1}
+                        if self.action_range is not None:
+                            action = action.clamp(self.action_range['min'], self.action_range['max'])
+                        output['action'] = action
 
         if self._cuda:
             output = to_device(output, 'cpu')
