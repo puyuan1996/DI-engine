@@ -35,11 +35,11 @@ hopper_dqn_default_config = dict(
         # TODO(pu): test ema
         # is_ema=True,  # use EMA
         original_action_shape=3,
-        random_collect_size=int(5e4),  # transitions
-        warm_up_update=int(1e4),
+        # random_collect_size=int(5e4),  # transitions
+        # warm_up_update=int(1e4),
         # debug
-        # random_collect_size=int(1),  
-        # warm_up_update=int(1),
+        random_collect_size=int(1),  
+        warm_up_update=int(1),
 
         vqvae_embedding_dim=64,  # ved: D
         vqvae_hidden_dim=[256],  # vhd

@@ -610,7 +610,7 @@ class DQNVQVAEPolicy(Policy):
                         action = action.clamp(self.action_range['min'], self.action_range['max'])
                     output['action']['action_args'] = action
             else:
-                # continous action space
+                # continuos action space
                 if not self._cfg.augment_extreme_action:
                     # TODO
                     output['action'] = self._vqvae_model.decode({'quantized_index': output['action'], 'obs': data, 'threshold_phase': 'collect' in self._cfg.threshold_phase})[
@@ -625,7 +625,7 @@ class DQNVQVAEPolicy(Policy):
                     mask = output['action'].ge(self._cfg.latent_action_shape) & output['action'].le(self._cfg.model.action_shape)  # TODO
 
                     # the usual latent of vqvae learned action
-                    output_action[~mask] = self._vqvae_model.decode({'quantized_index': output['action'].masked_select(~mask), 'obs': data.masked_select(~mask.unsqueeze(-1)).view(-1,self._cfg.model.obs_shape)})[
+                    output_action[~mask] = self._vqvae_model.decode({'quantized_index': output['action'].masked_select(~mask), 'obs': data.masked_select(~mask.unsqueeze(-1)).view(-1,self._cfg.model.obs_shape), 'threshold_phase': 'collect' in self._cfg.threshold_phase})[
                         'recons_action']
 
                     if mask.sum() > 0:
@@ -739,7 +739,7 @@ class DQNVQVAEPolicy(Policy):
                     mask = output['action'].ge(self._cfg.latent_action_shape) & output['action'].le(self._cfg.model.action_shape)  # TODO
 
                     # the usual latent of vqvae learned action
-                    output_action[~mask] = self._vqvae_model.decode({'quantized_index': output['action'].masked_select(~mask), 'obs': data.masked_select(~mask.unsqueeze(-1)).view(-1,self._cfg.model.obs_shape)})[
+                    output_action[~mask] = self._vqvae_model.decode({'quantized_index': output['action'].masked_select(~mask), 'obs': data.masked_select(~mask.unsqueeze(-1)).view(-1,self._cfg.model.obs_shape), 'threshold_phase': 'collect' in self._cfg.threshold_phase})[
                         'recons_action']
 
                     if mask.sum() > 0:

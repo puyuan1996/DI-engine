@@ -42,8 +42,8 @@ halfcheetah_dqn_default_config = dict(
         # warm_up_update=int(10),
 
         vqvae_embedding_dim=64,  # ved: D
-        # vqvae_hidden_dim=[256],  # vhd
-        vqvae_hidden_dim=[512],  # vhd
+        vqvae_hidden_dim=[256],  # vhd
+        # vqvae_hidden_dim=[512],  # vhd
         target_network_soft_update=False,
         beta=0.25,
         vq_loss_weight=0.1,  # TODO
@@ -52,8 +52,8 @@ halfcheetah_dqn_default_config = dict(
         mask_pretanh=False,
         replay_buffer_size_vqvae=int(1e6),
         auxiliary_conservative_loss=False,
-        # augment_extreme_action=False,
-        augment_extreme_action=True,
+        augment_extreme_action=False,
+        # augment_extreme_action=True,
 
         # obs_regularization=True,
         obs_regularization=False,
@@ -72,8 +72,9 @@ halfcheetah_dqn_default_config = dict(
         cont_reconst_l1_loss=False,
         cont_reconst_smooth_l1_loss=False,
         categorical_head_for_cont_action=False,  # categorical distribution
-        threshold_categorical_head_for_cont_action=False,  # categorical distribution
-        categorical_head_for_cont_action_threshold=0.1,
+
+        threshold_categorical_head_for_cont_action=True,  # threshold categorical distribution
+        categorical_head_for_cont_action_threshold=0.9,
         threshold_phase=['eval'],  # ['eval', 'collect']
         n_atom=11,
 
@@ -96,14 +97,15 @@ halfcheetah_dqn_default_config = dict(
         priority_IS_weight_vqvae=False,  # NOTE: return priority
         priority_type_vqvae='return',
         priority_vqvae_min=0.,
-        latent_action_shape=int(64),  # num of num_embeddings: K, i.e. shape of latent action
+        # latent_action_shape=int(64),  # num of num_embeddings: K, i.e. shape of latent action
+        latent_action_shape=int(128),  # num of num_embeddings: K, i.e. shape of latent action
         model=dict(
             ensemble_num=20,  # TODO
             obs_shape=17,
             # TODO: augment_extreme_action=True,
-            action_shape=int(64+2**6),  # Q dim
+            # action_shape=int(64+2**6),  # Q dim
             # action_shape=int(64),  # Q dim
-            # action_shape=int(128),  # num of num_embeddings: K
+            action_shape=int(128),  # num of num_embeddings: K
             # encoder_hidden_size_list=[128, 128, 64],  # small net
             encoder_hidden_size_list=[256, 256, 128],  # middle net
             # encoder_hidden_size_list=[512, 512, 256],  # large net
@@ -118,8 +120,10 @@ halfcheetah_dqn_default_config = dict(
             constrain_action=False,  # TODO(pu): delete this key
 
             rl_vae_update_circle=1,  # train rl 1 iter, vae 1 iter
-            update_per_collect_rl=20,  # for collector n_sample=256
-            update_per_collect_vae=20,
+            # update_per_collect_rl=20,  # for collector n_sample=256
+            # update_per_collect_vae=20,
+            update_per_collect_rl=50,  # for collector n_sample=256
+            update_per_collect_vae=50,
 
             rl_batch_size=512,
             vqvae_batch_size=512,
@@ -143,13 +147,15 @@ halfcheetah_dqn_default_config = dict(
             rl_linear_lr_scheduler=False,
 
             # add noise in original continuous action
-            noise=False,  # NOTE: if vqvae_pretrain_only=True
-            # noise=True,  # NOTE: if vqvae_pretrain_only=False
-            noise_sigma=0.2,
+            # noise=False,  # NOTE: if vqvae_pretrain_only=True
+            noise=True,  # NOTE: if vqvae_pretrain_only=False
+            noise_sigma=0.,
             noise_range=dict(
                 min=-0.5,
                 max=0.5,
             ),
+            noise_augment_extreme_action=True,
+            noise_augment_extreme_action_prob=0.1,
         ),
         # collect_mode config
         collect=dict(
@@ -190,7 +196,7 @@ create_config = halfcheetah_dqn_create_config
 
 
 def train(args):
-    main_config.exp_name = 'data_halfcheetah/dqn_sbh_ensemble20_aea_noobs_noema_middlenet_k64_beta0.25_vlw0.1_vhd512' + '_seed' + f'{args.seed}' + '_3M'
+    main_config.exp_name = 'data_halfcheetah/dqn_sbh_ensemble20_tch11-edge-eval-0.9_noise0_naea01_upc50_noobs_noema_middlenet_k128_beta0.25_vlw0.1' + '_seed' + f'{args.seed}' + '_3M'
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,
                               max_env_step=int(3e6))
 
