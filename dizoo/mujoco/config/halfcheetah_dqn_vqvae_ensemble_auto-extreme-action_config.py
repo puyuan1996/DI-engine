@@ -9,7 +9,7 @@ halfcheetah_dqn_default_config = dict(
         norm_reward=dict(use_norm=False, ),
         # (bool) Scale output action into legal range.
         use_act_scale=True,
-        clip_rewards=True,
+        clip_rewards=False,
         # Env number respectively for collector and evaluator.
         collector_env_num=8,
         evaluator_env_num=8,
@@ -53,8 +53,8 @@ halfcheetah_dqn_default_config = dict(
         mask_pretanh=False,
         replay_buffer_size_vqvae=int(1e6),
         auxiliary_conservative_loss=False,
-        # augment_extreme_action=False,
-        augment_extreme_action=True,
+        augment_extreme_action=False,
+        # augment_extreme_action=True,
 
         # obs_regularization=True,
         obs_regularization=False,
@@ -98,15 +98,15 @@ halfcheetah_dqn_default_config = dict(
         priority_IS_weight_vqvae=False,  # NOTE: return priority
         priority_type_vqvae='return',
         priority_vqvae_min=0.,
-        latent_action_shape=int(64),  # num of num_embeddings: K, i.e. shape of latent action
-        # latent_action_shape=int(128),  # num of num_embeddings: K, i.e. shape of latent action
+        # latent_action_shape=int(64),  # num of num_embeddings: K, i.e. shape of latent action
+        latent_action_shape=int(128),  # num of num_embeddings: K, i.e. shape of latent action
         model=dict(
             ensemble_num=20,  # TODO
             obs_shape=17,
             # TODO: augment_extreme_action=True,
-            action_shape=int(64+2**6),  # Q dim
+            # action_shape=int(64+2**6),  # Q dim
             # action_shape=int(64),  # Q dim
-            # action_shape=int(128),  # num of num_embeddings: K
+            action_shape=int(128),  # num of num_embeddings: K
             # encoder_hidden_size_list=[128, 128, 64],  # small net
             encoder_hidden_size_list=[256, 256, 128],  # middle net
             # encoder_hidden_size_list=[512, 512, 256],  # large net
@@ -148,8 +148,8 @@ halfcheetah_dqn_default_config = dict(
             rl_linear_lr_scheduler=False,
 
             # add noise in original continuous action
-            noise=False,  # NOTE: if vqvae_pretrain_only=True or augment_extreme_action=True
-            # noise=True,  # NOTE: if vqvae_pretrain_only=False
+            # noise=False,  # NOTE: if vqvae_pretrain_only=True or augment_extreme_action=True
+            noise=True,  # NOTE: if vqvae_pretrain_only=False
             noise_sigma=0.,
             noise_range=dict(
                 min=-0.5,
@@ -197,8 +197,7 @@ create_config = halfcheetah_dqn_create_config
 
 
 def train(args):
-    # main_config.exp_name = 'data_halfcheetah/dqn_sbh_ensemble20_tch11-edge-eval-0.9_noise0_naea01_upc50_noobs_noema_middlenet_k128_beta0.25_vlw0.1' + '_seed' + f'{args.seed}' + '_3M'
-    main_config.exp_name = 'data_halfcheetah/dqn_sbh_ensemble20_aea_upc50_vhd512_noobs_noema_middlenet_k64_beta0.25_vlw0.1_clip-reward' + '_seed' + f'{args.seed}' + '_3M'
+    main_config.exp_name = 'data_halfcheetah/dqn_sbh_ensemble20_tch11-edge-eval-0.9_noise0_naea01_upc50_noobs_noema_middlenet_k128_beta0.25_vlw0.1' + '_seed' + f'{args.seed}' + '_3M'
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,
                               max_env_step=int(3e6))
 
