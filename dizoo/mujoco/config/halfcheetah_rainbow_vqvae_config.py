@@ -199,7 +199,7 @@ create_config = halfcheetah_rainbow_create_config
 
 
 def train(args):
-    main_config.exp_name = 'data_halfcheetah/rainbow_sbh_ensemble20_aea_upc50_vhd512_noobs_noema_middlenet_k64_beta0.25_vlw0.1' + '_seed' + f'{args.seed}' + '_3M'
+    main_config.exp_name = 'data_halfcheetah/rainbow_aea_upc50_vhd512_noobs_noema_middlenet_k64_beta0.25_vlw0.1' + '_seed' + f'{args.seed}' + '_3M'
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=int(3e6))
 
 if __name__ == "__main__":

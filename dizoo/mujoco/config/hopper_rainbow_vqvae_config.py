@@ -200,7 +200,7 @@ create_config = hopper_rainbow_create_config
 
 
 def train(args):
-    main_config.exp_name = 'data_hopper/rainbow_sbh_ensemble20_tch11-edge-eval-0.9_noise0_naea01_upc20_noobs_noema_middlenet_k64_beta0.25_vlw0.1' + '_seed' + f'{args.seed}' + '_3M'
+    main_config.exp_name = 'data_hopper/rainbow_tch11-edge-eval-0.9_noise0_naea01_upc20_noobs_noema_middlenet_k64_beta0.25_vlw0.1' + '_seed' + f'{args.seed}' + '_3M'
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=int(3e6))
 
 if __name__ == "__main__":
