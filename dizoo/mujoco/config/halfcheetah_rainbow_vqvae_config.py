@@ -1,10 +1,10 @@
 from easydict import EasyDict
 
 nstep = 3
-hopper_rainbow_default_config = dict(
-    exp_name='hopper_rainbow_vqvae_seed0',
+halfcheetah_rainbow_default_config = dict(
+    exp_name='halfcheetah_rainbow_vqvae_seed0',
     env=dict(
-        env_id='Hopper-v3',
+        env_id='HalfCheetah-v3',
         norm_obs=dict(use_norm=False, ),
         norm_reward=dict(use_norm=False, ),
         # (bool) Scale output action into legal range.
@@ -35,7 +35,7 @@ hopper_rainbow_default_config = dict(
         is_ema=False,  # no use EMA
         # TODO(pu): test ema
         # is_ema=True,  # use EMA
-        original_action_shape=3,
+        original_action_shape=6,
         random_collect_size=int(5e4),  # transitions
         warm_up_update=int(1e4),
         # debug
@@ -43,7 +43,8 @@ hopper_rainbow_default_config = dict(
         # warm_up_update=int(1),
 
         vqvae_embedding_dim=64,  # ved: D
-        vqvae_hidden_dim=[256],  # vhd
+        # vqvae_hidden_dim=[256],  # vhd
+        vqvae_hidden_dim=[512],  # vhd
         target_network_soft_update=False,
         beta=0.25,
         vq_loss_weight=0.1,  # TODO
@@ -71,15 +72,14 @@ hopper_rainbow_default_config = dict(
         cont_reconst_l1_loss=False,
         cont_reconst_smooth_l1_loss=False,
         categorical_head_for_cont_action=False,  # categorical distribution
-
-        augment_extreme_action=False,
-        # augment_extreme_action=True,
+        
+        # augment_extreme_action=False,
+        augment_extreme_action=True,
 
         # if manually augment_extreme_action=False, set threshold_categorical_head_for_cont_action=True, 
-        threshold_categorical_head_for_cont_action=True,  # thereshold categorical distribution
+        threshold_categorical_head_for_cont_action=False,  # thereshold categorical distribution
         categorical_head_for_cont_action_threshold=0.9,
         threshold_phase=['eval'],  # ['eval', 'collect']
-        
         n_atom=11,
 
         gaussian_head_for_cont_action=False,  # gaussian distribution
@@ -104,10 +104,10 @@ hopper_rainbow_default_config = dict(
         priority_vqvae_min=0.,
         latent_action_shape=int(64),  # num of num_embeddings: K, i.e. shape of latent action
         model=dict(
-            obs_shape=11,
+            obs_shape=17,
             # if manually augment_extreme_action=True,
-            # action_shape=int(64+2**3),  # Q dim
-            action_shape=int(64),  # Q dim
+            action_shape=int(64+2**6),  # Q dim
+            # action_shape=int(64),  # Q dim
             # action_shape=int(128),  # num of num_embeddings: K
             # encoder_hidden_size_list=[128, 128, 64],  # small net
             encoder_hidden_size_list=[256, 256, 128],  # middle net
@@ -119,14 +119,14 @@ hopper_rainbow_default_config = dict(
         ),
         learn=dict(
             # NOTE: only halfcheetah, set this key True
-            ignore_done=False,
+            ignore_done=True,
             
             reconst_loss_stop_value=1e-6,  # TODO(pu)
             constrain_action=False,  # TODO(pu): delete this key
 
             rl_vae_update_circle=1,  # train rl 1 iter, vae 1 iter
-            update_per_collect_rl=20,  # for collector n_sample=256
-            update_per_collect_vae=20,
+            update_per_collect_rl=50,  # for collector n_sample=256
+            update_per_collect_vae=50,
 
             rl_batch_size=512,
             vqvae_batch_size=512,
@@ -149,10 +149,9 @@ hopper_rainbow_default_config = dict(
 
             rl_linear_lr_scheduler=False,
 
-
             # add noise in original continuous action
-            # noise=False,  # NOTE: if vqvae_pretrain_only=True
-            noise=True,  # NOTE: if vqvae_pretrain_only=False
+            noise=False,  # NOTE: if vqvae_pretrain_only=True
+            # noise=True,  # NOTE: if vqvae_pretrain_only=False
             noise_sigma=0.,
             noise_range=dict(
                 min=-0.5,
@@ -184,10 +183,10 @@ hopper_rainbow_default_config = dict(
         ),
     ),
 )
-hopper_rainbow_default_config = EasyDict(hopper_rainbow_default_config)
-main_config = hopper_rainbow_default_config
+halfcheetah_rainbow_default_config = EasyDict(halfcheetah_rainbow_default_config)
+main_config = halfcheetah_rainbow_default_config
 
-hopper_rainbow_create_config = dict(
+halfcheetah_rainbow_create_config = dict(
     env=dict(
         type='mujoco',
         import_names=['dizoo.mujoco.envs.mujoco_env'],
@@ -195,12 +194,12 @@ hopper_rainbow_create_config = dict(
     env_manager=dict(type='subprocess'),
     policy=dict(type='rainbow_vqvae'),
 )
-hopper_rainbow_create_config = EasyDict(hopper_rainbow_create_config)
-create_config = hopper_rainbow_create_config
+halfcheetah_rainbow_create_config = EasyDict(halfcheetah_rainbow_create_config)
+create_config = halfcheetah_rainbow_create_config
 
 
 def train(args):
-    main_config.exp_name = 'data_hopper/rainbow_sbh_ensemble20_tch11-edge-eval-0.9_noise0_naea01_upc20_noobs_noema_middlenet_k64_beta0.25_vlw0.1' + '_seed' + f'{args.seed}' + '_3M'
+    main_config.exp_name = 'data_halfcheetah/rainbow_sbh_ensemble20_aea_upc50_vhd512_noobs_noema_middlenet_k64_beta0.25_vlw0.1' + '_seed' + f'{args.seed}' + '_3M'
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=int(3e6))
 
 if __name__ == "__main__":
@@ -214,4 +213,4 @@ if __name__ == "__main__":
         args = parser.parse_args()
 
         train(args)
-        # hopper: obs_shape: 11, action_shape: 3
+        # halfcheetah: obs_shape: 17, action_shape: 6

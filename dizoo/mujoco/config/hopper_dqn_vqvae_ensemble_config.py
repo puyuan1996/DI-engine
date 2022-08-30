@@ -9,6 +9,7 @@ hopper_dqn_default_config = dict(
         norm_reward=dict(use_norm=False, ),
         # (bool) Scale output action into legal range.
         use_act_scale=True,
+        clip_rewards=False,
         # Env number respectively for collector and evaluator.
         collector_env_num=8,
         evaluator_env_num=8,
@@ -35,11 +36,11 @@ hopper_dqn_default_config = dict(
         # TODO(pu): test ema
         # is_ema=True,  # use EMA
         original_action_shape=3,
-        # random_collect_size=int(5e4),  # transitions
-        # warm_up_update=int(1e4),
+        random_collect_size=int(5e4),  # transitions
+        warm_up_update=int(1e4),
         # debug
-        random_collect_size=int(1),  
-        warm_up_update=int(1),
+        # random_collect_size=int(1),  
+        # warm_up_update=int(1),
 
         vqvae_embedding_dim=64,  # ved: D
         vqvae_hidden_dim=[256],  # vhd
@@ -103,7 +104,7 @@ hopper_dqn_default_config = dict(
         model=dict(
             ensemble_num=20,  # TODO
             obs_shape=11,
-            # TODO:
+            # if manually augment_extreme_action=True,
             # action_shape=int(64+2**3),  # Q dim
             action_shape=int(64),  # Q dim
             # action_shape=int(128),  # num of num_embeddings: K
@@ -121,8 +122,8 @@ hopper_dqn_default_config = dict(
             constrain_action=False,  # TODO(pu): delete this key
 
             rl_vae_update_circle=1,  # train rl 1 iter, vae 1 iter
-            update_per_collect_rl=20,  # for collector n_sample=256
-            update_per_collect_vae=20,
+            update_per_collect_rl=30,  # for collector n_sample=256
+            update_per_collect_vae=30,
 
             rl_batch_size=512,
             vqvae_batch_size=512,
@@ -196,7 +197,7 @@ create_config = hopper_dqn_create_config
 
 
 def train(args):
-    main_config.exp_name = 'data_hopper/dqn_sbh_ensemble20_tch11-edge-eval-0.9_noise0_naea01_noobs_noema_middlenet_k64_beta0.25_vlw0.1' + '_seed' + f'{args.seed}' + '_3M'
+    main_config.exp_name = 'data_hopper/dqn_sbh_ensemble20_tch11-edge-eval-0.9_noise0_naea01_k64_upc30_noobs_noema_middlenet_beta0.25_vlw0.1' + '_seed' + f'{args.seed}' + '_3M'
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,
                               max_env_step=int(3e6))
 

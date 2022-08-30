@@ -12,6 +12,11 @@ from .dqn import DQNPolicy
 from .common_utils import default_preprocess_learn
 from ding.model.template.action_vqvae import ActionVQVAE
 
+from ding.utils import RunningMeanStd
+from torch.nn import functional as F
+import numpy as np
+import matplotlib.pyplot as plt
+from ding.envs.common import affine_transform
 
 
 @POLICY_REGISTRY.register('rainbow-vqvae')
@@ -141,6 +146,9 @@ class RainbowDQNVQVAEPolicy(DQNPolicy):
         ),
     )
 
+    def default_model(self) -> Tuple[str, List[str]]:
+        return 'rainbowdqn', ['ding.model.template.q_learning']
+
     def _init_learn(self) -> None:
         r"""
         Overview:
@@ -156,16 +164,31 @@ class RainbowDQNVQVAEPolicy(DQNPolicy):
         """
         self._priority = self._cfg.priority
         self._priority_IS_weight = self._cfg.priority_IS_weight
-        # NOTE:
+        self._priority_vqvae = self._cfg.priority_vqvae
+        self._priority_IS_weight_vqvae = self._cfg.priority_IS_weight_vqvae
+        
+        # Optimizer
         if self._cfg.learn.rl_clip_grad is True:
-            self._optimizer = Adam(
+            if self._cfg.learn.rl_weight_decay is not None:
+                self._optimizer = Adam(
                 self._model.parameters(),
                 lr=self._cfg.learn.learning_rate,
+                weight_decay=self._cfg.learn.rl_weight_decay,
+                optim_type='adamw',
                 grad_clip_type=self._cfg.learn.grad_clip_type,
                 clip_value=self._cfg.learn.grad_clip_value
             )
+            else:
+                self._optimizer = Adam(
+                    self._model.parameters(),
+                    lr=self._cfg.learn.learning_rate,
+                    grad_clip_type=self._cfg.learn.grad_clip_type,
+                    clip_value=self._cfg.learn.grad_clip_value
+                )
+
         else:
             self._optimizer = Adam(self._model.parameters(), lr=self._cfg.learn.learning_rate)
+      
         self._gamma = self._cfg.discount_factor
         self._nstep = self._cfg.nstep
         self._v_max = self._cfg.model.v_max
@@ -186,23 +209,46 @@ class RainbowDQNVQVAEPolicy(DQNPolicy):
         self._forward_learn_cnt = 0  # count iterations
         self._vqvae_model = ActionVQVAE(
             self._cfg.original_action_shape,
-            self._cfg.model.action_shape,  #K
-            self._cfg.vqvae_embedding_dim,  #D
+            self._cfg.latent_action_shape,  # K
+            self._cfg.vqvae_embedding_dim,  # D
             self._cfg.vqvae_hidden_dim,
-            self._cfg.vq_loss_weight,
+            beta=self._cfg.beta,
+            vq_loss_weight=self._cfg.vq_loss_weight,  # TODO
             is_ema=self._cfg.is_ema,
             is_ema_target=self._cfg.is_ema_target,
             eps_greedy_nearest=self._cfg.eps_greedy_nearest,
+            cont_reconst_l1_loss=self._cfg.cont_reconst_l1_loss,
+            cont_reconst_smooth_l1_loss=self._cfg.cont_reconst_smooth_l1_loss,
+            categorical_head_for_cont_action=self._cfg.categorical_head_for_cont_action,
+            threshold_categorical_head_for_cont_action=self._cfg.threshold_categorical_head_for_cont_action,
+            categorical_head_for_cont_action_threshold=self._cfg.categorical_head_for_cont_action_threshold,
+            n_atom=self._cfg.n_atom,
+            gaussian_head_for_cont_action=self._cfg.gaussian_head_for_cont_action,
+            embedding_table_onehot=self._cfg.embedding_table_onehot,
+            obs_regularization=self._cfg.obs_regularization,
+            obs_shape=self._cfg.model.obs_shape,
+            predict_loss_weight=self._cfg.predict_loss_weight,
+            mask_pretanh=self._cfg.mask_pretanh,
+            recons_loss_cont_weight = self._cfg.recons_loss_cont_weight
         )
         self._vqvae_model = to_device(self._vqvae_model, self._device)
-        # NOTE:
         if self._cfg.learn.vqvae_clip_grad is True:
+            if self._cfg.learn.rl_weight_decay is not None:
                 self._optimizer_vqvae = Adam(
-                self._vqvae_model.parameters(),
-                lr=self._cfg.learn.learning_rate_vae,
-                grad_clip_type=self._cfg.learn.grad_clip_type,
-                clip_value=self._cfg.learn.grad_clip_value
-        )
+                    self._vqvae_model.parameters(),
+                    lr=self._cfg.learn.learning_rate_vae,
+                    weight_decay=self._cfg.learn.vqvae_weight_decay,
+                    optim_type='adamw',
+                    grad_clip_type=self._cfg.learn.grad_clip_type,
+                    clip_value=self._cfg.learn.grad_clip_value
+                )
+            else:
+                self._optimizer_vqvae = Adam(
+                    self._vqvae_model.parameters(),
+                    lr=self._cfg.learn.learning_rate_vae,
+                    grad_clip_type=self._cfg.learn.grad_clip_type,
+                    clip_value=self._cfg.learn.grad_clip_value
+                )
         else:
             self._optimizer_vqvae = Adam(
                 self._vqvae_model.parameters(),
@@ -239,17 +285,27 @@ class RainbowDQNVQVAEPolicy(DQNPolicy):
             # ====================
             # train vae
             # ====================
-            result = self._vqvae_model.train(data)
+            if self._cfg.obs_regularization:
+                data['true_residual'] = data['next_obs'] - data['obs']
+                result = self._vqvae_model.train_with_obs(data)
+            else:
+                result = self._vqvae_model.train(data)
 
             loss_dict['total_vqvae_loss'] = result['total_vqvae_loss'].item()
             loss_dict['reconstruction_loss'] = result['recons_loss'].item()
             loss_dict['vq_loss'] = result['vq_loss'].item()
             loss_dict['embedding_loss'] = result['embedding_loss'].item()
             loss_dict['commitment_loss'] = result['commitment_loss'].item()
-            
+            loss_dict['recons_action_probs_left_mask_proportion'] = float(result['recons_action_probs_left_mask_proportion'])
+            loss_dict['recons_action_probs_right_mask_proportion'] = float(result['recons_action_probs_right_mask_proportion'])
+
+            if self._cfg.obs_regularization:
+                loss_dict['predict_loss'] = result['predict_loss'].item()
+
             # print(loss_dict['reconstruction_loss'])
             if loss_dict['reconstruction_loss'] < self._cfg.learn.reconst_loss_stop_value:
                 self._warm_up_stop = True
+
             # vae update
             self._optimizer_vqvae.zero_grad()
             result['total_vqvae_loss'].backward()
@@ -286,13 +342,21 @@ class RainbowDQNVQVAEPolicy(DQNPolicy):
                 if self._cuda:
                     data = to_device(data, self._device)
 
-                result = self._vqvae_model.train(data)
+                if self._cfg.obs_regularization:
+                    data['true_residual'] = data['next_obs'] - data['obs']
+                    result = self._vqvae_model.train_with_obs(data)
+                else:
+                    result = self._vqvae_model.train(data)
 
                 loss_dict['total_vqvae_loss'] = result['total_vqvae_loss'].item()
                 loss_dict['reconstruction_loss'] = result['recons_loss'].item()
                 loss_dict['vq_loss'] = result['vq_loss'].item()
                 loss_dict['embedding_loss'] = result['embedding_loss'].item()
                 loss_dict['commitment_loss'] = result['commitment_loss'].item()
+                loss_dict['recons_action_probs_left_mask_proportion'] = float(result['recons_action_probs_left_mask_proportion'])
+                loss_dict['recons_action_probs_right_mask_proportion'] = float(result['recons_action_probs_right_mask_proportion'])
+                if self._cfg.obs_regularization:
+                    loss_dict['predict_loss'] = result['predict_loss'].item()
 
                 # vae update
                 self._optimizer_vqvae.zero_grad()
@@ -326,9 +390,15 @@ class RainbowDQNVQVAEPolicy(DQNPolicy):
 
                 # Representation shift correction (RSC)
                 # update all latent action
-                quantized_index = self._vqvae_model.encode({'action': data['action']})
-                data['latent_action'] = quantized_index.clone().detach()
-                # print(torch.unique(data['latent_action']))
+                if self._cfg.recompute_latent_action:
+                    if self._cfg.rl_reconst_loss_weight:
+                        result = self._vqvae_model.train(data)
+                        reconstruction_loss_none_reduction = result['recons_loss_none_reduction']
+                        data['latent_action'] = result['quantized_index'].clone().detach()
+                    else:
+                        quantized_index = self._vqvae_model.encode(data)
+                        data['latent_action'] = quantized_index.clone().detach()
+                        # print(torch.unique(data['latent_action']))
 
                 if self._cuda:
                     data = to_device(data, self._device)
@@ -393,10 +463,11 @@ class RainbowDQNVQVAEPolicy(DQNPolicy):
             'vq_loss',
             'total_grad_norm_rl',
             'total_grad_norm_vqvae',
-            # 'predict_loss',
             # '[histogram]latent_action',
             # '[histogram]cos_similarity',
         ]
+        if self._cfg.obs_regularization:
+            ret.append('predict_loss')
         return ret
 
     def _state_dict_learn(self) -> Dict[str, Any]:
@@ -469,13 +540,14 @@ class RainbowDQNVQVAEPolicy(DQNPolicy):
         self._reset_noise(self._collect_model)
         with torch.no_grad():
             output = self._collect_model.forward(data, eps=eps)
-            # here output['action'] is the out of DQN, is discrete action
+            # here output['action'] is the out of Rainbow DQN, is discrete action
             output['latent_action'] = copy.deepcopy(output['action'])
             if self._cuda:
                 output = to_device(output, self._device)
 
             if self._cfg.action_space == 'hybrid':
-                recons_action = self._vqvae_model.decode(output['action'])
+                # TODO(pu): decode into original hybrid actions, here data is obs
+                recons_action = self._vqvae_model.decode({'quantized_index': output['action'], 'obs': data, 'threshold_phase': 'collect' in self._cfg.threshold_phase})
                 output['action'] = {
                     'action_type': recons_action['recons_action']['action_type'],
                     'action_args': recons_action['recons_action']['action_args']
@@ -497,21 +569,69 @@ class RainbowDQNVQVAEPolicy(DQNPolicy):
                         action = action.clamp(self.action_range['min'], self.action_range['max'])
                     output['action']['action_args'] = action
             else:
-                output['action'] = self._vqvae_model.decode(output['action'])['recons_action']
+                output_action = torch.zeros([output['action'].shape[0], self._cfg.original_action_shape])
+                if self._cuda:
+                    output_action = to_device(output_action, self._device)
+                # the latent of extreme_action, e.g. [64, 64+2**3) [64, 72)
+                mask = output['action'].ge(self._cfg.latent_action_shape) & output['action'].le(self._cfg.model.action_shape)  # TODO
+
+                # the usual latent of vqvae learned action
+                output_action[~mask] = self._vqvae_model.decode({'quantized_index': output['action'].masked_select(~mask), 'obs': data.masked_select(~mask.unsqueeze(-1)).view(-1,self._cfg.model.obs_shape), 'threshold_phase': 'collect' in self._cfg.threshold_phase})[
+                    'recons_action']
+
+                if mask.sum() > 0:
+                    # the latent of extreme_action, e.g. [64, 64+2**3) [64, 72) -> [0, 8)
+                    extreme_action_index = output['action'].masked_select(mask) - self._cfg.latent_action_shape
+                    from itertools import product
+                    # NOTE:
+                    # disc_to_cont: transform discrete action index to original continuous action
+                    self.m = self._cfg.original_action_shape
+                    self.n = 2
+                    self.K =  self.n ** self.m
+                    self.disc_to_cont = list(product(*[list(range(self.n)) for dim in range(self.m)] ))
+                    # NOTE: disc_to_cont: transform discrete action index to original continuous action
+                    extreme_action = torch.tensor([[-1. if k==0 else 1.for k in  self.disc_to_cont[int(one_extreme_action_index)]] for one_extreme_action_index in extreme_action_index])
+                    if self._cuda:
+                        extreme_action = to_device(extreme_action, self._device)
+                    output_action[mask] = extreme_action
+
+                output['action'] = output_action
+
+                # debug
+                # latents = to_device(torch.arange(64), 'cuda')
+                # recons_action = self._vqvae_model.decode(latents)['recons_action']
+                # print(recons_action.max(0), recons_action.min(0),recons_action.mean(0), recons_action.std(0))
 
                 # NOTE: add noise in the original actions
                 if self._cfg.learn.noise:
-                    from ding.rl_utils.exploration import GaussianNoise
-                    action = output['action']
-                    gaussian_noise = GaussianNoise(mu=0.0, sigma=self._cfg.learn.noise_sigma)
-                    noise = gaussian_noise(output['action'].shape, output['action'].device)
-                    if self._cfg.learn.noise_range is not None:
-                        noise = noise.clamp(self._cfg.learn.noise_range['min'], self._cfg.learn.noise_range['max'])
-                    action += noise
-                    self.action_range = {'min': -1, 'max': 1}
-                    if self.action_range is not None:
-                        action = action.clamp(self.action_range['min'], self.action_range['max'])
-                    output['action'] = action
+                    if self._cfg.learn.noise_augment_extreme_action:
+                        if np.random.random() < self._cfg.learn.noise_augment_extreme_action_prob:
+                            halved_prob = torch.ones_like(output['action'])/2
+                            output['action'] = 2*torch.bernoulli(halved_prob)-1  # {-1,1}
+                        else:
+                            from ding.rl_utils.exploration import GaussianNoise
+                            action = output['action']
+                            gaussian_noise = GaussianNoise(mu=0.0, sigma=self._cfg.learn.noise_sigma)
+                            noise = gaussian_noise(output['action'].shape, output['action'].device)
+                            if self._cfg.learn.noise_range is not None:
+                                noise = noise.clamp(self._cfg.learn.noise_range['min'], self._cfg.learn.noise_range['max'])
+                            action += noise
+                            self.action_range = {'min': -1, 'max': 1}
+                            if self.action_range is not None:
+                                action = action.clamp(self.action_range['min'], self.action_range['max'])
+                            output['action'] = action
+                    else:
+                        from ding.rl_utils.exploration import GaussianNoise
+                        action = output['action']
+                        gaussian_noise = GaussianNoise(mu=0.0, sigma=self._cfg.learn.noise_sigma)
+                        noise = gaussian_noise(output['action'].shape, output['action'].device)
+                        if self._cfg.learn.noise_range is not None:
+                            noise = noise.clamp(self._cfg.learn.noise_range['min'], self._cfg.learn.noise_range['max'])
+                        action += noise
+                        self.action_range = {'min': -1, 'max': 1}
+                        if self.action_range is not None:
+                            action = action.clamp(self.action_range['min'], self.action_range['max'])
+                        output['action'] = action
 
         if self._cuda:
             output = to_device(output, 'cpu')
@@ -571,20 +691,51 @@ class RainbowDQNVQVAEPolicy(DQNPolicy):
         if self._cuda:
             data = to_device(data, self._device)
         self._eval_model.eval()
+        # for subprocess case
+        data = data.float()
         with torch.no_grad():
             output = self._eval_model.forward(data)
-            # here output['action'] is the out of DQN, is discrete action
+            # here output['action'] is the out of Rainbow DQN, is discrete action
             # output['latent_action'] = output['action']  # TODO(pu)
             output['latent_action'] = copy.deepcopy(output['action'])
 
             if self._cfg.action_space == 'hybrid':
-                recons_action = self._vqvae_model.decode(output['action'])
+                recons_action = self._vqvae_model.decode({'quantized_index': output['action'], 'obs': data, 'threshold_phase': 'eval' in self._cfg.threshold_phase})
                 output['action'] = {
                     'action_type': recons_action['recons_action']['action_type'],
                     'action_args': recons_action['recons_action']['action_args']
                 }
             else:
-                output['action'] = self._vqvae_model.decode(output['action'])['recons_action']
+                if not self._cfg.augment_extreme_action:
+                    output['action'] = self._vqvae_model.decode({'quantized_index': output['action'], 'obs': data, 'threshold_phase': 'eval' in self._cfg.threshold_phase})[
+                        'recons_action']
+                else:
+                    output_action = torch.zeros([output['action'].shape[0], self._cfg.original_action_shape])
+                    if self._cuda:
+                        output_action = to_device(output_action, self._device)
+                    # the latent of extreme_action 
+                    mask = output['action'].ge(self._cfg.latent_action_shape) & output['action'].le(self._cfg.model.action_shape)  # TODO
+
+                    # the usual latent of vqvae learned action
+                    output_action[~mask] = self._vqvae_model.decode({'quantized_index': output['action'].masked_select(~mask), 'obs': data.masked_select(~mask.unsqueeze(-1)).view(-1,self._cfg.model.obs_shape), 'threshold_phase': 'collect' in self._cfg.threshold_phase})[
+                        'recons_action']
+
+                    if mask.sum() > 0:
+                        # the latent of extreme_action 
+                        extreme_action_index = output['action'].masked_select(mask) - self._cfg.latent_action_shape
+                        from itertools import product
+                        # NOTE: disc_to_cont: transform discrete action index to original continuous action
+                        self.m = self._cfg.original_action_shape
+                        self.n = 2
+                        self.K =  self.n ** self.m
+                        self.disc_to_cont = list(product(*[list(range(self.n)) for dim in range(self.m)] ))
+                        # NOTE: disc_to_cont: transform discrete action index to original continuous action
+                        extreme_action = torch.tensor([[-1. if k==0 else 1.for k in  self.disc_to_cont[int(one_extreme_action_index)]] for one_extreme_action_index in extreme_action_index])
+                        if self._cuda:
+                            extreme_action = to_device(extreme_action, self._device)
+                        output_action[mask] = extreme_action
+
+                    output['action'] = output_action
 
         if self._cuda:
             output = to_device(output, 'cpu')
@@ -604,9 +755,6 @@ class RainbowDQNVQVAEPolicy(DQNPolicy):
         """
         data = get_nstep_return_data(traj, self._nstep, gamma=self._gamma)
         return get_train_sample(data, self._unroll_len)
-
-    def default_model(self) -> Tuple[str, List[str]]:
-        return 'rainbowdqn', ['ding.model.template.q_learning']
 
     def _reset_noise(self, model: torch.nn.Module):
         r"""

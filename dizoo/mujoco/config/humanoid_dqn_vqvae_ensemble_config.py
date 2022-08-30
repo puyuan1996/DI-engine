@@ -9,6 +9,7 @@ humanoid_dqn_default_config = dict(
         norm_reward=dict(use_norm=False, ),
         # (bool) Scale output action into legal range.
         use_act_scale=True,
+        clip_rewards=False,
         # Env number respectively for collector and evaluator.
         collector_env_num=8,
         evaluator_env_num=8,
@@ -42,7 +43,8 @@ humanoid_dqn_default_config = dict(
         # warm_up_update=int(10),
 
         vqvae_embedding_dim=64,  # ved: D
-        vqvae_hidden_dim=[256],  # vhd
+        # vqvae_hidden_dim=[256],  # vhd
+        vqvae_hidden_dim=[512],  # vhd
         target_network_soft_update=False,
         beta=0.25,
         vq_loss_weight=0.1,  # TODO
@@ -51,8 +53,6 @@ humanoid_dqn_default_config = dict(
         mask_pretanh=False,
         replay_buffer_size_vqvae=int(1e6),
         auxiliary_conservative_loss=False,
-        # augment_extreme_action=False,
-        augment_extreme_action=True,
 
         # obs_regularization=True,
         obs_regularization=False,
@@ -71,7 +71,13 @@ humanoid_dqn_default_config = dict(
         cont_reconst_l1_loss=False,
         cont_reconst_smooth_l1_loss=False,
         categorical_head_for_cont_action=False,  # categorical distribution
-        n_atom=51,
+
+        augment_extreme_action=False,
+        threshold_categorical_head_for_cont_action=False,  # thereshold categorical distribution
+        categorical_head_for_cont_action_threshold=0.9,
+        threshold_phase=['eval'],  # ['eval', 'collect']
+        n_atom=11,
+
         gaussian_head_for_cont_action=False,  # gaussian distribution
         embedding_table_onehot=False,
 
@@ -96,8 +102,8 @@ humanoid_dqn_default_config = dict(
             ensemble_num=20,  # TODO
             obs_shape=376,
             # TODO: augment_extreme_action=True,
-            action_shape=int(64+2**17),  # Q dim
-            # action_shape=int(64),  # Q dim
+            # action_shape=int(64+2**17),  # Q dim
+            action_shape=int(64),  # Q dim
             # action_shape=int(128),  # num of num_embeddings: K
             # encoder_hidden_size_list=[128, 128, 64],  # small net
             encoder_hidden_size_list=[256, 256, 128],  # middle net
@@ -113,8 +119,8 @@ humanoid_dqn_default_config = dict(
             constrain_action=False,  # TODO(pu): delete this key
 
             rl_vae_update_circle=1,  # train rl 1 iter, vae 1 iter
-            update_per_collect_rl=20,  # for collector n_sample=256
-            update_per_collect_vae=20,
+            update_per_collect_rl=50,  # for collector n_sample=256
+            update_per_collect_vae=50,
 
             rl_batch_size=512,
             vqvae_batch_size=512,
@@ -183,7 +189,7 @@ create_config = humanoid_dqn_create_config
 
 
 def train(args):
-    main_config.exp_name = 'data_humanoid/dqn_sbh_ensemble20_aea_noobs_noema_middlenet_k64_beta0.25_vlw0.1' + '_seed' + f'{args.seed}' + '_3M'
+    main_config.exp_name = 'data_humanoid/dqn_sbh_ensemble20_k64_upc50_vhd512_noobs_noema_middlenet_beta0.25_vlw0.1' + '_seed' + f'{args.seed}' + '_3M'
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,
                               max_env_step=int(3e6))
 

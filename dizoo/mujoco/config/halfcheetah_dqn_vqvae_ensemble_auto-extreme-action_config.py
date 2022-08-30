@@ -42,8 +42,9 @@ halfcheetah_dqn_default_config = dict(
         # random_collect_size=int(10),  
         # warm_up_update=int(10),
 
-        vqvae_embedding_dim=64,  # ved: D
+        # vqvae_embedding_dim=64,  # ved: D
         # vqvae_hidden_dim=[256],  # vhd
+        vqvae_embedding_dim=128,  # ved: D
         vqvae_hidden_dim=[512],  # vhd
         target_network_soft_update=False,
         beta=0.25,
@@ -53,8 +54,6 @@ halfcheetah_dqn_default_config = dict(
         mask_pretanh=False,
         replay_buffer_size_vqvae=int(1e6),
         auxiliary_conservative_loss=False,
-        augment_extreme_action=False,
-        # augment_extreme_action=True,
 
         # obs_regularization=True,
         obs_regularization=False,
@@ -74,6 +73,10 @@ halfcheetah_dqn_default_config = dict(
         cont_reconst_smooth_l1_loss=False,
         categorical_head_for_cont_action=False,  # categorical distribution
 
+        augment_extreme_action=False,
+        # augment_extreme_action=True,
+        
+        # if manually augment_extreme_action=False, set threshold_categorical_head_for_cont_action=True, 
         threshold_categorical_head_for_cont_action=True,  # threshold categorical distribution
         categorical_head_for_cont_action_threshold=0.9,
         threshold_phase=['eval'],  # ['eval', 'collect']
@@ -103,7 +106,7 @@ halfcheetah_dqn_default_config = dict(
         model=dict(
             ensemble_num=20,  # TODO
             obs_shape=17,
-            # TODO: augment_extreme_action=True,
+            # if manually augment_extreme_action=True,
             # action_shape=int(64+2**6),  # Q dim
             # action_shape=int(64),  # Q dim
             action_shape=int(128),  # num of num_embeddings: K
@@ -197,7 +200,7 @@ create_config = halfcheetah_dqn_create_config
 
 
 def train(args):
-    main_config.exp_name = 'data_halfcheetah/dqn_sbh_ensemble20_tch11-edge-eval-0.9_noise0_naea01_upc50_noobs_noema_middlenet_k128_beta0.25_vlw0.1' + '_seed' + f'{args.seed}' + '_3M'
+    main_config.exp_name = 'data_halfcheetah/dqn_sbh_ensemble20_tch11-edge-eval-0.9_noise0_naea01_k128_upc50_vhd512_ved128_noobs_noema_middlenet_beta0.25_vlw0.1' + '_seed' + f'{args.seed}' + '_3M'
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,
                               max_env_step=int(3e6))
 
@@ -213,3 +216,5 @@ if __name__ == "__main__":
         args = parser.parse_args()
 
         train(args)
+        # halfcheetah: obs_shape: 17, action_shape: 6
+
