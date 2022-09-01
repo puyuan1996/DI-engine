@@ -586,6 +586,12 @@ class DQNVQVAEPolicy(Policy):
             if self._cuda:
                 output = to_device(output, self._device)
 
+
+            # debug
+            # latents = to_device(torch.arange(64), 'cuda')
+            # recons_action = self._vqvae_model.decode({'quantized_index': latents, 'obs': data, 'threshold_phase': False})['recons_action']
+            # print(recons_action.max(0), recons_action.min(0),recons_action.mean(0), recons_action.std(0))
+
             if self._cfg.action_space == 'hybrid':
                 # TODO(pu): decode into original hybrid actions, here data is obs
                 recons_action = self._vqvae_model.decode({'quantized_index': output['action'], 'obs': data, 'threshold_phase': 'collect' in self._cfg.threshold_phase})
@@ -646,11 +652,6 @@ class DQNVQVAEPolicy(Policy):
 
                     output['action'] = output_action
                     
-
-                # debug
-                # latents = to_device(torch.arange(64), 'cuda')
-                # recons_action = self._vqvae_model.decode(latents)['recons_action']
-                # print(recons_action.max(0), recons_action.min(0),recons_action.mean(0), recons_action.std(0))
 
                 # NOTE: add noise in the original actions
                 if self._cfg.learn.noise:
@@ -883,14 +884,23 @@ class DQNVQVAEPolicy(Policy):
         return transition
 
 
-    def visualize_latent(self, save_histogram=True, name=0, granularity=0.1):
+    def visualize_latent(self, save_histogram=False, save_mapping=False, save_decoding_mapping=False, name_suffix=0, granularity=0.01):
+        # i.e. to execute:
+        # action_embedding = self._get_action_embedding(data)
         if self.cfg.action_space == 'continuous':
-            # continuous action, now only for hopper env: 3 dim cont
-            xx, yy, zz = np.meshgrid(
-                np.arange(-1, 1, granularity), np.arange(-1, 1, granularity), np.arange(-1, 1, granularity)
+            # continuous action, for lunarlander env: 2 dim cont
+            xx, yy = np.meshgrid(
+                np.arange(-1, 1, granularity), np.arange(-1, 1, granularity)
             )
-            cnt = int((2 / granularity)) ** 3
-            action_samples = np.array([xx.ravel(), yy.ravel(), zz.ravel()]).reshape(cnt, 3)
+            cnt = int((2 / granularity)) ** 2
+            action_samples = np.array([xx.ravel(), yy.ravel()]).reshape(cnt, 2)
+
+            # continuous action, for hopper env: 3 dim cont
+            # xx, yy, zz = np.meshgrid(
+            #     np.arange(-1, 1, granularity), np.arange(-1, 1, granularity), np.arange(-1, 1, granularity)
+            # )
+            # cnt = int((2 / granularity)) ** 3
+            # action_samples = np.array([xx.ravel(), yy.ravel(), zz.ravel()]).reshape(cnt, 3)
         elif self.cfg.action_space == 'hybrid':
             # hybrid action, now only for gym_hybrid env: 3 dim discrete, 2 dim cont
             xx, yy = np.meshgrid(np.arange(-1, 1, granularity), np.arange(-1, 1, granularity))
@@ -912,7 +922,6 @@ class DQNVQVAEPolicy(Policy):
         # quantized_index, quantized_inputs, vq_loss, _, _ = self._vqvae_model.vq_layer(encoding)
 
         with torch.no_grad():
-            # action_embedding = self._get_action_embedding(data)
             encoding = self._vqvae_model.encoder(to_device(torch.Tensor(action_samples), self._device))
             quantized_index = self._vqvae_model.vq_layer.encode(encoding)
 
@@ -927,18 +936,59 @@ class DQNVQVAEPolicy(Policy):
                 quantized_index.detach().cpu().numpy(), HIST_BINS, density=False, facecolor='g', alpha=0.75
             )
 
-            plt.xlabel('Latent Discrete action')
+            plt.xlabel('Latent Action')
             plt.ylabel('Count')
-            plt.title('Histogram of Latent Discrete action')
+            plt.title('Latent Action Histogram')
             plt.grid(True)
             plt.show()
 
-            if isinstance(name, int):
-                plt.savefig(f'latent_histogram_iter{name}.png')
-                print(f'save latent_histogram_iter{name}.png')
-            elif isinstance(name, str):
-                plt.savefig('latent_histogram_' + name + '.png')
-                print('latent_histogram_' + name + '.png')
+            if isinstance(name_suffix, int):
+                plt.savefig(f'latent_histogram_{name_suffix}.png')
+                print(f'save latent_histogram_{name_suffix}.png')
+            elif isinstance(name_suffix, str):
+                plt.savefig('latent_histogram_' + name_suffix + '.png')
+                print('latent_histogram_' + name_suffix + '.png')
+        elif save_mapping:
+            xx, yy = np.meshgrid(np.arange(-1, 1, granularity), np.arange(-1, 1, granularity))
+
+            x = xx.ravel()
+            y = yy.ravel()
+            c = quantized_index.detach().cpu().numpy()
+            fig = plt.figure()
+            ax = fig.add_subplot(111)
+            sc = ax.scatter(x, y, c=c, marker='o')
+            plt.xlabel('Original Action Dim0')
+            plt.ylabel('Original Action Dim1')
+            ax.set_title('Latent Action Mapping')
+            fig.colorbar(sc)
+            plt.show()
+            plt.savefig(f'latent_mapping_{name_suffix}.png')
+        elif save_decoding_mapping:
+            # TODO: k
+            latents = to_device(torch.arange(64), 'cuda')
+            recons_action = self._vqvae_model.decode({'quantized_index': latents, 'obs': None, 'threshold_phase': False})['recons_action'].detach().cpu().numpy()
+            print(recons_action.max(0), recons_action.min(0),recons_action.mean(0), recons_action.std(0))
+            
+            c = latents.detach().cpu().numpy()
+            fig = plt.figure()
+            ax = fig.add_subplot(111)
+
+            sc = ax.scatter(recons_action[:,0], recons_action[:,1], c=c, marker='o')
+            
+            # annotaions
+            annotations=[f"{i}" for i in range(64)]
+            for i, label in enumerate(annotations):
+                plt.text(recons_action[:,0][i], recons_action[:,1][i],label)
+
+            plt.xlabel('Original Action Dim0')
+            plt.ylabel('Original Action Dim1')
+            ax.set_title('Latent Action Decoding')
+            fig.colorbar(sc)
+            #设置坐标轴范围
+            plt.xlim((-1, 1))
+            plt.ylim((-1, 1))
+            plt.show()
+            plt.savefig(f'latent_action_decoding_{name_suffix}.png')
         else:
             return quantized_index.detach().cpu().numpy()
 
@@ -967,11 +1017,4 @@ class DQNVQVAEPolicy(Policy):
         else:
             return np.array(dis)
 
-# debug
-# import matplotlib.pyplot as plt
-# fig = plt.figure()
-# ax = fig.add_subplot(111)
-# ax.set_title('Hopper-v3 dqn episode0_latent_actions')
-# plt.plot(episode0_latent_actions)
-# plt.show()
-# plt.savefig(f'hopper-v3_dqn_episode0_latent_actions.png')
+

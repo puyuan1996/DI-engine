@@ -17,7 +17,10 @@ lunarlander_dqn_default_config = dict(
         stop_value=int(1e6),
     ),
     policy=dict(
-        model_path=None,
+        # model_path=None,
+        # model_path='/home/puyuan/DI-engine/data_lunarlander/dqn_sbh_ensemble20_noobs_noema_smallnet_k64_seed1_3M/ckpt/ckpt_best.pth.tar',
+        model_path='/home/puyuan/DI-engine/data_lunarlander/dqn_sbh_ensemble20_noobs_noema_smallnet_k64_seed1_3M/ckpt/iteration_400000.pth.tar',
+
 
         # Whether to use cuda for network.
         cuda=True,
@@ -35,11 +38,11 @@ lunarlander_dqn_default_config = dict(
         # TODO(pu): test ema
         # is_ema=True,  # use EMA
         original_action_shape=2,
-        random_collect_size=int(5e4),  # transitions
-        warm_up_update=int(1e4),
+        # random_collect_size=int(5e4),  # transitions
+        # warm_up_update=int(1e4),
         # debug
-        # random_collect_size=int(1),  
-        # warm_up_update=int(1),
+        random_collect_size=int(0),  
+        warm_up_update=int(0),
 
         vqvae_embedding_dim=64,  # ved: D
         vqvae_hidden_dim=[256],  # vhd
@@ -193,7 +196,7 @@ create_config = lunarlander_dqn_create_config
 
 
 def train(args):
-    main_config.exp_name = 'data_lunarlander/dqn_sbh_ensemble20_noobs_noema_smallnet_k64' + '_seed' + f'{args.seed}' + '_3M'
+    main_config.exp_name = 'data_lunarlander/debug_dqn_sbh_ensemble20_noobs_noema_smallnet_k64' + '_seed' + f'{args.seed}' + '_3M'
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=int(3e6))
 
 if __name__ == "__main__":
