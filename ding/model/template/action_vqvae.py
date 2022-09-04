@@ -8,7 +8,7 @@ from torch.distributions import Normal, Independent
 from ding.torch_utils import one_hot, to_tensor
 from ding.model.common import RegressionHead, ReparameterizationHead, DiscreteHead, MultiHead, \
     FCEncoder, ConvEncoder
-
+from ding.torch_utils import Adam, to_device, unsqueeze, ContrastiveLoss
 
 class ExponentialMovingAverage(nn.Module):
 
@@ -50,7 +50,7 @@ class VectorQuantizer(nn.Module):
     def __init__(
             self,
             embedding_num: int,
-            embedding_size: int = 128,
+            embedding_dim: int = 128,
             beta: float = 0.25,
             is_ema: bool = False,
             is_ema_target: bool = False,
@@ -59,7 +59,7 @@ class VectorQuantizer(nn.Module):
     ):
         super(VectorQuantizer, self).__init__()
         self.K = embedding_num
-        self.D = embedding_size
+        self.D = embedding_dim
         self.beta = beta
         self.is_ema = is_ema
         self.is_ema_target = is_ema_target
@@ -171,7 +171,7 @@ class ActionVQVAE(nn.Module):
             self,
             action_shape: Union[int, Dict],
             embedding_num: int,
-            embedding_size: int = 128,
+            embedding_dim: int = 128,
             hidden_dims: List = [256],
             beta: float = 0.25,
             vq_loss_weight: float = 1,
@@ -192,6 +192,7 @@ class ActionVQVAE(nn.Module):
             predict_loss_weight: float = 1,
             mask_pretanh: bool = False,
             recons_loss_cont_weight: float = 1,
+            q_contrastive_regularizer: bool = False,
     ) -> None:
         super(ActionVQVAE, self).__init__()
 
@@ -201,7 +202,7 @@ class ActionVQVAE(nn.Module):
         self.hidden_dims = hidden_dims
         self.vq_loss_weight = vq_loss_weight
         self.predict_loss_weight = predict_loss_weight
-        self.embedding_size = embedding_size
+        self.embedding_dim = embedding_dim
         self.embedding_num = embedding_num
         self.act = nn.ReLU()
         self.cont_reconst_l1_loss = cont_reconst_l1_loss
@@ -215,6 +216,10 @@ class ActionVQVAE(nn.Module):
         self.vqvae_return_weight = vqvae_return_weight
         self.mask_pretanh = mask_pretanh
         self.recons_loss_cont_weight = recons_loss_cont_weight
+        self.q_contrastive_regularizer = q_contrastive_regularizer
+
+        if self.q_contrastive_regularizer==True:
+             self.q_contrastive_regularizer = ContrastiveLoss(self.embedding_dim, self.embedding_dim, encode_shape=64)
 
         """Encoder"""
         # action encode head
@@ -237,25 +242,25 @@ class ActionVQVAE(nn.Module):
             self.decode_prediction_head_layer2 = nn.Linear(self.hidden_dims[0], self.obs_shape)
 
         self.encode_common = nn.Sequential(nn.Linear(self.hidden_dims[0], self.hidden_dims[0]), nn.ReLU())
-        self.encode_mu_head = nn.Linear(self.hidden_dims[0], self.embedding_size)
+        self.encode_mu_head = nn.Linear(self.hidden_dims[0], self.embedding_dim)
 
         modules = [self.encode_action_head, self.encode_common, self.encode_mu_head]
         self.encoder = nn.Sequential(*modules)
 
         # VQ layer
-        self.vq_layer = VectorQuantizer(embedding_num, embedding_size, beta, is_ema, is_ema_target, eps_greedy_nearest,
+        self.vq_layer = VectorQuantizer(embedding_num, embedding_dim, beta, is_ema, is_ema_target, eps_greedy_nearest,
                                         embedding_table_onehot)
 
         """Decoder"""
         self.decoder = nn.Sequential(
             *[
-                nn.Linear(self.embedding_size, self.hidden_dims[0]),
+                nn.Linear(self.embedding_dim, self.hidden_dims[0]),
                 self.act,
                 nn.Linear(self.hidden_dims[0], self.hidden_dims[0]),
                 self.act,
             ]
         )
-        self.decode_action_head = nn.Sequential(nn.Linear(self.embedding_size, hidden_dims[0]), self.act)
+        self.decode_action_head = nn.Sequential(nn.Linear(self.embedding_dim, hidden_dims[0]), self.act)
         self.decode_common = nn.Sequential(nn.Linear(hidden_dims[0], hidden_dims[0]), nn.ReLU())
 
         if isinstance(self.action_shape, int):  # continuous action
@@ -560,6 +565,11 @@ class ActionVQVAE(nn.Module):
         action_obs_embedding_dot = action_embedding * obs_embedding
         action_obs_embedding = self.encode_common(action_obs_embedding_dot)
         encoding = self.encode_mu_head(action_obs_embedding)
+
+        if self.q_contrastive_regularizer:
+            data['q_value']
+            encoding
+
 
         quantized_index, quantized_embedding, vq_loss, embedding_loss, commitment_loss = self.vq_layer.train(encoding)
 

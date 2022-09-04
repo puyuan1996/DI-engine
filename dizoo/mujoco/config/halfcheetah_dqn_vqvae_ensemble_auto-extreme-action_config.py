@@ -42,10 +42,10 @@ halfcheetah_dqn_default_config = dict(
         # random_collect_size=int(10),  
         # warm_up_update=int(10),
 
-        # vqvae_embedding_dim=64,  # ved: D
-        # vqvae_hidden_dim=[256],  # vhd
-        vqvae_embedding_dim=128,  # ved: D
-        vqvae_hidden_dim=[512],  # vhd
+        vqvae_embedding_dim=64,  # ved: D
+        vqvae_hidden_dim=[256],  # vhd
+        # vqvae_embedding_dim=128,  # ved: D
+        # vqvae_hidden_dim=[512],  # vhd
         target_network_soft_update=False,
         beta=0.25,
         vq_loss_weight=0.1,  # TODO
@@ -55,9 +55,9 @@ halfcheetah_dqn_default_config = dict(
         replay_buffer_size_vqvae=int(1e6),
         auxiliary_conservative_loss=False,
 
-        # obs_regularization=True,
-        obs_regularization=False,
-        predict_loss_weight=1,  # TODO
+        obs_regularization=True,
+        # obs_regularization=False,
+        predict_loss_weight=0,  # TODO
 
         # vqvae_pretrain_only=True,
         # NOTE: if only pretrain vqvae , i.e. vqvae_pretrain_only=True, should set this key to False
@@ -101,15 +101,15 @@ halfcheetah_dqn_default_config = dict(
         priority_IS_weight_vqvae=False,  # NOTE: return priority
         priority_type_vqvae='return',
         priority_vqvae_min=0.,
-        # latent_action_shape=int(64),  # num of num_embeddings: K, i.e. shape of latent action
         latent_action_shape=int(128),  # num of num_embeddings: K, i.e. shape of latent action
+        # latent_action_shape=int(128),  # num of num_embeddings: K, i.e. shape of latent action
         model=dict(
             ensemble_num=20,  # TODO
             obs_shape=17,
             # if manually augment_extreme_action=True,
             # action_shape=int(64+2**6),  # Q dim
-            # action_shape=int(64),  # Q dim
-            action_shape=int(128),  # num of num_embeddings: K
+            action_shape=int(128),  # Q dim
+            # action_shape=int(128),  # num of num_embeddings: K
             # encoder_hidden_size_list=[128, 128, 64],  # small net
             encoder_hidden_size_list=[256, 256, 128],  # middle net
             # encoder_hidden_size_list=[512, 512, 256],  # large net
@@ -177,7 +177,8 @@ halfcheetah_dqn_default_config = dict(
                 # Decay type. Support ['exp', 'linear'].
                 type='exp',
                 start=1,
-                end=0.05,
+                # end=0.05,
+                end=0.0,
                 decay=int(1e5),
             ),
             replay_buffer=dict(replay_buffer_size=int(1e6), ),
@@ -200,7 +201,7 @@ create_config = halfcheetah_dqn_create_config
 
 
 def train(args):
-    main_config.exp_name = 'data_halfcheetah/dqn_sbh_ensemble20_tch11-edge-eval-0.9_noise0_naea01_k128_upc50_vhd512_ved128_noobs_noema_middlenet_beta0.25_vlw0.1' + '_seed' + f'{args.seed}' + '_3M'
+    main_config.exp_name = 'data_halfcheetah/dqn_sbh_ensemble20_tch11-edge-eval-09_noise0_naea01_k128_endeps0_upc50_ved64_vhd256_obs0_noema_middlenet_beta0.25_vlw0.1' + '_seed' + f'{args.seed}' + '_3M'
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,
                               max_env_step=int(3e6))
 

@@ -235,7 +235,8 @@ class DQNVQVAEPolicy(Policy):
             obs_shape=self._cfg.model.obs_shape,
             predict_loss_weight=self._cfg.predict_loss_weight,
             mask_pretanh=self._cfg.mask_pretanh,
-            recons_loss_cont_weight = self._cfg.recons_loss_cont_weight
+            recons_loss_cont_weight = self._cfg.recons_loss_cont_weight,
+            q_contrastive_regularizer = self._cfg.q_contrastive_regularizer
         )
         self._vqvae_model = to_device(self._vqvae_model, self._device)
         if self._cfg.learn.vqvae_clip_grad is True:

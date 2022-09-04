@@ -17,9 +17,9 @@ lunarlander_dqn_default_config = dict(
         stop_value=int(1e6),
     ),
     policy=dict(
-        # model_path=None,
+        model_path=None,
         # model_path='/home/puyuan/DI-engine/data_lunarlander/dqn_sbh_ensemble20_noobs_noema_smallnet_k64_seed1_3M/ckpt/ckpt_best.pth.tar',
-        model_path='/home/puyuan/DI-engine/data_lunarlander/dqn_sbh_ensemble20_noobs_noema_smallnet_k64_seed1_3M/ckpt/iteration_400000.pth.tar',
+        # model_path='/home/puyuan/DI-engine/data_lunarlander/dqn_sbh_ensemble20_noobs_noema_smallnet_k64_seed1_3M/ckpt/iteration_400000.pth.tar',
 
 
         # Whether to use cuda for network.
@@ -41,8 +41,8 @@ lunarlander_dqn_default_config = dict(
         # random_collect_size=int(5e4),  # transitions
         # warm_up_update=int(1e4),
         # debug
-        random_collect_size=int(0),  
-        warm_up_update=int(0),
+        random_collect_size=int(10),  
+        warm_up_update=int(2),
 
         vqvae_embedding_dim=64,  # ved: D
         vqvae_hidden_dim=[256],  # vhd
@@ -57,9 +57,12 @@ lunarlander_dqn_default_config = dict(
         augment_extreme_action=False,
         # augment_extreme_action=True,
 
-        # obs_regularization=True,
-        obs_regularization=False,
-        predict_loss_weight=1,  # TODO
+        obs_regularization=True,
+        # obs_regularization=False,
+        predict_loss_weight=0,  # TODO
+
+        # only if obs_regularization=True, this option take effect
+        q_contrastive_regularizer=True,
 
         # vqvae_pretrain_only=True,
         # NOTE: if only pretrain vqvae , i.e. vqvae_pretrain_only=True, should set this key to False
@@ -102,11 +105,11 @@ lunarlander_dqn_default_config = dict(
         priority_IS_weight_vqvae=False,  # NOTE: return priority
         priority_type_vqvae='return',
         priority_vqvae_min=0.,
-        latent_action_shape=int(64),  # num of num_embeddings: K, i.e. shape of latent action
+        latent_action_shape=int(8),  # num of num_embeddings: K, i.e. shape of latent action
         model=dict(
             ensemble_num=20,  # TODO
             obs_shape=8,
-            action_shape=int(64),  # num of num_embeddings, K
+            action_shape=int(8),  # num of num_embeddings, K
             encoder_hidden_size_list=[128, 128, 64],  # small net
             # Whether to use dueling head.
             dueling=True,
@@ -118,15 +121,15 @@ lunarlander_dqn_default_config = dict(
             reconst_loss_stop_value=1e-6,  # TODO(pu)
             constrain_action=False,  # TODO(pu): delete this key
            
-            # 1,256,10
             rl_vae_update_circle=1,  # train rl 1 iter, vae 1 iter
             update_per_collect_rl=20,  # for collector n_sample=256
             update_per_collect_vae=20,
 
-            rl_batch_size=512,
-            vqvae_batch_size=512,
-            # rl_batch_size=256,
-            # vqvae_batch_size=256,
+            # rl_batch_size=512,
+            # vqvae_batch_size=512,
+            # debug
+            rl_batch_size=5,
+            vqvae_batch_size=5,
             learning_rate=3e-4,
             learning_rate_vae=3e-4,
             # Frequency of target network update.
@@ -196,7 +199,7 @@ create_config = lunarlander_dqn_create_config
 
 
 def train(args):
-    main_config.exp_name = 'data_lunarlander/debug_dqn_sbh_ensemble20_noobs_noema_smallnet_k64' + '_seed' + f'{args.seed}' + '_3M'
+    main_config.exp_name = 'data_lunarlander/debug_dqn_sbh_ensemble20_obs0_noema_smallnet_k8_upc20' + '_seed' + f'{args.seed}' + '_3M'
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=int(3e6))
 
 if __name__ == "__main__":
