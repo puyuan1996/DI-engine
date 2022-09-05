@@ -3,7 +3,6 @@ from easydict import EasyDict
 collector_env_num = 8
 evaluator_env_num = 8
 expert_replay_buffer_size = int(5e3)
-
 """
 agent config
 """
@@ -14,7 +13,8 @@ pong_r2d3_config = dict(
         evaluator_env_num=evaluator_env_num,
         n_evaluator_episode=evaluator_env_num,
         stop_value=20,
-        env_id='PongNoFrameskip-v4',
+        env_id='Pong-v4',
+        #'ALE/Pong-v5' is available. But special setting is needed after gym make.
         frame_stack=4,
     ),
     policy=dict(
@@ -91,7 +91,6 @@ pong_r2d3_create_config = dict(
 )
 pong_r2d3_create_config = EasyDict(pong_r2d3_create_config)
 create_config = pong_r2d3_create_config
-
 """
 export config
 """
@@ -102,7 +101,8 @@ expert_pong_r2d3_config = dict(
         evaluator_env_num=evaluator_env_num,
         n_evaluator_episode=evaluator_env_num,
         stop_value=20,
-        env_id='PongNoFrameskip-v4',
+        env_id='Pong-v4',
+        #'ALE/Pong-v5' is available. But special setting is needed after gym make.
         frame_stack=4,
     ),
     policy=dict(
@@ -119,9 +119,7 @@ expert_pong_r2d3_config = dict(
         discount_factor=0.997,
         burnin_step=20,
         nstep=5,
-        learn=dict(
-            expert_replay_buffer_size=expert_replay_buffer_size,
-        ),
+        learn=dict(expert_replay_buffer_size=expert_replay_buffer_size, ),
         collect=dict(
             # NOTE: It is important that set key traj_len_inf=True here,
             # to make sure self._traj_len=INF in serial_sample_collector.py.
@@ -135,8 +133,8 @@ expert_pong_r2d3_config = dict(
             # Absolute path is recommended.
             model_path='./pong_offppo_seed0/ckpt/ckpt_best.pth.tar',
             # Cut trajectories into pieces with length "unroll_len",
-            # which should set as self._learn_unroll_len_plus_burnin_step of r2d2
-            unroll_len=42,  # NOTE: should equals self._learn_unroll_len_plus_burnin_step in r2d2 policy
+            # which should set as self._sequence_len of r2d2
+            unroll_len=42,  # NOTE: should equals self._sequence_len in r2d2 policy
             env_num=collector_env_num,
         ),
         eval=dict(env_num=evaluator_env_num, ),

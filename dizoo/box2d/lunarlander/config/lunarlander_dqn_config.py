@@ -9,13 +9,15 @@ lunarlander_dqn_config = dict(
         # Env number respectively for collector and evaluator.
         collector_env_num=8,
         evaluator_env_num=8,
-        env_id='LunarLander-v2',
         n_evaluator_episode=8,
         stop_value=200,
+        # The path to save the game replay
+        # replay_path='./lunarlander_dqn_seed0/video',
     ),
     policy=dict(
         # Whether to use cuda for network.
-        cuda=False,
+        cuda=True,
+        load_path="./lunarlander_dqn_seed0/ckpt/ckpt_best.pth.tar",
         model=dict(
             obs_shape=8,
             action_shape=4,

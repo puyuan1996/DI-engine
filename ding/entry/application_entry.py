@@ -1,9 +1,10 @@
 from typing import Union, Optional, List, Any, Tuple
+import os
 import pickle
 import numpy as np
 import torch
 from functools import partial
-import os
+from copy import deepcopy
 
 from ding.config import compile_config, read_config
 from ding.worker import SampleSerialCollector, InteractionSerialEvaluator, EpisodeSerialCollector
@@ -43,8 +44,7 @@ def eval(
     if isinstance(input_cfg, str):
         cfg, create_cfg = read_config(input_cfg)
     else:
-        cfg, create_cfg = input_cfg
-    create_cfg.policy.type += '_command'
+        cfg, create_cfg = deepcopy(input_cfg)
     env_fn = None if env_setting is None else env_setting[0]
     cfg = compile_config(
         cfg, seed=seed, env=env_fn, auto=True, create_cfg=create_cfg, save_cfg=True, save_path='eval_config.py'
@@ -109,8 +109,7 @@ def collect_demo_data(
     if isinstance(input_cfg, str):
         cfg, create_cfg = read_config(input_cfg)
     else:
-        cfg, create_cfg = input_cfg
-    create_cfg.policy.type += '_command'
+        cfg, create_cfg = deepcopy(input_cfg)
     env_fn = None if env_setting is None else env_setting[0]
     cfg = compile_config(
         cfg,
@@ -194,8 +193,7 @@ def collect_episodic_demo_data(
     if isinstance(input_cfg, str):
         cfg, create_cfg = read_config(input_cfg)
     else:
-        cfg, create_cfg = input_cfg
-    create_cfg.policy.type += '_command'
+        cfg, create_cfg = deepcopy(input_cfg)
     env_fn = None if env_setting is None else env_setting[0]
     cfg = compile_config(
         cfg,
@@ -248,7 +246,7 @@ def collect_episodic_demo_data(
 def episode_to_transitions(data_path: str, expert_data_path: str, nstep: int) -> None:
     r"""
     Overview:
-        Transfer episoded data into nstep transitions
+        Transfer episodic data into nstep transitions.
     Arguments:
         - data_path (:obj:str): data path that stores the pkl file
         - expert_data_path (:obj:`str`): File path of the expert demo data will be written to.
@@ -259,6 +257,32 @@ def episode_to_transitions(data_path: str, expert_data_path: str, nstep: int) ->
         _dict = pickle.load(f)  # class is list; length is cfg.reward_model.collect_count
     post_process_data = []
     for i in range(len(_dict)):
+        data = get_nstep_return_data(_dict[i], nstep)
+        post_process_data.extend(data)
+    offline_data_save_type(
+        post_process_data,
+        expert_data_path,
+    )
+
+
+def episode_to_transitions_filter(data_path: str, expert_data_path: str, nstep: int, min_episode_return: int) -> None:
+    r"""
+    Overview:
+        Transfer episodic data into n-step transitions and only take the episode data whose return is larger than
+        min_episode_return.
+    Arguments:
+        - data_path (:obj:str): data path that stores the pkl file
+        - expert_data_path (:obj:`str`): File path of the expert demo data will be written to.
+        - nstep (:obj:`int`): {s_{t}, a_{t}, s_{t+n}}.
+
+    """
+    with open(data_path, 'rb') as f:
+        _dict = pickle.load(f)  # class is list; length is cfg.reward_model.collect_count
+    post_process_data = []
+    for i in range(len(_dict)):
+        episode_rewards = torch.stack([_dict[i][j]['reward'] for j in range(_dict[i].__len__())], axis=0)
+        if episode_rewards.sum() < min_episode_return:
+            continue
         data = get_nstep_return_data(_dict[i], nstep)
         post_process_data.extend(data)
     offline_data_save_type(

@@ -21,26 +21,26 @@ from unittest.mock import patch
 
 @pytest.mark.unittest
 def test_data_pusher():
-    buffer = DequeBuffer(size=10)
+    buffer_ = DequeBuffer(size=10)
     ctx = OnlineRLContext()
     ctx.trajectories = [i for i in range(5)]
-    data_pusher(cfg=None, buffer_=buffer)(ctx)
-    assert buffer.count() == 5
+    data_pusher(cfg=None, buffer_=buffer_)(ctx)
+    assert buffer_.count() == 5
 
-    buffer = DequeBuffer(size=10)
+    buffer_ = DequeBuffer(size=10)
     ctx = OnlineRLContext()
     ctx.episodes = [i for i in range(5)]
-    data_pusher(cfg=None, buffer_=buffer)(ctx)
-    assert buffer.count() == 5
+    data_pusher(cfg=None, buffer_=buffer_)(ctx)
+    assert buffer_.count() == 5
 
-    buffer = DequeBuffer(size=10)
+    buffer_ = DequeBuffer(size=10)
     ctx = OnlineRLContext()
     with pytest.raises(RuntimeError) as exc_info:
-        data_pusher(cfg=None, buffer_=buffer)(ctx)
+        data_pusher(cfg=None, buffer_=buffer_)(ctx)
     assert str(exc_info.value) == "Either ctx.trajectories or ctx.episodes should be not None."
 
 
-def offpolicy_data_fetcher_type_buffer_helper(priority=0.5, use_deque=True):
+def offpolicy_data_fetcher_type_buffer_helper(priority=0.5, use_list=True):
     cfg = EasyDict({'policy': {'learn': {'batch_size': 20}, 'collect': {'unroll_len': 1}}})
     buffer = DequeBuffer(size=20)
     buffer.use(PriorityExperienceReplay(buffer=buffer))
@@ -48,8 +48,8 @@ def offpolicy_data_fetcher_type_buffer_helper(priority=0.5, use_deque=True):
         buffer.push({'obs': i, 'reward': 1, 'info': 'xxx'})
     ctx = OnlineRLContext()
 
-    if use_deque:
-        ctx.train_output = deque([{'priority': [priority for _ in range(20)]}])
+    if use_list:
+        ctx.train_output = [{'priority': [priority for _ in range(20)]}]
     else:
         ctx.train_output = {'priority': [priority for _ in range(20)]}
 
@@ -73,8 +73,8 @@ def offpolicy_data_fetcher_type_buffer_helper(priority=0.5, use_deque=True):
 
 def call_offpolicy_data_fetcher_type_buffer():
     # if isinstance(buffer_, Buffer):
-    offpolicy_data_fetcher_type_buffer_helper(priority=0.5, use_deque=True)
-    offpolicy_data_fetcher_type_buffer_helper(priority=0.3, use_deque=False)
+    offpolicy_data_fetcher_type_buffer_helper(priority=0.5, use_list=True)
+    offpolicy_data_fetcher_type_buffer_helper(priority=0.3, use_list=False)
 
 
 def call_offpolicy_data_fetcher_type_list():

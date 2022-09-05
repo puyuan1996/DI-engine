@@ -1,4 +1,4 @@
-from abc import abstractmethod
+from abc import abstractmethod, ABC
 from typing import Any, List, Optional, Union, Callable
 import copy
 from dataclasses import dataclass
@@ -53,7 +53,7 @@ def _copy_buffereddata(d: BufferedData) -> BufferedData:
 fastcopy.dispatch[BufferedData] = _copy_buffereddata
 
 
-class Buffer:
+class Buffer(ABC):
     """
     Buffer is an abstraction of device storage, third-party services or data structures,
     For example, memory queue, sum-tree, redis, or di-store.
@@ -120,23 +120,6 @@ class Buffer:
         raise NotImplementedError
 
     @abstractmethod
-    def batch_update(
-            self,
-            indices: List[str],
-            datas: Optional[List[Optional[Any]]] = None,
-            metas: Optional[List[Optional[dict]]] = None
-    ) -> None:
-        """
-        Overview:
-            Batch update data and meta by indices, maybe useful in some data architectures.
-        Arguments:
-            - indices (:obj:`List[str]`): Index of data.
-            - datas (:obj:`Optional[List[Optional[Any]]]`): Pure data.
-            - metas (:obj:`Optional[List[Optional[dict]]]`): Meta information.
-        """
-        raise NotImplementedError
-
-    @abstractmethod
     def delete(self, index: str):
         """
         Overview:
@@ -167,18 +150,17 @@ class Buffer:
         raise NotImplementedError
 
     def use(self, func: Callable) -> "Buffer":
-        r"""
+        """
         Overview:
             Use algorithm middleware to modify the behavior of the buffer.
             Every middleware should be a callable function, it will receive three argument parts, including:
-            1. The buffer instance, you can use this instance to visit every thing of the buffer,
-               including the storage.
-            2. The functions called by the user, there are three methods named `push`, `sample` and `clear`,
+            1. The buffer instance, you can use this instance to visit every thing of the buffer, including the storage.
+            2. The functions called by the user, there are three methods named `push` , `sample` and `clear` , \
                so you can use these function name to decide which action to choose.
-            3. The remaining arguments passed by the user to the original function, will be passed in *args.
+            3. The remaining arguments passed by the user to the original function, will be passed in `*args` .
 
             Each middleware handler should return two parts of the value, including:
-            1. The first value is `done` (True or False), if done==True, the middleware chain will stop immediately,
+            1. The first value is `done` (True or False), if done==True, the middleware chain will stop immediately, \
                no more middleware will be executed during this execution
             2. The remaining values, will be passed to the next middleware or the default function in the buffer.
         Arguments:

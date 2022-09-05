@@ -4,6 +4,7 @@ import torch
 from ditk import logging
 from functools import partial
 from tensorboardX import SummaryWriter
+from copy import deepcopy
 
 from ding.envs import get_vec_env_setting, create_env_manager
 from ding.worker import BaseLearner, InteractionSerialEvaluator, BaseSerialCommander, create_buffer, \
@@ -50,7 +51,7 @@ def serial_pipeline_sqil(
         cfg, create_cfg = read_config(input_cfg)
         expert_cfg, expert_create_cfg = read_config(expert_cfg)
     else:
-        cfg, create_cfg = input_cfg
+        cfg, create_cfg = deepcopy(input_cfg)
         expert_cfg, expert_create_cfg = expert_cfg
     create_cfg.policy.type = create_cfg.policy.type + '_command'
     expert_create_cfg.policy.type = expert_create_cfg.policy.type + '_command'
@@ -119,6 +120,10 @@ def serial_pipeline_sqil(
     # Accumulate plenty of data at the beginning of training.
     if cfg.policy.get('random_collect_size', 0) > 0:
         random_collect(cfg.policy, policy, collector, collector_env, commander, replay_buffer)
+    if cfg.policy.get('expert_random_collect_size', 0) > 0:
+        random_collect(
+            expert_cfg.policy, expert_policy, expert_collector, expert_collector_env, expert_commander, expert_buffer
+        )
     while True:
         collect_kwargs = commander.step()
         # Evaluate policy performance

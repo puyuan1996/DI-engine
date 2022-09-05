@@ -7,10 +7,11 @@ import torch
 import treetensor.torch as ttorch
 from easydict import EasyDict
 from ding.envs import BaseEnvManager
+from ding.framework.context import OfflineRLContext
 from ding.policy import Policy
 from ding.data import Dataset, DataLoader
 from ding.framework import task
-from ding.torch_utils import tensor_to_list
+from ding.torch_utils import tensor_to_list, to_ndarray
 from ding.utils import lists_to_dicts
 
 if TYPE_CHECKING:
@@ -184,7 +185,7 @@ def interaction_evaluator(cfg: EasyDict, policy: Policy, env: BaseEnvManager) ->
             obs = ttorch.as_tensor(env.ready_obs).to(dtype=ttorch.float32)
             obs = {i: obs[i] for i in range(obs.shape[0])}  # TBD
             inference_output = policy.forward(obs)
-            action = [v['action'].numpy() for v in inference_output.values()]  # TBD
+            action = [to_ndarray(v['action']) for v in inference_output.values()]  # TBD
             timesteps = env.step(action)
             for timestep in timesteps:
                 env_id = timestep.env_id.item()
@@ -195,11 +196,14 @@ def interaction_evaluator(cfg: EasyDict, policy: Policy, env: BaseEnvManager) ->
         episode_reward = eval_monitor.get_episode_reward()
         eval_reward = np.mean(episode_reward)
         stop_flag = eval_reward >= cfg.env.stop_value and ctx.train_iter > 0
-        logging.info(
-            'Evaluation: Train Iter({})\tEnv Step({})\tEval Reward({:.3f})'.format(
-                ctx.train_iter, ctx.env_step, eval_reward
+        if isinstance(ctx, OfflineRLContext):
+            logging.info('Evaluation: Train Iter({})\tEval Reward({:.3f})'.format(ctx.train_iter, eval_reward))
+        else:
+            logging.info(
+                'Evaluation: Train Iter({})\tEnv Step({})\tEval Reward({:.3f})'.format(
+                    ctx.train_iter, ctx.env_step, eval_reward
+                )
             )
-        )
         ctx.last_eval_iter = ctx.train_iter
         ctx.eval_value = eval_reward
 

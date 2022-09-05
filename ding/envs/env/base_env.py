@@ -11,7 +11,12 @@ BaseEnvInfo = namedtuple('BaseEnvInfo', ['agent_num', 'obs_space', 'act_space', 
 
 
 
-class BaseEnv(ABC, gym.Env):
+# for solving multiple inheritance metaclass conflict between gym and ABC
+class FinalMeta(type(ABC), type(gym.Env)):
+    pass
+
+
+class BaseEnv(gym.Env, ABC, metaclass=FinalMeta):
     """
     Overview:
         Basic environment class, extended from ``gym.Env``

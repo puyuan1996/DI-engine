@@ -7,7 +7,8 @@ qbert_ppg_config = dict(
         evaluator_env_num=8,
         n_evaluator_episode=8,
         stop_value=1000000,
-        env_id='QbertNoFrameskip-v4',
+        env_id='Qbert-v4',
+        #'ALE/Qbert-v5' is available. But special setting is needed after gym make.
         frame_stack=4
     ),
     policy=dict(
@@ -66,7 +67,7 @@ qbert_ppg_create_config = dict(
         import_names=['dizoo.atari.envs.atari_env'],
     ),
     env_manager=dict(type='subprocess'),
-    policy=dict(type='ppg'),
+    policy=dict(type='ppg_offpolicy'),
 )
 create_config = EasyDict(qbert_ppg_create_config)
 

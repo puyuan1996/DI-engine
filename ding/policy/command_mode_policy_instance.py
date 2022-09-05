@@ -13,17 +13,19 @@ from .sql_vqvae_episode import SQLVQVAEEPISODEPolicy
 
 
 
+from .dqn import DQNPolicy, DQNSTDIMPolicy
 from .c51 import C51Policy
 from .qrdqn import QRDQNPolicy
 from .iqn import IQNPolicy
+from .fqf import FQFPolicy
 from .rainbow import RainbowDQNPolicy
 from .r2d2 import R2D2Policy
 from .r2d2_gtrxl import R2D2GTrXLPolicy
 from .r2d2_collect_traj import R2D2CollectTrajPolicy
 from .sqn import SQNPolicy
-from .ppo import PPOPolicy, PPOOffPolicy
+from .ppo import PPOPolicy, PPOOffPolicy, PPOPGPolicy, PPOSTDIMPolicy
 from .offppo_collect_traj import OffPPOCollectTrajPolicy
-from .ppg import PPGPolicy
+from .ppg import PPGPolicy, PPGOffPolicy
 from .a2c import A2CPolicy
 from .impala import IMPALAPolicy
 from .ngu import NGUPolicy
@@ -32,6 +34,7 @@ from .td3 import TD3Policy
 from .td3_vae import TD3VAEPolicy
 from .td3_bc import TD3BCPolicy
 from .sac import SACPolicy, SACDiscretePolicy
+from .mbpolicy.mbsac import MBSACPolicy, STEVESACPolicy
 from .qmix import QMIXPolicy
 from .wqmix import WQMIXPolicy
 from .collaq import CollaQPolicy
@@ -40,13 +43,17 @@ from .atoc import ATOCPolicy
 from .acer import ACERPolicy
 from .qtran import QTRANPolicy
 from .sql import SQLPolicy
+from .bc import BehaviourCloningPolicy
+from .ibc import IBCPolicy
 
 from .dqfd import DQFDPolicy
 from .r2d3 import R2D3Policy
 
 from .d4pg import D4PGPolicy
 from .cql import CQLPolicy, CQLDiscretePolicy
+from .decision_transformer import DTPolicy
 from .pdqn import PDQNPolicy
+from .sac import SQILSACPolicy
 
 
 class EpsCommandModePolicy(CommandModePolicy):
@@ -107,6 +114,11 @@ class DQNCommandModePolicy(DQNPolicy, EpsCommandModePolicy):
     pass
 
 
+@POLICY_REGISTRY.register('dqn_stdim_command')
+class DQNSTDIMCommandModePolicy(DQNSTDIMPolicy, EpsCommandModePolicy):
+    pass
+
+
 @POLICY_REGISTRY.register('dqfd_command')
 class DQFDCommandModePolicy(DQFDPolicy, EpsCommandModePolicy):
     pass
@@ -124,6 +136,11 @@ class QRDQNCommandModePolicy(QRDQNPolicy, EpsCommandModePolicy):
 
 @POLICY_REGISTRY.register('iqn_command')
 class IQNCommandModePolicy(IQNPolicy, EpsCommandModePolicy):
+    pass
+
+
+@POLICY_REGISTRY.register('fqf_command')
+class FQFCommandModePolicy(FQFPolicy, EpsCommandModePolicy):
     pass
 
 
@@ -167,6 +184,16 @@ class PPOCommandModePolicy(PPOPolicy, DummyCommandModePolicy):
     pass
 
 
+@POLICY_REGISTRY.register('ppo_stdim_command')
+class PPOSTDIMCommandModePolicy(PPOSTDIMPolicy, DummyCommandModePolicy):
+    pass
+
+
+@POLICY_REGISTRY.register('ppo_pg_command')
+class PPOPGCommandModePolicy(PPOPGPolicy, DummyCommandModePolicy):
+    pass
+
+
 @POLICY_REGISTRY.register('ppo_offpolicy_command')
 class PPOOffCommandModePolicy(PPOOffPolicy, DummyCommandModePolicy):
     pass
@@ -184,6 +211,11 @@ class A2CCommandModePolicy(A2CPolicy, DummyCommandModePolicy):
 
 @POLICY_REGISTRY.register('impala_command')
 class IMPALACommandModePolicy(IMPALAPolicy, DummyCommandModePolicy):
+    pass
+
+
+@POLICY_REGISTRY.register('ppg_offpolicy_command')
+class PPGOffCommandModePolicy(PPGOffPolicy, DummyCommandModePolicy):
     pass
 
 
@@ -272,6 +304,16 @@ class SACCommandModePolicy(SACPolicy, DummyCommandModePolicy):
     pass
 
 
+@POLICY_REGISTRY.register('mbsac_command')
+class MBSACCommandModePolicy(MBSACPolicy, DummyCommandModePolicy):
+    pass
+
+
+@POLICY_REGISTRY.register('stevesac_command')
+class STEVESACCommandModePolicy(STEVESACPolicy, DummyCommandModePolicy):
+    pass
+
+
 @POLICY_REGISTRY.register('cql_command')
 class CQLCommandModePolicy(CQLPolicy, DummyCommandModePolicy):
     pass
@@ -279,6 +321,11 @@ class CQLCommandModePolicy(CQLPolicy, DummyCommandModePolicy):
 
 @POLICY_REGISTRY.register('cql_discrete_command')
 class CQLDiscreteCommandModePolicy(CQLDiscretePolicy, EpsCommandModePolicy):
+    pass
+
+
+@POLICY_REGISTRY.register('dt_command')
+class DTCommandModePolicy(DTPolicy, DummyCommandModePolicy):
     pass
 
 
@@ -335,3 +382,54 @@ class PDQNCommandModePolicy(PDQNPolicy, EpsCommandModePolicy):
 @POLICY_REGISTRY.register('sac_discrete_command')
 class SACDiscreteCommandModePolicy(SACDiscretePolicy, EpsCommandModePolicy):
     pass
+
+
+@POLICY_REGISTRY.register('sqil_sac_command')
+class SQILSACCommandModePolicy(SQILSACPolicy, DummyCommandModePolicy):
+    pass
+
+
+@POLICY_REGISTRY.register('ibc_command')
+class IBCCommandModePolicy(IBCPolicy, DummyCommandModePolicy):
+    pass
+
+
+@POLICY_REGISTRY.register('bc_command')
+class BCCommandModePolicy(BehaviourCloningPolicy, DummyCommandModePolicy):
+
+    def _init_command(self) -> None:
+        r"""
+        Overview:
+            Command mode init method. Called by ``self.__init__``.
+            Set the eps_greedy rule according to the config for command
+        """
+        if self._cfg.continuous:
+            noise_cfg = self._cfg.collect.noise_sigma
+            self.epsilon_greedy = get_epsilon_greedy_fn(noise_cfg.start, noise_cfg.end, noise_cfg.decay, noise_cfg.type)
+        else:
+            eps_cfg = self._cfg.other.eps
+            self.epsilon_greedy = get_epsilon_greedy_fn(eps_cfg.start, eps_cfg.end, eps_cfg.decay, eps_cfg.type)
+
+    def _get_setting_collect(self, command_info: dict) -> dict:
+        r"""
+        Overview:
+            Collect mode setting information including eps
+        Arguments:
+            - command_info (:obj:`dict`): Dict type, including at least ['learner_train_iter', 'collector_envstep']
+        Returns:
+           - collect_setting (:obj:`dict`): Including eps in collect mode.
+        """
+        if self._cfg.continuous:
+            # Decay according to `learner_step`
+            step = command_info['learner_step']
+            return {'sigma': self.epsilon_greedy(step)}
+        else:
+            # Decay according to `envstep`
+            step = command_info['envstep']
+            return {'eps': self.epsilon_greedy(step)}
+
+    def _get_setting_learn(self, command_info: dict) -> dict:
+        return {}
+
+    def _get_setting_eval(self, command_info: dict) -> dict:
+        return {}
