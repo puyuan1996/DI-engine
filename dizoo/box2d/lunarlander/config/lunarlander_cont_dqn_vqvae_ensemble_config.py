@@ -38,11 +38,11 @@ lunarlander_dqn_default_config = dict(
         # TODO(pu): test ema
         # is_ema=True,  # use EMA
         original_action_shape=2,
-        # random_collect_size=int(5e4),  # transitions
-        # warm_up_update=int(1e4),
+        random_collect_size=int(5e4),  # transitions
+        warm_up_update=int(1e4),
         # debug
-        random_collect_size=int(10),  
-        warm_up_update=int(2),
+        # random_collect_size=int(10),  
+        # warm_up_update=int(2),
 
         vqvae_embedding_dim=64,  # ved: D
         vqvae_hidden_dim=[256],  # vhd
@@ -62,7 +62,8 @@ lunarlander_dqn_default_config = dict(
         predict_loss_weight=0,  # TODO
 
         # only if obs_regularization=True, this option take effect
-        q_contrastive_regularizer=True,
+        v_contrastive_regularization=True,
+        contrastive_regularization_loss_weight=1,
 
         # vqvae_pretrain_only=True,
         # NOTE: if only pretrain vqvae , i.e. vqvae_pretrain_only=True, should set this key to False
@@ -125,11 +126,12 @@ lunarlander_dqn_default_config = dict(
             update_per_collect_rl=20,  # for collector n_sample=256
             update_per_collect_vae=20,
 
-            # rl_batch_size=512,
-            # vqvae_batch_size=512,
+            rl_batch_size=512,
+            vqvae_batch_size=512,
             # debug
-            rl_batch_size=5,
-            vqvae_batch_size=5,
+            # rl_batch_size=5,
+            # vqvae_batch_size=5,
+
             learning_rate=3e-4,
             learning_rate_vae=3e-4,
             # Frequency of target network update.
@@ -199,7 +201,7 @@ create_config = lunarlander_dqn_create_config
 
 
 def train(args):
-    main_config.exp_name = 'data_lunarlander/debug_dqn_sbh_ensemble20_obs0_noema_smallnet_k8_upc20' + '_seed' + f'{args.seed}' + '_3M'
+    main_config.exp_name = 'data_lunarlander/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_upc20_crlw1' + '_seed' + f'{args.seed}' + '_3M'
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=int(3e6))
 
 if __name__ == "__main__":

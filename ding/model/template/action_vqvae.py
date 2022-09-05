@@ -192,7 +192,8 @@ class ActionVQVAE(nn.Module):
             predict_loss_weight: float = 1,
             mask_pretanh: bool = False,
             recons_loss_cont_weight: float = 1,
-            q_contrastive_regularizer: bool = False,
+            v_contrastive_regularization: bool = False,
+            contrastive_regularization_loss_weight: float = 1,
     ) -> None:
         super(ActionVQVAE, self).__init__()
 
@@ -216,10 +217,11 @@ class ActionVQVAE(nn.Module):
         self.vqvae_return_weight = vqvae_return_weight
         self.mask_pretanh = mask_pretanh
         self.recons_loss_cont_weight = recons_loss_cont_weight
-        self.q_contrastive_regularizer = q_contrastive_regularizer
+        self.v_contrastive_regularization =  v_contrastive_regularization
+        self.contrastive_regularization_loss_weight = contrastive_regularization_loss_weight
 
-        if self.q_contrastive_regularizer==True:
-             self.q_contrastive_regularizer = ContrastiveLoss(self.embedding_dim, self.embedding_dim, encode_shape=64)
+        if self.v_contrastive_regularization==True:
+            self.v_contrastive_regularizer = ContrastiveLoss(self.embedding_dim, self.embedding_dim, encode_shape=64)
 
         """Encoder"""
         # action encode head
@@ -557,6 +559,7 @@ class ActionVQVAE(nn.Module):
                  - quantized_index (:obj:`torch.Tensor`): the latent action.
                  and loss statistics
          """
+        contrastive_regularization_loss=0
         action_embedding = self._get_action_embedding(data)
 
         # encode
@@ -566,9 +569,15 @@ class ActionVQVAE(nn.Module):
         action_obs_embedding = self.encode_common(action_obs_embedding_dot)
         encoding = self.encode_mu_head(action_obs_embedding)
 
-        if self.q_contrastive_regularizer:
-            data['q_value']
-            encoding
+        if self.v_contrastive_regularization and 'target_v_value' in data.keys():
+            # if 'target_v_value' not in data.keys(), it's in warmup phase
+            # data['target_v_value'].shape
+            # data['target_v_value'].sort()[0]
+            x_index = data['target_v_value'].sort()[1][:-1:2]
+            y_index = data['target_v_value'].sort()[1][1:-1:2]
+            x = encoding[x_index,:]
+            y = encoding[y_index,:]
+            contrastive_regularization_loss = self.v_contrastive_regularizer(x, y)
 
 
         quantized_index, quantized_embedding, vq_loss, embedding_loss, commitment_loss = self.vq_layer.train(encoding)
@@ -578,7 +587,6 @@ class ActionVQVAE(nn.Module):
         action_obs_decoding = action_decoding * obs_embedding
 
         action_obs_decoding_common = self.decode_common(action_obs_decoding)
-
         prediction_residual_tmp = self.decode_prediction_head_layer1(action_obs_decoding_common)
         prediction_residual = self.decode_prediction_head_layer2(prediction_residual_tmp)
 
@@ -594,6 +602,11 @@ class ActionVQVAE(nn.Module):
         predict_loss = F.mse_loss(prediction_residual, data['true_residual'])
 
         total_vqvae_loss = recons_loss + self.vq_loss_weight * vq_loss + self.predict_loss_weight * predict_loss
+        if self.v_contrastive_regularization and hasattr(data, 'target_v_value'):
+            # TODO
+            # self.contrastive_regularization_loss_weight = 1
+            total_vqvae_loss += self.contrastive_regularization_loss_weight * contrastive_regularization_loss
+        
         return {
             'quantized_index': quantized_index,
             'recons_loss_none_reduction': recons_loss_none_reduction,  # use as rl priority in dqn_vqvae
@@ -604,6 +617,7 @@ class ActionVQVAE(nn.Module):
             'embedding_loss': embedding_loss,
             'commitment_loss': commitment_loss,
             'predict_loss': predict_loss,
+            'contrastive_regularization_loss': contrastive_regularization_loss,
             'recons_action_probs_left_mask_proportion':recons_action_probs_left_mask_proportion, 
             'recons_action_probs_right_mask_proportion':recons_action_probs_right_mask_proportion,
         }

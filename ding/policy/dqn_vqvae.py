@@ -236,7 +236,8 @@ class DQNVQVAEPolicy(Policy):
             predict_loss_weight=self._cfg.predict_loss_weight,
             mask_pretanh=self._cfg.mask_pretanh,
             recons_loss_cont_weight = self._cfg.recons_loss_cont_weight,
-            q_contrastive_regularizer = self._cfg.q_contrastive_regularizer
+            v_contrastive_regularization = self._cfg.v_contrastive_regularization,
+            contrastive_regularization_loss_weight = self._cfg.contrastive_regularization_loss_weight
         )
         self._vqvae_model = to_device(self._vqvae_model, self._device)
         if self._cfg.learn.vqvae_clip_grad is True:
@@ -363,6 +364,24 @@ class DQNVQVAEPolicy(Policy):
                     data = to_device(data, self._device)
 
                 if self._cfg.obs_regularization:
+                    if self._cfg.v_contrastive_regularization:
+
+                        # ====================
+                        # Q-learning forward
+                        # ====================
+                        self._learn_model.train()
+                        self._target_model.train()
+                        # Target q value
+                        with torch.no_grad():
+                            # target_q_value_list:list{20}, each element is shape [B,A]
+                            target_q_value_list = self._target_model.forward(data['next_obs'])
+
+                        # get the average q value for each action,   target_q_value_tensor shape: (B,A,E), B is batcn_size, A is action shape, E is ensemble num
+                        target_q_value_tensor = torch.stack([target_q_value['logit'] for target_q_value in target_q_value_list], dim=-1)
+                        mean_target_q_value = torch.mean(torch.mean(target_q_value_tensor, dim=-1), dim=-1)  # shape (B, )
+                        # approximate v value of next state
+                        data['target_v_value'] = mean_target_q_value
+
                     data['true_residual'] = data['next_obs'] - data['obs']
                     result = self._vqvae_model.train_with_obs(data)
                 else:
@@ -377,6 +396,9 @@ class DQNVQVAEPolicy(Policy):
                 loss_dict['recons_action_probs_right_mask_proportion'] = float(result['recons_action_probs_right_mask_proportion'])
                 if self._cfg.obs_regularization:
                     loss_dict['predict_loss'] = result['predict_loss'].item()
+                if self._cfg.v_contrastive_regularization:
+                    loss_dict['contrastive_regularization_loss'] = result['contrastive_regularization_loss'].item()
+                
 
                 # vae update
                 self._optimizer_vqvae.zero_grad()
@@ -436,12 +458,15 @@ class DQNVQVAEPolicy(Policy):
                 q_value_list = self._learn_model.forward(data['obs'])['logit']
                 # Target q value
                 with torch.no_grad():
+                    # target_q_value_list:list{20}, each element is shape [B,A]
                     target_q_value_list = self._target_model.forward(data['next_obs'])
                     # Max avarage q value action (main model)
                     target_q_action = self._learn_model.forward(data['next_obs'])['action']
 
-                # get the average q value for each action
+                # get the average q value for each action,   target_q_value_tensor shape: (B,A,E), B is batcn_size, A is action shape, E is ensemble num
                 target_q_value_tensor = torch.stack([target_q_value['logit'] for target_q_value in target_q_value_list], dim=-1)
+                # mean_target_q_value = torch.mean(torch.mean(target_q_value_tensor, dim=-1), dim=-1)  # shape (B, )
+
                 min_target_q_value = torch.min( target_q_value_tensor, dim=-1)[0]
                 for agent in range(self._cfg.model.ensemble_num): 
                     # NOTE: RL learn policy in latent action space, so here using data['latent_action']
@@ -542,6 +567,8 @@ class DQNVQVAEPolicy(Policy):
         ]
         if self._cfg.obs_regularization:
             ret.append('predict_loss')
+        elif self._cfg.v_contrastive_regularization:
+            ret.append('contrastive_regularization_loss')
         return ret
         
     def _init_collect(self) -> None:
