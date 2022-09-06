@@ -220,7 +220,7 @@ class ActionVQVAE(nn.Module):
         self.v_contrastive_regularization =  v_contrastive_regularization
         self.contrastive_regularization_loss_weight = contrastive_regularization_loss_weight
 
-        if self.v_contrastive_regularization is True:
+        if self.v_contrastive_regularization==True:
             self.v_contrastive_regularizer = ContrastiveLoss(self.embedding_dim, self.embedding_dim, encode_shape=64)
 
         """Encoder"""
@@ -243,10 +243,10 @@ class ActionVQVAE(nn.Module):
                                                                nn.ReLU())
             self.decode_prediction_head_layer2 = nn.Linear(self.hidden_dims[0], self.obs_shape)
 
-        self.encode_common = nn.Sequential(nn.Linear(self.hidden_dims[0], self.hidden_dims[0]), nn.ReLU())
-        self.encode_mu_head = nn.Linear(self.hidden_dims[0], self.embedding_dim)
+        self.encode_common_1 = nn.Sequential(nn.Linear(self.hidden_dims[0], self.hidden_dims[0]), nn.ReLU())
+        self.encode_common_2 = nn.Linear(self.hidden_dims[0], self.embedding_dim)
 
-        modules = [self.encode_action_head, self.encode_common, self.encode_mu_head]
+        modules = [self.encode_action_head, self.encode_common_1, self.encode_common_2]
         self.encoder = nn.Sequential(*modules)
 
         # VQ layer
@@ -566,18 +566,19 @@ class ActionVQVAE(nn.Module):
         action_embedding = self.encode_action_head(action_embedding)
         obs_embedding = self.encode_obs_head(data['obs'])
         action_obs_embedding_dot = action_embedding * obs_embedding
-        action_obs_embedding = self.encode_common(action_obs_embedding_dot)
-        encoding = self.encode_mu_head(action_obs_embedding)
+        action_obs_embedding = self.encode_common_1(action_obs_embedding_dot)
+        encoding = self.encode_common_2(action_obs_embedding)
 
         if self.v_contrastive_regularization and 'target_v_value' in data.keys():
             # if 'target_v_value' not in data.keys(), it's in warmup phase
             # data['target_v_value'].shape
-            # data['target_v_value'].sort()
+            # data['target_v_value'].sort()[0]
             x_index = data['target_v_value'].sort()[1][::2]
             y_index = data['target_v_value'].sort()[1][1::2]
             x = encoding[x_index,:]
             y = encoding[y_index,:]
             contrastive_regularization_loss = self.v_contrastive_regularizer(x, y)
+
 
         quantized_index, quantized_embedding, vq_loss, embedding_loss, commitment_loss = self.vq_layer.train(encoding)
 
@@ -643,8 +644,8 @@ class ActionVQVAE(nn.Module):
                 obs_embedding = self.encode_obs_head(data['obs'])
 
                 action_obs_embedding_dot = action_embedding * obs_embedding
-                action_obs_embedding = self.encode_common(action_obs_embedding_dot)
-                encoding = self.encode_mu_head(action_obs_embedding)
+                action_obs_embedding = self.encode_common_1(action_obs_embedding_dot)
+                encoding = self.encode_common_2(action_obs_embedding)
             else:
                 encoding = self.encoder(action_embedding)
 

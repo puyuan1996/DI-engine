@@ -12,6 +12,7 @@ from ding.envs.common.common_function import affine_transform
 from ding.torch_utils import to_ndarray, to_list
 from ding.utils import ENV_REGISTRY
 from .mujoco_wrappers import wrap_mujoco
+import torch
 
 
 @ENV_REGISTRY.register('mujoco')

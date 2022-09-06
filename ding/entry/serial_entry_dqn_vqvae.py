@@ -83,12 +83,16 @@ def serial_pipeline_dqn_vqvae(
         cfg.policy.other.commander, learner, collector, evaluator, replay_buffer, policy.command_mode
     )
 
-    # visualize
-    # policy.visualize_latent(save_histogram=False, save_mapping=True, name_suffix='lunarlander_k64_seed1_best', granularity=0.01)
-    # policy.visualize_latent(save_histogram=True, save_mapping=False, name_suffix='lunarlander_k64_seed1_best', granularity=0.01)
-    # policy.visualize_latent(save_histogram=False, save_mapping=True, name_suffix='lunarlander_k64_seed1_iter2e5', granularity=0.01)
-    # policy.visualize_latent(save_histogram=True, save_mapping=False, name_suffix='lunarlander_k64_seed1_iter2e5', granularity=0.01)
+    # visualize: analyze vqvae encoder
+    # policy.visualize_latent(save_histogram=False, save_mapping=True, name_suffix='lunarlander_k8_seed1_best', granularity=0.01)
+    # policy.visualize_latent(save_histogram=True, save_mapping=False, name_suffix='lunarlander_k8_seed1_best', granularity=0.01)
 
+    # policy.visualize_latent(save_histogram=False, save_mapping=True, name_suffix='lunarlander_k8_seed1_iter2e5', granularity=0.01)
+    # policy.visualize_latent(save_histogram=True, save_mapping=False, name_suffix='lunarlander_k8_seed1_iter2e5', granularity=0.01)
+
+    # visualize: analyze vqvae decoder
+    # policy.visualize_latent(save_histogram=False, save_mapping=False, save_decoding_mapping=True, name_suffix='lunarlander_obs0_k8_seed1_neg1_best', granularity=0.01,k=8)
+    # policy.visualize_latent(save_histogram=False, save_mapping=False, save_decoding_mapping=True, name_suffix='lunarlander_k8_seed1_iter2e5', granularity=0.01)
 
     # ==========
     # Main loop
@@ -139,15 +143,6 @@ def serial_pipeline_dqn_vqvae(
     # if the condition "timestep.done or len(self._traj_buffer[env_id]) == self._traj_len" is satisfied, the self._traj_buffer will be clear.
     # For our alg., the data in self._traj_buffer[env_id], latent_action=False, cannot be used in rl_vae phase.
     collector.reset(policy.collect_mode)
-
-    # visualize
-    # policy.visualize_latent(save_histogram=False, save_mapping=False, save_decoding_mapping=True, name_suffix='lunarlander_k64_seed1_best', granularity=0.01)
-    # policy.visualize_latent(save_histogram=False, save_mapping=False, save_decoding_mapping=True, name_suffix='lunarlander_k64_seed1_iter1e4', granularity=0.01)
-
-    # from ding.torch_utils import Adam, to_device, to_tensor
-    # latents = to_device(torch.arange(64), 'cuda')
-    # recons_action = policy._vqvae_model.decode({'quantized_index': latents, 'obs': None, 'threshold_phase': False})['recons_action']
-    # print(recons_action.max(0), recons_action.min(0),recons_action.mean(0), recons_action.std(0))
 
     for iter in range(max_iterations):
         collect_kwargs = commander.step()

@@ -373,13 +373,13 @@ class DQNVQVAEPolicy(Policy):
                         self._target_model.train()
                         # Target q value
                         with torch.no_grad():
-                            # target_q_value_list:list{20}, each element is shape [B,A]
+                            # target_q_value_list: list{20}, each element is shape [B, A]
                             target_q_value_list = self._target_model.forward(data['next_obs'])
 
-                        # get the average q value for each action,   target_q_value_tensor shape: (B,A,E), B is batcn_size, A is action shape, E is ensemble num
+                        # get the average q value for each action, target_q_value_tensor shape: (B, A, E), B is batcn_size, A is action shape, E is ensemble num
                         target_q_value_tensor = torch.stack([target_q_value['logit'] for target_q_value in target_q_value_list], dim=-1)
                         mean_target_q_value = torch.mean(torch.mean(target_q_value_tensor, dim=-1), dim=-1)  # shape (B, )
-                        # approximate v value of next state
+                        # approximate target v value of next state
                         data['target_v_value'] = mean_target_q_value
 
                     data['true_residual'] = data['next_obs'] - data['obs']
@@ -567,7 +567,7 @@ class DQNVQVAEPolicy(Policy):
         ]
         if self._cfg.obs_regularization:
             ret.append('predict_loss')
-        elif self._cfg.v_contrastive_regularization:
+        if self._cfg.v_contrastive_regularization:
             ret.append('contrastive_regularization_loss')
         return ret
         
@@ -912,7 +912,7 @@ class DQNVQVAEPolicy(Policy):
         return transition
 
 
-    def visualize_latent(self, save_histogram=False, save_mapping=False, save_decoding_mapping=False, name_suffix=0, granularity=0.01):
+    def visualize_latent(self, save_histogram=False, save_mapping=False, save_decoding_mapping=False, name_suffix=0, granularity=0.01, k=8):
         # i.e. to execute:
         # action_embedding = self._get_action_embedding(data)
         if self.cfg.action_space == 'continuous':
@@ -993,9 +993,20 @@ class DQNVQVAEPolicy(Policy):
             plt.savefig(f'latent_mapping_{name_suffix}.png')
         elif save_decoding_mapping:
             # TODO: k
-            latents = to_device(torch.arange(64), 'cuda')
-            recons_action = self._vqvae_model.decode({'quantized_index': latents, 'obs': None, 'threshold_phase': False})['recons_action'].detach().cpu().numpy()
+            latents = to_device(torch.arange(k), 'cuda')
+            
+            # if obs-conditioned
+            obs = torch.tensor([0,  1.4135e+00, -5.9936e-02,  1.1277e-01,  6.9229e-04, 1.3576e-02,  0.0000e+00,  0.0000e+00])
+            # obs = torch.tensor([-1,  1.4135e+00, -5.9936e-02,  1.1277e-01,  6.9229e-04, 1.3576e-02,  0.0000e+00,  0.0000e+00])
+            obs =  obs.repeat(8,1)
+            obs = to_device( obs, 'cuda')
+            recons_action = self._vqvae_model.decode({'quantized_index': latents, 'obs': obs, 'threshold_phase': False})['recons_action'].detach().cpu().numpy()
+            
+            # if no obs-conditioned
+            # recons_action = self._vqvae_model.decode({'quantized_index': latents, 'obs': None, 'threshold_phase': False})['recons_action'].detach().cpu().numpy()
+            
             print(recons_action.max(0), recons_action.min(0),recons_action.mean(0), recons_action.std(0))
+
             
             c = latents.detach().cpu().numpy()
             fig = plt.figure()
@@ -1004,7 +1015,7 @@ class DQNVQVAEPolicy(Policy):
             sc = ax.scatter(recons_action[:,0], recons_action[:,1], c=c, marker='o')
             
             # annotaions
-            annotations=[f"{i}" for i in range(64)]
+            annotations=[f"{i}" for i in range(k)]
             for i, label in enumerate(annotations):
                 plt.text(recons_action[:,0][i], recons_action[:,1][i],label)
 

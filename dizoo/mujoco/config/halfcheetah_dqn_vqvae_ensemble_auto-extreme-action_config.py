@@ -59,6 +59,11 @@ halfcheetah_dqn_default_config = dict(
         # obs_regularization=False,
         predict_loss_weight=0,  # TODO
 
+        # only if obs_regularization=True, this option take effect
+        v_contrastive_regularization=False,
+        # v_contrastive_regularization=True,
+        contrastive_regularization_loss_weight=0.1,
+
         # vqvae_pretrain_only=True,
         # NOTE: if only pretrain vqvae , i.e. vqvae_pretrain_only=True, should set this key to False
         # recompute_latent_action=False,
@@ -201,7 +206,7 @@ create_config = halfcheetah_dqn_create_config
 
 
 def train(args):
-    main_config.exp_name = 'data_halfcheetah/dqn_sbh_ensemble20_tch11-edge-eval-09_noise0_naea01_k128_endeps0_upc50_ved64_vhd256_obs0_noema_middlenet_beta0.25_vlw0.1' + '_seed' + f'{args.seed}' + '_3M'
+    main_config.exp_name = 'data_halfcheetah/debug_dqn_sbh_ensemble20_tch11-edge-eval-09_noise0_naea01_k128_endeps0_upc50_ved64_vhd256_obs0_noema_middlenet_beta0.25_vlw0.1' + '_seed' + f'{args.seed}' + '_3M'
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,
                               max_env_step=int(3e6))
 

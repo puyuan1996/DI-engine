@@ -59,6 +59,11 @@ walker2d_dqn_default_config = dict(
         obs_regularization=False,
         predict_loss_weight=1,  # TODO
 
+       # only if obs_regularization=True, this option take effect
+        v_contrastive_regularization=False,
+        # v_contrastive_regularization=True,
+        contrastive_regularization_loss_weight=0.1,
+
         # vqvae_pretrain_only=True,
         # NOTE: if only pretrain vqvae , i.e. vqvae_pretrain_only=True, should set this key to False
         # recompute_latent_action=False,
