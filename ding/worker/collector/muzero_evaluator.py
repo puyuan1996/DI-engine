@@ -204,12 +204,16 @@ class MuZeroEvaluator(ISerialEvaluator):
         init_obses = self._env.ready_obs
         # init_obses = to_tensor(init_obses, dtype=torch.float32)
         action_mask = [init_obses[i]['action_mask'] for i in range(env_nums)]
+        action_mask_dict = {i: to_ndarray(init_obses[i]['action_mask']) for i in range(env_nums)}
+
         if 'to_play' in init_obses[0]:
             two_player_game = True
         else:
             two_player_game = False
         if two_player_game:
             to_play = [init_obses[i]['to_play'] for i in range(env_nums)]
+            to_play_dict = {i: to_ndarray(init_obses[i]['to_play']) for i in range(env_nums)}
+
         dones = np.array([False for _ in range(env_nums)])
 
         game_histories = [
@@ -224,10 +228,32 @@ class MuZeroEvaluator(ISerialEvaluator):
 
         ep_ori_rewards = np.zeros(env_nums)
         ep_clip_rewards = np.zeros(env_nums)
+        
+        ready_env_id = set()
+        remain_episode = n_episode
 
         with self._timer:
             while not eval_monitor.is_finished():
-                stack_obs = [game_history.step_obs() for game_history in game_histories]
+                # stack_obs = [game_history.step_obs() for game_history in game_histories]
+                
+                # Get current ready env obs. 
+                # only for subprocess, to get the ready_env_id
+                obs = self._env.ready_obs
+                # TODO(pu): subprocess
+                new_available_env_id = set(obs.keys()).difference(ready_env_id)
+                ready_env_id = ready_env_id.union(set(list(new_available_env_id)[:remain_episode]))
+                remain_episode -= min(len(new_available_env_id), remain_episode)
+
+                stack_obs = {env_id: game_histories[env_id].step_obs()  for env_id in ready_env_id}
+                stack_obs = list(stack_obs.values())
+
+                action_mask_dict = {env_id: action_mask_dict[env_id]  for env_id in ready_env_id}
+                to_play_dict =  {env_id: to_play_dict[env_id]  for env_id in ready_env_id}
+                action_mask = [action_mask_dict[env_id]  for env_id in ready_env_id]
+                to_play =  [to_play_dict[env_id]  for env_id in ready_env_id]
+
+                stack_obs = to_ndarray(stack_obs)
+
                 stack_obs = prepare_observation_lst(stack_obs)
                 if self.game_config.image_based:
                     stack_obs = torch.from_numpy(stack_obs).to(self.game_config.device).float() / 255.0
@@ -238,11 +264,31 @@ class MuZeroEvaluator(ISerialEvaluator):
                 else:
                     policy_output = self._policy.forward(stack_obs, action_mask, None)
 
-                actions = {i: a['action'] for i, a in policy_output.items()}
-                distributions_dict = {i: a['distributions'] for i, a in policy_output.items()}
-                value_dict = {i: a['value'] for i, a in policy_output.items()}
-                # print(actions)
+
+                actions_no_env_id = {k: v['action'] for k, v in policy_output.items()}
+                distributions_dict_no_env_id = {k: v['distributions'] for k, v in policy_output.items()}
+                value_dict_no_env_id = {k: v['value'] for k, v in policy_output.items()}
+                # pred_value_dict_no_env_id = {k: v['pred_value'] for k, v in policy_output.items()}
+                # visit_entropy_dict_no_env_id = {k: v['visit_count_distribution_entropy'] for k, v in policy_output.items()}
+
+                # TODO(pu): subprocess
+                actions={}
+                distributions_dict={}
+                value_dict={}
+                # pred_value_dict={}
+                # visit_entropy_dict={}
+                for index, env_id in enumerate(ready_env_id):
+                    actions[env_id] = actions_no_env_id.pop(index)
+                    distributions_dict[env_id] = distributions_dict_no_env_id.pop(index)
+                    value_dict[env_id] =  value_dict_no_env_id.pop(index)
+                    # pred_value_dict[env_id] = pred_value_dict_no_env_id.pop(index)
+                    # visit_entropy_dict[env_id] =   visit_entropy_dict_no_env_id.pop(index)
+
+                # Interact with env.
                 timesteps = self._env.step(actions)
+                # for debug
+                # if len(timesteps.keys())!=self._env_num:
+                #     print(f'current ready env id is {list(timesteps.keys())}')
 
                 for env_id, t in timesteps.items():
                     i = env_id
@@ -254,8 +300,10 @@ class MuZeroEvaluator(ISerialEvaluator):
                     game_histories[i].store_search_stats(distributions_dict[i], value_dict[i])
                     if two_player_game:
                         # for two_player board games
+                        # append a transition tuple, including a_t, o_{t+1}, r_{t}, action_mask_{t}, to_play_{t}
+                        # in ``game_histories[env_id].init``, we have append o_{t} in ``self.obs_history``
                         game_histories[i].append(
-                            actions[i], to_ndarray(obs['observation']), clip_reward, action_mask[i], to_play[i]
+                            actions[i], to_ndarray(obs['observation']), clip_reward, action_mask_dict[i], to_play_dict[i]
                         )
                     else:
                         game_histories[i].append(actions[i], to_ndarray(obs['observation']), clip_reward)
@@ -263,8 +311,8 @@ class MuZeroEvaluator(ISerialEvaluator):
                     # NOTE: the position of code snippt is very important.
                     # the obs['action_mask'] and obs['to_play'] is corresponding to next action
                     if two_player_game:
-                        action_mask[i] = to_ndarray(obs['action_mask'])
-                        to_play[i] = to_ndarray(obs['to_play'])
+                        action_mask_dict[i] = to_ndarray(obs['action_mask'])
+                        to_play_dict[i] = to_ndarray(obs['to_play'])
 
                     dones[i] = done
                     ep_ori_rewards[i] += ori_reward
@@ -282,22 +330,28 @@ class MuZeroEvaluator(ISerialEvaluator):
                                 env_id, eval_monitor.get_latest_reward(env_id), eval_monitor.get_current_episode()
                             )
                         )
+                        if n_episode > self._env_num:
+                            # reset the finished env
+                            init_obses = self._env.ready_obs
+                            if len( init_obses .keys())!=self._env_num:
+                                while env_id not in init_obses.keys():
+                                    init_obses = self._env.ready_obs
+                                    print(f'wailt the {env_id} env to reset')
+                            init_obs = init_obses[env_id]['observation']
+                            init_obs = to_ndarray(init_obs)
+                            if two_player_game:
+                                # for two_player board games
+                                action_mask_dict[i] = to_ndarray(init_obses[i]['action_mask'])
+                                to_play_dict[i] = to_ndarray(init_obses[i]['to_play'])
 
-                        # reset the finished env
-                        init_obses = self._env.ready_obs
-                        if two_player_game:
-                            # for two_player board games
-                            action_mask[i] = to_ndarray(init_obses[i]['action_mask'])
-                            to_play[i] = to_ndarray(init_obses[i]['to_play'])
-
-                        game_histories[i] = GameHistory(
-                            self._env.action_space,
-                            game_history_length=self.game_config.game_history_length,
-                            config=self.game_config
-                        )
-                        game_histories[i].init(
-                            [init_obses[i]['observation'] for _ in range(self.game_config.frame_stack_num)]
-                        )
+                            game_histories[i] = GameHistory(
+                                self._env.action_space,
+                                game_history_length=self.game_config.game_history_length,
+                                config=self.game_config
+                            )
+                            game_histories[i].init(
+                                [init_obses[i]['observation'] for _ in range(self.game_config.frame_stack_num)]
+                            )
 
                     envstep_count += 1
         duration = self._timer.value

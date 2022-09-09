@@ -121,6 +121,12 @@ def serial_pipeline_muzero(
         # returns = np.array(returns)
         # print(f'win rate: {len(np.where(returns == 1.)[0])/ test_episodes}, draw rate: {len(np.where(returns == 0.)[0])/test_episodes}, lose rate: {len(np.where(returns == -1.)[0])/ test_episodes}')
         # break
+        
+        # test muzero_evaluator
+        # for i in range(10):
+        #     stop, reward = evaluator.eval(
+        #             learner.save_checkpoint, learner.train_iter, collector.envstep, config=game_config
+        #         )
 
         # Evaluate policy performance
         if evaluator.should_eval(learner.train_iter):

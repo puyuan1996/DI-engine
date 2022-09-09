@@ -453,8 +453,9 @@ class MuZeroCollector(ISerialCollector):
 
                 # Interact with env.
                 timesteps = self._env.step(actions)
-                if len(timesteps.keys())!=self._env_num:
-                    print(f'current ready env id is {list(timesteps.keys())}')
+                # for debug
+                # if len(timesteps.keys())!=self._env_num:
+                #     print(f'current ready env id is {list(timesteps.keys())}')
 
             # TODO(nyz) this duration may be inaccurate in async env
             interaction_duration = self._timer.value / len(timesteps)
@@ -625,7 +626,8 @@ class MuZeroCollector(ISerialCollector):
                 # logs
                 visit_entropies = np.array(self_play_visit_entropy).mean()
                 # visit_entropies /= max_visit_entropy
-                print('visit_entropies:', visit_entropies)
+                # for debug
+                # print('visit_entropies:', visit_entropies)
 
                 return_data = [self.trajectory_pool[i][0] for i in range(self.len_pool())], [
                         {

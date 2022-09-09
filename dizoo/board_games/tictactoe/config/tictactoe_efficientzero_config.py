@@ -99,7 +99,6 @@ tictactoe_efficientzero_config = dict(
         ),
         # the eval cost is expensive, so we set eval_freq larger
         eval=dict(evaluator=dict(eval_freq=int(2e3), )),
-
         # command_mode config
         other=dict(
             # Epsilon greedy with decay.
@@ -135,5 +134,4 @@ create_config = tictactoe_efficientzero_create_config
 
 if __name__ == "__main__":
     from ding.entry import serial_pipeline_muzero
-
     serial_pipeline_muzero([main_config, create_config], game_config=game_config, seed=0, max_env_step=int(1e6))
