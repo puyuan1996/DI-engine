@@ -557,17 +557,27 @@ class MuZeroCollector(ISerialCollector):
                 # visit_entropies /= max_visit_entropy
                 print('visit_entropies:', visit_entropies)
 
-                # save the game histories and clear the pool
-                # self.trajectory_pool: list of (game_history, priority)
-                self.replay_buffer.push_games(
-                    [self.trajectory_pool[i][0] for i in range(self.len_pool())], [
+                return_data = [self.trajectory_pool[i][0] for i in range(self.len_pool())], [
                         {
                             'priorities': self.trajectory_pool[i][1],
                             'end_tag': self.trajectory_pool[i][2],
                             'gap_steps': self.gap_step
                         } for i in range(self.len_pool())
                     ]
-                )
+
+                # save the game histories and clear the pool
+                # self.trajectory_pool: list of (game_history, priority)
+
+                # self.replay_buffer.push_games(
+                #     [self.trajectory_pool[i][0] for i in range(self.len_pool())], [
+                #         {
+                #             'priorities': self.trajectory_pool[i][1],
+                #             'end_tag': self.trajectory_pool[i][2],
+                #             'gap_steps': self.gap_step
+                #         } for i in range(self.len_pool())
+                #     ]
+                # )
+
                 # np.save('/Users/puyuan/code/DI-engine/dizoo/board_games/atari/config/one_episode_replay_buffer_img',
                 #         self.replay_buffer.buffer)
                 # one_episode_replay_buffer_img = np.load('/Users/puyuan/code/DI-engine/dizoo/board_games/atari/config/one_episode_replay_buffer_img.npy',

@@ -2,14 +2,14 @@ from easydict import EasyDict
 from dizoo.board_games.atari.config.atari_config import game_config
 
 # debug
-collector_env_num = 1
-evaluator_env_num = 1
-
 # collector_env_num = 1
-# evaluator_env_num = 3
+# evaluator_env_num = 1
+
+collector_env_num = 1
+evaluator_env_num = 3
 atari_efficientzero_config = dict(
-    exp_name='data_ez_ctree/pong_efficientzero_seed0_lr0.2_ns50_ftv025_upc1000_halfsizemodel',
-    # exp_name='data_ez_ptree/pong_efficientzero_seed0_lr0.2_ns50_upc200',
+    exp_name='data_ez_ctree/pong_efficientzero_seed0_lr0.2_ns50_ftv025_upc1000',
+    # exp_name='data_ez_ptree/pong_efficientzero_seed0_lr0.2_ns50_ftv025_upc1000',
     env=dict(
         collector_env_num=collector_env_num,
         evaluator_env_num=evaluator_env_num,
@@ -44,10 +44,11 @@ atari_efficientzero_config = dict(
             action_space_size=6,
             downsample=True,
             num_blocks=1,
-            # num_channels=64,  # Number of channels in the ResNet, default config in EZ original repo
-            # lstm_hidden_size=512,  # default config in EZ original repo
-            num_channels=32,  # Number of channels in the ResNet, for time efficiency
-            lstm_hidden_size=256,  # for time efficiency
+            num_channels=64,  # Number of channels in the ResNet, default config in EZ original repo
+            lstm_hidden_size=512,  # default config in EZ original repo
+            # The env step is twice as large as the original size model when converging
+            # num_channels=32,  # Number of channels in the ResNet, for time efficiency
+            # lstm_hidden_size=256,  # for time efficiency
             reduced_channels_reward=16,
             reduced_channels_value=16,
             reduced_channels_policy=16,
@@ -69,11 +70,11 @@ atari_efficientzero_config = dict(
         # learn_mode config
         learn=dict(
             # debug
-            update_per_collect=2,
-            batch_size=4,
+            # update_per_collect=2,
+            # batch_size=4,
 
-            # update_per_collect=1000,
-            # batch_size=256,
+            update_per_collect=1000,
+            batch_size=256,
 
             learning_rate=0.2,
             # Frequency of target network update.
@@ -119,4 +120,4 @@ create_config = atari_efficientzero_create_config
 
 if __name__ == "__main__":
     from ding.entry import serial_pipeline_muzero
-    serial_pipeline_muzero([main_config, create_config], seed=0, max_env_step=int(5e6), game_config=game_config)
+    serial_pipeline_muzero([main_config, create_config], seed=0, max_env_step=int(1e6), game_config=game_config)

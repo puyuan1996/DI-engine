@@ -27,8 +27,9 @@ game_config = EasyDict(dict(
     gray_scale=False,
     downsample=False,
     vis_result=True,
-    # TODO(pu): test the effect of augmentation
-    use_augmentation=True,
+    # TODO(pu): test the effect of augmentation,
+    # use_augmentation=True,  # only for atari image obs
+    use_augmentation=False,
     # Style of augmentation
     # choices=['none', 'rrc', 'affine', 'crop', 'blur', 'shift', 'intensity']
     augmentation=['shift', 'intensity'],
@@ -132,19 +133,19 @@ game_config = EasyDict(dict(
 
     bn_mt=0.1,
     # siamese
-    proj_hid=128,
-    proj_out=128,
-    pred_hid=64,
-    pred_out=128,
+    proj_hid=1024,
+    proj_out=1024,
+    pred_hid=512,
+    pred_out=1024,
 
     blocks=1,  # Number of blocks in the ResNet
     channels=16,  # Number of channels in the ResNet
     reduced_channels_reward=16,  # x36 Number of channels in reward head
     reduced_channels_value=16,  # x36 Number of channels in value head
     reduced_channels_policy=16,  # x36 Number of channels in policy head
-    resnet_fc_reward_layers=[8],  # Define the hidden layers in the reward head of the dynamic network
-    resnet_fc_value_layers=[8],  # Define the hidden layers in the value head of the prediction network
-    resnet_fc_policy_layers=[8],  # Define the hidden layers in the policy head of the prediction network
+    resnet_fc_reward_layers=[32],  # Define the hidden layers in the reward head of the dynamic network
+    resnet_fc_value_layers=[32],  # Define the hidden layers in the value head of the prediction network
+    resnet_fc_policy_layers=[32],  # Define the hidden layers in the policy head of the prediction network
 ))
 
 game_config = GameBaseConfig(game_config)

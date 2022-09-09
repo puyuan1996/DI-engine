@@ -5,13 +5,13 @@ from easydict import EasyDict
 from dizoo.board_games.tictactoe.config.tictactoe_config import game_config
 
 # debug
-# collector_env_num = 2
-# evaluator_env_num = 2
+collector_env_num = 2
+evaluator_env_num = 2
 
-collector_env_num = 8
-evaluator_env_num = 5
+# collector_env_num = 8
+# evaluator_env_num = 5
 tictactoe_efficientzero_config = dict(
-    exp_name='data_ez_ptree/tictactoe_2pm_efficientzero_seed0',
+    exp_name='data_ez_ptree/debug_tictactoe_2pm_efficientzero_seed0',
     env=dict(
         collector_env_num=collector_env_num,
         evaluator_env_num=evaluator_env_num,
@@ -71,8 +71,8 @@ tictactoe_efficientzero_config = dict(
         # learn_mode config
         learn=dict(
             # debug
-            # update_per_collect=2,
-            # batch_size=5,
+            update_per_collect=2,
+            batch_size=5,
 
             # one_player_mode, board_size=3, episode_length=3**2/2=4.5
             # collector_env_num=8,  update_per_collect=5*8=40
@@ -83,8 +83,8 @@ tictactoe_efficientzero_config = dict(
             # collector_env_num=8,  update_per_collect=9*8=72
             # update_per_collect=int(3 ** 2 * collector_env_num),
 
-            batch_size=64,
-            update_per_collect=int(50),
+            # batch_size=64,
+            # update_per_collect=int(50),
 
             # learning_rate=0.2,
             learning_rate=0.002,
@@ -99,8 +99,6 @@ tictactoe_efficientzero_config = dict(
         ),
         # the eval cost is expensive, so we set eval_freq larger
         eval=dict(evaluator=dict(eval_freq=int(2e3), )),
-        # debug
-        # eval=dict(evaluator=dict(eval_freq=int(5), )),
 
         # command_mode config
         other=dict(
