@@ -324,9 +324,13 @@ class MuZeroCollector(ISerialCollector):
         collected_episode = 0
         return_data = []
         env_nums = self._env_num
+
+
         # initializations
         init_obses = self._env.ready_obs
         action_mask = [to_ndarray(init_obses[i]['action_mask']) for i in range(env_nums)]
+        action_mask_dict = {i: to_ndarray(init_obses[i]['action_mask']) for i in range(env_nums)}
+
         if 'to_play' in init_obses[0]:
             two_player_game = True
         else:
@@ -334,6 +338,7 @@ class MuZeroCollector(ISerialCollector):
 
         if two_player_game:
             to_play = [to_ndarray(init_obses[i]['to_play']) for i in range(env_nums)]
+            to_play_dict = {i: to_ndarray(init_obses[i]['to_play']) for i in range(env_nums)}
 
         dones = np.array([False for _ in range(env_nums)])
         game_histories = [
@@ -387,9 +392,34 @@ class MuZeroCollector(ISerialCollector):
         max_visit_entropy = _get_max_entropy(self.game_config.action_space_size)
         print('max_visit_entropy', max_visit_entropy)
 
+        ready_env_id = set()
+        remain_episode = n_episode
+        # new_available_env_id = set(init_obses.keys()).difference(ready_env_id)
+        # ready_env_id = ready_env_id.union(set(list(new_available_env_id)[:remain_episode]))
+        # remain_episode -= min(len(new_available_env_id), remain_episode)
+
         while True:
             with self._timer:
-                stack_obs = [game_history.step_obs() for game_history in game_histories]
+                # stack_obs = [game_history.step_obs() for game_history in game_histories]
+                
+                # Get current ready env obs. 
+                # only for subprocess, to get the ready_env_id
+                obs = self._env.ready_obs
+                # TODO(pu): subprocess
+                new_available_env_id = set(obs.keys()).difference(ready_env_id)
+                ready_env_id = ready_env_id.union(set(list(new_available_env_id)[:remain_episode]))
+                remain_episode -= min(len(new_available_env_id), remain_episode)
+
+                stack_obs = {env_id: game_histories[env_id].step_obs()  for env_id in ready_env_id}
+                stack_obs = list(stack_obs.values())
+
+   
+
+                action_mask_dict = {env_id: action_mask_dict[env_id]  for env_id in ready_env_id}
+                to_play_dict =  {env_id: to_play_dict[env_id]  for env_id in ready_env_id}
+                action_mask = [action_mask_dict[env_id]  for env_id in ready_env_id]
+                to_play =  [to_play_dict[env_id]  for env_id in ready_env_id]
+
                 stack_obs = to_ndarray(stack_obs)
                 stack_obs = prepare_observation_lst(stack_obs)
                 if self.game_config.image_based:
@@ -402,88 +432,113 @@ class MuZeroCollector(ISerialCollector):
                 else:
                     policy_output = self._policy.forward(stack_obs, action_mask, temperature, None)
 
-                actions = {k: v['action'] for k, v in policy_output.items()}
-                distributions_dict = {k: v['distributions'] for k, v in policy_output.items()}
-                value_dict = {k: v['value'] for k, v in policy_output.items()}
-                pred_value_dict = {k: v['pred_value'] for k, v in policy_output.items()}
-                visit_entropy_dict = {k: v['visit_count_distribution_entropy'] for k, v in policy_output.items()}
+                actions_no_env_id = {k: v['action'] for k, v in policy_output.items()}
+                distributions_dict_no_env_id = {k: v['distributions'] for k, v in policy_output.items()}
+                value_dict_no_env_id = {k: v['value'] for k, v in policy_output.items()}
+                pred_value_dict_no_env_id = {k: v['pred_value'] for k, v in policy_output.items()}
+                visit_entropy_dict_no_env_id = {k: v['visit_count_distribution_entropy'] for k, v in policy_output.items()}
+
+                # TODO(pu): subprocess
+                actions={}
+                distributions_dict={}
+                value_dict={}
+                pred_value_dict={}
+                visit_entropy_dict={}
+                for index, env_id in enumerate(ready_env_id):
+                    actions[env_id] = actions_no_env_id.pop(index)
+                    distributions_dict[env_id] = distributions_dict_no_env_id.pop(index)
+                    value_dict[env_id] =  value_dict_no_env_id.pop(index)
+                    pred_value_dict[env_id] = pred_value_dict_no_env_id.pop(index)
+                    visit_entropy_dict[env_id] =   visit_entropy_dict_no_env_id.pop(index)
 
                 # Interact with env.
                 timesteps = self._env.step(actions)
+                if len(timesteps.keys())!=self._env_num:
+                    print(f'current ready env id is {list(timesteps.keys())}')
 
             # TODO(nyz) this duration may be inaccurate in async env
             interaction_duration = self._timer.value / len(timesteps)
 
             for env_id, timestep in timesteps.items():
-                i = env_id
-                obs, ori_reward, done, info = timestep.obs, timestep.reward, timestep.done, timestep.info
+                with self._timer:
+                    if timestep.info.get('abnormal', False):
+                        # If there is an abnormal timestep, reset all the related variables(including this env).
+                        # suppose there is no reset param, just reset this env
+                        self._env.reset({env_id: None})
+                        self._policy.reset([env_id])
+                        self._reset_stat(env_id)
+                        self._logger.info('Env{} returns a abnormal step, its info is {}'.format(env_id, timestep.info))
+                        continue
+                    i = env_id
+                    obs, ori_reward, done, info = timestep.obs, timestep.reward, timestep.done, timestep.info
 
-                if self.game_config.clip_reward:
-                    clip_reward = np.sign(ori_reward)
-                else:
-                    clip_reward = ori_reward
-                game_histories[i].store_search_stats(distributions_dict[i], value_dict[i])
-                if two_player_game:
-                    # for two_player board games
-                    # append a transition tuple, including a_t, o_{t+1}, r_{t}, action_mask_{t}, to_play_{t}
-                    # in ``game_histories[i].init``, we have append o_{t} in ``self.obs_history``
-                    game_histories[i].append(
-                        actions[i], to_ndarray(obs['observation']), clip_reward, action_mask[i], to_play[i]
-                    )
-                else:
-                    game_histories[i].append(actions[i], to_ndarray(obs['observation']), clip_reward)
+                    if self.game_config.clip_reward:
+                        clip_reward = np.sign(ori_reward)
+                    else:
+                        clip_reward = ori_reward
+                    game_histories[env_id].store_search_stats(distributions_dict[env_id], value_dict[env_id])
+                    if two_player_game:
+                        # for two_player board games
+                        # append a transition tuple, including a_t, o_{t+1}, r_{t}, action_mask_{t}, to_play_{t}
+                        # in ``game_histories[env_id].init``, we have append o_{t} in ``self.obs_history``
+                        game_histories[env_id].append(
+                            actions[env_id], to_ndarray(obs['observation']), clip_reward, action_mask_dict[env_id], to_play_dict[env_id]
+                        )
+                    else:
+                        game_histories[env_id].append(actions[env_id], to_ndarray(obs['observation']), clip_reward)
 
-                # NOTE: the position of code snippet is very important.
-                # the obs['action_mask'] and obs['to_play'] is corresponding to next action
-                if two_player_game:
-                    action_mask[i] = to_ndarray(obs['action_mask'])
-                    to_play[i] = to_ndarray(obs['to_play'])
+                    # NOTE: the position of code snippet is very important.
+                    # the obs['action_mask'] and obs['to_play'] is corresponding to next action
+                    if two_player_game:
+                        action_mask_dict[env_id] = to_ndarray(obs['action_mask'])
+                        to_play_dict[env_id] = to_ndarray(obs['to_play'])
 
-                eps_reward_lst[i] += clip_reward
-                eps_ori_reward_lst[i] += ori_reward
-                dones[i] = done
-                visit_entropies_lst[i] += visit_entropy_dict[i]
+                    eps_reward_lst[env_id] += clip_reward
+                    eps_ori_reward_lst[env_id] += ori_reward
+                    dones[env_id] = done
+                    visit_entropies_lst[env_id] += visit_entropy_dict[env_id]
 
-                eps_steps_lst[i] += 1
-                total_transitions += 1
+                    eps_steps_lst[env_id] += 1
+                    total_transitions += 1
 
-                if self.game_config.use_priority and not self.game_config.use_max_priority:
-                    pred_values_lst[i].append(pred_value_dict[i])
-                    search_values_lst[i].append(value_dict[i])
+                    if self.game_config.use_priority and not self.game_config.use_max_priority:
+                        pred_values_lst[env_id].append(pred_value_dict[env_id])
+                        search_values_lst[env_id].append(value_dict[env_id])
 
-                # fresh stack windows
-                del stack_obs_windows[i][0]
-                stack_obs_windows[i].append(to_ndarray(obs['observation']))
+                    # fresh stack windows
+                    del stack_obs_windows[env_id][0]
+                    stack_obs_windows[env_id].append(to_ndarray(obs['observation']))
 
-                # we will save a game history if it is the end of the game or the next game history is finished.
+                    # we will save a game history if it is the end of the game or the next game history is finished.
 
-                # if game history is full, we will save the game history
-                if game_histories[i].is_full():
-                    # pad over last block trajectory
-                    if last_game_histories[i] is not None:
-                        # TODO(pu): return the one game history
-                        self.put_last_trajectory(i, last_game_histories, last_game_priorities, game_histories, dones)
+                    # if game history is full, we will save the game history
+                    if game_histories[env_id].is_full():
+                        # pad over last block trajectory
+                        if last_game_histories[env_id] is not None:
+                            # TODO(pu): return the one game history
+                            self.put_last_trajectory(i, last_game_histories, last_game_priorities, game_histories, dones)
 
-                    # calculate priority
-                    priorities = self.get_priorities(i, pred_values_lst, search_values_lst)
-                    pred_values_lst[i] = []
-                    search_values_lst[i] = []
+                        # calculate priority
+                        priorities = self.get_priorities(i, pred_values_lst, search_values_lst)
+                        pred_values_lst[env_id] = []
+                        search_values_lst[env_id] = []
 
-                    #  the game_histories become last_game_history
-                    last_game_histories[i] = game_histories[i]
-                    last_game_priorities[i] = priorities
+                        #  the game_histories become last_game_history
+                        last_game_histories[env_id] = game_histories[env_id]
+                        last_game_priorities[env_id] = priorities
 
-                    # new GameHistory
-                    game_histories[i] = GameHistory(
-                        self._env.action_space,
-                        game_history_length=self.game_config.game_history_length,
-                        config=self.game_config
-                    )
-                    game_histories[i].init(stack_obs_windows[i])
-                    # TODO(pu): return data
+                        # new GameHistory
+                        game_histories[env_id] = GameHistory(
+                            self._env.action_space,
+                            game_history_length=self.game_config.game_history_length,
+                            config=self.game_config
+                        )
+                        game_histories[env_id].init(stack_obs_windows[env_id])
+                        # TODO(pu): return data
 
-                self._env_info[env_id]['step'] += 1
-                self._total_envstep_count += 1
+                    self._env_info[env_id]['step'] += 1
+                    self._total_envstep_count += 1
+
                 self._env_info[env_id]['time'] += self._timer.value + interaction_duration
 
                 if timestep.done:
@@ -493,63 +548,78 @@ class MuZeroCollector(ISerialCollector):
                         'reward': reward,
                         'time': self._env_info[env_id]['time'],
                         'step': self._env_info[env_id]['step'],
-                        'visit_entropy': visit_entropies_lst[i] / eps_steps_lst[i],
+                        'visit_entropy': visit_entropies_lst[env_id] / eps_steps_lst[env_id],
                     }
                     collected_episode += 1
                     self._episode_info.append(info)
-                    # Env reset is done by env_manager automatically
-                    self._policy.reset([env_id])
-                    self._reset_stat(env_id)
 
                     # if it is the end of the game, we will save the game history
 
                     # NOTE: put the  second last game history in one episode into the trajectory_pool
                     # pad over 2th last game_history using the last game_history
-                    if last_game_histories[i] is not None:
+                    if last_game_histories[env_id] is not None:
                         self.put_last_trajectory(i, last_game_histories, last_game_priorities, game_histories, dones)
 
                     # store current block trajectory
                     priorities = self.get_priorities(i, pred_values_lst, search_values_lst)
 
                     # NOTE: put the last game history in one episode into the trajectory_pool
-                    game_histories[i].game_history_to_array()
+                    game_histories[env_id].game_history_to_array()
 
-                    # assert len(game_histories[i]) == len(priorities)
-                    self.trajectory_pool.append((game_histories[i], priorities, dones[i]))
+                    # assert len(game_histories[env_id]) == len(priorities)
+                    self.trajectory_pool.append((game_histories[env_id], priorities, dones[env_id]))
 
+
+                    # TODO(pu)
                     # reset the finished env and init game_histories
-                    init_obses = self._env.ready_obs
-                    init_obs = init_obses[i]['observation']
 
-                    init_obs = to_ndarray(init_obs)
-                    action_mask[i] = to_ndarray(init_obses[i]['action_mask'])
-                    to_play[i] = to_ndarray(init_obses[i]['to_play'])
+                    if n_episode > self._env_num:
+                        init_obses = self._env.ready_obs
+                        
+                        if len( init_obses .keys())!=self._env_num:
+                            while env_id not in init_obses.keys():
+                                init_obses = self._env.ready_obs
+                                print(f'wailt the {env_id} env to reset')
 
-                    game_histories[i] = GameHistory(
-                        self._env.action_space,
-                        game_history_length=self.game_config.game_history_length,
-                        config=self.game_config
-                    )
-                    stack_obs_windows[i] = [init_obs for _ in range(self.game_config.frame_stack_num)]
-                    game_histories[i].init(stack_obs_windows[i])
-                    last_game_histories[i] = None
-                    last_game_priorities[i] = None
+                        init_obs = init_obses[env_id]['observation']
+                        #  init_obses [0]['observation']
+
+                        init_obs = to_ndarray(init_obs)
+                        action_mask_dict[env_id] = to_ndarray(init_obses[env_id]['action_mask'])
+                        to_play_dict[env_id] = to_ndarray(init_obses[env_id]['to_play'])
+
+                        game_histories[env_id] = GameHistory(
+                            self._env.action_space,
+                            game_history_length=self.game_config.game_history_length,
+                            config=self.game_config
+                        )
+                        stack_obs_windows[env_id] = [init_obs for _ in range(self.game_config.frame_stack_num)]
+                        game_histories[env_id].init(stack_obs_windows[env_id])
+                        last_game_histories[env_id] = None
+                        last_game_priorities[env_id] = None
 
                     # log
-                    self_play_rewards_max = max(self_play_rewards_max, eps_reward_lst[i])
-                    self_play_moves_max = max(self_play_moves_max, eps_steps_lst[i])
-                    self_play_rewards += eps_reward_lst[i]
-                    self_play_ori_rewards += eps_ori_reward_lst[i]
-                    self_play_visit_entropy.append(visit_entropies_lst[i] / eps_steps_lst[i])
-                    self_play_moves += eps_steps_lst[i]
+                    self_play_rewards_max = max(self_play_rewards_max, eps_reward_lst[env_id])
+                    self_play_moves_max = max(self_play_moves_max, eps_steps_lst[env_id])
+                    self_play_rewards += eps_reward_lst[env_id]
+                    self_play_ori_rewards += eps_ori_reward_lst[env_id]
+                    self_play_visit_entropy.append(visit_entropies_lst[env_id] / eps_steps_lst[env_id])
+                    self_play_moves += eps_steps_lst[env_id]
                     self_play_episodes += 1
 
-                    pred_values_lst[i] = []
-                    search_values_lst[i] = []
-                    eps_steps_lst[i] = 0
-                    eps_reward_lst[i] = 0
-                    eps_ori_reward_lst[i] = 0
-                    visit_entropies_lst[i] = 0
+                    pred_values_lst[env_id] = []
+                    search_values_lst[env_id] = []
+                    eps_steps_lst[env_id] = 0
+                    eps_reward_lst[env_id] = 0
+                    eps_ori_reward_lst[env_id] = 0
+                    visit_entropies_lst[env_id] = 0
+
+                    # Env reset is done by env_manager automatically
+                    self._policy.reset([env_id])
+                    self._reset_stat(env_id)
+                    # TODO(pu): subprocess
+                    ready_env_id.remove(env_id)
+
 
             if collected_episode >= n_episode:
                 # logs

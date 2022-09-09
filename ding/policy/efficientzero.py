@@ -683,7 +683,7 @@ class EfficientZeroPolicy(Policy):
             'predicted_value_prefixs',
             'predicted_values',
 
-            'visit_count_distribution_entropy',
+            # 'visit_count_distribution_entropy',
             # 'target_policy',
             # 'predicted_policies'
             # 'td_data',

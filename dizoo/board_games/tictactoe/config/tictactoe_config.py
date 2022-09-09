@@ -4,9 +4,9 @@ from ding.rl_utils.mcts.game_base_config import GameBaseConfig, DiscreteSupport
 game_config = EasyDict(dict(
     env_name='tictactoe',
     model_type='board_game',
-    # device='cuda',
+    device='cuda',
     # debug
-    device='cpu',
+    # device='cpu',
     mcts_ctree=False,
     # TODO: mcts_ctree now only support env_num=1, because in cpp MCTS root node,
     #  we must specify the one same action mask,
@@ -38,26 +38,26 @@ game_config = EasyDict(dict(
     augmentation=['shift', 'intensity'],
 
     # debug
-    collector_env_num=2,
-    evaluator_env_num=2,
-    num_simulations=5,
-    batch_size=5,
-    total_transitions=int(3e3),
-    lstm_hidden_size=64,
-    td_steps=2,
-    num_unroll_steps=3,
-    lstm_horizon_len=3,
-
-    # collector_env_num=8,
-    # evaluator_env_num=5,
-    # num_simulations=25,
-    # batch_size=64,
+    # collector_env_num=2,
+    # evaluator_env_num=2,
+    # num_simulations=5,
+    # batch_size=4,
     # total_transitions=int(3e3),
     # lstm_hidden_size=64,
-    # # to make sure the value target is the final outcome
-    # td_steps=9,
+    # td_steps=2,
     # num_unroll_steps=3,
     # lstm_horizon_len=3,
+
+    collector_env_num=8,
+    evaluator_env_num=5,
+    num_simulations=25,
+    batch_size=64,
+    total_transitions=int(3e3),
+    lstm_hidden_size=64,
+    # to make sure the value target is the final outcome
+    td_steps=9,
+    num_unroll_steps=3,
+    lstm_horizon_len=3,
 
     # TODO(pu): why 0.99?
     revisit_policy_search_rate=0.99,

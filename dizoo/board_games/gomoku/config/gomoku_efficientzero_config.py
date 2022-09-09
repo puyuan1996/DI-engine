@@ -112,8 +112,8 @@ gomoku_efficientzero_create_config = dict(
         type='gomoku',
         import_names=['dizoo.board_games.gomoku.envs.gomoku_env'],
     ),
-    env_manager=dict(type='base'),
-    # env_manager=dict(type='subprocess'),
+    # env_manager=dict(type='base'),
+    env_manager=dict(type='subprocess'),
     policy=dict(type='efficientzero'),
     collector=dict(type='episode_muzero', get_train_sample=True)
 )
