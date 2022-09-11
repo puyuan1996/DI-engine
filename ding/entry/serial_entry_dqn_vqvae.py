@@ -55,6 +55,10 @@ def serial_pipeline_dqn_vqvae(
     evaluator_env = create_env_manager(cfg.env.manager, [partial(env_fn, cfg=c) for c in evaluator_env_cfg])
     collector_env.seed(cfg.seed)
     evaluator_env.seed(cfg.seed, dynamic_seed=False)
+
+    # save replay
+    # evaluator_env.enable_save_replay(replay_path=cfg.env.replay_path)
+
     set_pkg_seed(cfg.seed, use_cuda=cfg.policy.cuda)
     policy = create_policy(cfg.policy, model=model, enable_field=['learn', 'collect', 'eval', 'command'])
 

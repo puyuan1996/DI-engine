@@ -217,14 +217,15 @@ def collect_episodic_demo_data(
 
     collector_env.seed(seed)
     set_pkg_seed(seed, use_cuda=cfg.policy.cuda)
-    # policy = create_policy(cfg.policy, model=model, enable_field=['collect', 'eval'])
     # TODO(pu)
-    policy = create_policy(cfg.policy, model=model, enable_field=['learn', 'collect', 'eval', 'command'])
+    policy = create_policy(cfg.policy, model=model, enable_field=['learn', 'collect', 'eval'])
 
     collect_demo_policy = policy.collect_mode
     if state_dict is None:
         assert state_dict_path is not None
         state_dict = torch.load(state_dict_path, map_location='cpu')
+
+    # load pretrained model
     policy.collect_mode.load_state_dict(state_dict)
     
     collector = EpisodeSerialCollector(cfg.policy.collect.collector, collector_env, collect_demo_policy)

@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt
 from ding.envs.common import affine_transform
 
 
-@POLICY_REGISTRY.register('dqn-vqvae')
+@POLICY_REGISTRY.register('dqn_vqvae')
 class DQNVQVAEPolicy(Policy):
     r"""
     Overview:
@@ -77,7 +77,7 @@ class DQNVQVAEPolicy(Policy):
     """
 
     config = dict(
-        type='dqn-vqvae',
+        type='dqn_vqvae',
         cuda=False,
         on_policy=False,
         priority=False,

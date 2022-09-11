@@ -1,12 +1,15 @@
 from typing import Any, List, Union, Optional
 import time
 import gym
+import os
 import numpy as np
 from ding.envs import BaseEnv, BaseEnvTimestep
 from ding.torch_utils import to_ndarray, to_list
 from ding.utils import ENV_REGISTRY
 from ding.envs.common import affine_transform
 from ding.envs import ObsPlusPrevActRewWrapper
+from matplotlib import animation
+import matplotlib.pyplot as plt
 
 
 @ENV_REGISTRY.register('lunarlander')
@@ -17,7 +20,9 @@ class LunarLanderEnv(BaseEnv):
         self._init_flag = False
         # env_id: LunarLander-v2, LunarLanderContinuous-v2
         self._env_id = cfg.env_id
-        self._replay_path = None
+        self._replay_path = cfg.replay_path
+        self._save_replay_gif = cfg.save_replay_gif
+        self._save_replay_count = 0
         if 'Continuous' in self._env_id:
             self._act_scale = cfg.act_scale  # act_scale only works in continous env
         else:
@@ -26,13 +31,13 @@ class LunarLanderEnv(BaseEnv):
     def reset(self) -> np.ndarray:
         if not self._init_flag:
             self._env = gym.make(self._cfg.env_id)
-            if self._replay_path is not None:
-                self._env = gym.wrappers.RecordVideo(
-                    self._env,
-                    video_folder=self._replay_path,
-                    episode_trigger=lambda episode_id: True,
-                    name_prefix='rl-video-{}'.format(id(self))
-                )
+            # if self._replay_path is not None:
+            #     self._env = gym.wrappers.RecordVideo(
+            #         self._env,
+            #         video_folder=self._replay_path,
+            #         episode_trigger=lambda episode_id: True,
+            #         name_prefix='rl-video-{}'.format(id(self))
+            #     )
             if hasattr(self._cfg, 'obs_plus_prev_action_reward') and self._cfg.obs_plus_prev_action_reward:
                 self._env = ObsPlusPrevActRewWrapper(self._env)
             self._observation_space = self._env.observation_space
@@ -49,7 +54,8 @@ class LunarLanderEnv(BaseEnv):
         self._final_eval_reward = 0
         obs = self._env.reset()
         obs = to_ndarray(obs)
-
+        if self._save_replay_gif:
+            self._frames = []
         return obs
 
     def close(self) -> None:
@@ -71,11 +77,20 @@ class LunarLanderEnv(BaseEnv):
             action = action.item()  # 0-dim array
         if self._act_scale:
             action = affine_transform(action, min_val=-1, max_val=1)
+        if self._save_replay_gif:
+            self._frames.append(self._env.render(mode='rgb_array'))
         obs, rew, done, info = self._env.step(action)
+        self._env.render()
         # print(action, obs, rew, done, info)
         self._final_eval_reward += rew
         if done:
             info['final_eval_reward'] = self._final_eval_reward
+            if self._save_replay_gif:
+                path = os.path.join(
+                    self._replay_path, '{}_episode_{}.gif'.format(self._env_id, self._save_replay_count)
+                )
+                self.display_frames_as_gif(self._frames, path)
+                self._save_replay_count += 1
 
         obs = to_ndarray(obs)
         rew = to_ndarray([rew]).astype(np.float32)  # wrapped to be transferred to a array with shape (1,)
@@ -85,6 +100,8 @@ class LunarLanderEnv(BaseEnv):
         if replay_path is None:
             replay_path = './video'
         self._replay_path = replay_path
+        self._save_replay_gif = True
+        self._save_replay_count = 0
         # this function can lead to the meaningless result
         self._env = gym.wrappers.RecordVideo(
             self._env,
@@ -92,6 +109,17 @@ class LunarLanderEnv(BaseEnv):
             episode_trigger=lambda episode_id: True,
             name_prefix='rl-video-{}'.format(id(self))
         )
+
+    @staticmethod
+    def display_frames_as_gif(frames: list, path: str) -> None:
+        patch = plt.imshow(frames[0])
+        plt.axis('off')
+
+        def animate(i):
+            patch.set_data(frames[i])
+
+        anim = animation.FuncAnimation(plt.gcf(), animate, frames=len(frames), interval=5)
+        anim.save(path, writer='imagemagick', fps=20)
 
     def random_action(self) -> np.ndarray:
         random_action = self.action_space.sample()

@@ -152,26 +152,3 @@ hopper_dqn_create_config = dict(
 hopper_dqn_create_config = EasyDict(hopper_dqn_create_config)
 create_config = hopper_dqn_create_config
 
-# if __name__ == "__main__":
-#     serial_pipeline_dqn_vqvae([main_config, create_config], seed=0)
-
-# import copy
-
-# def train(args):
-#     main_config.exp_name = 'data_hopper/noobs_noprio_ema_nonoise_rlcipgrad5_vhd512_D256_k128_upcr20' + 'seed_' + f'{args.seed}'+'_3M'
-#     # main_config.exp_name = 'debug'  # debug
-
-#     serial_pipeline_dqn_vqvae(
-#         [copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed
-#     )
-
-
-# if __name__ == "__main__":
-#     import argparse
-#     # for seed in [0, 1, 2, 3, 4]:
-#     for seed in [0]:
-#         parser = argparse.ArgumentParser()
-#         parser.add_argument('--seed', '-s', type=int, default=seed)
-#         args = parser.parse_args()
-
-#         train(args)

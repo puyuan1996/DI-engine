@@ -20,7 +20,7 @@ lunarlander_dqn_default_config = dict(
         # stop_value=200,
         stop_value=int(1e6),
         # replay_path='/home/puyuan/DI-engine/data_lunarlander/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_seed1_3M',
-        replay_path='/Users/puyuan/code/DI-engine/data_lunarlander_visualize',
+        replay_path='/Users/puyuan/code/DI-engine/data_lunarlander_visualize/dqn_sbh_ensemble20_noobs_noema_smallnet_k8_upc50_seed1_3M',
         save_replay_gif=True,
     ),
     policy=dict(
@@ -188,6 +188,10 @@ lunarlander_dqn_default_config = dict(
             n_sample=256,
             # Cut trajectories into pieces with length "unroll_len".
             unroll_len=1,
+
+            data_type='naive',
+            data_path='/Users/puyuan/code/DI-engine/data_lunarlander_visualize/dqn_sbh_ensemble20_noobs_noema_smallnet_k8_upc50_seed1_3M/data_iteration_best_1eps.pkl'
+
         ),
         eval=dict(evaluator=dict(eval_freq=1000, )),
         # command_mode config
@@ -213,8 +217,7 @@ lunarlander_dqn_create_config = dict(
         type='lunarlander',
         import_names=['dizoo.box2d.lunarlander.envs.lunarlander_env'],
     ),
-    # env_manager=dict(type='subprocess'),
-    env_manager=dict(type='base'),
+    env_manager=dict(type='subprocess'),
     policy=dict(type='dqn_vqvae'),
 )
 lunarlander_dqn_create_config = EasyDict(lunarlander_dqn_create_config)
@@ -223,7 +226,6 @@ create_config = lunarlander_dqn_create_config
 
 def train(args):
     main_config.exp_name = 'data_lunarlander_visualize/noobs_k8_upc50'
-    # main_config.exp_name = 'data_lunarlander/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_upc50_crlw1' + '_seed' + f'{args.seed}' + '_3M'
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=int(3e6))
 
 if __name__ == "__main__":
