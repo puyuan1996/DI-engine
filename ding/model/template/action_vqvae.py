@@ -601,7 +601,7 @@ class ActionVQVAE(nn.Module):
         predict_loss = F.mse_loss(prediction_residual, data['true_residual'])
 
         total_vqvae_loss = recons_loss + self.vq_loss_weight * vq_loss + self.predict_loss_weight * predict_loss
-        if self.v_contrastive_regularization and hasattr(data, 'target_v_value'):
+        if self.v_contrastive_regularization and 'target_v_value' in data.keys():
             # TODO
             # self.contrastive_regularization_loss_weight = 1
             total_vqvae_loss += self.contrastive_regularization_loss_weight * contrastive_regularization_loss

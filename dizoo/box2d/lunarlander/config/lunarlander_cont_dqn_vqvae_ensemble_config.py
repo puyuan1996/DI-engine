@@ -10,18 +10,19 @@ lunarlander_dqn_default_config = dict(
         # (bool) Scale output action into legal range.
         act_scale=True,
         # Env number respectively for collector and evaluator.
-        # collector_env_num=8,
-        # evaluator_env_num=5,
-        # n_evaluator_episode=5,
-        collector_env_num=1,
-        evaluator_env_num=1,
-        n_evaluator_episode=1,
+        collector_env_num=8,
+        evaluator_env_num=5,
+        n_evaluator_episode=5,
+        # debug
+        # collector_env_num=1,
+        # evaluator_env_num=1,
+        # n_evaluator_episode=1,
         # stop_value=200,
         stop_value=int(1e6),
         # replay_path='/home/puyuan/DI-engine/data_lunarlander/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_seed1_3M',
     ),
     policy=dict(
-        # model_path=None,
+        model_path=None,
         # model_path='/home/puyuan/DI-engine/data_lunarlander/dqn_sbh_ensemble20_noobs_noema_smallnet_k64_seed1_3M/ckpt/ckpt_best.pth.tar',
         # model_path='/home/puyuan/DI-engine/data_lunarlander/dqn_sbh_ensemble20_noobs_noema_smallnet_k64_seed1_3M/ckpt/iteration_400000.pth.tar',
 
@@ -31,7 +32,7 @@ lunarlander_dqn_default_config = dict(
 
         # model_path='/home/puyuan/DI-engine/data_lunarlander/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_seed1_3M/ckpt/ckpt_best.pth.tar',
 
-        model_path='/home/puyuan/DI-engine/data_lunarlander/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_upc20_crlw01_seed1_3M/ckpt/ckpt_best.pth.tar',
+        # model_path='/home/puyuan/DI-engine/data_lunarlander/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_upc20_crlw01_seed1_3M/ckpt/ckpt_best.pth.tar',
 
 
 
@@ -51,8 +52,8 @@ lunarlander_dqn_default_config = dict(
         # TODO(pu): test ema
         # is_ema=True,  # use EMA
         original_action_shape=2,
-        # random_collect_size=int(5e4),  # transitions
-        # warm_up_update=int(1e4),
+        random_collect_size=int(5e4),  # transitions
+        warm_up_update=int(1e4),
         # debug
         # random_collect_size=int(10),  
         # warm_up_update=int(2),
@@ -78,7 +79,7 @@ lunarlander_dqn_default_config = dict(
         # only if obs_regularization=True, this option take effect
         # v_contrastive_regularization=False,
         v_contrastive_regularization=True,
-        contrastive_regularization_loss_weight=0.1,
+        contrastive_regularization_loss_weight=1,
 
         # vqvae_pretrain_only=True,
         # NOTE: if only pretrain vqvae , i.e. vqvae_pretrain_only=True, should set this key to False
@@ -138,8 +139,8 @@ lunarlander_dqn_default_config = dict(
             constrain_action=False,  # TODO(pu): delete this key
            
             rl_vae_update_circle=1,  # train rl 1 iter, vae 1 iter
-            update_per_collect_rl=20,  # for collector n_sample=256
-            update_per_collect_vae=20,
+            update_per_collect_rl=50,  # for collector n_sample=256
+            update_per_collect_vae=50,
 
             rl_batch_size=512,
             vqvae_batch_size=512,
@@ -215,8 +216,8 @@ create_config = lunarlander_dqn_create_config
 
 
 def train(args):
-    main_config.exp_name = 'data_lunarlander/debug'
-    # main_config.exp_name = 'data_lunarlander/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_upc20_crlw1' + '_seed' + f'{args.seed}' + '_3M'
+    # main_config.exp_name = 'data_lunarlander/debug'
+    main_config.exp_name = 'data_lunarlander/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_upc50_crlw1' + '_seed' + f'{args.seed}' + '_3M'
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=int(3e6))
 
 if __name__ == "__main__":
