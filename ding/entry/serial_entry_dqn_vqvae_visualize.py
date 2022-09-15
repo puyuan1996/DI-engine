@@ -23,8 +23,9 @@ def serial_pipeline_dqn_vqvae_visualize(
         max_iterations: Optional[int] = int(1e10),
         max_env_step: Optional[int] = int(3e3),
         obs = None,
-        timestep=1,
+name_suffix=None,
 visualize_path =None,
+        number_of_frames=None,
 ) -> 'Policy':  # noqa
     """
     Overview:
@@ -97,8 +98,34 @@ visualize_path =None,
     # policy.visualize_latent(save_histogram=False, save_mapping=True, name_suffix='lunarlander_k8_seed1_iter2e5', granularity=0.01)
     # policy.visualize_latent(save_histogram=True, save_mapping=False, name_suffix='lunarlander_k8_seed1_iter2e5', granularity=0.01)
 
-    # visualize: analyze vqvae decoder
-    # obs= torch.  tensor([ -1,  0.0195, -0.2831, -0.4054, -0.2638, -0.0378,  1.0000,  0.0000])
-    policy.visualize_latent(save_histogram=False, save_mapping=False, save_decoding_mapping=True, obs=obs, name_suffix=f'lunarlander_obs0_crlw1_k8_seed1_x{timestep}_best', granularity=0.01,k=8,visualize_path =visualize_path )
-    # policy.visualize_latent(save_histogram=False, save_mapping=False, save_decoding_mapping=True, name_suffix='lunarlander_k8_seed1_iter2e5', granularity=0.01)
-    # print('visualize done')
+    # visualize: analyze vqvae
+    if number_of_frames is not None:
+        # process <number_of_frames> frames once
+        for timestep in range( number_of_frames):
+            name_suffix_timestep = copy.deepcopy(name_suffix)
+            name_suffix_timestep = name_suffix_timestep + f'_t{timestep}'
+            policy.visualize_latent(save_histogram=False, save_mapping=False, save_decoding_mapping=True,
+                                    obs=obs[timestep],
+                                    name_suffix=name_suffix_timestep, granularity=0.01, k=8,
+                                    visualize_path=visualize_path)
+            policy.visualize_latent(save_histogram=False, save_mapping=True, save_decoding_mapping=False, obs=obs[timestep],
+                                    name_suffix=name_suffix_timestep, granularity=0.01, k=8, visualize_path=visualize_path)
+            from ding.torch_utils import Adam, to_device, to_tensor
+            # if cfg.policy.cuda:
+            #     obs = to_device(obs, 'cuda')
+            # policy._eval_model.eval()
+            # with torch.no_grad():
+            #     output = policy._eval_model.forward(obs[timestep])
+            # print('action:', output['action'])
+    else:
+        # process one frame once
+        policy.visualize_latent(save_histogram=False, save_mapping=False, save_decoding_mapping=True, obs=obs, name_suffix= name_suffix, granularity=0.01, k=8, visualize_path =visualize_path )
+        policy.visualize_latent(save_histogram=False, save_mapping=True, save_decoding_mapping=False, obs=obs, name_suffix= name_suffix, granularity=0.01, k=8, visualize_path =visualize_path )
+
+        from ding.torch_utils import Adam, to_device, to_tensor
+        # if cfg.policy.cuda:
+        #     obs = to_device(obs, 'cuda')
+        policy._eval_model.eval()
+        with torch.no_grad():
+            output = policy._eval_model.forward(obs)
+        print('action:', output['action'])

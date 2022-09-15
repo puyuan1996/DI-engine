@@ -43,8 +43,8 @@ humanoid_dqn_default_config = dict(
         # warm_up_update=int(10),
 
         vqvae_embedding_dim=64,  # ved: D
-        # vqvae_hidden_dim=[256],  # vhd
-        vqvae_hidden_dim=[512],  # vhd
+        vqvae_hidden_dim=[256],  # vhd
+        # vqvae_hidden_dim=[512],  # vhd
         target_network_soft_update=False,
         beta=0.25,
         vq_loss_weight=0.1,  # TODO
@@ -54,15 +54,15 @@ humanoid_dqn_default_config = dict(
         replay_buffer_size_vqvae=int(1e6),
         auxiliary_conservative_loss=False,
 
-        # obs_regularization=True,
-        obs_regularization=False,
-        predict_loss_weight=1,  # TODO
+        obs_regularization=True,
+        # obs_regularization=False,
+        predict_loss_weight=0,  # TODO
 
-       # only if obs_regularization=True, this option take effect
-        v_contrastive_regularization=False,
-        # v_contrastive_regularization=True,
-        contrastive_regularization_loss_weight=0.1,
-        
+        # only if obs_regularization=True, this option take effect
+        # v_contrastive_regularization=False,
+        v_contrastive_regularization=True,
+        contrastive_regularization_loss_weight=1,
+
         # vqvae_pretrain_only=True,
         # NOTE: if only pretrain vqvae , i.e. vqvae_pretrain_only=True, should set this key to False
         # recompute_latent_action=False,
@@ -102,14 +102,15 @@ humanoid_dqn_default_config = dict(
         priority_IS_weight_vqvae=False,  # NOTE: return priority
         priority_type_vqvae='return',
         priority_vqvae_min=0.,
-        latent_action_shape=int(64),  # num of num_embeddings: K, i.e. shape of latent action
+        # latent_action_shape=int(64),  # num of num_embeddings: K, i.e. shape of latent action
+        latent_action_shape=int(128),  # num of num_embeddings: K, i.e. shape of latent action
         model=dict(
             ensemble_num=20,  # TODO
             obs_shape=376,
             # TODO: augment_extreme_action=True,
             # action_shape=int(64+2**17),  # Q dim
-            action_shape=int(64),  # Q dim
-            # action_shape=int(128),  # num of num_embeddings: K
+            # action_shape=int(64),  # Q dim
+            action_shape=int(128),  # num of num_embeddings: K
             # encoder_hidden_size_list=[128, 128, 64],  # small net
             encoder_hidden_size_list=[256, 256, 128],  # middle net
             # encoder_hidden_size_list=[512, 512, 256],  # large net
@@ -145,6 +146,8 @@ humanoid_dqn_default_config = dict(
             # vqvae_weight_decay=1e-4,
             rl_weight_decay=None,
             vqvae_weight_decay=None,
+
+            rl_linear_lr_scheduler=False,
 
             # add noise in original continuous action
             noise=False,  # NOTE: if vqvae_pretrain_only=True
@@ -194,7 +197,7 @@ create_config = humanoid_dqn_create_config
 
 
 def train(args):
-    main_config.exp_name = 'data_humanoid/dqn_sbh_ensemble20_k64_upc50_vhd512_noobs_noema_middlenet_beta0.25_vlw0.1' + '_seed' + f'{args.seed}' + '_3M'
+    main_config.exp_name = 'data_humanoid/dqn_sbh_ensemble20_k128_upc50_obs0_crlw1_noema_middlenet_beta0.25_vlw0.1' + '_seed' + f'{args.seed}' + '_3M'
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,
                               max_env_step=int(3e6))
 
@@ -204,9 +207,11 @@ if __name__ == "__main__":
     import argparse
     from ding.entry import serial_pipeline_dqn_vqvae
 
-    for seed in [0,1,2]:
+    for seed in [0, 1, 2]:
         parser = argparse.ArgumentParser()
         parser.add_argument('--seed', '-s', type=int, default=seed)
         args = parser.parse_args()
 
         train(args)
+        # ant: obs_shape: 376, action_shape: 17
+

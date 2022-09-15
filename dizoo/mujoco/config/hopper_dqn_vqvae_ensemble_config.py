@@ -55,9 +55,14 @@ hopper_dqn_default_config = dict(
         augment_extreme_action=False,
         # augment_extreme_action=True,
 
-        # obs_regularization=True,
-        obs_regularization=False,
-        predict_loss_weight=1,  # TODO
+        obs_regularization=True,
+        # obs_regularization=False,
+        predict_loss_weight=0,  # TODO
+
+        # only if obs_regularization=True, this option take effect
+        # v_contrastive_regularization=False,
+        v_contrastive_regularization=True,
+        contrastive_regularization_loss_weight=1,
 
         # vqvae_pretrain_only=True,
         # NOTE: if only pretrain vqvae , i.e. vqvae_pretrain_only=True, should set this key to False
@@ -73,11 +78,10 @@ hopper_dqn_default_config = dict(
         cont_reconst_smooth_l1_loss=False,
 
         categorical_head_for_cont_action=False,  # categorical distribution
-        
         threshold_categorical_head_for_cont_action=True,  # thereshold categorical distribution
         categorical_head_for_cont_action_threshold=0.9,
         threshold_phase=['eval'],  # ['eval', 'collect']
-        
+
         n_atom=11,
 
         gaussian_head_for_cont_action=False,  # gaussian distribution
@@ -146,7 +150,6 @@ hopper_dqn_default_config = dict(
 
             rl_linear_lr_scheduler=False,
 
-
             # add noise in original continuous action
             # noise=False,  # NOTE: if vqvae_pretrain_only=True
             noise=True,  # NOTE: if vqvae_pretrain_only=False
@@ -197,7 +200,7 @@ create_config = hopper_dqn_create_config
 
 
 def train(args):
-    main_config.exp_name = 'data_hopper/dqn_sbh_ensemble20_tch11-edge-eval-0.9_noise0_naea01_k64_upc30_noobs_noema_middlenet_beta0.25_vlw0.1' + '_seed' + f'{args.seed}' + '_3M'
+    main_config.exp_name = 'data_hopper/dqn_sbh_ensemble20_tch11-edge-eval-0.9_noise0_k64_upc20_obs0_crlw1_noema_middlenet_beta0.25_vlw0.1' + '_seed' + f'{args.seed}' + '_3M'
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,
                               max_env_step=int(3e6))
 
@@ -207,7 +210,7 @@ if __name__ == "__main__":
     import argparse
     from ding.entry import serial_pipeline_dqn_vqvae
 
-    for seed in [0,1,2]:
+    for seed in [0, 1, 2]:
         parser = argparse.ArgumentParser()
         parser.add_argument('--seed', '-s', type=int, default=seed)
         args = parser.parse_args()

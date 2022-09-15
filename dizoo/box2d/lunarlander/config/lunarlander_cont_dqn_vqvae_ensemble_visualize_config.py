@@ -34,9 +34,9 @@ lunarlander_dqn_default_config = dict(
 
         # model_path='/home/puyuan/DI-engine/data_lunarlander/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_seed1_3M/ckpt/ckpt_best.pth.tar',
 
-        model_path='/Users/puyuan/code/DI-engine/data_lunarlander/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_upc50_seed1_3M/ckpt/ckpt_best.pth.tar',
+        # model_path='/Users/puyuan/code/DI-engine/data_lunarlander/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_upc50_seed1_3M/ckpt/ckpt_best.pth.tar',
 
-        # model_path='/Users/puyuan/code/DI-engine/data_lunarlander/dqn_sbh_ensemble20_noobs_noema_smallnet_k8_upc50_seed1_3M/ckpt/ckpt_best.pth.tar',
+        model_path='/Users/puyuan/code/DI-engine/data_lunarlander/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_upc50_crlw1_seed1_3M/ckpt/ckpt_best.pth.tar',
 
         # Whether to use cuda for network.
         cuda=True,
@@ -82,8 +82,8 @@ lunarlander_dqn_default_config = dict(
 
         # TODO
         # only if obs_regularization=True, this option take effect
-        v_contrastive_regularization=False,
-        # v_contrastive_regularization=True,
+        # v_contrastive_regularization=False,
+        v_contrastive_regularization=True,
         contrastive_regularization_loss_weight=1,
 
         # vqvae_pretrain_only=True,
@@ -223,14 +223,24 @@ create_config = lunarlander_dqn_create_config
 
 def train(args):
     main_config.exp_name = 'data_lunarlander_visualize/noobs_k8_upc50'
-    serial_pipeline_dqn_vqvae_visualize([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=int(3e6))
+    # visualize_path = '/Users/puyuan/code/DI-engine/data_lunarlander_visualize/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_upc50_seed1_3M/collect_in_seed1_change-obs/'
+
+    visualize_path = '/Users/puyuan/code/DI-engine/data_lunarlander_visualize/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_upc50_crlw1_seed1_3M/collect_in_seed1_change-obs/'
+
+
+
+    # obs= torch.tensor([ 0.2246,  0.2622, -0.4423, -0.6654,  0.0036, -0.3611,  0.0000,  0.0000])
+    # obs = torch.tensor([ 0.2246,  0.2622, 1, 0,  0.0036, -0.3611,  0.0000,  0.0000])
+
+    obs = torch. tensor([0.3219, 0.2685, 1, -0.5076, 0.1122, -0.1886, 0.0000, 0.0000])
+    serial_pipeline_dqn_vqvae_visualize([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=int(3e6), obs=obs, name_suffix='lunarlander_obs0_k8_seed1_t138_obs-2_best', visualize_path=visualize_path)
 
 if __name__ == "__main__":
     import copy
     import argparse
+    import torch
     from ding.entry import serial_pipeline_dqn_vqvae_visualize
-    # for seed in [0,1,2]:
-    for seed in [2]:
+    for seed in [1]:
         parser = argparse.ArgumentParser()
         parser.add_argument('--seed', '-s', type=int, default=seed)
         args = parser.parse_args()
