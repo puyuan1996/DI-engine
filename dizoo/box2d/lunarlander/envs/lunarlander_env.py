@@ -80,7 +80,7 @@ class LunarLanderEnv(BaseEnv):
         if self._save_replay_gif:
             self._frames.append(self._env.render(mode='rgb_array'))
         obs, rew, done, info = self._env.step(action)
-        self._env.render()
+        # self._env.render()
         # print(action, obs, rew, done, info)
         self._final_eval_reward += rew
         if done:
@@ -112,14 +112,17 @@ class LunarLanderEnv(BaseEnv):
 
     @staticmethod
     def display_frames_as_gif(frames: list, path: str) -> None:
-        patch = plt.imshow(frames[0])
-        plt.axis('off')
+        # patch = plt.imshow(frames[0])
+        # plt.axis('off')
+        #
+        # def animate(i):
+        #     patch.set_data(frames[i])
+        #
+        # anim = animation.FuncAnimation(plt.gcf(), animate, frames=len(frames), interval=5)
+        # anim.save(path, writer='imagemagick', fps=20)
 
-        def animate(i):
-            patch.set_data(frames[i])
-
-        anim = animation.FuncAnimation(plt.gcf(), animate, frames=len(frames), interval=5)
-        anim.save(path, writer='imagemagick', fps=20)
+        import imageio
+        imageio.mimsave(path, frames, fps=20)
 
     def random_action(self) -> np.ndarray:
         random_action = self.action_space.sample()

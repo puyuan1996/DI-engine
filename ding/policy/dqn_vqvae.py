@@ -131,6 +131,7 @@ class DQNVQVAEPolicy(Policy):
             replay_buffer=dict(replay_buffer_size=10000, ),
         ),
     )
+
     def default_model(self) -> Tuple[str, List[str]]:
         """
         Overview:
@@ -146,7 +147,6 @@ class DQNVQVAEPolicy(Policy):
         # return 'dqn_ma_share_backbone', ['ding.model.template.q_learning']
         return 'dqn_ma_share_backbone_head', ['ding.model.template.q_learning']
 
-
     def _init_learn(self) -> None:
         """
         Overview:
@@ -158,18 +158,17 @@ class DQNVQVAEPolicy(Policy):
         self._priority_vqvae = self._cfg.priority_vqvae
         self._priority_IS_weight_vqvae = self._cfg.priority_IS_weight_vqvae
 
-
         # Optimizer
         if self._cfg.learn.rl_clip_grad is True:
             if self._cfg.learn.rl_weight_decay is not None:
                 self._optimizer = Adam(
-                self._model.parameters(),
-                lr=self._cfg.learn.learning_rate,
-                weight_decay=self._cfg.learn.rl_weight_decay,
-                optim_type='adamw',
-                grad_clip_type=self._cfg.learn.grad_clip_type,
-                clip_value=self._cfg.learn.grad_clip_value
-            )
+                    self._model.parameters(),
+                    lr=self._cfg.learn.learning_rate,
+                    weight_decay=self._cfg.learn.rl_weight_decay,
+                    optim_type='adamw',
+                    grad_clip_type=self._cfg.learn.grad_clip_type,
+                    clip_value=self._cfg.learn.grad_clip_value
+                )
             else:
                 self._optimizer = Adam(
                     self._model.parameters(),
@@ -184,9 +183,9 @@ class DQNVQVAEPolicy(Policy):
         if self._cfg.learn.rl_linear_lr_scheduler is True:
             from torch.optim.lr_scheduler import LambdaLR
             # rl_lambda = lambda step: (1e-5 / 3e-4 -1) * (1 / (3e6*20/256) ) * step + 1
-            rl_lambda = lambda step: (1e-5 / 3e-4 -1) * (1 / (3e6 * self._cfg.learn.update_per_collect_rl/self._cfg.collect.n_sample) ) * step + 1
+            rl_lambda = lambda step: (1e-5 / 3e-4 - 1) * (
+                        1 / (3e6 * self._cfg.learn.update_per_collect_rl / self._cfg.collect.n_sample)) * step + 1
             self.rl_scheduler = LambdaLR(self._optimizer, lr_lambda=rl_lambda, last_epoch=-1)
-
 
         self._gamma = self._cfg.discount_factor
         self._nstep = self._cfg.nstep
@@ -235,9 +234,9 @@ class DQNVQVAEPolicy(Policy):
             obs_shape=self._cfg.model.obs_shape,
             predict_loss_weight=self._cfg.predict_loss_weight,
             mask_pretanh=self._cfg.mask_pretanh,
-            recons_loss_cont_weight = self._cfg.recons_loss_cont_weight,
-            v_contrastive_regularization = self._cfg.v_contrastive_regularization,
-            contrastive_regularization_loss_weight = self._cfg.contrastive_regularization_loss_weight
+            recons_loss_cont_weight=self._cfg.recons_loss_cont_weight,
+            v_contrastive_regularization=self._cfg.v_contrastive_regularization,
+            contrastive_regularization_loss_weight=self._cfg.contrastive_regularization_loss_weight
         )
         self._vqvae_model = to_device(self._vqvae_model, self._device)
         if self._cfg.learn.vqvae_clip_grad is True:
@@ -262,7 +261,6 @@ class DQNVQVAEPolicy(Policy):
                 self._vqvae_model.parameters(),
                 lr=self._cfg.learn.learning_rate_vae,
             )
-
 
     def _forward_learn(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -317,8 +315,10 @@ class DQNVQVAEPolicy(Policy):
             loss_dict['vq_loss'] = result['vq_loss'].item()
             loss_dict['embedding_loss'] = result['embedding_loss'].item()
             loss_dict['commitment_loss'] = result['commitment_loss'].item()
-            loss_dict['recons_action_probs_left_mask_proportion'] = float(result['recons_action_probs_left_mask_proportion'])
-            loss_dict['recons_action_probs_right_mask_proportion'] = float(result['recons_action_probs_right_mask_proportion'])
+            loss_dict['recons_action_probs_left_mask_proportion'] = float(
+                result['recons_action_probs_left_mask_proportion'])
+            loss_dict['recons_action_probs_right_mask_proportion'] = float(
+                result['recons_action_probs_right_mask_proportion'])
 
             if self._cfg.obs_regularization:
                 loss_dict['predict_loss'] = result['predict_loss'].item()
@@ -365,7 +365,6 @@ class DQNVQVAEPolicy(Policy):
 
                 if self._cfg.obs_regularization:
                     if self._cfg.v_contrastive_regularization:
-
                         # ====================
                         # Q-learning forward
                         # ====================
@@ -377,8 +376,10 @@ class DQNVQVAEPolicy(Policy):
                             target_q_value_list = self._target_model.forward(data['next_obs'])
 
                         # get the average q value for each action, target_q_value_tensor shape: (B, A, E), B is batcn_size, A is action shape, E is ensemble num
-                        target_q_value_tensor = torch.stack([target_q_value['logit'] for target_q_value in target_q_value_list], dim=-1)
-                        mean_target_q_value = torch.mean(torch.mean(target_q_value_tensor, dim=-1), dim=-1)  # shape (B, )
+                        target_q_value_tensor = torch.stack(
+                            [target_q_value['logit'] for target_q_value in target_q_value_list], dim=-1)
+                        mean_target_q_value = torch.mean(torch.mean(target_q_value_tensor, dim=-1),
+                                                         dim=-1)  # shape (B, )
                         # approximate target v value of next state
                         data['target_v_value'] = mean_target_q_value
 
@@ -392,20 +393,20 @@ class DQNVQVAEPolicy(Policy):
                 loss_dict['vq_loss'] = result['vq_loss'].item()
                 loss_dict['embedding_loss'] = result['embedding_loss'].item()
                 loss_dict['commitment_loss'] = result['commitment_loss'].item()
-                loss_dict['recons_action_probs_left_mask_proportion'] = float(result['recons_action_probs_left_mask_proportion'])
-                loss_dict['recons_action_probs_right_mask_proportion'] = float(result['recons_action_probs_right_mask_proportion'])
+                loss_dict['recons_action_probs_left_mask_proportion'] = float(
+                    result['recons_action_probs_left_mask_proportion'])
+                loss_dict['recons_action_probs_right_mask_proportion'] = float(
+                    result['recons_action_probs_right_mask_proportion'])
                 if self._cfg.obs_regularization:
                     loss_dict['predict_loss'] = result['predict_loss'].item()
                 if self._cfg.v_contrastive_regularization:
                     loss_dict['contrastive_regularization_loss'] = result['contrastive_regularization_loss'].item()
-                
 
                 # vae update
                 self._optimizer_vqvae.zero_grad()
                 result['total_vqvae_loss'].backward()
                 total_grad_norm_vqvae = self._optimizer_vqvae.get_grad()
                 self._optimizer_vqvae.step()
-
 
                 # NOTE:visualize_latent, now it's only for env hopper and gym_hybrid
                 # quantized_index = self.visualize_latent(save_histogram=False)
@@ -430,7 +431,7 @@ class DQNVQVAEPolicy(Policy):
                 if self._cuda:
                     data = to_device(data, self._device)
 
-                # Representation shift correction (RSC)
+                # latent action remapping
                 # update all latent action
                 if self._cfg.recompute_latent_action:
                     if self._cfg.rl_reconst_loss_weight:
@@ -464,23 +465,26 @@ class DQNVQVAEPolicy(Policy):
                     target_q_action = self._learn_model.forward(data['next_obs'])['action']
 
                 # get the average q value for each action,   target_q_value_tensor shape: (B,A,E), B is batcn_size, A is action shape, E is ensemble num
-                target_q_value_tensor = torch.stack([target_q_value['logit'] for target_q_value in target_q_value_list], dim=-1)
+                target_q_value_tensor = torch.stack([target_q_value['logit'] for target_q_value in target_q_value_list],
+                                                    dim=-1)
                 # mean_target_q_value = torch.mean(torch.mean(target_q_value_tensor, dim=-1), dim=-1)  # shape (B, )
 
-                min_target_q_value = torch.min( target_q_value_tensor, dim=-1)[0]
-                for agent in range(self._cfg.model.ensemble_num): 
+                min_target_q_value = torch.min(target_q_value_tensor, dim=-1)[0]
+                for agent in range(self._cfg.model.ensemble_num):
                     # NOTE: RL learn policy in latent action space, so here using data['latent_action']
                     data_n = q_nstep_td_data(
-                        q_value_list[agent]['logit'], min_target_q_value, data['latent_action'].squeeze(-1), target_q_action, data['reward'], data['done'], data['weight']
+                        q_value_list[agent]['logit'], min_target_q_value, data['latent_action'].squeeze(-1),
+                        target_q_action, data['reward'], data['done'], data['weight']
                     )
                     value_gamma = data.get('value_gamma')
-                    loss_agent, td_error_per_sample_agent = q_nstep_td_error(data_n, self._gamma, nstep=self._nstep, value_gamma=value_gamma)
+                    loss_agent, td_error_per_sample_agent = q_nstep_td_error(data_n, self._gamma, nstep=self._nstep,
+                                                                             value_gamma=value_gamma)
                     loss += loss_agent
                     # loss_list.append(loss_agent)
 
                 # TODO(pu): td3_bc loss
                 if self._cfg.auxiliary_conservative_loss:
-                    alpha=2.5
+                    alpha = 2.5
                     self.alpha = alpha
                     auxiliary_conservative_loss = q_value.mean()
                     # add behavior cloning loss weight(\lambda)
@@ -507,14 +511,15 @@ class DQNVQVAEPolicy(Policy):
 
                 q_value_dict = {}
                 # get statistics for multi q value
-                q_value_tensor = torch.stack([q_value['logit'] for q_value in q_value_list], dim=-1).detach().cpu() # shape (B, A, Ensemble_num)
+                q_value_tensor = torch.stack([q_value['logit'] for q_value in q_value_list],
+                                             dim=-1).detach().cpu()  # shape (B, A, Ensemble_num)
                 mean_q_value = torch.mean(q_value_tensor, dim=-1)  # shape (B, A)
                 min_q_value = torch.min(q_value_tensor, dim=-1)[0]  # shape (B, A)
                 max_q_value = torch.max(q_value_tensor, dim=-1)[0]  # shape (B, A)
 
-                q_value_dict['mean_q_value'] =  mean_q_value.mean().item()
-                q_value_dict['min_q_value'] =  min_q_value.mean().item()
-                q_value_dict['max_q_value'] =  max_q_value.mean().item()
+                q_value_dict['mean_q_value'] = mean_q_value.mean().item()
+                q_value_dict['min_q_value'] = min_q_value.mean().item()
+                q_value_dict['max_q_value'] = max_q_value.mean().item()
                 if self._cfg.learn.rl_linear_lr_scheduler is True:
                     return {
                         # 'cur_lr': self._optimizer.defaults['lr'],
@@ -570,7 +575,7 @@ class DQNVQVAEPolicy(Policy):
         if self._cfg.v_contrastive_regularization:
             ret.append('contrastive_regularization_loss')
         return ret
-        
+
     def _init_collect(self) -> None:
         """
         Overview:
@@ -609,11 +614,21 @@ class DQNVQVAEPolicy(Policy):
         data = data.float()
         with torch.no_grad():
             output = self._collect_model.forward(data, eps=eps)
+
+            ### only for visualize
+            # Current q value (main model)
+            q_value_list = self._learn_model.forward(data)['logit']
+            # get statistics for multi q value
+            q_value_tensor = torch.stack([q_value['logit'] for q_value in q_value_list],
+                                         dim=-1).detach().cpu()  # shape (B, A, Ensemble_num)
+            mean_q_value = torch.mean(q_value_tensor, dim=-1)  # shape (B, A)
+            output['q_value'] = mean_q_value
+            ### only for visualize
+
             # here output['action'] is the out of DQN, is discrete action
             output['latent_action'] = copy.deepcopy(output['action'])
             if self._cuda:
                 output = to_device(output, self._device)
-
 
             # debug
             # latents = to_device(torch.arange(64), 'cuda')
@@ -622,7 +637,8 @@ class DQNVQVAEPolicy(Policy):
 
             if self._cfg.action_space == 'hybrid':
                 # TODO(pu): decode into original hybrid actions, here data is obs
-                recons_action = self._vqvae_model.decode({'quantized_index': output['action'], 'obs': data, 'threshold_phase': 'collect' in self._cfg.threshold_phase})
+                recons_action = self._vqvae_model.decode({'quantized_index': output['action'], 'obs': data,
+                                                          'threshold_phase': 'collect' in self._cfg.threshold_phase})
                 output['action'] = {
                     'action_type': recons_action['recons_action']['action_type'],
                     'action_args': recons_action['recons_action']['action_args']
@@ -647,7 +663,8 @@ class DQNVQVAEPolicy(Policy):
                 # continuos action space
                 if not self._cfg.augment_extreme_action:
                     # TODO
-                    output['action'] = self._vqvae_model.decode({'quantized_index': output['action'], 'obs': data, 'threshold_phase': 'collect' in self._cfg.threshold_phase})[
+                    output['action'] = self._vqvae_model.decode({'quantized_index': output['action'], 'obs': data,
+                                                                 'threshold_phase': 'collect' in self._cfg.threshold_phase})[
                         'recons_action']
                     # output = self._vqvae_model.decode({'quantized_index': output['action'], 'obs': data})
                     # output['action'] = output['recons_action']
@@ -656,10 +673,14 @@ class DQNVQVAEPolicy(Policy):
                     if self._cuda:
                         output_action = to_device(output_action, self._device)
                     # the latent of extreme_action, e.g. [64, 64+2**3) [64, 72)
-                    mask = output['action'].ge(self._cfg.latent_action_shape) & output['action'].le(self._cfg.model.action_shape)  # TODO
+                    mask = output['action'].ge(self._cfg.latent_action_shape) & output['action'].le(
+                        self._cfg.model.action_shape)  # TODO
 
                     # the usual latent of vqvae learned action
-                    output_action[~mask] = self._vqvae_model.decode({'quantized_index': output['action'].masked_select(~mask), 'obs': data.masked_select(~mask.unsqueeze(-1)).view(-1,self._cfg.model.obs_shape), 'threshold_phase': 'collect' in self._cfg.threshold_phase})[
+                    output_action[~mask] = self._vqvae_model.decode(
+                        {'quantized_index': output['action'].masked_select(~mask),
+                         'obs': data.masked_select(~mask.unsqueeze(-1)).view(-1, self._cfg.model.obs_shape),
+                         'threshold_phase': 'collect' in self._cfg.threshold_phase})[
                         'recons_action']
 
                     if mask.sum() > 0:
@@ -670,30 +691,32 @@ class DQNVQVAEPolicy(Policy):
                         # disc_to_cont: transform discrete action index to original continuous action
                         self.m = self._cfg.original_action_shape
                         self.n = 2
-                        self.K =  self.n ** self.m
-                        self.disc_to_cont = list(product(*[list(range(self.n)) for dim in range(self.m)] ))
+                        self.K = self.n ** self.m
+                        self.disc_to_cont = list(product(*[list(range(self.n)) for dim in range(self.m)]))
                         # NOTE: disc_to_cont: transform discrete action index to original continuous action
-                        extreme_action = torch.tensor([[-1. if k==0 else 1.for k in  self.disc_to_cont[int(one_extreme_action_index)]] for one_extreme_action_index in extreme_action_index])
+                        extreme_action = torch.tensor(
+                            [[-1. if k == 0 else 1. for k in self.disc_to_cont[int(one_extreme_action_index)]] for
+                             one_extreme_action_index in extreme_action_index])
                         if self._cuda:
                             extreme_action = to_device(extreme_action, self._device)
                         output_action[mask] = extreme_action
 
                     output['action'] = output_action
-                    
 
                 # NOTE: add noise in the original actions
                 if self._cfg.learn.noise:
                     if self._cfg.learn.noise_augment_extreme_action:
                         if np.random.random() < self._cfg.learn.noise_augment_extreme_action_prob:
-                            halved_prob = torch.ones_like(output['action'])/2
-                            output['action'] = 2*torch.bernoulli(halved_prob)-1  # {-1,1}
+                            halved_prob = torch.ones_like(output['action']) / 2
+                            output['action'] = 2 * torch.bernoulli(halved_prob) - 1  # {-1,1}
                         else:
                             from ding.rl_utils.exploration import GaussianNoise
                             action = output['action']
                             gaussian_noise = GaussianNoise(mu=0.0, sigma=self._cfg.learn.noise_sigma)
                             noise = gaussian_noise(output['action'].shape, output['action'].device)
                             if self._cfg.learn.noise_range is not None:
-                                noise = noise.clamp(self._cfg.learn.noise_range['min'], self._cfg.learn.noise_range['max'])
+                                noise = noise.clamp(self._cfg.learn.noise_range['min'],
+                                                    self._cfg.learn.noise_range['max'])
                             action += noise
                             self.action_range = {'min': -1, 'max': 1}
                             if self.action_range is not None:
@@ -751,24 +774,30 @@ class DQNVQVAEPolicy(Policy):
             output['latent_action'] = copy.deepcopy(output['action'])
 
             if self._cfg.action_space == 'hybrid':
-                recons_action = self._vqvae_model.decode({'quantized_index': output['action'], 'obs': data, 'threshold_phase': 'eval' in self._cfg.threshold_phase})
+                recons_action = self._vqvae_model.decode({'quantized_index': output['action'], 'obs': data,
+                                                          'threshold_phase': 'eval' in self._cfg.threshold_phase})
                 output['action'] = {
                     'action_type': recons_action['recons_action']['action_type'],
                     'action_args': recons_action['recons_action']['action_args']
                 }
             else:
                 if not self._cfg.augment_extreme_action:
-                    output['action'] = self._vqvae_model.decode({'quantized_index': output['action'], 'obs': data, 'threshold_phase': 'eval' in self._cfg.threshold_phase})[
+                    output['action'] = self._vqvae_model.decode({'quantized_index': output['action'], 'obs': data,
+                                                                 'threshold_phase': 'eval' in self._cfg.threshold_phase})[
                         'recons_action']
                 else:
                     output_action = torch.zeros([output['action'].shape[0], self._cfg.original_action_shape])
                     if self._cuda:
                         output_action = to_device(output_action, self._device)
                     # the latent of extreme_action 
-                    mask = output['action'].ge(self._cfg.latent_action_shape) & output['action'].le(self._cfg.model.action_shape)  # TODO
+                    mask = output['action'].ge(self._cfg.latent_action_shape) & output['action'].le(
+                        self._cfg.model.action_shape)  # TODO
 
                     # the usual latent of vqvae learned action
-                    output_action[~mask] = self._vqvae_model.decode({'quantized_index': output['action'].masked_select(~mask), 'obs': data.masked_select(~mask.unsqueeze(-1)).view(-1,self._cfg.model.obs_shape), 'threshold_phase': 'collect' in self._cfg.threshold_phase})[
+                    output_action[~mask] = self._vqvae_model.decode(
+                        {'quantized_index': output['action'].masked_select(~mask),
+                         'obs': data.masked_select(~mask.unsqueeze(-1)).view(-1, self._cfg.model.obs_shape),
+                         'threshold_phase': 'collect' in self._cfg.threshold_phase})[
                         'recons_action']
 
                     if mask.sum() > 0:
@@ -778,16 +807,17 @@ class DQNVQVAEPolicy(Policy):
                         # NOTE: disc_to_cont: transform discrete action index to original continuous action
                         self.m = self._cfg.original_action_shape
                         self.n = 2
-                        self.K =  self.n ** self.m
-                        self.disc_to_cont = list(product(*[list(range(self.n)) for dim in range(self.m)] ))
+                        self.K = self.n ** self.m
+                        self.disc_to_cont = list(product(*[list(range(self.n)) for dim in range(self.m)]))
                         # NOTE: disc_to_cont: transform discrete action index to original continuous action
-                        extreme_action = torch.tensor([[-1. if k==0 else 1.for k in  self.disc_to_cont[int(one_extreme_action_index)]] for one_extreme_action_index in extreme_action_index])
+                        extreme_action = torch.tensor(
+                            [[-1. if k == 0 else 1. for k in self.disc_to_cont[int(one_extreme_action_index)]] for
+                             one_extreme_action_index in extreme_action_index])
                         if self._cuda:
                             extreme_action = to_device(extreme_action, self._device)
                         output_action[mask] = extreme_action
 
                     output['action'] = output_action
-                    
 
         if self._cuda:
             output = to_device(output, 'cpu')
@@ -894,6 +924,9 @@ class DQNVQVAEPolicy(Policy):
                 'next_obs': timestep.obs,
                 'action': policy_output['action'],
                 'latent_action': policy_output['latent_action'],
+                ### only for visualize
+                # q value
+                'q_value': policy_output['q_value'], # only for visualize
                 'reward': timestep.reward,
                 # 'rewrad_run': timestep.info['rewrad_run'],
                 # 'rewrad_ctrl': timestep.info['rewrad_ctrl'],
@@ -911,47 +944,48 @@ class DQNVQVAEPolicy(Policy):
             }
         return transition
 
+    def visualize_latent(self, save_histogram=False, save_mapping=False, save_decoding_mapping=False, obs=None,
+                         name_suffix=0, granularity=0.01, k=8, visualize_path=None):
+        if save_histogram or save_histogram:
+            # i.e. to execute:
+            # action_embedding = self._get_action_embedding(data)
+            if self.cfg.action_space == 'continuous':
+                # continuous action, for lunarlander env: 2 dim cont
+                xx, yy = np.meshgrid(
+                    np.arange(-1, 1, granularity), np.arange(-1, 1, granularity)
+                )
+                cnt = int((2 / granularity)) ** 2
+                action_samples = np.array([xx.ravel(), yy.ravel()]).reshape(cnt, 2)
 
-    def visualize_latent(self, save_histogram=False, save_mapping=False, save_decoding_mapping=False, name_suffix=0, granularity=0.01, k=8):
-        # i.e. to execute:
-        # action_embedding = self._get_action_embedding(data)
-        if self.cfg.action_space == 'continuous':
-            # continuous action, for lunarlander env: 2 dim cont
-            xx, yy = np.meshgrid(
-                np.arange(-1, 1, granularity), np.arange(-1, 1, granularity)
-            )
-            cnt = int((2 / granularity)) ** 2
-            action_samples = np.array([xx.ravel(), yy.ravel()]).reshape(cnt, 2)
+                # continuous action, for hopper env: 3 dim cont
+                # xx, yy, zz = np.meshgrid(
+                #     np.arange(-1, 1, granularity), np.arange(-1, 1, granularity), np.arange(-1, 1, granularity)
+                # )
+                # cnt = int((2 / granularity)) ** 3
+                # action_samples = np.array([xx.ravel(), yy.ravel(), zz.ravel()]).reshape(cnt, 3)
+            elif self.cfg.action_space == 'hybrid':
+                # hybrid action, now only for gym_hybrid env: 3 dim discrete, 2 dim cont
+                xx, yy = np.meshgrid(np.arange(-1, 1, granularity), np.arange(-1, 1, granularity))
+                cnt = int((2 / granularity)) ** 2
+                action_samples = np.array([xx.ravel(), yy.ravel()]).reshape(cnt, 2)
 
-            # continuous action, for hopper env: 3 dim cont
-            # xx, yy, zz = np.meshgrid(
-            #     np.arange(-1, 1, granularity), np.arange(-1, 1, granularity), np.arange(-1, 1, granularity)
-            # )
-            # cnt = int((2 / granularity)) ** 3
-            # action_samples = np.array([xx.ravel(), yy.ravel(), zz.ravel()]).reshape(cnt, 3)
-        elif self.cfg.action_space == 'hybrid':
-            # hybrid action, now only for gym_hybrid env: 3 dim discrete, 2 dim cont
-            xx, yy = np.meshgrid(np.arange(-1, 1, granularity), np.arange(-1, 1, granularity))
-            cnt = int((2 / granularity)) ** 2
-            action_samples = np.array([xx.ravel(), yy.ravel()]).reshape(cnt, 2)
+                action_samples_type1 = np.concatenate(
+                    [np.tile(np.array([1, 0, 0]), cnt).reshape(cnt, 3), action_samples], axis=-1
+                )
+                action_samples_type2 = np.concatenate(
+                    [np.tile(np.array([0, 1, 0]), cnt).reshape(cnt, 3), action_samples], axis=-1
+                )
+                action_samples_type3 = np.concatenate(
+                    [np.tile(np.array([0, 0, 1]), cnt).reshape(cnt, 3), action_samples], axis=-1
+                )
+                action_samples = np.concatenate([action_samples_type1, action_samples_type2, action_samples_type3])
 
-            action_samples_type1 = np.concatenate(
-                [np.tile(np.array([1, 0, 0]), cnt).reshape(cnt, 3), action_samples], axis=-1
-            )
-            action_samples_type2 = np.concatenate(
-                [np.tile(np.array([0, 1, 0]), cnt).reshape(cnt, 3), action_samples], axis=-1
-            )
-            action_samples_type3 = np.concatenate(
-                [np.tile(np.array([0, 0, 1]), cnt).reshape(cnt, 3), action_samples], axis=-1
-            )
-            action_samples = np.concatenate([action_samples_type1, action_samples_type2, action_samples_type3])
+            # encoding = self._vqvae_model.encoder(torch.Tensor(action_samples).to(torch.device('cuda')))
+            # quantized_index, quantized_inputs, vq_loss, _, _ = self._vqvae_model.vq_layer(encoding)
 
-        # encoding = self._vqvae_model.encoder(torch.Tensor(action_samples).to(torch.device('cuda')))
-        # quantized_index, quantized_inputs, vq_loss, _, _ = self._vqvae_model.vq_layer(encoding)
-
-        with torch.no_grad():
-            encoding = self._vqvae_model.encoder(to_device(torch.Tensor(action_samples), self._device))
-            quantized_index = self._vqvae_model.vq_layer.encode(encoding)
+            with torch.no_grad():
+                encoding = self._vqvae_model.encoder(to_device(torch.Tensor(action_samples), self._device))
+                quantized_index = self._vqvae_model.vq_layer.encode(encoding)
 
         if save_histogram:
             fig = plt.figure()
@@ -993,41 +1027,35 @@ class DQNVQVAEPolicy(Policy):
             plt.savefig(f'latent_mapping_{name_suffix}.png')
         elif save_decoding_mapping:
             # TODO: k
-            latents = to_device(torch.arange(k), 'cuda')
-            
-            # if obs-conditioned
-            obs = torch.tensor([0,  1.4135e+00, -5.9936e-02,  1.1277e-01,  6.9229e-04, 1.3576e-02,  0.0000e+00,  0.0000e+00])
-            # obs = torch.tensor([-1,  1.4135e+00, -5.9936e-02,  1.1277e-01,  6.9229e-04, 1.3576e-02,  0.0000e+00,  0.0000e+00])
-            obs =  obs.repeat(8,1)
-            obs = to_device( obs, 'cuda')
-            recons_action = self._vqvae_model.decode({'quantized_index': latents, 'obs': obs, 'threshold_phase': False})['recons_action'].detach().cpu().numpy()
-            
-            # if no obs-conditioned
-            # recons_action = self._vqvae_model.decode({'quantized_index': latents, 'obs': None, 'threshold_phase': False})['recons_action'].detach().cpu().numpy()
-            
-            print(recons_action.max(0), recons_action.min(0),recons_action.mean(0), recons_action.std(0))
+            latents = to_device(torch.arange(k), self._device)
+            obs = obs.repeat(k, 1)
+            obs = to_device(obs, self._device)
+            recons_action = self._vqvae_model.decode({'quantized_index': latents, 'obs': obs, 'threshold_phase': False})[
+                'recons_action'].detach().cpu().numpy()
+            print(recons_action.max(0), recons_action.min(0), recons_action.mean(0), recons_action.std(0))
 
-            
             c = latents.detach().cpu().numpy()
             fig = plt.figure()
             ax = fig.add_subplot(111)
 
-            sc = ax.scatter(recons_action[:,0], recons_action[:,1], c=c, marker='o')
-            
-            # annotaions
-            annotations=[f"{i}" for i in range(k)]
+            sc = ax.scatter(recons_action[:, 0], recons_action[:, 1], c=c, marker='o')
+
+            # annotations
+            annotations = [f"{i}" for i in range(k)]
             for i, label in enumerate(annotations):
-                plt.text(recons_action[:,0][i], recons_action[:,1][i],label)
+                plt.text(recons_action[:, 0][i], recons_action[:, 1][i], label)
 
             plt.xlabel('Original Action Dim0')
             plt.ylabel('Original Action Dim1')
             ax.set_title('Latent Action Decoding')
             fig.colorbar(sc)
-            #设置坐标轴范围
+            # 设置坐标轴范围
             plt.xlim((-1, 1))
             plt.ylim((-1, 1))
-            plt.show()
-            plt.savefig(f'latent_action_decoding_{name_suffix}.png')
+            plt.savefig(f'{visualize_path}'+f'latent_action_decoding_{name_suffix}.png')
+            # plt.show()
+            plt.clf()
+            plt.close('all')
         else:
             return quantized_index.detach().cpu().numpy()
 
@@ -1055,5 +1083,3 @@ class DQNVQVAEPolicy(Policy):
                 print('save embedding_table_CosineSimilarity_' + name + '.png')
         else:
             return np.array(dis)
-
-

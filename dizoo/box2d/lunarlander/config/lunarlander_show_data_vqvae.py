@@ -21,6 +21,8 @@ def train(args):
     create_cfg.policy.type = create_cfg.policy.type + '_command'
     cfg = compile_config(cfg, seed=args.seed, auto=True, create_cfg=create_cfg)
 
+    cfg.policy.collect.data_path =  '/Users/puyuan/code/DI-engine/data_lunarlander_visualize/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_upc50_crlw1_seed1_3M/collect_in_seed1_q_value_mapping/data_iteration_best_1eps.pkl'
+
     # Dataset
     dataset = create_dataset(cfg)
     print('num_episodes', dataset.__len__())

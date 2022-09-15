@@ -642,6 +642,7 @@ class MultiEpsGreedySampleWrapper(IModelWrapper):
             ans.append(output)
         return ans
 
+
 class MultiAverageEpsGreedySampleWrapper(IModelWrapper):
     r"""
     Overview:

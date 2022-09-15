@@ -64,7 +64,8 @@ def eval(
     set_pkg_seed(seed, use_cuda=cfg.policy.cuda)
     # policy = create_policy(cfg.policy, model=model, enable_field=['eval'])
     # TODO(pu)
-    policy = create_policy(cfg.policy, model=model, enable_field=['learn', 'collect', 'eval', 'command'])
+    policy = create_policy(cfg.policy, model=model, enable_field=['learn', 'collect', 'eval'])
+    # policy = create_policy(cfg.policy, model=model, enable_field=['learn', 'collect', 'eval', 'command'])
     if state_dict is None:
         if load_path is None:
             load_path = cfg.policy.learn.learner.load_path

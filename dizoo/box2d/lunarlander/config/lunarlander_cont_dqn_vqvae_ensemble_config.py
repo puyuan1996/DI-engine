@@ -10,33 +10,23 @@ lunarlander_dqn_default_config = dict(
         # (bool) Scale output action into legal range.
         act_scale=True,
         # Env number respectively for collector and evaluator.
-        # collector_env_num=8,
-        # evaluator_env_num=5,
-        # n_evaluator_episode=5,
+        collector_env_num=8,
+        evaluator_env_num=5,
+        n_evaluator_episode=5,
         # debug
-        collector_env_num=1,
-        evaluator_env_num=1,
-        n_evaluator_episode=1,
+        # collector_env_num=1,
+        # evaluator_env_num=1,
+        # n_evaluator_episode=1,
         # stop_value=200,
         stop_value=int(1e6),
         # replay_path='/home/puyuan/DI-engine/data_lunarlander/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_seed1_3M',
         replay_path='/Users/puyuan/code/DI-engine/data_lunarlander_visualize',
-        save_replay_gif=True,
+        # save_replay_gif=True,
+        save_replay_gif=False,
     ),
     policy=dict(
-        # model_path=None,
-        # model_path='/home/puyuan/DI-engine/data_lunarlander/dqn_sbh_ensemble20_noobs_noema_smallnet_k64_seed1_3M/ckpt/ckpt_best.pth.tar',
-        # model_path='/home/puyuan/DI-engine/data_lunarlander/dqn_sbh_ensemble20_noobs_noema_smallnet_k64_seed1_3M/ckpt/iteration_400000.pth.tar',
-
-        # model_path='/home/puyuan/DI-engine/data_lunarlander/dqn_sbh_ensemble20_noobs_noema_smallnet_k8_seed1_3M/ckpt/ckpt_best.pth.tar',
-        # model_path='/home/puyuan/DI-engine/data_lunarlander/dqn_sbh_ensemble20_noobs_noema_smallnet_k8_seed1_3M/ckpt/iteration_0.pth.tar',
-        # model_path='/home/puyuan/DI-engine/data_lunarlander/dqn_sbh_ensemble20_noobs_noema_smallnet_k8_seed1_3M/ckpt/iteration_200000.pth.tar',
-
-        # model_path='/home/puyuan/DI-engine/data_lunarlander/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_seed1_3M/ckpt/ckpt_best.pth.tar',
-
-        # model_path='/home/puyuan/DI-engine/data_lunarlander/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_upc20_crlw01_seed1_3M/ckpt/ckpt_best.pth.tar',
-
-        model_path='/Users/puyuan/code/DI-engine/data_lunarlander/dqn_sbh_ensemble20_noobs_noema_smallnet_k8_upc50_seed1_3M/ckpt/ckpt_best.pth.tar',
+        model_path=None,
+        # model_path='/Users/puyuan/code/DI-engine/data_lunarlander/dqn_sbh_ensemble20_noobs_noema_smallnet_k8_upc50_seed1_3M/ckpt/ckpt_best.pth.tar',
 
         # Whether to use cuda for network.
         cuda=True,
@@ -50,47 +40,45 @@ lunarlander_dqn_default_config = dict(
         eps_greedy_nearest=False,  # TODO(pu): delete this key
         is_ema_target=False,
 
-        is_ema=False,  # no use EMA
         # TODO(pu): test ema
+        is_ema=False,  # no use EMA
         # is_ema=True,  # use EMA
         original_action_shape=2,
-        # random_collect_size=int(5e4),  # transitions
-        # warm_up_update=int(1e4),
+        random_collect_size=int(5e4),  # transitions
+        warm_up_update=int(1e4),
         # debug
         # random_collect_size=int(10),  
         # warm_up_update=int(2),
         # eval
-        random_collect_size=int(0),
-        warm_up_update=int(0),
+        # random_collect_size=int(0),
+        # warm_up_update=int(0),
 
         vqvae_embedding_dim=64,  # ved: D
         vqvae_hidden_dim=[256],  # vhd
         target_network_soft_update=False,
         beta=0.25,
-        vq_loss_weight=0.1,  # TODO
+        vq_loss_weight=0.1,
         recons_loss_cont_weight=1,
-        # mask_pretanh=True,
         mask_pretanh=False,
         replay_buffer_size_vqvae=int(1e6),
         auxiliary_conservative_loss=False,
         augment_extreme_action=False,
         # augment_extreme_action=True,
         # TODO
-        # obs_regularization=True,
-        obs_regularization=False,
+        obs_regularization=True,
+        # obs_regularization=False,
         predict_loss_weight=0,  
 
         # TODO
         # only if obs_regularization=True, this option take effect
-        v_contrastive_regularization=False,
-        # v_contrastive_regularization=True,
+        # v_contrastive_regularization=False,
+        v_contrastive_regularization=True,
         contrastive_regularization_loss_weight=1,
 
         # vqvae_pretrain_only=True,
         # NOTE: if only pretrain vqvae , i.e. vqvae_pretrain_only=True, should set this key to False
         # recompute_latent_action=False,
 
-        # TODO
         vqvae_pretrain_only=False,
         # NOTE: if train vqvae dynamically, i.e. vqvae_pretrain_only=False, should set this key to True
         recompute_latent_action=True,
@@ -127,11 +115,11 @@ lunarlander_dqn_default_config = dict(
         priority_IS_weight_vqvae=False,  # NOTE: return priority
         priority_type_vqvae='return',
         priority_vqvae_min=0.,
-        latent_action_shape=int(8),  # num of num_embeddings: K, i.e. shape of latent action
+        latent_action_shape=int(4),  # num of num_embeddings: K, i.e. shape of latent action
         model=dict(
             ensemble_num=20,  # TODO
             obs_shape=8,
-            action_shape=int(8),  # num of num_embeddings, K
+            action_shape=int(4),  # num of num_embeddings, K
             encoder_hidden_size_list=[128, 128, 64],  # small net
             # Whether to use dueling head.
             dueling=True,
@@ -199,7 +187,6 @@ lunarlander_dqn_default_config = dict(
                 start=1,
                 end=0.05,
                 decay=int(1e5),
-                # decay=int(1e4),
             ),
             replay_buffer=dict(replay_buffer_size=int(1e6), )
         ),
@@ -222,8 +209,8 @@ create_config = lunarlander_dqn_create_config
 
 
 def train(args):
-    main_config.exp_name = 'data_lunarlander_visualize/noobs_k8_upc50'
-    # main_config.exp_name = 'data_lunarlander/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_upc50_crlw1' + '_seed' + f'{args.seed}' + '_3M'
+    # main_config.exp_name = 'data_lunarlander_visualize/noobs_k8_upc50'
+    main_config.exp_name = 'data_lunarlander/dqn_sbh_ensemble20_obs0_noema_smallnet_k4_upc50_crlw1' + '_seed' + f'{args.seed}' + '_3M'
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=int(3e6))
 
 if __name__ == "__main__":

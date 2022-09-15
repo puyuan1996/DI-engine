@@ -4,7 +4,7 @@ module_path = os.path.dirname(__file__)
 
 nstep = 3
 lunarlander_dqn_default_config = dict(
-    exp_name='exp/lunarlander_cont_dqn_vqvae_seed0',
+    exp_name='lunarlander_cont_dqn_vqvae_seed0',
     env=dict(
         env_id='LunarLanderContinuous-v2',
         # (bool) Scale output action into legal range.
@@ -20,16 +20,23 @@ lunarlander_dqn_default_config = dict(
         # stop_value=200,
         stop_value=int(1e6),
         # replay_path='/home/puyuan/DI-engine/data_lunarlander/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_seed1_3M',
-        # TODO(pu)
-        replay_path='/Users/puyuan/code/DI-engine/data_lunarlander_visualize/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_upc50_seed1_3M',
+        replay_path='/Users/puyuan/code/DI-engine/data_lunarlander_visualize',
         save_replay_gif=True,
     ),
     policy=dict(
         # model_path=None,
-        # model_path='/Users/puyuan/code/DI-engine/data_lunarlander/dqn_sbh_ensemble20_noobs_noema_smallnet_k8_upc50_seed1_3M/ckpt/ckpt_best.pth.tar',
-        # TODO(pu)
-        model_path='/Users/puyuan/code/DI-engine/data_lunarlander/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_upc50_crlw1_seed1_3M/ckpt/ckpt_best.pth.tar',
+        # model_path='/home/puyuan/DI-engine/data_lunarlander/dqn_sbh_ensemble20_noobs_noema_smallnet_k64_seed1_3M/ckpt/ckpt_best.pth.tar',
+        # model_path='/home/puyuan/DI-engine/data_lunarlander/dqn_sbh_ensemble20_noobs_noema_smallnet_k64_seed1_3M/ckpt/iteration_400000.pth.tar',
 
+        # model_path='/home/puyuan/DI-engine/data_lunarlander/dqn_sbh_ensemble20_noobs_noema_smallnet_k8_seed1_3M/ckpt/ckpt_best.pth.tar',
+        # model_path='/home/puyuan/DI-engine/data_lunarlander/dqn_sbh_ensemble20_noobs_noema_smallnet_k8_seed1_3M/ckpt/iteration_0.pth.tar',
+        # model_path='/home/puyuan/DI-engine/data_lunarlander/dqn_sbh_ensemble20_noobs_noema_smallnet_k8_seed1_3M/ckpt/iteration_200000.pth.tar',
+
+        # model_path='/home/puyuan/DI-engine/data_lunarlander/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_seed1_3M/ckpt/ckpt_best.pth.tar',
+
+        model_path='/Users/puyuan/code/DI-engine/data_lunarlander/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_upc50_seed1_3M/ckpt/ckpt_best.pth.tar',
+
+        # model_path='/Users/puyuan/code/DI-engine/data_lunarlander/dqn_sbh_ensemble20_noobs_noema_smallnet_k8_upc50_seed1_3M/ckpt/ckpt_best.pth.tar',
 
         # Whether to use cuda for network.
         cuda=True,
@@ -75,8 +82,8 @@ lunarlander_dqn_default_config = dict(
 
         # TODO
         # only if obs_regularization=True, this option take effect
-        # v_contrastive_regularization=False,
-        v_contrastive_regularization=True,
+        v_contrastive_regularization=False,
+        # v_contrastive_regularization=True,
         contrastive_regularization_loss_weight=1,
 
         # vqvae_pretrain_only=True,
@@ -181,12 +188,7 @@ lunarlander_dqn_default_config = dict(
             n_sample=256,
             # Cut trajectories into pieces with length "unroll_len".
             unroll_len=1,
-
-            data_type='naive',
-            # TODO(pu)
-            # data_path='/Users/puyuan/code/DI-engine/data_lunarlander_visualize/dqn_sbh_ensemble20_noobs_noema_smallnet_k8_upc50_seed1_3M/data_iteration_best_1eps.pkl'
-            data_path = '/Users/puyuan/code/DI-engine/data_lunarlander_visualize/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_upc50_seed1_3M/collect_in_seed1/data_iteration_best_1eps.pkl'
-),
+        ),
         eval=dict(evaluator=dict(eval_freq=1000, )),
         # command_mode config
         other=dict(
@@ -211,7 +213,8 @@ lunarlander_dqn_create_config = dict(
         type='lunarlander',
         import_names=['dizoo.box2d.lunarlander.envs.lunarlander_env'],
     ),
-    env_manager=dict(type='subprocess'),
+    # env_manager=dict(type='subprocess'),
+    env_manager=dict(type='base'),
     policy=dict(type='dqn_vqvae'),
 )
 lunarlander_dqn_create_config = EasyDict(lunarlander_dqn_create_config)
@@ -220,13 +223,14 @@ create_config = lunarlander_dqn_create_config
 
 def train(args):
     main_config.exp_name = 'data_lunarlander_visualize/noobs_k8_upc50'
-    serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=int(3e6))
+    serial_pipeline_dqn_vqvae_visualize([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=int(3e6))
 
 if __name__ == "__main__":
     import copy
     import argparse
-    from ding.entry import serial_pipeline_dqn_vqvae
-    for seed in [0,1,2]:
+    from ding.entry import serial_pipeline_dqn_vqvae_visualize
+    # for seed in [0,1,2]:
+    for seed in [2]:
         parser = argparse.ArgumentParser()
         parser.add_argument('--seed', '-s', type=int, default=seed)
         args = parser.parse_args()
