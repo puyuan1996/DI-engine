@@ -9,13 +9,13 @@ halfcheetah_dqn_default_config = dict(
         norm_reward=dict(use_norm=False, ),
         # (bool) Scale output action into legal range.
         use_act_scale=True,
-        clip_rewards=True,
+        clip_rewards=False,
         # Env number respectively for collector and evaluator.
         collector_env_num=8,
         evaluator_env_num=8,
         n_evaluator_episode=8,
         # stop_value=4000,
-        stop_value=int(1e6),  # stop according to max env steps 
+        stop_value=int(1e6),  # stop according to max env steps
     ),
     policy=dict(
         model_path=None,
@@ -39,12 +39,12 @@ halfcheetah_dqn_default_config = dict(
         random_collect_size=int(5e4),  # transitions
         warm_up_update=int(1e4),
         # debug
-        # random_collect_size=int(10),  
+        # random_collect_size=int(10),
         # warm_up_update=int(10),
 
         vqvae_embedding_dim=64,  # ved: D
-        # vqvae_hidden_dim=[256],  # vhd
-        vqvae_hidden_dim=[512],  # vhd
+        vqvae_hidden_dim=[256],  # vhd
+        # vqvae_hidden_dim=[512],  # vhd
         target_network_soft_update=False,
         beta=0.25,
         vq_loss_weight=0.1,  # TODO
@@ -54,9 +54,9 @@ halfcheetah_dqn_default_config = dict(
         replay_buffer_size_vqvae=int(1e6),
         auxiliary_conservative_loss=False,
 
-        # obs_regularization=True,
-        obs_regularization=False,
-        predict_loss_weight=1,  # TODO
+        obs_regularization=True,
+        # obs_regularization=False,
+        predict_loss_weight=0,  # TODO
 
         # vqvae_pretrain_only=True,
         # NOTE: if only pretrain vqvae , i.e. vqvae_pretrain_only=True, should set this key to False
@@ -75,7 +75,7 @@ halfcheetah_dqn_default_config = dict(
         # augment_extreme_action=False,
         augment_extreme_action=True,
 
-        # if manually augment_extreme_action=False, set threshold_categorical_head_for_cont_action=True, 
+        # if manually augment_extreme_action=False, set threshold_categorical_head_for_cont_action=True,
         threshold_categorical_head_for_cont_action=False,  # thereshold categorical distribution
         categorical_head_for_cont_action_threshold=0.9,
         threshold_phase=['eval'],  # ['eval', 'collect']
@@ -199,7 +199,7 @@ create_config = halfcheetah_dqn_create_config
 
 
 def train(args):
-    main_config.exp_name = 'data_halfcheetah/dqn_sbh_ensemble20_aea_k64_upc50_vhd512_noobs_noema_middlenet_beta0.25_vlw0.1_clip-reward' + '_seed' + f'{args.seed}' + '_3M'
+    main_config.exp_name = 'data_halfcheetah/dqn_sbh_ensemble20_maea_k64_upc50_obs0_noema_middlenet_beta0.25_vlw0.1' + '_seed' + f'{args.seed}' + '_3M'
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,
                               max_env_step=int(3e6))
 
