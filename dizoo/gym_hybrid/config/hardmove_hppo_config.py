@@ -1,5 +1,5 @@
 from easydict import EasyDict
-num_actuators=8
+num_actuators=10
 from itertools import product
 action_mask = list(product(*[list(range(2)) for dim in range(num_actuators)] ))
 
@@ -17,8 +17,11 @@ gym_hybrid_hppo_config = dict(
         n_evaluator_episode=8,
         # stop_value=2,
         stop_value=999,
+        save_replay_gif=False,
+        replay_path=None,
     ),
     policy=dict(
+        model_path=None,
         cuda=True,
         priority=False,
         action_space='hybrid',
@@ -80,7 +83,7 @@ create_config = gym_hybrid_hppo_create_config
 #     serial_pipeline_onpolicy([main_config, create_config], seed=0)
 
 def train(args):
-    main_config.exp_name = 'data_hardmove_n8/hppo' + '_seed' + f'{args.seed}'+'_3M'
+    main_config.exp_name = 'data_hardmove_n10/hppo' + '_seed' + f'{args.seed}'+'_3M'
 
     serial_pipeline_onpolicy([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,max_env_step=int(3e6))
 
@@ -90,7 +93,7 @@ if __name__ == "__main__":
     import argparse
     from ding.entry import serial_pipeline_onpolicy
 
-    for seed in [0,1,2,3,4]:
+    for seed in [0,1,2]:
         parser = argparse.ArgumentParser()
         parser.add_argument('--seed', '-s', type=int, default=seed)
         args = parser.parse_args()
