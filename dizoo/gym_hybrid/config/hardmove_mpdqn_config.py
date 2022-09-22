@@ -1,5 +1,5 @@
 from easydict import EasyDict
-num_actuators=4
+num_actuators=10
 from itertools import product
 action_mask = list(product(*[list(range(2)) for dim in range(num_actuators)] ))
 
@@ -17,9 +17,14 @@ gym_hybrid_mpdqn_config = dict(
         n_evaluator_episode=8,
         # stop_value=2,
         stop_value=999,
+        save_replay_gif=False,
+        replay_path=None,
     ),
     policy=dict(
-        cuda=True,
+        model_path=None,
+        # cuda=True,
+        cuda=False,
+
         priority=False,
         # (bool) Whether use Importance Sampling Weight to correct biased update. If True, priority must be True.
         priority_IS_weight=False,
@@ -100,7 +105,7 @@ create_config = gym_hybrid_mpdqn_create_config
 #     serial_pipeline([main_config, create_config], seed=0)
 
 def train(args):
-    main_config.exp_name = 'data_hardmove_n4/mpdqn' + '_seed' + f'{args.seed}'+'_3M'
+    main_config.exp_name = 'data_hardmove_n10/mpdqn' + '_seed' + f'{args.seed}'+'_3M'
 
     serial_pipeline([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,max_env_step=int(3e6))
 
@@ -110,7 +115,7 @@ if __name__ == "__main__":
     import argparse
     from ding.entry import serial_pipeline
 
-    for seed in [0,1,2,3,4]:
+    for seed in [0,1,2]:
         parser = argparse.ArgumentParser()
         parser.add_argument('--seed', '-s', type=int, default=seed)
         args = parser.parse_args()

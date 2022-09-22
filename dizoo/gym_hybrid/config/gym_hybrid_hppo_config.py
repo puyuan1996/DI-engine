@@ -7,11 +7,17 @@ gym_hybrid_hppo_config = dict(
         evaluator_env_num=5,
         # (bool) Scale output action into legal range, usually [-1, 1].
         act_scale=True,
-        env_id='Moving-v0',  # ['Sliding-v0', 'Moving-v0']
+        # env_id='Moving-v0',  # ['Sliding-v0', 'Moving-v0']
+        env_id='Sliding-v0',  # ['Sliding-v0', 'Moving-v0']
+
         n_evaluator_episode=5,
-        stop_value=1.8,
+        # stop_value=1.8,
+        stop_value=int(1e6),  # stop according to max env steps
+        save_replay_gif=False,
+        replay_path=None,
     ),
     policy=dict(
+        model_path=None,
         cuda=True,
         priority=False,
         action_space='hybrid',
@@ -61,7 +67,30 @@ gym_hybrid_hppo_create_config = dict(
 gym_hybrid_hppo_create_config = EasyDict(gym_hybrid_hppo_create_config)
 create_config = gym_hybrid_hppo_create_config
 
+# if __name__ == "__main__":
+#     # or you can enter `ding -m serial -c gym_hybrid_hppo_config.py -s 0`
+#     from ding.entry import serial_pipeline_onpolicy
+#     serial_pipeline_onpolicy([main_config, create_config], seed=0)
+
+def train(args):
+    # main_config.exp_name = 'data_hardmove_n10/' + 'hppo_seed' + f'{args.seed}'
+    # main_config.exp_name = 'data_moving/' + 'hppo_seed' + f'{args.seed}'
+    main_config.exp_name = 'data_sliding/' + 'hppo_seed' + f'{args.seed}'
+
+
+
+    serial_pipeline_onpolicy([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,
+                              max_env_step=int(3e6))
+
+
 if __name__ == "__main__":
-    # or you can enter `ding -m serial -c gym_hybrid_hppo_config.py -s 0`
+    import copy
+    import argparse
     from ding.entry import serial_pipeline_onpolicy
-    serial_pipeline_onpolicy([main_config, create_config], seed=0)
+
+    for seed in [0,1,2]:
+        parser = argparse.ArgumentParser()
+        parser.add_argument('--seed', '-s', type=int, default=seed)
+        args = parser.parse_args()
+
+        train(args)

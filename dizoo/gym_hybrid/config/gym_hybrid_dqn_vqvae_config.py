@@ -19,8 +19,8 @@ gym_hybrid_dqn_default_config = dict(
         # (bool) Scale output action into legal range [-1, 1].
         act_scale=True,
         # env_id='Moving-v0',
-        # env_id='Sliding-v0',
-        env_id='HardMove-v0',
+        env_id='Sliding-v0',
+        # env_id='HardMove-v0',
         num_actuators=num_actuators,  # only for 'HardMove-v0'
         # stop_value=2,
         stop_value=int(1e6),  # stop according to max env steps
@@ -49,22 +49,26 @@ gym_hybrid_dqn_default_config = dict(
         is_ema=False,  # no use EMA
         # is_ema=True,  # use EMA TODO(pu): test ema
         # for 'Moving-v0', 'Sliding-v0'
-        # original_action_shape=dict(
-        #     action_type_shape=3,
-        #     action_args_shape=2,
-        # ),
-        # for 'HardMove-v0'
         original_action_shape=dict(
-            action_type_shape=int(2 ** num_actuators),  # 2**4=16, 2**6=64, 2**8=256, 2**10=1024
-            action_args_shape=int(num_actuators),  # 4,6,8,10
+            action_type_shape=3,
+            action_args_shape=2,
         ),
+        # for 'HardMove-v0'
+        # original_action_shape=dict(
+        #     action_type_shape=int(2 ** num_actuators),  # 2**4=16, 2**6=64, 2**8=256, 2**10=1024
+        #     action_args_shape=int(num_actuators),  # 4,6,8,10
+        # ),
         random_collect_size=int(5e4),
         warm_up_update=int(1e4),
         # debug
         # warm_up_update=int(0),
         # random_collect_size=int(0),
         vqvae_embedding_dim=64,  # ved: D
-        vqvae_hidden_dim=[1024],  # vhd
+        # vqvae_hidden_dim=[1024],  # vhd
+        vqvae_hidden_dim=[256],  # vhd
+        target_network_soft_update=False,
+
+
         beta=0.25,
         vq_loss_weight=1,  # TODO
         recons_loss_cont_weight=1,
@@ -78,6 +82,11 @@ gym_hybrid_dqn_default_config = dict(
         obs_regularization=False,
         predict_loss_weight=0.,  # TODO
 
+        # only if obs_regularization=True, this option take effect
+        v_contrastive_regularization=False,
+        # v_contrastive_regularization=True,
+        contrastive_regularization_loss_weight=0.1,
+
         vqvae_pretrain_only=False,
         # NOTE: if train vqvae dynamically, i.e. vqvae_pretrain_only=False, should set this key to True
         recompute_latent_action=True,
@@ -90,6 +99,12 @@ gym_hybrid_dqn_default_config = dict(
         cont_reconst_l1_loss=False,
         cont_reconst_smooth_l1_loss=False,
         categorical_head_for_cont_action=False,  # categorical distribution
+
+        # threshold_categorical_head_for_cont_action=True,  # thereshold categorical distribution
+        threshold_categorical_head_for_cont_action=False,  # thereshold categorical distribution
+        categorical_head_for_cont_action_threshold=0.9,
+        threshold_phase=['eval'],  # ['eval', 'collect']
+
         n_atom=51,
         gaussian_head_for_cont_action=False,  # gaussian distribution
         embedding_table_onehot=False,
@@ -109,14 +124,16 @@ gym_hybrid_dqn_default_config = dict(
         priority_IS_weight_vqvae=False,  # NOTE: return priority
         priority_type_vqvae='return',
         priority_vqvae_min=0,
-        latent_action_shape=int(64),  # num of num_embeddings: K, i.e. shape of latent action
+        latent_action_shape=int(16),  # num of num_embeddings: K, i.e. shape of latent action
+        # latent_action_shape=int(64),  # num of num_embeddings: K, i.e. shape of latent action
         model=dict(
+            ensemble_num=3,  # TODO
             obs_shape=10,
-            # action_shape=int(16),  # num of num_embeddings: K
-            # encoder_hidden_size_list=[128, 128, 64],  # small net
+            action_shape=int(16),  # num of num_embeddings: K
+            encoder_hidden_size_list=[128, 128, 64],  # small net
             # for hardmove
-            action_shape=int(64),  # num of num_embeddings: K
-            encoder_hidden_size_list=[256, 256, 128],  # middle net
+            # action_shape=int(64),  # num of num_embeddings: K
+            # encoder_hidden_size_list=[256, 256, 128],  # middle net
             # Whether to use dueling head.
             dueling=True,
         ),
@@ -146,6 +163,9 @@ gym_hybrid_dqn_default_config = dict(
             grad_clip_type='clip_norm',
             grad_clip_value=0.5,
 
+            rl_linear_lr_scheduler=False,
+
+
             # add noise in original continuous action
             noise=False,  # NOTE: if vqvae_pretrain_only=True
             # noise=True,  # NOTE: if vqvae_pretrain_only=False
@@ -154,6 +174,8 @@ gym_hybrid_dqn_default_config = dict(
                 min=-0.5,
                 max=0.5,
             ),
+            noise_augment_extreme_action=True,
+            noise_augment_extreme_action_prob=0.1,
         ),
         # collect_mode config
         collect=dict(
@@ -201,8 +223,14 @@ def train(args):
     # main_config.exp_name = 'data_sliding/dqn_obs_noema_smallnet_k16' + '_seed' + f'{args.seed}'
     # main_config.exp_name = 'data_sliding/dqn_noema_smallnet_k16' + '_seed' + f'{args.seed}'
 
-    # main_config.exp_name = 'data_hardmove_n10/dqn_noobs_noema_middlenet_k64_vhd1024_vlw1_softtarget1e-3_embedding-table-one-hot' + '_seed' + f'{args.seed}'
-    main_config.exp_name = 'data_hardmove_n10/dqn_noobs_noema_middlenet_k64_vhd1024_beta0.25_vlw1_softtarget1e-3' + '_seed' + f'{args.seed}'
+    # main_config.exp_name = 'data_hardmove_n10/dqn_noobs_noema_middlenet_k64_vhd1024_beta0.25_vlw1_softtarget1e-3' + '_seed' + f'{args.seed}'
+    
+    # main_config.exp_name = 'data_hardmove_n10/dqn_noobs_ensem20_noema_middlenet_k64_vhd1024_beta0.25_vlw1_softtarget1e-3' + '_seed' + f'{args.seed}'
+    
+    # main_config.exp_name = 'data_moving//dqn_noobs_ensem3_noema_smallenet_k16_vhd256_beta0.25_vlw1_softtarget1e-3' + '_seed' + f'{args.seed}'
+
+    main_config.exp_name = 'data_sliding//dqn_noobs_ensem3_noema_smallenet_k16_vhd256_beta0.25_vlw1_softtarget1e-3' + '_seed' + f'{args.seed}'
+
     # main_config.exp_name = 'data_hardmove_n10/dqn_noema_middlenet_k64_vhd1024_wd1e-4_noise' + '_seed' + f'{args.seed}'
     # main_config.exp_name = 'data_hardmove_n10/dqn_noema_middlenet_k64_vhd1024_wd0_embedding-table-one-hot_noise' + '_seed' + f'{args.seed}'
 
@@ -215,7 +243,6 @@ if __name__ == "__main__":
     import argparse
     from ding.entry import serial_pipeline_dqn_vqvae
 
-    # for seed in [2]:
     for seed in [0,1,2]:
         parser = argparse.ArgumentParser()
         parser.add_argument('--seed', '-s', type=int, default=seed)

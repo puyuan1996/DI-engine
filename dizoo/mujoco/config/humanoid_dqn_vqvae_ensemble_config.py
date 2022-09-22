@@ -62,7 +62,7 @@ humanoid_dqn_default_config = dict(
         # v_contrastive_regularization=False,
         v_contrastive_regularization=True,
         contrastive_regularization_loss_weight=1,
-
+        
         # vqvae_pretrain_only=True,
         # NOTE: if only pretrain vqvae , i.e. vqvae_pretrain_only=True, should set this key to False
         # recompute_latent_action=False,
