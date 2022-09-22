@@ -1,25 +1,26 @@
 from easydict import EasyDict
 
-hopper_sac_config = dict(
-    exp_name='hopper_sac_action_bins_seed0',
+ant_sac_config = dict(
+    exp_name='ant_sac_seed0',
     env=dict(
-        env_id='Hopper-v3',
+        env_id='Humanoid-v3',
         norm_obs=dict(use_norm=False, ),
         norm_reward=dict(use_norm=False, ),
         collector_env_num=8,
         evaluator_env_num=8,
         use_act_scale=True,
-        clip_rewards=False,
         n_evaluator_episode=8,
-        # stop_value=6000,
+        clip_rewards=False,
+        # stop_value=12000,
         stop_value=99999,
+        manager=dict(shared_memory=False, reset_inplace=True),
     ),
     policy=dict(
         cuda=True,
         random_collect_size=10000,
         model=dict(
-            obs_shape=11,
-            action_shape=3,
+            obs_shape=376,
+            action_shape=17,
             twin_critic=True,
             action_space='reparameterization',
             actor_head_hidden_size=256,
@@ -48,14 +49,15 @@ hopper_sac_config = dict(
     ),
 )
 
-hopper_sac_config = EasyDict(hopper_sac_config)
-main_config = hopper_sac_config
+ant_sac_config = EasyDict(ant_sac_config)
+main_config = ant_sac_config
 
-hopper_sac_create_config = dict(
+ant_sac_create_config = dict(
     env=dict(
         type='mujoco',
         import_names=['dizoo.mujoco.envs.mujoco_env'],
     ),
+    # env_manager=dict(type='base'),
     env_manager=dict(type='subprocess'),
     policy=dict(
         type='sac',
@@ -63,15 +65,16 @@ hopper_sac_create_config = dict(
     ),
     replay_buffer=dict(type='naive', ),
 )
-hopper_sac_create_config = EasyDict(hopper_sac_create_config)
-create_config = hopper_sac_create_config
+ant_sac_create_config = EasyDict(ant_sac_create_config)
+create_config = ant_sac_create_config
 
 # if __name__ == "__main__":
-#     # or you can enter `ding -m serial -c hopper_sac_config.py -s 0`
+#     # or you can enter `ding -m serial -c ant_sac_config.py -s 0 --env-step 1e7`
 #     from ding.entry import serial_pipeline
-#     serial_pipeline([main_config, create_config], seed=0)
+#     serial_pipeline((main_config, create_config), seed=0)
+
 def train(args):
-    main_config.exp_name = 'data_hopper/sac_seed' + f'{args.seed}' + '_3M'
+    main_config.exp_name = 'data_humanoid/sac_seed' + f'{args.seed}' + '_3M'
     serial_pipeline([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=int(3e6))
 
 if __name__ == "__main__":

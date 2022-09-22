@@ -1,6 +1,5 @@
 from easydict import EasyDict
 import os
-import os
 
 os.environ['DISPLAY'] = ':1'
 

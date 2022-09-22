@@ -6,11 +6,13 @@ walker2d_sac_config = dict(
         env_id='Walker2d-v3',
         norm_obs=dict(use_norm=False, ),
         norm_reward=dict(use_norm=False, ),
-        collector_env_num=1,
+        collector_env_num=8,
         evaluator_env_num=8,
         use_act_scale=True,
         n_evaluator_episode=8,
-        stop_value=6000,
+        clip_rewards=False,
+        # stop_value=6000,
+        stop_value=99999,
     ),
     policy=dict(
         cuda=True,
@@ -41,7 +43,7 @@ walker2d_sac_config = dict(
             unroll_len=1,
         ),
         command=dict(),
-        eval=dict(),
+        eval=dict(evaluator=dict(eval_freq=5000, )),
         other=dict(replay_buffer=dict(replay_buffer_size=1000000, ), ),
     ),
 )
@@ -64,7 +66,21 @@ walker2d_sac_create_config = dict(
 walker2d_sac_create_config = EasyDict(walker2d_sac_create_config)
 create_config = walker2d_sac_create_config
 
+# if __name__ == "__main__":
+#     # or you can enter `ding -m serial -c walker2d_sac_config.py -s 0`
+#     from ding.entry import serial_pipeline
+#     serial_pipeline([main_config, create_config], seed=0)
+
+def train(args):
+    main_config.exp_name = 'data_walker2d/sac_seed' + f'{args.seed}' + '_3M'
+    serial_pipeline([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=int(3e6))
+
 if __name__ == "__main__":
-    # or you can enter `ding -m serial -c walker2d_sac_config.py -s 0`
+    import copy
+    import argparse
     from ding.entry import serial_pipeline
-    serial_pipeline([main_config, create_config], seed=0)
+    for seed in [0,1,2]:
+        parser = argparse.ArgumentParser()
+        parser.add_argument('--seed', '-s', type=int, default=seed)
+        args = parser.parse_args()
+        train(args)
