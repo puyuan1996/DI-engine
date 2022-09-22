@@ -58,6 +58,11 @@ halfcheetah_dqn_default_config = dict(
         # obs_regularization=False,
         predict_loss_weight=0,  # TODO
 
+        # only if obs_regularization=True, this option take effect
+        v_contrastive_regularization=False,
+        # v_contrastive_regularization=True,
+        contrastive_regularization_loss_weight=1,
+
         # vqvae_pretrain_only=True,
         # NOTE: if only pretrain vqvae , i.e. vqvae_pretrain_only=True, should set this key to False
         # recompute_latent_action=False,
@@ -72,8 +77,8 @@ halfcheetah_dqn_default_config = dict(
         cont_reconst_smooth_l1_loss=False,
         categorical_head_for_cont_action=False,  # categorical distribution
 
-        # augment_extreme_action=False,
-        augment_extreme_action=True,
+        augment_extreme_action=False,
+        # augment_extreme_action=True,
 
         # if manually augment_extreme_action=False, set threshold_categorical_head_for_cont_action=True,
         threshold_categorical_head_for_cont_action=False,  # thereshold categorical distribution
@@ -100,15 +105,17 @@ halfcheetah_dqn_default_config = dict(
         priority_IS_weight_vqvae=False,  # NOTE: return priority
         priority_type_vqvae='return',
         priority_vqvae_min=0.,
-        latent_action_shape=int(64),  # num of num_embeddings: K, i.e. shape of latent action
-        # latent_action_shape=int(128),  # num of num_embeddings: K, i.e. shape of latent action
+        # latent_action_shape=int(32),  # num of num_embeddings: K, i.e. shape of latent action
+        # latent_action_shape=int(64),  # num of num_embeddings: K, i.e. shape of latent action
+        latent_action_shape=int(128),  # num of num_embeddings: K, i.e. shape of latent action
         model=dict(
             ensemble_num=20,  # TODO
             obs_shape=17,
             # if manually augment_extreme_action=True,
-            action_shape=int(64+2**6),  # Q dim
+            # action_shape=int(64+2**6),  # Q dim
+            # action_shape=int(32),  # Q dim
             # action_shape=int(64),  # Q dim
-            # action_shape=int(128),  # num of num_embeddings: K
+            action_shape=int(128),  # num of num_embeddings: K
             # encoder_hidden_size_list=[128, 128, 64],  # small net
             encoder_hidden_size_list=[256, 256, 128],  # middle net
             # encoder_hidden_size_list=[512, 512, 256],  # large net
@@ -199,7 +206,8 @@ create_config = halfcheetah_dqn_create_config
 
 
 def train(args):
-    main_config.exp_name = 'data_halfcheetah/dqn_sbh_ensemble20_maea_k64_upc50_obs0_noema_middlenet_beta0.25_vlw0.1' + '_seed' + f'{args.seed}' + '_3M'
+    # main_config.exp_name = 'data_halfcheetah/dqn_sbh_ensemble20_maea_k64_upc50_obs0_noema_middlenet_beta0.25_vlw0.1' + '_seed' + f'{args.seed}' + '_3M'
+    main_config.exp_name = 'data_halfcheetah/dqn_sbh_ensemble20_k128_upc50_obs0_noema_middlenet_beta0.25_vlw0.1' + '_seed' + f'{args.seed}' + '_3M'
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,
                               max_env_step=int(3e6))
 

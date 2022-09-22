@@ -115,7 +115,7 @@ def serial_pipeline(
             with open(f'/home/puyuan//DI-engine/hopper_sac_action_bins_seed{cfg.seed}/expert_data_1eps_iter{learner.train_iter}.pkl', 'rb') as f:
                 data = pickle.load(f)
             episode_actions = torch.stack([data[0][i]['action'] for i in range(len(data[0]))],axis=0)
-            
+
             for action_dim in range(3):
                 fig = plt.figure()
                 # Fixing bin edges
@@ -151,26 +151,24 @@ def serial_pipeline(
             learner.train(train_data, collector.envstep)
             if learner.policy.get_attribute('priority'):
                 replay_buffer.update(learner.priority_info)
-        
-
 
         if collector.envstep >= max_env_step or learner.train_iter >= max_train_iter:
             break
 
     # Learner's after_run hook.
     learner.call_hook('after_run')
-    import time
-    import pickle
-    import numpy as np
-    with open(os.path.join(cfg.exp_name, 'result.pkl'), 'wb') as f:
-        eval_value_raw = [d['final_eval_reward'] for d in eval_info]
-        final_data = {
-            'stop': stop,
-            'env_step': collector.envstep,
-            'train_iter': learner.train_iter,
-            'eval_value': np.mean(eval_value_raw),
-            'eval_value_raw': eval_value_raw,
-            'finish_time': time.ctime(),
-        }
-        pickle.dump(final_data, f)
+    # import time
+    # import pickle
+    # import numpy as np
+    # with open(os.path.join(cfg.exp_name, 'result.pkl'), 'wb') as f:
+    #     eval_value_raw = [d['final_eval_reward'] for d in eval_info]
+    #     final_data = {
+    #         'stop': stop,
+    #         'env_step': collector.envstep,
+    #         'train_iter': learner.train_iter,
+    #         'eval_value': np.mean(eval_value_raw),
+    #         'eval_value_raw': eval_value_raw,
+    #         'finish_time': time.ctime(),
+    #     }
+    #     pickle.dump(final_data, f)
     return policy

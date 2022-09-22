@@ -1,10 +1,10 @@
 from easydict import EasyDict
 
 nstep = 3
-halfcheetah_dqn_default_config = dict(
-    exp_name='halfcheetah_dqn_seed0',
+walker2d_dqn_default_config = dict(
+    exp_name='walker2d_dqn_seed0',
     env=dict(
-        env_id='HalfCheetah-v3',
+        env_id='Walker2d-v3',
         norm_obs=dict(use_norm=False, ),
         norm_reward=dict(use_norm=False, ),
         # (bool) Scale output action into legal range.
@@ -37,7 +37,7 @@ halfcheetah_dqn_default_config = dict(
             dueling=True,
         ),
         learn=dict(
-            ignore_done=True,
+            ignore_done=False,
             batch_size=512,
             learning_rate=3e-4,
             # Frequency of target network update.
@@ -74,10 +74,10 @@ halfcheetah_dqn_default_config = dict(
     ),
 )
 
-halfcheetah_dqn_default_config = EasyDict(halfcheetah_dqn_default_config)
-main_config = halfcheetah_dqn_default_config
+walker2d_dqn_default_config = EasyDict(walker2d_dqn_default_config)
+main_config = walker2d_dqn_default_config
 
-halfcheetah_dqn_create_config = dict(
+walker2d_dqn_create_config = dict(
     env=dict(
         type='mujoco-disc',
         import_names=['dizoo.mujoco.envs.mujoco_env_disc'],
@@ -86,12 +86,12 @@ halfcheetah_dqn_create_config = dict(
     # env_manager=dict(type='base'),
     policy=dict(type='dqn'),
 )
-halfcheetah_dqn_create_config = EasyDict(halfcheetah_dqn_create_config)
-create_config = halfcheetah_dqn_create_config
+walker2d_dqn_create_config = EasyDict(walker2d_dqn_create_config)
+create_config = walker2d_dqn_create_config
 
 
 def train(args):
-    main_config.exp_name = 'data_halfcheetah/dqn_k64_middelnet_upc20' + '_seed' + f'{args.seed}'+'_3M'
+    main_config.exp_name = 'data_walker2d/dqn_k64_middelnet_upc20' + '_seed' + f'{args.seed}'+'_3M'
     serial_pipeline([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=int(3e6))
 
 if __name__ == "__main__":
