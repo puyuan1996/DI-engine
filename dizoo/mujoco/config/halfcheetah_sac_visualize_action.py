@@ -1,6 +1,6 @@
 import imageio
 
-from dizoo.box2d.lunarlander.config.lunarlander_cont_dqn_vqvae_ensemble_generation_config import main_config, \
+from dizoo.mujoco.config.halfcheetah_dqn_vqvae_ensemble_generation_config import main_config, \
     create_config
 
 from ding.entry import collect_episodic_demo_data, eval
@@ -34,9 +34,9 @@ def train(args):
     for iter in [-1, 0, 60000, 120000, 180000]:
     # for iter in [-1]:
         if iter == -1:
-            visualize_path = f'/Users/puyuan/code/DI-engine/data_lunarlander_visualize/sac_seed0_3M/action_coverage/iter-best_action/'
+            visualize_path = f'/Users/puyuan/code/DI-engine/data_halfcheetah_visualize/sac_seed0_3M/action_coverage/iter-best_action/'
         else:
-            visualize_path = f'/Users/puyuan/code/DI-engine/data_lunarlander_visualize/sac_seed0_3M/action_coverage/iter-{iter}_action/'
+            visualize_path = f'/Users/puyuan/code/DI-engine/data_halfcheetah_visualize/sac_seed0_3M/action_coverage/iter-{iter}_action/'
 
         episode_actions = []
 
@@ -46,9 +46,9 @@ def train(args):
             print(f'iter: {iter}', f'seed: {seed}')
 
             if iter == -1:
-                cfg.policy.collect.data_path = f'/Users/puyuan/code/DI-engine/data_lunarlander_visualize/sac_seed0_3M/iter-best_collect_in_' + f'seed{seed}/data_iter-best_1eps.pkl'
+                cfg.policy.collect.data_path = f'/Users/puyuan/code/DI-engine/data_halfcheetah_visualize/sac_seed0_3M/iter-best_collect_in_' + f'seed{seed}/data_iter-best_1eps.pkl'
             else:
-                cfg.policy.collect.data_path = f'/Users/puyuan/code/DI-engine/data_lunarlander_visualize/sac_seed0_3M/iter-{iter}_collect_in_' + f'seed{seed}/data_iter-{iter}_1eps.pkl'
+                cfg.policy.collect.data_path = f'/Users/puyuan/code/DI-engine/data_halfcheetah_visualize/sac_seed0_3M/iter-{iter}_collect_in_' + f'seed{seed}/data_iter-{iter}_1eps.pkl'
 
 
             # Dataset
