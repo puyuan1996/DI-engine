@@ -15,7 +15,7 @@ halfcheetah_dqn_default_config = dict(
         evaluator_env_num=8,
         n_evaluator_episode=8,
         # stop_value=4000,
-        stop_value=int(1e6),  # stop according to max env steps 
+        stop_value=int(1e6),  # stop according to max env steps
     ),
     policy=dict(
         model_path=None,
@@ -39,7 +39,7 @@ halfcheetah_dqn_default_config = dict(
         random_collect_size=int(5e4),  # transitions
         warm_up_update=int(1e4),
         # debug
-        # random_collect_size=int(10),  
+        # random_collect_size=int(10),
         # warm_up_update=int(10),
 
         vqvae_embedding_dim=64,  # ved: D
@@ -75,7 +75,7 @@ halfcheetah_dqn_default_config = dict(
         # augment_extreme_action=False,
         augment_extreme_action=True,
 
-        # if manually augment_extreme_action=False, set threshold_categorical_head_for_cont_action=True, 
+        # if manually augment_extreme_action=False, set threshold_categorical_head_for_cont_action=True,
         threshold_categorical_head_for_cont_action=False,  # thereshold categorical distribution
         categorical_head_for_cont_action_threshold=0.9,
         threshold_phase=['eval'],  # ['eval', 'collect']

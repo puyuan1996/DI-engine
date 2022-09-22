@@ -207,9 +207,11 @@ if __name__ == "__main__":
     import argparse
     from ding.entry import serial_pipeline_dqn_vqvae
 
-    for seed in [0,1,2]:
+    for seed in [0, 1, 2]:
         parser = argparse.ArgumentParser()
         parser.add_argument('--seed', '-s', type=int, default=seed)
         args = parser.parse_args()
 
         train(args)
+        # ant: obs_shape: 376, action_shape: 17
+

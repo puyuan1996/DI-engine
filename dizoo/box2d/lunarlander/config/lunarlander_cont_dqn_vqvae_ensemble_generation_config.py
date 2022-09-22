@@ -1,5 +1,6 @@
 from easydict import EasyDict
 import os
+
 module_path = os.path.dirname(__file__)
 
 nstep = 3
@@ -21,15 +22,15 @@ lunarlander_dqn_default_config = dict(
         stop_value=int(1e6),
         # replay_path='/home/puyuan/DI-engine/data_lunarlander/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_seed1_3M',
         # TODO(pu)
-        replay_path='/Users/puyuan/code/DI-engine/data_lunarlander_visualize/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_upc50_seed1_3M',
+        replay_path='/Users/puyuan/code/DI-engine/data_lunarlander_visualize/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_upc50_crlw1_seed1_3M/iter-190000_collect_in_seed2',
         save_replay_gif=True,
     ),
     policy=dict(
         # model_path=None,
         # model_path='/Users/puyuan/code/DI-engine/data_lunarlander/dqn_sbh_ensemble20_noobs_noema_smallnet_k8_upc50_seed1_3M/ckpt/ckpt_best.pth.tar',
         # TODO(pu)
-        model_path='/Users/puyuan/code/DI-engine/data_lunarlander/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_upc50_crlw1_seed1_3M/ckpt/ckpt_best.pth.tar',
-
+        # model_path='/Users/puyuan/code/DI-engine/data_lunarlander/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_upc50_crlw1_seed1_3M/ckpt/ckpt_best.pth.tar',
+        model_path='/Users/puyuan/code/DI-engine/data_lunarlander/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_upc50_crlw1_seed1_3M/ckpt/iteration_190000.pth.tar',
 
         # Whether to use cuda for network.
         cuda=True,
@@ -71,7 +72,7 @@ lunarlander_dqn_default_config = dict(
         # TODO
         obs_regularization=True,
         # obs_regularization=False,
-        predict_loss_weight=0,  
+        predict_loss_weight=0,
 
         # TODO
         # only if obs_regularization=True, this option take effect
@@ -97,7 +98,7 @@ lunarlander_dqn_default_config = dict(
         threshold_categorical_head_for_cont_action=False,  # thereshold categorical distribution
         categorical_head_for_cont_action_threshold=0.9,
         threshold_phase=['eval'],  # ['eval', 'collect']
-        
+
         n_atom=11,
 
         gaussian_head_for_cont_action=False,  # gaussian distribution
@@ -135,7 +136,7 @@ lunarlander_dqn_default_config = dict(
 
             reconst_loss_stop_value=1e-6,  # TODO(pu)
             constrain_action=False,  # TODO(pu): delete this key
-           
+
             rl_vae_update_circle=1,  # train rl 1 iter, vae 1 iter
             update_per_collect_rl=50,  # for collector n_sample=256
             update_per_collect_vae=50,
@@ -185,8 +186,8 @@ lunarlander_dqn_default_config = dict(
             data_type='naive',
             # TODO(pu)
             # data_path='/Users/puyuan/code/DI-engine/data_lunarlander_visualize/dqn_sbh_ensemble20_noobs_noema_smallnet_k8_upc50_seed1_3M/data_iteration_best_1eps.pkl'
-            data_path = '/Users/puyuan/code/DI-engine/data_lunarlander_visualize/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_upc50_seed1_3M/collect_in_seed1/data_iteration_best_1eps.pkl'
-),
+            # data_path='/Users/puyuan/code/DI-engine/data_lunarlander_visualize/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_upc50_seed1_3M/collect_in_seed1/data_iteration_best_1eps.pkl'
+        ),
         eval=dict(evaluator=dict(eval_freq=1000, )),
         # command_mode config
         other=dict(
@@ -220,17 +221,19 @@ create_config = lunarlander_dqn_create_config
 
 def train(args):
     main_config.exp_name = 'data_lunarlander_visualize/noobs_k8_upc50'
-    serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=int(3e6))
+    serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,
+                              max_env_step=int(3e6))
+
 
 if __name__ == "__main__":
     import copy
     import argparse
     from ding.entry import serial_pipeline_dqn_vqvae
-    for seed in [0,1,2]:
+
+    for seed in [0, 1, 2]:
         parser = argparse.ArgumentParser()
         parser.add_argument('--seed', '-s', type=int, default=seed)
         args = parser.parse_args()
         train(args)
         # obs_shape: 8
         # action_shape: 2
-

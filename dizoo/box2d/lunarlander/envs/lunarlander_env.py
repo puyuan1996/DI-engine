@@ -86,6 +86,9 @@ class LunarLanderEnv(BaseEnv):
         if done:
             info['final_eval_reward'] = self._final_eval_reward
             if self._save_replay_gif:
+                print(self._replay_path)
+                if not os.path.exists(self._replay_path):
+                    os.makedirs(self._replay_path)
                 path = os.path.join(
                     self._replay_path, '{}_episode_{}.gif'.format(self._env_id, self._save_replay_count)
                 )

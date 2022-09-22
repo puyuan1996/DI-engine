@@ -17,6 +17,7 @@ import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 import os
+from ding.entry import serial_pipeline_dqn_vqvae_visualize
 
 
 def train(args):
@@ -31,9 +32,9 @@ def train(args):
     cfg = compile_config(cfg, seed=args.seed, auto=True, create_cfg=create_cfg)
 
     # TODO(pu)
-    visualize_path = '/Users/puyuan/code/DI-engine/data_lunarlander_visualize/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_upc50_crlw1_seed1_3M/collect_in_seed1_q_value_mapping/'
-    original_gif_path = '/Users/puyuan/code/DI-engine/data_lunarlander_visualize/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_upc50_crlw1_seed1_3M/collect_in_seed1_q_value_mapping/LunarLanderContinuous-v2_episode_0.gif'
-    cfg.policy.collect.data_path = '/Users/puyuan/code/DI-engine/data_lunarlander_visualize/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_upc50_crlw1_seed1_3M/collect_in_seed1_q_value_mapping/data_iteration_best_1eps.pkl'
+    visualize_path = '/Users/puyuan/code/DI-engine/data_lunarlander_visualize/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_upc50_seed1_3M/collect_in_seed1_mapping/'
+    original_gif_path = '/Users/puyuan/code/DI-engine/data_lunarlander_visualize/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_upc50_seed1_3M/collect_in_seed1_mapping/LunarLanderContinuous-v2_episode_0.gif'
+    cfg.policy.collect.data_path = '/Users/puyuan/code/DI-engine/data_lunarlander_visualize/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_upc50_seed1_3M/collect_in_seed1_mapping/data_iteration_best_1eps.pkl'
 
     # Dataset
     dataset = create_dataset(cfg)
@@ -55,10 +56,10 @@ def train(args):
     episode0_obs = torch.stack(
         [dataset.__getitem__(0)[i]['obs'] for i in range(dataset.__getitem__(0).__len__())], axis=0)
 
-    # episode0_actions = torch.stack(
-    #     [dataset.__getitem__(0)[i]['action'] for i in range(dataset.__getitem__(0).__len__())], axis=0)
-    # episode0_rewards = torch.stack(
-    #     [dataset.__getitem__(0)[i]['reward'] for i in range(dataset.__getitem__(0).__len__())], axis=0)
+    episode0_actions = torch.stack(
+        [dataset.__getitem__(0)[i]['action'] for i in range(dataset.__getitem__(0).__len__())], axis=0)
+    episode0_rewards = torch.stack(
+        [dataset.__getitem__(0)[i]['reward'] for i in range(dataset.__getitem__(0).__len__())], axis=0)
 
     episode0_q_value = torch.stack(
         [to_tensor(dataset.__getitem__(0)[i]['q_value']) for i in range(dataset.__getitem__(0).__len__())],
@@ -68,16 +69,15 @@ def train(args):
     #     [to_tensor(dataset.__getitem__(0)[i]['_mapping']) for i in range(dataset.__getitem__(0).__len__())],
     #     axis=0)
 
-    # episode0_latent_actions = torch.stack(
-    #     [dataset.__getitem__(0)[i]['latent_action'] for i in range(dataset.__getitem__(0).__len__())], axis=0)
+    episode0_latent_actions = torch.stack(
+        [dataset.__getitem__(0)[i]['latent_action'] for i in range(dataset.__getitem__(0).__len__())], axis=0)
+
     # print(episode0_rewards.max(), episode0_rewards.min(), episode0_rewards.mean(), episode0_rewards.std())
     # print(episode0_actions.max(0), episode0_actions.min(0), episode0_actions.mean(0), episode0_actions.std(0))
 
     def display_frames_as_gif(frames: list, path: str) -> None:
-        import imageio
         imageio.mimsave(path, frames, fps=20)
 
-    import imageio
     gif = imageio.get_reader(original_gif_path, '.gif')
 
     # Here's the number you're looking for
@@ -85,38 +85,59 @@ def train(args):
     print(' number_of_frames:', number_of_frames)
     processed_frames = []
 
+
+    # process <number_of_frames> frames
+    # serial_pipeline_dqn_vqvae_visualize([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=1,
+    #                                         max_env_step=int(3e6), obs=episode0_obs, name_suffix='lunarlander_obs0_k8_seed1',
+    #                                         visualize_path=visualize_path, number_of_frames=number_of_frames)
     for timestep, frame in enumerate(gif):
-        from ding.entry import serial_pipeline_dqn_vqvae_visualize
-        serial_pipeline_dqn_vqvae_visualize([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=1,
-                                            max_env_step=int(3e6), obs=episode0_obs[timestep], timestep=timestep,
-                                            visualize_path=visualize_path)
+        # generate latent mapping img
+        # process one frame once
+        # name_suffix = f'lunarlander_obs0_k8_seed1_t{timestep}_best'
+        # serial_pipeline_dqn_vqvae_visualize([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=1,
+        #                                     max_env_step=int(3e6), obs=episode0_obs[timestep], name_suffix=name_suffix,
+        #                                     visualize_path=visualize_path)
+
         # each frame is a numpy matrix
         # print(frame.shape)
-
-        # import cv2
-        # cv2.namedWindow('Image')
-        # cv2.imshow('Image', frame)
-        # cv2.waitKey(0)
-        # cv2.destroyAllWindows()
 
         # fig, ax = plt.subplots(figsize=(3, 2))
 
         fig = plt.figure(figsize=(15, 15))
         fig.tight_layout()
-        plt.subplot(2, 2, 1)
+        ax1 = plt.subplot(2, 2, 1)
         plt.imshow(frame)
+        obs = [round(i, 4) for i in episode0_obs[timestep].tolist()]
+        reward = [round(i, 4) for i in episode0_rewards[timestep].tolist()]
+
+        text_0 = f"{timestep}"
+        text_1 = f"{obs[:4]}"
+        text_2 = f"{obs[-4:]}"
+        text_3 = f"{reward}"
+
+        ax1.text(0, 0, text_0, fontsize=10, color="r", horizontalalignment='left', verticalalignment='top')
+        ax1.text(0, 50, text_1, fontsize=10, color="r", horizontalalignment='left', verticalalignment='top')
+        ax1.text(0, 100, text_2, fontsize=10, color="r", horizontalalignment='left', verticalalignment='top')
+        ax1.text(0, 150, text_3, fontsize=10, color="r", horizontalalignment='left', verticalalignment='top')
 
         plt.subplot(2, 2, 2)
-        plt.bar(range(8), episode0_q_value[timestep], fc='g')
+        barlist = plt.bar(range(8), episode0_q_value[timestep], fc='g')
+        barlist[int(episode0_latent_actions[timestep])].set_color('r')
         plt.xlabel('Latent Action')
         plt.ylabel('Q Value')
         # plt.title(' Histogram')
         plt.grid(True)
 
-        plt.subplot(2, 1, 2)
+        plt.subplot(2, 2, 3)
         plt.axis('off')
         img_mapping = plt.imread(
-            visualize_path + f'latent_action_decoding_lunarlander_obs0_crlw1_k8_seed1_x{timestep}_best.png')
+            visualize_path + f'latent_mapping_lunarlander_obs0_k8_seed1_t{timestep}_best.png')
+        plt.imshow(img_mapping)
+
+        plt.subplot(2, 2, 4)
+        plt.axis('off')
+        img_mapping = plt.imread(
+            visualize_path + f'latent_action_decoding_lunarlander_obs0_k8_seed1_x{timestep}_best.png')
         plt.imshow(img_mapping)
 
         # plt.show()
@@ -138,8 +159,8 @@ def train(args):
         # if timestep == 1:
         #     break
 
-    processed_frames_path = '/Users/puyuan/code/DI-engine/data_lunarlander_visualize/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_upc50_crlw1_seed1_3M/collect_in_seed1_q_value_mapping/'
-    path = os.path.join(processed_frames_path, 'lunarlander_episode_0_q-value-mapping.gif')
+    processed_frames_path = '/Users/puyuan/code/DI-engine/data_lunarlander_visualize/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_upc50_seed1_3M/collect_in_seed1_mapping/'
+    path = os.path.join(processed_frames_path, 'lunarlander_episode_0_t-obs-rew_q-value_mapping_latent-decodeing.gif')
     display_frames_as_gif(processed_frames, path)
 
 

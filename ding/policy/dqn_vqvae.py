@@ -184,7 +184,7 @@ class DQNVQVAEPolicy(Policy):
             from torch.optim.lr_scheduler import LambdaLR
             # rl_lambda = lambda step: (1e-5 / 3e-4 -1) * (1 / (3e6*20/256) ) * step + 1
             rl_lambda = lambda step: (1e-5 / 3e-4 - 1) * (
-                        1 / (3e6 * self._cfg.learn.update_per_collect_rl / self._cfg.collect.n_sample)) * step + 1
+                    1 / (3e6 * self._cfg.learn.update_per_collect_rl / self._cfg.collect.n_sample)) * step + 1
             self.rl_scheduler = LambdaLR(self._optimizer, lr_lambda=rl_lambda, last_epoch=-1)
 
         self._gamma = self._cfg.discount_factor
@@ -926,7 +926,7 @@ class DQNVQVAEPolicy(Policy):
                 'latent_action': policy_output['latent_action'],
                 ### only for visualize
                 # q value
-                'q_value': policy_output['q_value'], # only for visualize
+                'q_value': policy_output['q_value'],  # only for visualize
                 'reward': timestep.reward,
                 # 'rewrad_run': timestep.info['rewrad_run'],
                 # 'rewrad_ctrl': timestep.info['rewrad_ctrl'],
@@ -946,7 +946,7 @@ class DQNVQVAEPolicy(Policy):
 
     def visualize_latent(self, save_histogram=False, save_mapping=False, save_decoding_mapping=False, obs=None,
                          name_suffix=0, granularity=0.01, k=8, visualize_path=None):
-        if save_histogram or save_histogram:
+        if save_histogram or save_mapping:
             # i.e. to execute:
             # action_embedding = self._get_action_embedding(data)
             if self.cfg.action_space == 'continuous':
@@ -980,12 +980,8 @@ class DQNVQVAEPolicy(Policy):
                 )
                 action_samples = np.concatenate([action_samples_type1, action_samples_type2, action_samples_type3])
 
-            # encoding = self._vqvae_model.encoder(torch.Tensor(action_samples).to(torch.device('cuda')))
-            # quantized_index, quantized_inputs, vq_loss, _, _ = self._vqvae_model.vq_layer(encoding)
-
-            with torch.no_grad():
-                encoding = self._vqvae_model.encoder(to_device(torch.Tensor(action_samples), self._device))
-                quantized_index = self._vqvae_model.vq_layer.encode(encoding)
+            quantized_index = self._vqvae_model.encode(
+                {'action': to_device(torch.Tensor(action_samples), self._device), 'obs': obs})
 
         if save_histogram:
             fig = plt.figure()
@@ -1002,13 +998,13 @@ class DQNVQVAEPolicy(Policy):
             plt.ylabel('Count')
             plt.title('Latent Action Histogram')
             plt.grid(True)
-            plt.show()
+            # plt.show()
 
             if isinstance(name_suffix, int):
-                plt.savefig(f'latent_histogram_{name_suffix}.png')
+                plt.savefig(f'{visualize_path}'+ f'latent_histogram_{name_suffix}.png')
                 print(f'save latent_histogram_{name_suffix}.png')
             elif isinstance(name_suffix, str):
-                plt.savefig('latent_histogram_' + name_suffix + '.png')
+                plt.savefig(f'{visualize_path}'+'latent_histogram_' + name_suffix + '.png')
                 print('latent_histogram_' + name_suffix + '.png')
         elif save_mapping:
             xx, yy = np.meshgrid(np.arange(-1, 1, granularity), np.arange(-1, 1, granularity))
@@ -1023,16 +1019,18 @@ class DQNVQVAEPolicy(Policy):
             plt.ylabel('Original Action Dim1')
             ax.set_title('Latent Action Mapping')
             fig.colorbar(sc)
-            plt.show()
-            plt.savefig(f'latent_mapping_{name_suffix}.png')
+            # plt.show()
+            plt.savefig(f'{visualize_path}' + f'latent_mapping_{name_suffix}.png')
+
         elif save_decoding_mapping:
             # TODO: k
             latents = to_device(torch.arange(k), self._device)
             obs = obs.repeat(k, 1)
             obs = to_device(obs, self._device)
-            recons_action = self._vqvae_model.decode({'quantized_index': latents, 'obs': obs, 'threshold_phase': False})[
+            recons_action = \
+            self._vqvae_model.decode({'quantized_index': latents, 'obs': obs, 'threshold_phase': False})[
                 'recons_action'].detach().cpu().numpy()
-            print(recons_action.max(0), recons_action.min(0), recons_action.mean(0), recons_action.std(0))
+            # print(recons_action.max(0), recons_action.min(0), recons_action.mean(0), recons_action.std(0))
 
             c = latents.detach().cpu().numpy()
             fig = plt.figure()
@@ -1052,7 +1050,7 @@ class DQNVQVAEPolicy(Policy):
             # 设置坐标轴范围
             plt.xlim((-1, 1))
             plt.ylim((-1, 1))
-            plt.savefig(f'{visualize_path}'+f'latent_action_decoding_{name_suffix}.png')
+            plt.savefig(f'{visualize_path}' + f'latent_action_decoding_{name_suffix}.png')
             # plt.show()
             plt.clf()
             plt.close('all')
