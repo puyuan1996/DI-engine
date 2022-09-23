@@ -11,13 +11,7 @@ hopper_sac_config = dict(
         use_act_scale=True,
         clip_rewards=False,
         n_evaluator_episode=8,
-<<<<<<< Updated upstream
-        # stop_value=6000,
-        stop_value=99999,
-=======
-        clip_rewards=False,
         stop_value=6000,
->>>>>>> Stashed changes
     ),
     policy=dict(
         cuda=True,

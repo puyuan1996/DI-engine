@@ -60,8 +60,8 @@ halfcheetah_dqn_default_config = dict(
         predict_loss_weight=0,  # TODO
 
         # only if obs_regularization=True, this option take effect
-        # v_contrastive_regularization=False,
-        v_contrastive_regularization=True,
+        v_contrastive_regularization=False,
+        # v_contrastive_regularization=True,
         contrastive_regularization_loss_weight=1,
 
         # vqvae_pretrain_only=True,
@@ -81,8 +81,8 @@ halfcheetah_dqn_default_config = dict(
         # manually augment_extreme_action
         augment_extreme_action=False,
         # augment_extreme_action=True,
-        
-        # if manually augment_extreme_action=False, set threshold_categorical_head_for_cont_action=True, 
+
+        # if manually augment_extreme_action=False, set threshold_categorical_head_for_cont_action=True,
         threshold_categorical_head_for_cont_action=True,  # threshold categorical distribution
         categorical_head_for_cont_action_threshold=0.9,
         threshold_phase=['eval'],  # ['eval', 'collect']
@@ -107,14 +107,14 @@ halfcheetah_dqn_default_config = dict(
         priority_IS_weight_vqvae=False,  # NOTE: return priority
         priority_type_vqvae='return',
         priority_vqvae_min=0.,
-        latent_action_shape=int(128),  # num of num_embeddings: K, i.e. shape of latent action
+        latent_action_shape=int(64),  # num of num_embeddings: K, i.e. shape of latent action
         # latent_action_shape=int(128),  # num of num_embeddings: K, i.e. shape of latent action
         model=dict(
             ensemble_num=20,  # TODO
             obs_shape=17,
             # if manually augment_extreme_action=True,
             # action_shape=int(64+2**6),  # Q dim
-            action_shape=int(128),  # Q dim
+            action_shape=int(64),  # Q dim
             # action_shape=int(128),  # num of num_embeddings: K
             # encoder_hidden_size_list=[128, 128, 64],  # small net
             encoder_hidden_size_list=[256, 256, 128],  # middle net
@@ -206,7 +206,7 @@ create_config = halfcheetah_dqn_create_config
 
 
 def train(args):
-    main_config.exp_name = 'data_halfcheetah/dqn_sbh_ensemble20_tch11-edge-eval-09_noise0_k128_upc50_ved64_vhd256_obs0_crlw1_noema_middlenet_beta0.25_vlw0.1' + '_seed' + f'{args.seed}' + '_3M'
+    main_config.exp_name = 'data_halfcheetah/dqn_sbh_ensemble20_tch11-edge-eval-09_noise0_k64_upc50_ved64_vhd256_obs0_noema_middlenet_beta0.25_vlw0.1' + '_seed' + f'{args.seed}' + '_3M'
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,
                               max_env_step=int(3e6))
 
@@ -216,7 +216,7 @@ if __name__ == "__main__":
     import argparse
     from ding.entry import serial_pipeline_dqn_vqvae
 
-    for seed in [0,1,2]:
+    for seed in [0, 1, 2]:
         parser = argparse.ArgumentParser()
         parser.add_argument('--seed', '-s', type=int, default=seed)
         args = parser.parse_args()
