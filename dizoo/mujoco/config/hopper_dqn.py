@@ -42,7 +42,8 @@ hopper_dqn_default_config = dict(
             batch_size=512,
             learning_rate=3e-4,
             # Frequency of target network update.
-            target_update_freq=100,
+            target_update_freq=500,
+            target_update_theta=0.001,
             update_per_collect=20,
         ),
         # collect_mode config
@@ -93,8 +94,8 @@ if __name__ == "__main__":
     import argparse
     from ding.entry import serial_pipeline
 
-    # for seed in [0,1,2]:
-    for seed in [0]:
+    for seed in [0,1,2]:
+    # for seed in [0]:
         parser = argparse.ArgumentParser()
         parser.add_argument('--seed', '-s', type=int, default=seed)
         args = parser.parse_args()

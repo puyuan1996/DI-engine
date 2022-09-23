@@ -159,18 +159,18 @@ def serial_pipeline(
 
     # Learner's after_run hook.
     learner.call_hook('after_run')
-    import time
-    import pickle
-    import numpy as np
-    with open(os.path.join(cfg.exp_name, 'result.pkl'), 'wb') as f:
-        eval_value_raw = [d['final_eval_reward'] for d in eval_info]
-        final_data = {
-            'stop': stop,
-            'env_step': collector.envstep,
-            'train_iter': learner.train_iter,
-            'eval_value': np.mean(eval_value_raw),
-            'eval_value_raw': eval_value_raw,
-            'finish_time': time.ctime(),
-        }
-        pickle.dump(final_data, f)
+    # import time
+    # import pickle
+    # import numpy as np
+    # with open(os.path.join(cfg.exp_name, 'result.pkl'), 'wb') as f:
+    #     eval_value_raw = [d['final_eval_reward'] for d in eval_info]
+    #     final_data = {
+    #         'stop': stop,
+    #         'env_step': collector.envstep,
+    #         'train_iter': learner.train_iter,
+    #         'eval_value': np.mean(eval_value_raw),
+    #         'eval_value_raw': eval_value_raw,
+    #         'finish_time': time.ctime(),
+    #     }
+    #     pickle.dump(final_data, f)
     return policy
