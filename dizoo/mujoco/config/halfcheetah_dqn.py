@@ -91,7 +91,7 @@ create_config = halfcheetah_dqn_create_config
 
 
 def train(args):
-    main_config.exp_name = 'data_halfcheetah/dqn_k64_middelnet_upc20' + '_seed' + f'{args.seed}'+'_3M'
+    main_config.exp_name = 'data_halfcheetah/dqn_k729_middelnet_upc20' + '_seed' + f'{args.seed}'+'_3M'
     serial_pipeline([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=int(3e6))
 
 if __name__ == "__main__":

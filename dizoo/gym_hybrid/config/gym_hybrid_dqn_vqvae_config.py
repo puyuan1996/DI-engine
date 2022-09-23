@@ -18,8 +18,8 @@ gym_hybrid_dqn_default_config = dict(
         # (bool) Scale output action into legal range [-1, 1].
         act_scale=True,
         # env_id='Moving-v0',
-        env_id='Sliding-v0',
-        # env_id='HardMove-v0',
+        # env_id='Sliding-v0',
+        env_id='HardMove-v0',
         num_actuators=num_actuators,  # only for 'HardMove-v0'
         # stop_value=2,
         stop_value=int(1e6),  # stop according to max env steps
@@ -48,23 +48,23 @@ gym_hybrid_dqn_default_config = dict(
         is_ema=False,  # no use EMA
         # is_ema=True,  # use EMA TODO(pu): test ema
         # for 'Moving-v0', 'Sliding-v0'
-        original_action_shape=dict(
-            action_type_shape=3,
-            action_args_shape=2,
-        ),
-        # for 'HardMove-v0'
         # original_action_shape=dict(
-        #     action_type_shape=int(2 ** num_actuators),  # 2**4=16, 2**6=64, 2**8=256, 2**10=1024
-        #     action_args_shape=int(num_actuators),  # 4,6,8,10
+        #     action_type_shape=3,
+        #     action_args_shape=2,
         # ),
+        # for 'HardMove-v0'
+        original_action_shape=dict(
+            action_type_shape=int(2 ** num_actuators),  # 2**4=16, 2**6=64, 2**8=256, 2**10=1024
+            action_args_shape=int(num_actuators),  # 4,6,8,10
+        ),
         random_collect_size=int(5e4),
         warm_up_update=int(1e4),
         # debug
         # warm_up_update=int(0),
         # random_collect_size=int(0),
         vqvae_embedding_dim=64,  # ved: D
-        # vqvae_hidden_dim=[1024],  # vhd
-        vqvae_hidden_dim=[256],  # vhd
+        vqvae_hidden_dim=[1024],  # vhd
+        # vqvae_hidden_dim=[256],  # vhd
         target_network_soft_update=False,
 
 
@@ -126,7 +126,7 @@ gym_hybrid_dqn_default_config = dict(
         latent_action_shape=int(16),  # num of num_embeddings: K, i.e. shape of latent action
         # latent_action_shape=int(64),  # num of num_embeddings: K, i.e. shape of latent action
         model=dict(
-            ensemble_num=3,  # TODO
+            ensemble_num=1,  # TODO
             obs_shape=10,
             action_shape=int(16),  # num of num_embeddings: K
             encoder_hidden_size_list=[128, 128, 64],  # small net
@@ -216,22 +216,14 @@ create_config = gym_hybrid_dqn_create_config
 
 
 def train(args):
-    # main_config.exp_name = 'data_moving/dqn_obs_noema_smallnet_k16' + '_seed' + f'{args.seed}'
-    # main_config.exp_name = 'data_moving/dqn_noema_smallnet_k16_nowarmup' + '_seed' + f'{args.seed}'
 
-    # main_config.exp_name = 'data_sliding/dqn_obs_noema_smallnet_k16' + '_seed' + f'{args.seed}'
-    # main_config.exp_name = 'data_sliding/dqn_noema_smallnet_k16' + '_seed' + f'{args.seed}'
+    # main_config.exp_name = 'data_hardmove_n4/dqn_sbh_ensem20_obs0_noema_middlenet_k64_vhd256_beta0.25_vlw1' + '_seed' + f'{args.seed}'
+    main_config.exp_name = 'data_hardmove_n10/dqn_sbh_ensem1_noobs_noema_middlenet_k64_vhd1024_beta0.25_vlw1' + '_seed' + f'{args.seed}'
 
-    # main_config.exp_name = 'data_hardmove_n10/dqn_noobs_noema_middlenet_k64_vhd1024_beta0.25_vlw1_softtarget1e-3' + '_seed' + f'{args.seed}'
     
-    # main_config.exp_name = 'data_hardmove_n10/dqn_noobs_ensem20_noema_middlenet_k64_vhd1024_beta0.25_vlw1_softtarget1e-3' + '_seed' + f'{args.seed}'
-    
-    # main_config.exp_name = 'data_moving//dqn_noobs_ensem3_noema_smallenet_k16_vhd256_beta0.25_vlw1_softtarget1e-3' + '_seed' + f'{args.seed}'
+    # main_config.exp_name = 'data_moving//dqn_sbh_ensem1_noobs_noema_smallenet_k16_vhd256_beta0.25_vlw1' + '_seed' + f'{args.seed}'
 
-    main_config.exp_name = 'data_sliding//dqn_noobs_ensem3_noema_smallenet_k16_vhd256_beta0.25_vlw1_softtarget1e-3' + '_seed' + f'{args.seed}'
 
-    # main_config.exp_name = 'data_hardmove_n10/dqn_noema_middlenet_k64_vhd1024_wd1e-4_noise' + '_seed' + f'{args.seed}'
-    # main_config.exp_name = 'data_hardmove_n10/dqn_noema_middlenet_k64_vhd1024_wd0_embedding-table-one-hot_noise' + '_seed' + f'{args.seed}'
 
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,
                               max_env_step=int(3e6))

@@ -67,6 +67,7 @@ class MujocoEnv(BaseEnv):
         self.n = self._cfg.each_dim_disc_size
         self.K =  self.n ** self.m
         self.disc_to_cont = list(product(*[list(range(self.n)) for dim in range(self.m)] ))
+        self._final_eval_reward = 0.
 
         return obs
 
@@ -92,6 +93,8 @@ class MujocoEnv(BaseEnv):
             action_range = {'min': self.action_space.low[0], 'max': self.action_space.high[0], 'dtype': np.float32}
             action = affine_transform(action, min_val=action_range['min'], max_val=action_range['max'])
         obs, rew, done, info = self._env.step(action)
+        self._final_eval_reward += rew
+
         if done:
             if self._save_replay:
                 path = os.path.join(
@@ -99,6 +102,8 @@ class MujocoEnv(BaseEnv):
                 )
                 self.display_frames_as_gif(self._frames, path)
                 self._save_replay_count += 1
+            info['final_eval_reward'] = self._final_eval_reward
+            
         obs = to_ndarray(obs).astype(np.float32)
         rew = to_ndarray([rew]).astype(np.float32)
         return BaseEnvTimestep(obs, rew, done, info)

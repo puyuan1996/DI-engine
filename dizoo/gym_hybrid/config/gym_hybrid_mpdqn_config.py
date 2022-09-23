@@ -12,7 +12,8 @@ gym_hybrid_mpdqn_config = dict(
         stop_value=1.8,
     ),
     policy=dict(
-        cuda=True,
+        # cuda=True,
+        cuda=False,
         priority=False,
         # (bool) Whether use Importance Sampling Weight to correct biased update. If True, priority must be True.
         priority_IS_weight=False,

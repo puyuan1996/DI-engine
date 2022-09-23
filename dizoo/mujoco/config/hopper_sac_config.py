@@ -83,7 +83,7 @@ if __name__ == "__main__":
     import copy
     import argparse
     from ding.entry import serial_pipeline
-    for seed in [0,1,2]:
+    for seed in [1,2]:
         parser = argparse.ArgumentParser()
         parser.add_argument('--seed', '-s', type=int, default=seed)
         args = parser.parse_args()

@@ -1,0 +1,57 @@
+v0.4.0-606-g8cae0517e
+
+commit 8cae0517e5fbdc2d9376ea610f9b7ad32e69974e
+Author: puyuan1996 <2402552459@qq.com>
+Date:   Fri Sep 23 00:35:02 2022 +0800
+
+    sync code
+
+ ding/entry/serial_entry.py                         |  32 +++---
+ dizoo/mujoco/config/halfcheetah_dqn.py             |  10 +-
+ .../halfcheetah_dqn_vqvae_ensemble_config.py       |  22 +++--
+ dizoo/mujoco/config/hopper_dqn.py                  |   7 +-
+ dizoo/mujoco/config/walker2d_dqn.py                | 107 +++++++++++++++++++++
+ 5 files changed, 146 insertions(+), 32 deletions(-)
+
+commit bfeafb6230f252de7f86ee164f29ed8ec107a1a3
+Author: puyuan1996 <2402552459@qq.com>
+Date:   Thu Sep 22 17:58:37 2022 +0800
+
+    feature(pu): add hopper sac action visualize config
+
+ .../config/lunarlander_collect_data_sac.py         |   4 +-
+ .../config/lunarlander_sac_visualize_action.py     |  32 ++--
+ .../mujoco/config/halfcheetah_collect_data_sac.py  |  58 ++++++
+ .../config/halfcheetah_sac_visualize_action.py     | 131 ++++++++++++++
+ dizoo/mujoco/config/hopper_collect_data_sac.py     |  71 ++++++++
+ dizoo/mujoco/config/hopper_sac_config.py           |   5 +
+ dizoo/mujoco/config/hopper_sac_visualize_action.py | 195 +++++++++++++++++++++
+ 7 files changed, 480 insertions(+), 16 deletions(-)
+
+commit efa5f7d4c6faa3b82f280e2b93928e36e1d9671f
+Merge: 689201a2d 944746d0f
+Author: puyuan1996 <2402552459@qq.com>
+Date:   Thu Sep 22 16:21:19 2022 +0800
+
+    Merge branch 'dev-action-obs-ensemble-pu' of https://gitlab.bj.sensetime.com/open-XLab/cell/DI-engine into dev-action-obs-ensemble-pu
+
+commit 689201a2db9f22ad74dc1dad16e6da44717433d5
+Author: puyuan1996 <2402552459@qq.com>
+Date:   Thu Sep 22 16:19:44 2022 +0800
+
+    polish(pu):polish mujoco sac config
+
+ .../config/gym_hybrid_dqn_vqvae_config.py          |  1 -
+ dizoo/mujoco/config/ant_sac_config.py              | 29 +++++--
+ dizoo/mujoco/config/halfcheetah_sac_config.py      | 31 ++++++--
+ dizoo/mujoco/config/hopper_sac_config.py           | 23 +++++-
+ dizoo/mujoco/config/humanoid_sac_config.py         | 88 ++++++++++++++++++++++
+ dizoo/mujoco/config/walker2d_sac_config.py         | 26 +++++--
+ 6 files changed, 177 insertions(+), 21 deletions(-)
+
+commit 944746d0f635c6c23ea2f17b3c0ee6b36281d4d3
+Merge: 9aaae895e 4bb74acc4
+Author: puyuan1996 <2402552459@qq.com>
+Date:   Thu Sep 22 13:51:00 2022 +0800
+
+    Merge branch 'dev-action-obs-ensemble-pu' of https://gitlab.bj.sensetime.com/open-XLab/cell/DI-engine into dev-action-obs-ensemble-pu

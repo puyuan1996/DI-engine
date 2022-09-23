@@ -1,10 +1,10 @@
 from easydict import EasyDict
 
 nstep = 3
-walker2d_dqn_default_config = dict(
-    exp_name='walker2d_dqn_seed0',
+ant_dqn_default_config = dict(
+    exp_name='ant_dqn_seed0',
     env=dict(
-        env_id='Walker2d-v3',
+        env_id='Ant-v3',
         norm_obs=dict(use_norm=False, ),
         norm_reward=dict(use_norm=False, ),
         # (bool) Scale output action into legal range.
@@ -15,7 +15,7 @@ walker2d_dqn_default_config = dict(
         n_evaluator_episode=8,
         # stop_value=3000,
         stop_value=int(1e6),  # max env steps
-        each_dim_disc_size=3,  # n: discrete size of each dim in origin continuous action
+        each_dim_disc_size=2,  # n: discrete size of each dim in origin continuous action
     ),
     policy=dict(
         # Whether to use cuda for network.
@@ -28,8 +28,8 @@ walker2d_dqn_default_config = dict(
         # learn_mode config
         # original_action_shape=3,  # m
         model=dict(
-            obs_shape=17,
-            action_shape=int(3**6),  # num of num_embeddings: K = n**m e.g. 2**6=64, 3**6=729, 4**6=4096
+            obs_shape=111,
+            action_shape=int(2**8),  # num of num_embeddings: K = n**m e.g. 2**6=64, 3**6=729, 4**6=4096
             # encoder_hidden_size_list=[128, 128, 64],  # small net
             encoder_hidden_size_list=[256, 256, 128],  # middle net
             # encoder_hidden_size_list=[512, 512, 256],  # large net
@@ -37,7 +37,7 @@ walker2d_dqn_default_config = dict(
             dueling=True,
         ),
         learn=dict(
-            ignore_done=False,
+            ignore_done=True,
             batch_size=512,
             learning_rate=3e-4,
             # Frequency of target network update.
@@ -74,10 +74,10 @@ walker2d_dqn_default_config = dict(
     ),
 )
 
-walker2d_dqn_default_config = EasyDict(walker2d_dqn_default_config)
-main_config = walker2d_dqn_default_config
+ant_dqn_default_config = EasyDict(ant_dqn_default_config)
+main_config = ant_dqn_default_config
 
-walker2d_dqn_create_config = dict(
+ant_dqn_create_config = dict(
     env=dict(
         type='mujoco-disc',
         import_names=['dizoo.mujoco.envs.mujoco_env_disc'],
@@ -86,12 +86,12 @@ walker2d_dqn_create_config = dict(
     # env_manager=dict(type='base'),
     policy=dict(type='dqn'),
 )
-walker2d_dqn_create_config = EasyDict(walker2d_dqn_create_config)
-create_config = walker2d_dqn_create_config
+ant_dqn_create_config = EasyDict(ant_dqn_create_config)
+create_config = ant_dqn_create_config
 
 
 def train(args):
-    main_config.exp_name = 'data_walker2d/dqn_k729_middelnet_upc20' + '_seed' + f'{args.seed}'+'_3M'
+    main_config.exp_name = 'data_ant/dqn_k1024_middelnet_upc20' + '_seed' + f'{args.seed}'+'_3M'
     serial_pipeline([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=int(3e6))
 
 if __name__ == "__main__":
