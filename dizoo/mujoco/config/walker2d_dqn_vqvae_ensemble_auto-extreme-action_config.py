@@ -42,11 +42,14 @@ walker2d_dqn_default_config = dict(
         # random_collect_size=int(10),  
         # warm_up_update=int(10),
 
-        # vqvae_embedding_dim=64,  # ved: D
-        # vqvae_hidden_dim=[256],  # vhd
-        vqvae_embedding_dim=128,  # ved: D
-        vqvae_hidden_dim=[512],  # vhd
-        target_network_soft_update=False,
+        vqvae_embedding_dim=64,  # ved: D
+        vqvae_hidden_dim=[256],  # vhd
+        # vqvae_embedding_dim=128,  # ved: D
+        # vqvae_hidden_dim=[512],  # vhd
+
+       # target_network_soft_update=False,
+        target_network_soft_update=True,
+
         beta=0.25,
         vq_loss_weight=0.1,  # TODO
         recons_loss_cont_weight=1,
@@ -57,7 +60,7 @@ walker2d_dqn_default_config = dict(
 
         # obs_regularization=True,
         obs_regularization=False,
-        predict_loss_weight=1,  # TODO
+        predict_loss_weight=0,  # TODO
 
        # only if obs_regularization=True, this option take effect
         v_contrastive_regularization=False,
@@ -201,7 +204,7 @@ create_config = walker2d_dqn_create_config
 
 
 def train(args):
-    main_config.exp_name = 'data_walker2d/dqn_sbh_ensemble20_tch11-edge-eval-0.9_noise0_naea01_k128_upc50_vhd512_ved128_noobs_noema_middlenet_beta0.25_vlw0.1' + '_seed' + f'{args.seed}' + '_3M'
+    main_config.exp_name = 'data_walker2d/dqn_sbh_ensemble20_noobs_soft_aaea_k128_upc50_noema_middlenet_beta0.25_vlw0.1' + '_seed' + f'{args.seed}' + '_3M'
     
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,
                               max_env_step=int(3e6))

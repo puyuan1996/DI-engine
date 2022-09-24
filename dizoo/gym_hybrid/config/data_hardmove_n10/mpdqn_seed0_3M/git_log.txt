@@ -1,0 +1,61 @@
+v0.4.0-632-g60fb9942e
+
+commit 60fb9942ede6c3f88fb0a86ed1d4495a67db32c4
+Author: puyuan1996 <2402552459@qq.com>
+Date:   Fri Sep 23 23:32:03 2022 +0800
+
+    sync code
+
+ .../dqn_k64_middlenet_upc20_seed0_3M/git_diff.txt  | 205 ---------------------
+ .../dqn_k64_middlenet_upc20_seed0_3M/git_log.txt   |  57 ------
+ ...qn_vqvae_ensemble_auto-extreme-action_config.py |  16 +-
+ dizoo/mujoco/config/hopper_sac_config.py           |   6 -
+ .../config/walker2d_dqn_vqvae_ensemble_config.py   |  34 ++--
+ 5 files changed, 29 insertions(+), 289 deletions(-)
+
+commit 42bccf30c78dc4af309701bc0abffd8121f5f513
+Merge: 8cae0517e d4924b762
+Author: puyuan1996 <2402552459@qq.com>
+Date:   Fri Sep 23 22:42:07 2022 +0800
+
+    Merge branch 'dev-action-obs-ensemble-pu' of https://gitlab.bj.sensetime.com/open-XLab/cell/DI-engine into dev-action-obs-ensemble-pu
+
+commit d4924b7621ddea6bbf807f41200dac4848b12f75
+Merge: cd1de27f6 f8a596f6a
+Author: puyuan <puyuan@sensetime.com>
+Date:   Fri Sep 23 20:53:58 2022 +0800
+
+    Merge branch 'main' of https://github.com/opendilab/DI-engine into dev-action-obs-ensemble-pu
+
+commit cd1de27f688467a4cd5b2d4ef565182174580bb1
+Author: puyuan1996 <2402552459@qq.com>
+Date:   Fri Sep 23 20:48:42 2022 +0800
+
+    sync code
+
+ ding/entry/serial_entry.py                         |  28 +++---
+ .../config/gym_hybrid_dqn_vqvae_config.py          |  38 +++-----
+ dizoo/mujoco/config/ant_sac_config.py              |   2 +-
+ dizoo/mujoco/config/halfcheetah_dqn.py             |  10 +-
+ .../halfcheetah_dqn_vqvae_ensemble_config.py       |  22 +++--
+ dizoo/mujoco/config/halfcheetah_sac_config.py      |   2 +-
+ dizoo/mujoco/config/hopper_dqn.py                  |   7 +-
+ dizoo/mujoco/config/hopper_sac_config.py           |   2 +-
+ dizoo/mujoco/config/humanoid_sac_config.py         |   2 +-
+ dizoo/mujoco/config/walker2d_dqn.py                | 107 +++++++++++++++++++++
+ dizoo/mujoco/config/walker2d_sac_config.py         |   2 +-
+ dizoo/mujoco/envs/mujoco_env_disc.py               |   5 +
+ 12 files changed, 170 insertions(+), 57 deletions(-)
+
+commit 8cae0517e5fbdc2d9376ea610f9b7ad32e69974e
+Author: puyuan1996 <2402552459@qq.com>
+Date:   Fri Sep 23 00:35:02 2022 +0800
+
+    sync code
+
+ ding/entry/serial_entry.py                         |  32 +++---
+ dizoo/mujoco/config/halfcheetah_dqn.py             |  10 +-
+ .../halfcheetah_dqn_vqvae_ensemble_config.py       |  22 +++--
+ dizoo/mujoco/config/hopper_dqn.py                  |   7 +-
+ dizoo/mujoco/config/walker2d_dqn.py                | 107 +++++++++++++++++++++
+ 5 files changed, 146 insertions(+), 32 deletions(-)

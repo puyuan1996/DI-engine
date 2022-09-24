@@ -8,7 +8,7 @@ module_path = os.path.dirname(__file__)
 nstep = 3
 collector_env_num = 8
 evaluator_env_num = 8
-num_actuators = 10
+num_actuators = 4
 gym_hybrid_dqn_default_config = dict(
     env=dict(
         collector_env_num=collector_env_num,
@@ -63,9 +63,10 @@ gym_hybrid_dqn_default_config = dict(
         # warm_up_update=int(0),
         # random_collect_size=int(0),
         vqvae_embedding_dim=64,  # ved: D
-        vqvae_hidden_dim=[1024],  # vhd
-        # vqvae_hidden_dim=[256],  # vhd
-        target_network_soft_update=False,
+        # vqvae_hidden_dim=[1024],  # vhd
+        vqvae_hidden_dim=[256],  # vhd
+        # target_network_soft_update=False,
+        target_network_soft_update=True,
 
 
         beta=0.25,
@@ -77,8 +78,8 @@ gym_hybrid_dqn_default_config = dict(
         auxiliary_conservative_loss=False,
         augment_extreme_action=False,
 
-        # obs_regularization=True,
-        obs_regularization=False,
+        obs_regularization=True,
+        # obs_regularization=False,
         predict_loss_weight=0.,  # TODO
 
         # only if obs_regularization=True, this option take effect
@@ -112,7 +113,7 @@ gym_hybrid_dqn_default_config = dict(
         priority=False,
         priority_IS_weight=False,
         # TODO: weight RL loss according to the reconstruct loss, because in In the area with large reconstruction
-        #  loss, the action reconstruction is inaccurate, that is, the (\hat{x}, r) does not match,
+        #  loss, the action reconstruction is inaccurate,s that is, the (\hat{x}, r) does not match,
         #  and the corresponding Q value is inaccurate. The update should be reduced to avoid wrong gradient.
         rl_reconst_loss_weight=False,
         rl_reconst_loss_weight_min=0.2,
@@ -123,10 +124,11 @@ gym_hybrid_dqn_default_config = dict(
         priority_IS_weight_vqvae=False,  # NOTE: return priority
         priority_type_vqvae='return',
         priority_vqvae_min=0,
-        latent_action_shape=int(16),  # num of num_embeddings: K, i.e. shape of latent action
+        # latent_action_shape=int(128),  # num of num_embeddings: K, i.e. shape of latent action
         # latent_action_shape=int(64),  # num of num_embeddings: K, i.e. shape of latent action
+        latent_action_shape=int(16),  # num of num_embeddings: K, i.e. shape of latent action
         model=dict(
-            ensemble_num=1,  # TODO
+            ensemble_num=20,  # TODO
             obs_shape=10,
             action_shape=int(16),  # num of num_embeddings: K
             encoder_hidden_size_list=[128, 128, 64],  # small net
@@ -216,9 +218,10 @@ create_config = gym_hybrid_dqn_create_config
 
 
 def train(args):
+    # main_config.exp_name = 'data_hardmove_n10/dqn_sbh_ensem20_noobs_soft_noema_middlenet_k128_vhd1024_beta0.25_vlw1' + '_seed' + f'{args.seed}'
 
-    # main_config.exp_name = 'data_hardmove_n4/dqn_sbh_ensem20_obs0_noema_middlenet_k64_vhd256_beta0.25_vlw1' + '_seed' + f'{args.seed}'
-    main_config.exp_name = 'data_hardmove_n10/dqn_sbh_ensem1_noobs_noema_middlenet_k64_vhd1024_beta0.25_vlw1' + '_seed' + f'{args.seed}'
+    # main_config.exp_name = 'data_hardmove_n10/dqn_sbh_ensem20_noobs_soft_noema_middlenet_k64_vhd1024_beta0.25_vlw1' + '_seed' + f'{args.seed}'
+    main_config.exp_name = 'data_hardmove_n4/dqn_sbh_ensem20_obs0_soft_noema_smallenet_k16_vhd256_beta0.25_vlw1' + '_seed' + f'{args.seed}'
 
     
     # main_config.exp_name = 'data_moving//dqn_sbh_ensem1_noobs_noema_smallenet_k16_vhd256_beta0.25_vlw1' + '_seed' + f'{args.seed}'

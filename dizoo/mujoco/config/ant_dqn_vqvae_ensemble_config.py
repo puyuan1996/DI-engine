@@ -45,7 +45,11 @@ ant_dqn_default_config = dict(
         vqvae_embedding_dim=64,  # ved: D
         vqvae_hidden_dim=[256],  # vhd
         # vqvae_hidden_dim=[512],  # vhd
-        target_network_soft_update=False,
+        
+        # target_network_soft_update=False,
+        target_network_soft_update=True,
+
+
         beta=0.25,
         vq_loss_weight=0.1,  # TODO
         recons_loss_cont_weight=1,
@@ -54,17 +58,13 @@ ant_dqn_default_config = dict(
         replay_buffer_size_vqvae=int(1e6),
         auxiliary_conservative_loss=False,
 
-        obs_regularization=True,
-        # obs_regularization=False,
-        predict_loss_weight=0,  # TODO
-
-        obs_regularization=True,
-        # obs_regularization=False,
+        # obs_regularization=True,
+        obs_regularization=False,
         predict_loss_weight=0,  # TODO
 
        # only if obs_regularization=True, this option take effect
-        # v_contrastive_regularization=False,
-        v_contrastive_regularization=True,
+        v_contrastive_regularization=False,
+        # v_contrastive_regularization=True,
         contrastive_regularization_loss_weight=1,
 
 
@@ -161,7 +161,7 @@ ant_dqn_default_config = dict(
             # add noise in original continuous action
             noise=False,  # NOTE: if vqvae_pretrain_only=True
             # noise=True,  # NOTE: if vqvae_pretrain_only=False
-            noise_sigma=0.1,
+            noise_sigma=0.,
             noise_range=dict(
                 min=-0.5,
                 max=0.5,
@@ -208,7 +208,7 @@ create_config = ant_dqn_create_config
 
 
 def train(args):
-    main_config.exp_name = 'data_ant/dqn_sbh_ensemble20_k128_upc50_obs0_crlw1_noema_middlenet_beta0.25_vlw0.1' + '_seed' + f'{args.seed}' + '_3M'
+    main_config.exp_name = 'data_ant/dqn_sbh_ensemble20_k128_noobs_soft_upc50_noema_middlenet_beta0.25_vlw0.1' + '_seed' + f'{args.seed}' + '_3M'
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,
                               max_env_step=int(3e6))
 
