@@ -105,7 +105,7 @@ create_config = gym_hybrid_mpdqn_create_config
 #     serial_pipeline([main_config, create_config], seed=0)
 
 def train(args):
-    main_config.exp_name = 'data_hardmove_n10/mpdqn' + '_seed' + f'{args.seed}'+'_3M'
+    main_config.exp_name = 'data_hardmove_n10/mpdqn' + '_seed' + f'{args.seed}'+'_3M'+'_cpu'
 
     serial_pipeline([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,max_env_step=int(3e6))
 

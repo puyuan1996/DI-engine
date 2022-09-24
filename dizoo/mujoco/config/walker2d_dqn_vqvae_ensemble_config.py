@@ -43,8 +43,8 @@ walker2d_dqn_default_config = dict(
         # warm_up_update=int(10),
 
         vqvae_embedding_dim=64,  # ved: D
-        # vqvae_hidden_dim=[256],  # vhd
-        vqvae_hidden_dim=[512],  # vhd
+        vqvae_hidden_dim=[256],  # vhd
+        # vqvae_hidden_dim=[512],  # vhd
         target_network_soft_update=False,
         beta=0.25,
         vq_loss_weight=0.1,  # TODO
@@ -56,8 +56,13 @@ walker2d_dqn_default_config = dict(
 
         # obs_regularization=True,
         obs_regularization=False,
-        predict_loss_weight=1,  # TODO
+        predict_loss_weight=0,  # TODO
 
+        # only if obs_regularization=True, this option take effect
+        v_contrastive_regularization=False,
+        # v_contrastive_regularization=True,
+        contrastive_regularization_loss_weight=1,
+        
         # vqvae_pretrain_only=True,
         # NOTE: if only pretrain vqvae , i.e. vqvae_pretrain_only=True, should set this key to False
         # recompute_latent_action=False,
@@ -72,11 +77,12 @@ walker2d_dqn_default_config = dict(
         cont_reconst_smooth_l1_loss=False,
         categorical_head_for_cont_action=False,  # categorical distribution
 
-        # augment_extreme_action=False,
-        augment_extreme_action=True,
+        augment_extreme_action=False,
+        # augment_extreme_action=True,
 
         # if manually augment_extreme_action=False, set threshold_categorical_head_for_cont_action=True, 
-        threshold_categorical_head_for_cont_action=False,  # thereshold categorical distribution
+        threshold_categorical_head_for_cont_action=True,  # thereshold categorical distribution
+        # threshold_categorical_head_for_cont_action=False,  # thereshold categorical distribution
         categorical_head_for_cont_action_threshold=0.9,
         threshold_phase=['eval'],  # ['eval', 'collect']
         n_atom=11,
@@ -100,7 +106,8 @@ walker2d_dqn_default_config = dict(
         priority_IS_weight_vqvae=False,  # NOTE: return priority
         priority_type_vqvae='return',
         priority_vqvae_min=0.,
-        latent_action_shape=int(64),  # num of num_embeddings: K, i.e. shape of latent action
+        latent_action_shape=int(128),  # num of num_embeddings: K, i.e. shape of latent action
+        # latent_action_shape=int(64),  # num of num_embeddings: K, i.e. shape of latent action
         model=dict(
             ensemble_num=20,  # TODO
             obs_shape=17,
@@ -144,10 +151,12 @@ walker2d_dqn_default_config = dict(
             rl_weight_decay=None,
             vqvae_weight_decay=None,
 
+            rl_linear_lr_scheduler=False,
+
             # add noise in original continuous action
-            noise=False,  # NOTE: if vqvae_pretrain_only=True
-            # noise=True,  # NOTE: if vqvae_pretrain_only=False
-            noise_sigma=0.1,
+            # noise=False,  # NOTE: if vqvae_pretrain_only=True
+            noise=True,  # NOTE: if vqvae_pretrain_only=False
+            noise_sigma=0.,
             noise_range=dict(
                 min=-0.5,
                 max=0.5,
@@ -194,7 +203,7 @@ create_config = walker2d_dqn_create_config
 
 
 def train(args):
-    main_config.exp_name = 'data_walker2d/dqn_sbh_ensemble20_aea_k64_upc50_vhd512_noobs_noema_middlenet_beta0.25_vlw0.1' + '_seed' + f'{args.seed}' + '_3M'
+    main_config.exp_name = 'data_walker2d/dqn_sbh_ensemble20_k128_noobs_aaea_upc50_noema_middlenet_beta0.25_vlw0.1' + '_seed' + f'{args.seed}' + '_3M'
     
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,
                               max_env_step=int(3e6))

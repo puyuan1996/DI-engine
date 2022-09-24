@@ -54,13 +54,13 @@ humanoid_dqn_default_config = dict(
         replay_buffer_size_vqvae=int(1e6),
         auxiliary_conservative_loss=False,
 
-        obs_regularization=True,
-        # obs_regularization=False,
+        # obs_regularization=True,
+        obs_regularization=False,
         predict_loss_weight=0,  # TODO
 
         # only if obs_regularization=True, this option take effect
-        # v_contrastive_regularization=False,
-        v_contrastive_regularization=True,
+        v_contrastive_regularization=False,
+        # v_contrastive_regularization=True,
         contrastive_regularization_loss_weight=1,
         
         # vqvae_pretrain_only=True,
@@ -76,9 +76,10 @@ humanoid_dqn_default_config = dict(
         cont_reconst_l1_loss=False,
         cont_reconst_smooth_l1_loss=False,
         categorical_head_for_cont_action=False,  # categorical distribution
-
         augment_extreme_action=False,
-        threshold_categorical_head_for_cont_action=False,  # thereshold categorical distribution
+
+        threshold_categorical_head_for_cont_action=True,  # thereshold categorical distribution
+        # threshold_categorical_head_for_cont_action=False,  # thereshold categorical distribution
         categorical_head_for_cont_action_threshold=0.9,
         threshold_phase=['eval'],  # ['eval', 'collect']
         n_atom=11,
@@ -150,13 +151,15 @@ humanoid_dqn_default_config = dict(
             rl_linear_lr_scheduler=False,
 
             # add noise in original continuous action
-            noise=False,  # NOTE: if vqvae_pretrain_only=True
-            # noise=True,  # NOTE: if vqvae_pretrain_only=False
-            noise_sigma=0.1,
+            # noise=False,  # NOTE: if vqvae_pretrain_only=True
+            noise=True,  # NOTE: if vqvae_pretrain_only=False
+            noise_sigma=0.,
             noise_range=dict(
                 min=-0.5,
                 max=0.5,
             ),
+            noise_augment_extreme_action=True,
+            noise_augment_extreme_action_prob=0.1,
         ),
         # collect_mode config
         collect=dict(
@@ -197,7 +200,7 @@ create_config = humanoid_dqn_create_config
 
 
 def train(args):
-    main_config.exp_name = 'data_humanoid/dqn_sbh_ensemble20_k128_upc50_obs0_crlw1_noema_middlenet_beta0.25_vlw0.1' + '_seed' + f'{args.seed}' + '_3M'
+    main_config.exp_name = 'data_humanoid/dqn_sbh_ensemble20_k128_noobs_aaea_upc50_noema_middlenet_beta0.25_vlw0.1' + '_seed' + f'{args.seed}' + '_3M'
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,
                               max_env_step=int(3e6))
 
