@@ -44,9 +44,11 @@ halfcheetah_dqn_default_config = dict(
 
         vqvae_embedding_dim=64,  # ved: D
         vqvae_hidden_dim=[256],  # vhd
-        # vqvae_embedding_dim=128,  # ved: D
         # vqvae_hidden_dim=[512],  # vhd
-        target_network_soft_update=False,
+
+        # target_network_soft_update=False,
+        target_network_soft_update=True,
+
         beta=0.25,
         vq_loss_weight=0.1,  # TODO
         recons_loss_cont_weight=1,
@@ -107,15 +109,15 @@ halfcheetah_dqn_default_config = dict(
         priority_IS_weight_vqvae=False,  # NOTE: return priority
         priority_type_vqvae='return',
         priority_vqvae_min=0.,
-        latent_action_shape=int(64),  # num of num_embeddings: K, i.e. shape of latent action
-        # latent_action_shape=int(128),  # num of num_embeddings: K, i.e. shape of latent action
+        # latent_action_shape=int(64),  # num of num_embeddings: K, i.e. shape of latent action
+        latent_action_shape=int(128),  # num of num_embeddings: K, i.e. shape of latent action
         model=dict(
             ensemble_num=20,  # TODO
             obs_shape=17,
             # if manually augment_extreme_action=True,
             # action_shape=int(64+2**6),  # Q dim
-            action_shape=int(64),  # Q dim
-            # action_shape=int(128),  # num of num_embeddings: K
+            # action_shape=int(64),  # Q dim
+            action_shape=int(128),  # num of num_embeddings: K
             # encoder_hidden_size_list=[128, 128, 64],  # small net
             encoder_hidden_size_list=[256, 256, 128],  # middle net
             # encoder_hidden_size_list=[512, 512, 256],  # large net
@@ -206,7 +208,7 @@ create_config = halfcheetah_dqn_create_config
 
 
 def train(args):
-    main_config.exp_name = 'data_halfcheetah/dqn_sbh_ensemble20_tch11-edge-eval-09_noise0_k64_upc50_ved64_vhd256_obs0_noema_middlenet_beta0.25_vlw0.1' + '_seed' + f'{args.seed}' + '_3M'
+    main_config.exp_name = 'data_halfcheetah/dqn_sbh_ensemble20_k128_noobs_aaea_soft_upc50_noema_middlenet_beta0.25_vlw0.1' + '_seed' + f'{args.seed}' + '_3M'
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,
                               max_env_step=int(3e6))
 
