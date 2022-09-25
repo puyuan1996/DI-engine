@@ -1,4 +1,18 @@
-v0.4.0-635-g3ea783adf
+v0.4.0-636-g3a3c68f3b
+
+commit 3a3c68f3b88980c137940e00adda623d5473aaa5
+Author: puyuan1996 <2402552459@qq.com>
+Date:   Sun Sep 25 01:15:16 2022 +0800
+
+    fix(pu): fix mpdqn device bug
+
+ ding/policy/pdqn.py                                |  2 +-
+ .../data_mooving/mpdqn_seed0_3M_cpu/git_diff.txt   | 51 +++++++++++++++++++
+ .../data_mooving/mpdqn_seed0_3M_cpu/git_log.txt    | 57 ++++++++++++++++++++++
+ .../mpdqn_seed0_3M_cpu_220925_010409/git_diff.txt  | 51 +++++++++++++++++++
+ .../mpdqn_seed0_3M_cpu_220925_010409/git_log.txt   | 57 ++++++++++++++++++++++
+ dizoo/gym_hybrid/config/hardmove_mpdqn_config.py   | 26 +++++-----
+ 6 files changed, 230 insertions(+), 14 deletions(-)
 
 commit 3ea783adfa33228bd9ef27bf3c70f42a86c3dd5e
 Merge: 60fb9942e e8f9626a0
@@ -48,10 +62,3 @@ Date:   Fri Sep 23 23:32:03 2022 +0800
  dizoo/mujoco/config/hopper_sac_config.py           |   6 -
  .../config/walker2d_dqn_vqvae_ensemble_config.py   |  34 ++--
  5 files changed, 29 insertions(+), 289 deletions(-)
-
-commit 42bccf30c78dc4af309701bc0abffd8121f5f513
-Merge: 8cae0517e d4924b762
-Author: puyuan1996 <2402552459@qq.com>
-Date:   Fri Sep 23 22:42:07 2022 +0800
-
-    Merge branch 'dev-action-obs-ensemble-pu' of https://gitlab.bj.sensetime.com/open-XLab/cell/DI-engine into dev-action-obs-ensemble-pu

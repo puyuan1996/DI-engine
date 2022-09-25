@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt
 import os
 from ding.entry import serial_pipeline_dqn_vqvae_visualize
 from sklearn.cluster import KMeans
-
+from matplotlib.patches import Rectangle
 def train(args):
     # config = [main_config, create_config]
     config = [copy.deepcopy(main_config), copy.deepcopy(create_config)]
@@ -41,7 +41,8 @@ def train(args):
         episode_actions = []
 
         # for seed in range(10):
-        for seed in range(10,20):
+        # for seed in range(10,20):
+        for seed in [8]:
 
             print(f'iter: {iter}', f'seed: {seed}')
 
@@ -67,16 +68,22 @@ def train(args):
             print('episode_length:',episode0_actions_collect_in_seed0.shape[0])
             print('episode_return:',episode0_rewards_collect_in_seed0.sum())
 
-            x =  episode0_actions_collect_in_seed0[:,0]
+            x = episode0_actions_collect_in_seed0[:,0]
             y = episode0_actions_collect_in_seed0[:,1]
             fig = plt.figure()
             ax = fig.add_subplot(111)
-            sc = ax.scatter(x, y, marker='o')
+            # sc = ax.scatter(x, y, marker='o')
+
+            position_mask = np.ma.masked_where((x < 0) & ((y<0.5) & (y>-0.5)), np.arange(episode0_actions_collect_in_seed0.shape[0]))
+            sc = ax.scatter(x, y, marker='o', c=position_mask.mask, cmap='coolwarm')
+            # sc = ax.scatter(x, y, marker='o', c=y, cmap='coolwarm')
+            ax.add_patch(Rectangle(xy=(-1, -0.5), width=1, height=1, linewidth=1,linestyle='dotted', color='red', fill=False))
+
             plt.xlabel('Original Action Dim0')
             plt.ylabel('Original Action Dim1')
             ax.set_title('Action Coverage')
             ##fig.colorbar(sc)
-            plt.savefig(f'{visualize_path}' + f'1eps_action_collect_in_seed{seed}.png')
+            plt.savefig(f'{visualize_path}' + f'1eps_action_collect_in_seed{seed}_mask.png')
 
             # plt.show()
 

@@ -1,0 +1,218 @@
+diff --git a/ding/policy/pdqn.py b/ding/policy/pdqn.py
+index fa2c08b04..84f4e217e 100755
+--- a/ding/policy/pdqn.py
++++ b/ding/policy/pdqn.py
+@@ -267,7 +267,7 @@ class PDQNPolicy(Policy):
+         return {
+             'cur_lr': self._dis_optimizer.defaults['lr'],
+             'q_loss': dis_loss.item(),
+-            'total_loss': cont_loss.item() + + dis_loss.item(),
++            'total_loss': cont_loss.item() + dis_loss.item(),
+             'continuous_loss': cont_loss.item(),
+             'q_value': q_pi_action_value.mean().item(),
+             'priority': td_error_per_sample.abs().tolist(),
+diff --git a/dizoo/box2d/lunarlander/config/lunarlander_sac_visualize_action.py b/dizoo/box2d/lunarlander/config/lunarlander_sac_visualize_action.py
+index 1e838766e..cfb51ca95 100644
+--- a/dizoo/box2d/lunarlander/config/lunarlander_sac_visualize_action.py
++++ b/dizoo/box2d/lunarlander/config/lunarlander_sac_visualize_action.py
+@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt
+ import os
+ from ding.entry import serial_pipeline_dqn_vqvae_visualize
+ from sklearn.cluster import KMeans
+-
++from matplotlib.patches import Rectangle
+ def train(args):
+     # config = [main_config, create_config]
+     config = [copy.deepcopy(main_config), copy.deepcopy(create_config)]
+@@ -41,7 +41,8 @@ def train(args):
+         episode_actions = []
+ 
+         # for seed in range(10):
+-        for seed in range(10,20):
++        # for seed in range(10,20):
++        for seed in [8]:
+ 
+             print(f'iter: {iter}', f'seed: {seed}')
+ 
+@@ -67,16 +68,22 @@ def train(args):
+             print('episode_length:',episode0_actions_collect_in_seed0.shape[0])
+             print('episode_return:',episode0_rewards_collect_in_seed0.sum())
+ 
+-            x =  episode0_actions_collect_in_seed0[:,0]
++            x = episode0_actions_collect_in_seed0[:,0]
+             y = episode0_actions_collect_in_seed0[:,1]
+             fig = plt.figure()
+             ax = fig.add_subplot(111)
+-            sc = ax.scatter(x, y, marker='o')
++            # sc = ax.scatter(x, y, marker='o')
++
++            position_mask = np.ma.masked_where((x < 0) & ((y<0.5) & (y>-0.5)), np.arange(episode0_actions_collect_in_seed0.shape[0]))
++            sc = ax.scatter(x, y, marker='o', c=position_mask.mask, cmap='coolwarm')
++            # sc = ax.scatter(x, y, marker='o', c=y, cmap='coolwarm')
++            ax.add_patch(Rectangle(xy=(-1, -0.5), width=1, height=1, linewidth=1,linestyle='dotted', color='red', fill=False))
++
+             plt.xlabel('Original Action Dim0')
+             plt.ylabel('Original Action Dim1')
+             ax.set_title('Action Coverage')
+             ##fig.colorbar(sc)
+-            plt.savefig(f'{visualize_path}' + f'1eps_action_collect_in_seed{seed}.png')
++            plt.savefig(f'{visualize_path}' + f'1eps_action_collect_in_seed{seed}_mask.png')
+ 
+             # plt.show()
+ 
+diff --git a/dizoo/mujoco/config/hopper_sac_visualize_action.py b/dizoo/mujoco/config/hopper_sac_visualize_action.py
+index 4191ded7d..8df497047 100644
+--- a/dizoo/mujoco/config/hopper_sac_visualize_action.py
++++ b/dizoo/mujoco/config/hopper_sac_visualize_action.py
+@@ -42,18 +42,20 @@ def train(args):
+     for iter in [-1, 0, 100000, 200000, 1000000]:
+     # for iter in [1000000]:
+ 
+-        # if iter == -1:
+-        #     visualize_path = f'/Users/puyuan/code/DI-engine/data_hopper_visualize/sac_seed0_1M/action_coverage/iter-best_action'
+-        # else:
+-        #     visualize_path = f'/Users/puyuan/code/DI-engine/data_hopper_visualize/sac_seed0_1M/action_coverage/iter-{iter}_action'
++        if iter == -1:
++            visualize_path = f'/Users/puyuan/code/DI-engine/data_hopper_visualize/sac_seed0_1M/action_coverage/iter-best_action'
++        else:
++            visualize_path = f'/Users/puyuan/code/DI-engine/data_hopper_visualize/sac_seed0_1M/action_coverage/iter-{iter}_action'
+ 
+-        visualize_path = f'/Users/puyuan/code/DI-engine/data_hopper_visualize/sac_seed0_1M/action_coverage/el1000_erlt3000'
++        # visualize_path = f'/Users/puyuan/code/DI-engine/data_hopper_visualize/sac_seed0_1M/action_coverage/el1000_erlt3000'
+ 
+         if not os.path.exists(visualize_path):
+                 os.mkdir(visualize_path)
+         episode_actions_tsne = []
+ 
+-        for seed in range(10):
++        # for seed in range(10):
++        for seed in [8]:
++
+             # for seed in range(10,20):
+ 
+             print(f'iter: {iter}', f'seed: {seed}')
+@@ -90,34 +92,34 @@ def train(args):
+             x_min, x_max = X_tsne.min(0), X_tsne.max(0)
+             X_norm = (X_tsne - x_min) / (x_max - x_min)  # 归一化[0,1]
+ 
+-            # x = X_norm[:, 0]
+-            # y = X_norm[:, 1]
+-            #
+-            # fig = plt.figure()
+-            # ax = fig.add_subplot(111)
+-            # sc = ax.scatter(x, y, marker='o')
+-            # # plt.xlabel('Original Action Dim0')
+-            # # plt.ylabel('Original Action Dim1')
+-            # ax.set_title('Action Coverage')
+-            # ##fig.colorbar(sc)
+-            # plt.savefig(f'{visualize_path}' + f'/1eps_action_collect_in_seed{seed}.png')
++            x = X_norm[:, 0]
++            y = X_norm[:, 1]
++
++            fig = plt.figure()
++            ax = fig.add_subplot(111)
++            sc = ax.scatter(x, y, marker='o')
++            plt.xlabel('t-SNE Dim0')
++            plt.ylabel('t-SNE Dim1')
++            ax.set_title('Action Coverage')
++            ##fig.colorbar(sc)
++            plt.savefig(f'{visualize_path}' + f'/1eps_action_collect_in_seed{seed}_arq.png')
+             #
+             #
+             # episode_actions_tsne.append(X_norm)
+ 
+-            if episode_actions_collect_in_one_seed.shape[0]==1000 and episode0_rewards_collect_in_seed0.sum()>3000:
+-                # episode_length=1000 and episode_return>3000
+-                el1000_erlt3000_cnt +=1
+-                print(f'iter: {iter}', f'seed: {seed}', 'episode_length=1000 and episode_return>3000')
+-                print(f'el1000_erlt3000_cnt: {el1000_erlt3000_cnt}')
+-                episode_actions_tsne_el1000_erlt3000.append(X_norm)
+-
+-            if episode_actions_collect_in_one_seed.shape[0] == 1000 and episode0_rewards_collect_in_seed0.sum() > 3500:
+-                # episode_length=1000 and episode_return>3500
+-                el1000_erlt3500_cnt += 1
+-                print(f'iter: {iter}', f'seed: {seed}', 'episode_length=1000 and episode_return>3500')
+-                print(f'el1000_erlt3500_cnt: {el1000_erlt3500_cnt}')
+-                episode_actions_tsne_el1000_erlt3500.append(X_norm)
++            # if episode_actions_collect_in_one_seed.shape[0]==1000 and episode0_rewards_collect_in_seed0.sum()>3000:
++            #     # episode_length=1000 and episode_return>3000
++            #     el1000_erlt3000_cnt +=1
++            #     print(f'iter: {iter}', f'seed: {seed}', 'episode_length=1000 and episode_return>3000')
++            #     print(f'el1000_erlt3000_cnt: {el1000_erlt3000_cnt}')
++            #     episode_actions_tsne_el1000_erlt3000.append(X_norm)
++            #
++            # if episode_actions_collect_in_one_seed.shape[0] == 1000 and episode0_rewards_collect_in_seed0.sum() > 3500:
++            #     # episode_length=1000 and episode_return>3500
++            #     el1000_erlt3500_cnt += 1
++            #     print(f'iter: {iter}', f'seed: {seed}', 'episode_length=1000 and episode_return>3500')
++            #     print(f'el1000_erlt3500_cnt: {el1000_erlt3500_cnt}')
++            #     episode_actions_tsne_el1000_erlt3500.append(X_norm)
+ 
+         # episode_actions_tsne = np.concatenate(episode_actions_tsne)
+         #
+@@ -155,35 +157,36 @@ def train(args):
+         #     # fig.colorbar(sc)
+         #     plt.savefig(f'{visualize_path}' + f'10eps_action_kmeans_{k}.png')
+ 
+-    episode_actions_tsne_el1000_erlt3000 = np.concatenate(episode_actions_tsne_el1000_erlt3000)
+-    # # original action coverage: tsne
+-    x = episode_actions_tsne_el1000_erlt3000[:, 0]
+-    y = episode_actions_tsne_el1000_erlt3000[:, 1]
+-
+-    fig = plt.figure()
+-    ax = fig.add_subplot(111)
+-    sc = ax.scatter(x, y, marker='o')
+-
+-    # plt.xlabel('Original Action Dim0')
+-    # plt.ylabel('Original Action Dim1')
+-    ax.set_title('Action Coverage')
+-    # fig.colorbar(sc)
+-    plt.savefig(f'{visualize_path}' + f'/el1000_erlt3000_action.png')
+-
+-    episode_actions_tsne_el1000_erlt3500 = np.concatenate(episode_actions_tsne_el1000_erlt3500)
+-    # # original action coverage: tsne
+-    x = episode_actions_tsne_el1000_erlt3500[:, 0]
+-    y = episode_actions_tsne_el1000_erlt3500[:, 1]
+-
+-    fig = plt.figure()
+-    ax = fig.add_subplot(111)
+-    sc = ax.scatter(x, y, marker='o')
+-
+-    # plt.xlabel('Original Action Dim0')
+-    # plt.ylabel('Original Action Dim1')
+-    ax.set_title('Action Coverage')
+-    # fig.colorbar(sc)
+-    plt.savefig(f'{visualize_path}' + f'/el1000_erlt3500_action.png')
++    # episode_actions_tsne_el1000_erlt3000 = np.concatenate(episode_actions_tsne_el1000_erlt3000)
++    # # # original action coverage: tsne
++    # x = episode_actions_tsne_el1000_erlt3000[:, 0]
++    # y = episode_actions_tsne_el1000_erlt3000[:, 1]
++    #
++    # fig = plt.figure()
++    # ax = fig.add_subplot(111)
++    # # sc = ax.scatter(x, y, marker='o')
++    # sc = ax.scatter(x, y, marker='o', cmap='coolwarm')
++    #
++    # # plt.xlabel('Original Action Dim0')
++    # # plt.ylabel('Original Action Dim1')
++    # ax.set_title('Action Coverage')
++    # # fig.colorbar(sc)
++    # plt.savefig(f'{visualize_path}' + f'/el1000_erlt3000_action.png')
++    #
++    # episode_actions_tsne_el1000_erlt3500 = np.concatenate(episode_actions_tsne_el1000_erlt3500)
++    # # # original action coverage: tsne
++    # x = episode_actions_tsne_el1000_erlt3500[:, 0]
++    # y = episode_actions_tsne_el1000_erlt3500[:, 1]
++    #
++    # fig = plt.figure()
++    # ax = fig.add_subplot(111)
++    # sc = ax.scatter(x, y, marker='o')
++    #
++    # # plt.xlabel('Original Action Dim0')
++    # # plt.ylabel('Original Action Dim1')
++    # ax.set_title('Action Coverage')
++    # # fig.colorbar(sc)
++    # plt.savefig(f'{visualize_path}' + f'/el1000_erlt3500_action.png')
+ 
+ if __name__ == "__main__":
+     import argparse

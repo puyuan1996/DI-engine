@@ -1,0 +1,64 @@
+v0.4.0-636-g3a3c68f3b
+
+commit 3a3c68f3b88980c137940e00adda623d5473aaa5
+Author: puyuan1996 <2402552459@qq.com>
+Date:   Sun Sep 25 01:15:16 2022 +0800
+
+    fix(pu): fix mpdqn device bug
+
+ ding/policy/pdqn.py                                |  2 +-
+ .../data_mooving/mpdqn_seed0_3M_cpu/git_diff.txt   | 51 +++++++++++++++++++
+ .../data_mooving/mpdqn_seed0_3M_cpu/git_log.txt    | 57 ++++++++++++++++++++++
+ .../mpdqn_seed0_3M_cpu_220925_010409/git_diff.txt  | 51 +++++++++++++++++++
+ .../mpdqn_seed0_3M_cpu_220925_010409/git_log.txt   | 57 ++++++++++++++++++++++
+ dizoo/gym_hybrid/config/hardmove_mpdqn_config.py   | 26 +++++-----
+ 6 files changed, 230 insertions(+), 14 deletions(-)
+
+commit 3ea783adfa33228bd9ef27bf3c70f42a86c3dd5e
+Merge: 60fb9942e e8f9626a0
+Author: puyuan1996 <2402552459@qq.com>
+Date:   Sat Sep 24 17:23:21 2022 +0800
+
+    Merge branch 'dev-action-obs-ensemble-pu' of https://gitlab.bj.sensetime.com/open-XLab/cell/DI-engine into dev-action-obs-ensemble-pu
+
+commit e8f9626a00a8ca6757e3208ca699e801b899637d
+Author: puyuan1996 <2402552459@qq.com>
+Date:   Sat Sep 24 16:33:12 2022 +0800
+
+    polish(pu): mujoco arq config use target soft update
+
+ .../mujoco/config/ant_dqn_vqvae_ensemble_config.py | 15 ++++++++-----
+ ...qn_vqvae_ensemble_auto-extreme-action_config.py | 16 +++++++------
+ .../config/hopper_dqn_vqvae_ensemble_config.py     | 26 +++++++++++++---------
+ .../config/humanoid_dqn_vqvae_ensemble_config.py   | 14 +++++++-----
+ ...qn_vqvae_ensemble_auto-extreme-action_config.py | 17 ++++++++------
+ 5 files changed, 51 insertions(+), 37 deletions(-)
+
+commit 3ac92a1ff389667b9d9964dd8bfcb2e8cb509e53
+Author: puyuan1996 <2402552459@qq.com>
+Date:   Sat Sep 24 15:39:54 2022 +0800
+
+    sync code
+
+ .../config/gym_hybrid_dqn_vqvae_config.py          | 25 +++++++++--------
+ dizoo/gym_hybrid/config/hardmove_mpdqn_config.py   |  2 +-
+ .../mujoco/config/ant_dqn_vqvae_ensemble_config.py | 25 ++++++++---------
+ dizoo/mujoco/config/halfcheetah_dqn.py             |  6 ++---
+ ...qn_vqvae_ensemble_auto-extreme-action_config.py | 10 +++----
+ .../halfcheetah_dqn_vqvae_ensemble_config.py       | 16 +++++------
+ .../config/humanoid_dqn_vqvae_ensemble_config.py   | 23 +++++++++-------
+ .../config/walker2d_dqn_vqvae_ensemble_config.py   | 31 ++++++++++++++--------
+ 8 files changed, 75 insertions(+), 63 deletions(-)
+
+commit 60fb9942ede6c3f88fb0a86ed1d4495a67db32c4
+Author: puyuan1996 <2402552459@qq.com>
+Date:   Fri Sep 23 23:32:03 2022 +0800
+
+    sync code
+
+ .../dqn_k64_middlenet_upc20_seed0_3M/git_diff.txt  | 205 ---------------------
+ .../dqn_k64_middlenet_upc20_seed0_3M/git_log.txt   |  57 ------
+ ...qn_vqvae_ensemble_auto-extreme-action_config.py |  16 +-
+ dizoo/mujoco/config/hopper_sac_config.py           |   6 -
+ .../config/walker2d_dqn_vqvae_ensemble_config.py   |  34 ++--
+ 5 files changed, 29 insertions(+), 289 deletions(-)
