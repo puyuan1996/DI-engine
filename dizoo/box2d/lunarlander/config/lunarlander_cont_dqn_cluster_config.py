@@ -4,9 +4,10 @@ nstep = 3
 lunarlander_dqn_config = dict(
     exp_name='lunarlander_dqn_seed0',
     env=dict(
-        env_id='LunarLander-v2',
+        env_id='LunarLanderContinuous-v2',
         # Whether to use shared memory. Only effective if "env_manager_type" is 'subprocess'
         # Env number respectively for collector and evaluator.
+        act_scale=True,
         collector_env_num=8,
         evaluator_env_num=8,
         n_evaluator_episode=8,
@@ -15,7 +16,6 @@ lunarlander_dqn_config = dict(
         # The path to save the game replay
         replay_path='./lunarlander_dqn_seed0/video',
         save_replay_gif=False,
-
     ),
     policy=dict(
         # Whether to use cuda for network.
@@ -79,7 +79,7 @@ lunarlander_dqn_create_config = dict(
     ),
     env_manager=dict(type='subprocess'),
     # env_manager=dict(type='base'),
-    policy=dict(type='dqn'),
+    policy=dict(type='dqn_cluster'),
 )
 lunarlander_dqn_create_config = EasyDict(lunarlander_dqn_create_config)
 create_config = lunarlander_dqn_create_config
@@ -90,7 +90,7 @@ create_config = lunarlander_dqn_create_config
 #     serial_pipeline([main_config, create_config], seed=0)
 
 def train(args):
-    main_config.exp_name = 'data_lunarlander/dqn_' + '_seed' + f'{args.seed}'
+    main_config.exp_name = 'data_lunarlander/dqn_cluster_k4_' + '_seed' + f'{args.seed}'
     serial_pipeline([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=int(3e6))
 
 if __name__ == "__main__":

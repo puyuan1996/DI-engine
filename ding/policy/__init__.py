@@ -1,5 +1,7 @@
 from .base_policy import Policy, CommandModePolicy, create_policy, get_policy_cls
 from .dqn_vqvae import DQNVQVAEPolicy
+from .dqn_cluster import DQNClusterPolicy 
+
 from .dqn_vqvae_episode import DQNVQVAEEPISODEPolicy
 
 from .sql_vqvae import SQLVQVAEPolicy

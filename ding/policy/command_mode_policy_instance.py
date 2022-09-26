@@ -5,6 +5,8 @@ from .base_policy import CommandModePolicy
 from .dqn import DQNPolicy
 from .dqn_ma import MADQNPolicy
 from .dqn_vqvae import DQNVQVAEPolicy
+from .dqn_cluster import DQNClusterPolicy 
+
 from .dqn_vqvae_episode import DQNVQVAEEPISODEPolicy
 from .onppo_vqvae import ONPPOVQVAEPolicy
 
@@ -276,6 +278,10 @@ class TD3VAECommandModePolicy(TD3VAEPolicy, DummyCommandModePolicy):
 
 @POLICY_REGISTRY.register('dqn_vqvae_command')
 class DQNVQVAECommandModePolicy(DQNVQVAEPolicy, EpsCommandModePolicy):
+    pass
+
+@POLICY_REGISTRY.register('dqn_cluster_command')
+class DQNClusterCommandModePolicy(DQNClusterPolicy, EpsCommandModePolicy):
     pass
 
 @POLICY_REGISTRY.register('dqn_vqvae_episode_command')
