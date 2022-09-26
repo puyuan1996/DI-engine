@@ -3,25 +3,21 @@ from easydict import EasyDict
 collector_env_num=1
 # collector_env_num=8
 evaluator_env_num=8
-
-num_actuators = 10
-
-gym_hybrid_onppo_default_config = dict(
-    exp_name='gym_hybrid_onppo_vqvae_seed0',
+ant_onppo_default_config = dict(
+    exp_name='ant_onppo_vqvae_seed0',
     env=dict(
+        env_id='Ant-v3',
+        norm_obs=dict(use_norm=False, ),
+        norm_reward=dict(use_norm=False, ),
+        # (bool) Scale output action into legal range.
+        use_act_scale=True,
+        clip_rewards=False,
+        # Env number respectively for collector and evaluator.
         collector_env_num=collector_env_num,
         evaluator_env_num=evaluator_env_num,
         n_evaluator_episode=evaluator_env_num,
-        # (bool) Scale output action into legal range [-1, 1].
-        act_scale=True,
-        # env_id='Moving-v0',
-        # env_id='Sliding-v0',
-        env_id='HardMove-v0',
-        num_actuators=num_actuators,  # only for 'HardMove-v0'
-        # stop_value=2,
-        stop_value=int(1e6),  # stop according to max env steps
-        save_replay_gif=False,
-        replay_path=None,
+        # stop_value=4000,
+        stop_value=int(1e6),  # stop according to max env steps 
     ),
     policy=dict(
         model_path=None,
@@ -36,35 +32,21 @@ gym_hybrid_onppo_default_config = dict(
         # Reward's future discount factor, aka. gamma.
         discount_factor=0.99,
 
-        original_action_space='hybrid',  # 'hybrid'
+        original_action_space='continuous',  # 'hybrid'
         eps_greedy_nearest=False,  # TODO(pu): delete this key
         is_ema_target=False,
 
         is_ema=False,  # no use EMA 
         # is_ema=True,  # use EMA TODO(pu): test ema
-        # for 'Moving-v0', 'Sliding-v0'
-        original_action_shape=dict(
-            action_type_shape=3,
-            action_args_shape=2,
-        ),
-        # for 'HardMove-v0'
-        # original_action_shape=dict(
-        #     action_type_shape=int(2 ** num_actuators),  # 2**4=16, 2**6=64, 2**8=256, 2**10=1024
-        #     action_args_shape=int(num_actuators),  # 4,6,8,10
-        # ),
+        original_action_shape=8,  # related to the environment
         random_collect_size=int(1000),  # n_episode
         warm_up_update=int(1e4),
         # debug
         # random_collect_size=int(1),
         # warm_up_update=int(1),
 
-        # target_network_soft_update=False,
-        # target_network_soft_update=True,
-
         vqvae_embedding_dim=64,  # ved: D
-        # vqvae_hidden_dim=[256],  # vhd
-        vqvae_hidden_dim=[1024],  # vhd
-
+        vqvae_hidden_dim=[256],  # vhd
         beta=0.25,
         vq_loss_weight=0.1,  # TODO
         recons_loss_cont_weight=1,
@@ -117,18 +99,15 @@ gym_hybrid_onppo_default_config = dict(
         priority_IS_weight_vqvae=False,  # NOTE: return priority
         priority_type_vqvae='return',
         priority_vqvae_min=0.,
-        # latent_action_shape=int(16),  # num of num_embeddings: K, i.e. shape of latent action
-        latent_action_shape=int(64),  # num of num_embeddings: K, i.e. shape of latent action
+        latent_action_shape=int(128),  # num of num_embeddings: K, i.e. shape of latent action
+        # latent_action_shape=int(64),  # num of num_embeddings: K, i.e. shape of latent action
         model=dict(
             action_space='discrete',
-            obs_shape=10,  # related to the environment
-            # for moving/sliding
-            # action_shape=int(16),  # num of num_embeddings: K
-            # encoder_hidden_size_list=[128, 128, 64],  # small net
-            # actor_head_hidden_size=64,
-            # critic_head_hidden_size=64,
-            # for hardmove
-            action_shape=int(64),  # num of num_embeddings: K
+            obs_shape=111,  # related to the environment
+            # TODO: augment_extreme_action=True,
+            # action_shape=int(64+2**3),  # Q dim
+            # action_shape=int(64),  # num of num_embeddings: K
+            action_shape=int(128),  # num of num_embeddings: K
             encoder_hidden_size_list=[256, 256, 128],  # middle net
             actor_head_hidden_size= 128,
             critic_head_hidden_size=128,
@@ -208,26 +187,24 @@ gym_hybrid_onppo_default_config = dict(
         ),
     ),
 )
-gym_hybrid_onppo_default_config = EasyDict(gym_hybrid_onppo_default_config)
-main_config = gym_hybrid_onppo_default_config
+ant_onppo_default_config = EasyDict(ant_onppo_default_config)
+main_config = ant_onppo_default_config
 
-gym_hybrid_onppo_create_config = dict(
+ant_onppo_create_config = dict(
     env=dict(
-        type='gym_hybrid',
-        import_names=['dizoo.gym_hybrid.envs.gym_hybrid_env'],
+        type='mujoco',
+        import_names=['dizoo.mujoco.envs.mujoco_env'],
     ),
     env_manager=dict(type='subprocess'),
-    # env_manager=dict(type='base'),
     policy=dict(type='onppo_vqvae'),
     collector=dict(type='episode', get_train_sample=True)
 )
-gym_hybrid_onppo_create_config = EasyDict(gym_hybrid_onppo_create_config)
-create_config = gym_hybrid_onppo_create_config
+ant_onppo_create_config = EasyDict(ant_onppo_create_config)
+create_config = ant_onppo_create_config
 
 
 def train(args):
-    # main_config.exp_name = 'data_moving/onppo_noobs_epcr10_noema_smallnet_k16_beta0.25_vlw01' + '_seed' + f'{args.seed}'+'_3M'
-    main_config.exp_name = 'data_hardmove_n10/onppo_noobs_epcr10_noema_moddlenet_k64_vhd1024_beta0.25_vlw01' + '_seed' + f'{args.seed}'+'_3M'
+    main_config.exp_name = 'data_ant/onppo_noobs_epcr10_noema_middlenet_k128_beta0.25_vlw01' + '_seed' + f'{args.seed}'+'_3M'
     serial_pipeline_onppo_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=int(3e6))
 
 if __name__ == "__main__":
