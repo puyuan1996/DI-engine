@@ -81,8 +81,8 @@ hopper_dqn_default_config = dict(
 
         categorical_head_for_cont_action=False,  # categorical distribution
 
-        # threshold_categorical_head_for_cont_action=True,  # thereshold categorical distribution
-        threshold_categorical_head_for_cont_action=False,  # thereshold categorical distribution
+        threshold_categorical_head_for_cont_action=True,  # thereshold categorical distribution
+        # threshold_categorical_head_for_cont_action=False,  # thereshold categorical distribution
         categorical_head_for_cont_action_threshold=0.9,
         threshold_phase=['eval'],  # ['eval', 'collect']
 
@@ -113,6 +113,7 @@ hopper_dqn_default_config = dict(
         warmup_update_epoches=20,
 
         model=dict(
+            ensemble_num=20,  # TODO
             obs_shape=11,
             action_shape=int(64),  # num of num_embeddings: K
             # action_shape=int(128),  # num of num_embeddings: K
@@ -149,8 +150,8 @@ hopper_dqn_default_config = dict(
             rl_linear_lr_scheduler=False,
 
             # add noise in original continuous action
-            noise=False,  # NOTE: if vqvae_pretrain_only=True
-            # noise=True,  # NOTE: if vqvae_pretrain_only=False
+            # noise=False,  # NOTE: if vqvae_pretrain_only=True
+            noise=True,  # NOTE: if vqvae_pretrain_only=False
             noise_sigma=0.,
             noise_range=dict(
                 min=-0.5,
@@ -199,7 +200,7 @@ create_config = hopper_dqn_create_config
 
 
 def train(args):
-    main_config.exp_name = 'data_hopper/dqn_sbh_ensemble20_k64_noobs_expertwarmup-1000eps-lt3500_upc50_noema_middlenet_beta0.25' + '_seed' + f'{args.seed}' + '_3M'
+    main_config.exp_name = 'data_hopper/dqn_sbh_ensemble20_k64_noobs_aaea_expertwarmup-1000eps-lt3500_upc50_noema_middlenet_beta0.25' + '_seed' + f'{args.seed}' + '_3M'
     serial_pipeline_dqn_vqvae_expert([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=int(3e6))
 
 if __name__ == "__main__":
