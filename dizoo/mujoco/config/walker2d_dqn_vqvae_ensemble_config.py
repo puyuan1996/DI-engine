@@ -84,8 +84,8 @@ walker2d_dqn_default_config = dict(
         # augment_extreme_action=True,
 
         # if manually augment_extreme_action=False, set threshold_categorical_head_for_cont_action=True, 
-        threshold_categorical_head_for_cont_action=True,  # thereshold categorical distribution
-        # threshold_categorical_head_for_cont_action=False,  # thereshold categorical distribution
+        # threshold_categorical_head_for_cont_action=True,  # thereshold categorical distribution
+        threshold_categorical_head_for_cont_action=False,  # thereshold categorical distribution
         categorical_head_for_cont_action_threshold=0.9,
         threshold_phase=['eval'],  # ['eval', 'collect']
         n_atom=11,
@@ -156,8 +156,8 @@ walker2d_dqn_default_config = dict(
             rl_linear_lr_scheduler=False,
 
             # add noise in original continuous action
-            # noise=False,  # NOTE: if vqvae_pretrain_only=True
-            noise=True,  # NOTE: if vqvae_pretrain_only=False
+            noise=False,  # NOTE: if vqvae_pretrain_only=True
+            # noise=True,  # NOTE: if vqvae_pretrain_only=False
             noise_sigma=0.,
             noise_range=dict(
                 min=-0.5,
@@ -216,7 +216,7 @@ if __name__ == "__main__":
     import argparse
     from ding.entry import serial_pipeline_dqn_vqvae
 
-    for seed in [0, 1, 2]:
+    for seed in [0,1,2]:
         parser = argparse.ArgumentParser()
         parser.add_argument('--seed', '-s', type=int, default=seed)
         args = parser.parse_args()

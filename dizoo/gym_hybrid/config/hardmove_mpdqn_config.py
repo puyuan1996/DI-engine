@@ -22,8 +22,8 @@ gym_hybrid_mpdqn_config = dict(
     ),
     policy=dict(
         model_path=None,
-        # cuda=True,
-        cuda=False,
+        cuda=True,
+        # cuda=False,
 
         priority=False,
         # (bool) Whether use Importance Sampling Weight to correct biased update. If True, priority must be True.
@@ -115,7 +115,8 @@ if __name__ == "__main__":
     import argparse
     from ding.entry import serial_pipeline
 
-    for seed in [0,1,2]:
+    # for seed in [0,1,2]:s
+    for seed in [2,1,0]:
         parser = argparse.ArgumentParser()
         parser.add_argument('--seed', '-s', type=int, default=seed)
         args = parser.parse_args()

@@ -8,7 +8,7 @@ module_path = os.path.dirname(__file__)
 nstep = 3
 collector_env_num = 8
 evaluator_env_num = 8
-num_actuators = 4
+num_actuators = 10
 gym_hybrid_dqn_default_config = dict(
     env=dict(
         collector_env_num=collector_env_num,
@@ -60,11 +60,11 @@ gym_hybrid_dqn_default_config = dict(
         random_collect_size=int(5e4),
         warm_up_update=int(1e4),
         # debug
-        # warm_up_update=int(0),
-        # random_collect_size=int(0),
+        # warm_up_update=int(1),
+        # random_collect_size=int(1),
         vqvae_embedding_dim=64,  # ved: D
-        # vqvae_hidden_dim=[1024],  # vhd
-        vqvae_hidden_dim=[256],  # vhd
+        vqvae_hidden_dim=[1024],  # vhd
+        # vqvae_hidden_dim=[256],  # vhd
         # target_network_soft_update=False,
         target_network_soft_update=True,
 
@@ -78,8 +78,8 @@ gym_hybrid_dqn_default_config = dict(
         auxiliary_conservative_loss=False,
         augment_extreme_action=False,
 
-        obs_regularization=True,
-        # obs_regularization=False,
+        # obs_regularization=True,
+        obs_regularization=False,
         predict_loss_weight=0.,  # TODO
 
         # only if obs_regularization=True, this option take effect
@@ -90,6 +90,8 @@ gym_hybrid_dqn_default_config = dict(
         vqvae_pretrain_only=False,
         # NOTE: if train vqvae dynamically, i.e. vqvae_pretrain_only=False, should set this key to True
         recompute_latent_action=True,
+        # recompute_latent_action=False,
+
 
         # vqvae_pretrain_only=True,
         # NOTE: if only pretrain vqvae, i.e. vqvae_pretrain_only=True, should set this key to False
@@ -125,16 +127,16 @@ gym_hybrid_dqn_default_config = dict(
         priority_type_vqvae='return',
         priority_vqvae_min=0,
         # latent_action_shape=int(128),  # num of num_embeddings: K, i.e. shape of latent action
-        # latent_action_shape=int(64),  # num of num_embeddings: K, i.e. shape of latent action
-        latent_action_shape=int(16),  # num of num_embeddings: K, i.e. shape of latent action
+        latent_action_shape=int(64),  # num of num_embeddings: K, i.e. shape of latent action
+        # latent_action_shape=int(16),  # num of num_embeddings: K, i.e. shape of latent action
         model=dict(
-            ensemble_num=20,  # TODO
+            ensemble_num=5,  # TODO
             obs_shape=10,
-            action_shape=int(16),  # num of num_embeddings: K
-            encoder_hidden_size_list=[128, 128, 64],  # small net
+            # action_shape=int(16),  # num of num_embeddings: K
+            # encoder_hidden_size_list=[128, 128, 64],  # small net
             # for hardmove
-            # action_shape=int(64),  # num of num_embeddings: K
-            # encoder_hidden_size_list=[256, 256, 128],  # middle net
+            action_shape=int(64),  # num of num_embeddings: K
+            encoder_hidden_size_list=[256, 256, 128],  # middle net
             # Whether to use dueling head.
             dueling=True,
         ),
@@ -218,13 +220,13 @@ create_config = gym_hybrid_dqn_create_config
 
 
 def train(args):
-    # main_config.exp_name = 'data_hardmove_n10/dqn_sbh_ensem20_noobs_soft_noema_middlenet_k128_vhd1024_beta0.25_vlw1' + '_seed' + f'{args.seed}'
+    main_config.exp_name = 'data_hardmove_n10/dqn_sbh_ensem5_noobs_soft_noema_middlenet_k64_vhd1024_beta0.25_vlw1' + '_seed' + f'{args.seed}'
 
-    # main_config.exp_name = 'data_hardmove_n10/dqn_sbh_ensem20_noobs_soft_noema_middlenet_k64_vhd1024_beta0.25_vlw1' + '_seed' + f'{args.seed}'
-    main_config.exp_name = 'data_hardmove_n4/dqn_sbh_ensem20_obs0_soft_noema_smallenet_k16_vhd256_beta0.25_vlw1' + '_seed' + f'{args.seed}'
+    # main_config.exp_name = 'data_hardmove_n10/dqn_sbh_ensem20_noobs_soft_nowarmup_noema_middlenet_k64_vhd1024_beta0.25_vlw1' + '_seed' + f'{args.seed}'
+    # main_config.exp_name = 'data_hardmove_n4/dqn_sbh_ensem20_obs0_soft_noema_smallenet_k16_vhd256_beta0.25_vlw1' + '_seed' + f'{args.seed}'
 
     
-    # main_config.exp_name = 'data_moving//dqn_sbh_ensem1_noobs_noema_smallenet_k16_vhd256_beta0.25_vlw1' + '_seed' + f'{args.seed}'
+    # main_config.exp_name = 'data_moving//dqn_sbh_ensem20_noobs_soft_noema_smallenet_k16_vhd256_beta0.25_vlw1' + '_seed' + f'{args.seed}'
 
 
 
