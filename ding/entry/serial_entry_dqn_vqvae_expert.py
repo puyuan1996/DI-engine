@@ -174,7 +174,7 @@ def serial_pipeline_dqn_vqvae_expert(
         # ====================
         # VAE phase
         # ====================
-        if not cfg.policy.vavae_pretrain_only:
+        if not cfg.policy.vqvae_pretrain_only:
             if iter % cfg.policy.learn.rl_vae_update_circle in range(cfg.policy.learn.rl_vae_update_circle - 1,
                                                                     cfg.policy.learn.rl_vae_update_circle):
                 for i in range(cfg.policy.learn.update_per_collect_vae):

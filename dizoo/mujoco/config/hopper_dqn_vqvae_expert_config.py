@@ -9,6 +9,7 @@ hopper_dqn_default_config = dict(
         norm_reward=dict(use_norm=False, ),
         # (bool) Scale output action into legal range.
         use_act_scale=True,
+        clip_rewards=False,
         # Env number respectively for collector and evaluator.
         collector_env_num=8,
         evaluator_env_num=8,
@@ -17,6 +18,8 @@ hopper_dqn_default_config = dict(
         stop_value=int(1e6),  # stop according to max env steps 
     ),
     policy=dict(
+        model_path=None,
+
         # Whether to use cuda for network.
         cuda=True,
 
@@ -32,32 +35,69 @@ hopper_dqn_default_config = dict(
         is_ema=False,  # no use EMA 
         # is_ema=True,  # use EMA TODO(pu): test ema
         original_action_shape=3,
+
         random_collect_size=int(5e4),
         warm_up_update=int(1e4),
          # debug
         # warm_up_update=int(10),
         # random_collect_size=int(10),
+
+        target_network_soft_update=False,
+        # target_network_soft_update=True,
+
         vqvae_embedding_dim=64,  # ved: D
         vqvae_hidden_dim=[256],  # vhd
-        # vqvae_embedding_dim=128,  # ved: D
-        # vqvae_hidden_dim=[512],  # vhd
-        vq_loss_weight=1,  # TODO
+
+
+        beta=0.25,
+        vq_loss_weight=0.1,  # TODO
+        recons_loss_cont_weight=1,
+        # mask_pretanh=True,
+        mask_pretanh=False,
         replay_buffer_size_vqvae=int(1e6),
+        auxiliary_conservative_loss=False,
+        augment_extreme_action=False,
+
+        # obs_regularization=True,
+        obs_regularization=False,
+        predict_loss_weight=0,  # TODO
+
+        v_contrastive_regularization=False,
+        # v_contrastive_regularization=True,
+        contrastive_regularization_loss_weight=0.1,
+
+        # vqvae_pretrain_only=True,
+        # NOTE: if only pretrain vqvae , i.e. vqvae_pretrain_only=True, should set this key to False
+        # recompute_latent_action=False,
+
+        # TODO
+        vqvae_pretrain_only=False,
+        # NOTE: if train vqvae dynamically, i.e. vqvae_pretrain_only=False, should set this key to True
+        recompute_latent_action=True,
 
         # optional design
         cont_reconst_l1_loss=False,
         cont_reconst_smooth_l1_loss=False,
+
         categorical_head_for_cont_action=False,  # categorical distribution
-        n_atom=51,
-        gaussian_head_for_cont_action=False, # gaussian distribution
+
+        # threshold_categorical_head_for_cont_action=True,  # thereshold categorical distribution
+        threshold_categorical_head_for_cont_action=False,  # thereshold categorical distribution
+        categorical_head_for_cont_action_threshold=0.9,
+        threshold_phase=['eval'],  # ['eval', 'collect']
+
+        n_atom=11,
+
+        gaussian_head_for_cont_action=False,  # gaussian distribution
         embedding_table_onehot=False,
 
         # rl priority
         priority=False,
         priority_IS_weight=False,
-        # TODO: weight RL loss according to the reconstruct loss, because in 
-        # In the area with large reconstruction loss, the action reconstruction is inaccurate, that is, the (\hat{x}, r) does not match, 
-        # and the corresponding Q value is inaccurate. The update should be reduced to avoid wrong gradient.
+
+        # TODO: weight RL loss according to the reconstruct loss, because in In the area with large reconstruction
+        #  loss, the action reconstruction is inaccurate, that is, the (\hat{x}, r) does not match,
+        #  and the corresponding Q value is inaccurate. The update should be reduced to avoid wrong gradient.
         rl_reconst_loss_weight=False,
         rl_reconst_loss_weight_min=0.2,
 
@@ -65,15 +105,10 @@ hopper_dqn_default_config = dict(
         vqvae_return_weight=False,  # NOTE: return weight
 
         priority_vqvae=False,  # NOTE: return priority
-        priority_IS_weight_vqvae=False, # NOTE: return priority
+        priority_IS_weight_vqvae=False,  # NOTE: return priority
         priority_type_vqvae='return',
-        priority_vqvae_min=0,
-
-        # vavae_pretrain_only=False, # NOTE
-        # recompute_latent_action=True, # NOTE: if train vqvae dynamically, i.e. vavae_pretrain_only=False, should set this key to True
-        
-        vavae_pretrain_only=True, # NOTE
-        recompute_latent_action=False, # NOTE: if only pretrain vqvae, i.e. vavae_pretrain_only=True, should set this key to False
+        priority_vqvae_min=0.,
+        latent_action_shape=int(64),  # num of num_embeddings: K, i.e. shape of latent action
 
         warmup_update_epoches=20,
 
@@ -92,28 +127,37 @@ hopper_dqn_default_config = dict(
             constrain_action=False, # TODO(pu): delete this key
 
             rl_vae_update_circle=1,  # train rl 1 iter, vae 1 iter
-            update_per_collect_rl=20,
-            update_per_collect_vae=20,
+            update_per_collect_rl=50,
+            update_per_collect_vae=50,
             rl_batch_size=512,
             vqvae_batch_size=512,
             learning_rate=3e-4,
             learning_rate_vae=3e-4,
             # Frequency of target network update.
             target_update_freq=500,
+            target_update_theta=0.001,
 
             rl_clip_grad=True,
             vqvae_clip_grad=True,
             grad_clip_type='clip_norm',
             grad_clip_value=0.5,
+            # rl_weight_decay=1e-4,
+            # vqvae_weight_decay=1e-4,
+            rl_weight_decay=None,
+            vqvae_weight_decay=None,
+
+            rl_linear_lr_scheduler=False,
 
             # add noise in original continuous action
-            noise=False,  # NOTE: if vavae_pretrain_only=True
-            # noise=True,  # NOTE: if vavae_pretrain_only=False
-            noise_sigma=0.1,
+            noise=False,  # NOTE: if vqvae_pretrain_only=True
+            # noise=True,  # NOTE: if vqvae_pretrain_only=False
+            noise_sigma=0.,
             noise_range=dict(
-            min=-0.5,
-            max=0.5,
+                min=-0.5,
+                max=0.5,
             ),
+            noise_augment_extreme_action=True,
+            noise_augment_extreme_action_prob=0.1,
         ),
         # collect_mode config
         collect=dict(
@@ -123,7 +167,7 @@ hopper_dqn_default_config = dict(
             # Cut trajectories into pieces with length "unroll_len".
             unroll_len=1,
         ),
-        eval=dict(evaluator=dict(eval_freq=1000, )),
+        eval=dict(evaluator=dict(eval_freq=5000, )),
         # command_mode config
         other=dict(
             # Epsilon greedy with decay.
@@ -155,15 +199,14 @@ create_config = hopper_dqn_create_config
 
 
 def train(args):
-    main_config.exp_name = 'data_hopper/dqnvqvae_noema_largenet_k64_pretrainonly_expert_1000eps_lt3500' + '_seed' + f'{args.seed}'+'_3M'
+    main_config.exp_name = 'data_hopper/dqn_sbh_ensemble20_k64_noobs_expertwarmup-1000eps-lt3500_upc50_noema_middlenet_beta0.25' + '_seed' + f'{args.seed}' + '_3M'
     serial_pipeline_dqn_vqvae_expert([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=int(3e6))
 
 if __name__ == "__main__":
     import copy
     import argparse
     from ding.entry import serial_pipeline_dqn_vqvae_expert
-    for seed in [0]:
-    # for seed in [0, 1,2]:
+    for seed in [0, 1,2]:
         parser = argparse.ArgumentParser()
         parser.add_argument('--seed', '-s', type=int, default=seed)
         args = parser.parse_args()

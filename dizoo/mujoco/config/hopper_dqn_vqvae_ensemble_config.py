@@ -36,6 +36,7 @@ hopper_dqn_default_config = dict(
         # TODO(pu): test ema
         # is_ema=True,  # use EMA
         original_action_shape=3,
+
         random_collect_size=int(5e4),  # transitions
         warm_up_update=int(1e4),
         # debug
@@ -45,8 +46,8 @@ hopper_dqn_default_config = dict(
         vqvae_embedding_dim=64,  # ved: D
         vqvae_hidden_dim=[256],  # vhd
         
-        # target_network_soft_update=False,
-        target_network_soft_update=True,
+        target_network_soft_update=False,
+        # target_network_soft_update=True,
 
         beta=0.25,
         vq_loss_weight=0.1,  # TODO
@@ -56,8 +57,6 @@ hopper_dqn_default_config = dict(
         replay_buffer_size_vqvae=int(1e6),
         auxiliary_conservative_loss=False,
         augment_extreme_action=False,
-
-
 
         # obs_regularization=True,
         obs_regularization=False,
