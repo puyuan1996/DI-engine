@@ -152,7 +152,7 @@ ant_onppo_default_config = dict(
             # add noise in original continuous action
             noise=False,  # NOTE: if vqvae_pretrain_only=True
             # noise=True,  # NOTE: if vqvae_pretrain_only=False
-            noise_sigma=0.1,
+            noise_sigma=0.,
             noise_range=dict(
             min=-0.5,
             max=0.5,
