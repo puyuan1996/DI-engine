@@ -23,7 +23,7 @@ lunarlander_dqn_config = dict(
         # load_path="./lunarlander_dqn_seed0/ckpt/ckpt_best.pth.tar",
         model=dict(
             obs_shape=8,
-            action_shape=4,
+            action_shape=8,
             # encoder_hidden_size_list=[512, 64],
             encoder_hidden_size_list=[128, 128, 64],  # small net
             # Whether to use dueling head.
@@ -90,7 +90,7 @@ create_config = lunarlander_dqn_create_config
 #     serial_pipeline([main_config, create_config], seed=0)
 
 def train(args):
-    main_config.exp_name = 'data_lunarlander/dqn_cluster_k4_' + '_seed' + f'{args.seed}'
+    main_config.exp_name = 'data_lunarlander/dqn_cluster_k8_' + '_seed' + f'{args.seed}'
     serial_pipeline([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=int(3e6))
 
 if __name__ == "__main__":

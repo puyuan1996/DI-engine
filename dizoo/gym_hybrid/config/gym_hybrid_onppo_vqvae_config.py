@@ -1,7 +1,8 @@
 from easydict import EasyDict
 
-collector_env_num=1
-# collector_env_num=8
+# collector_env_num=1
+collector_env_num=40
+# episode length=25
 evaluator_env_num=8
 
 num_actuators = 10
@@ -14,9 +15,9 @@ gym_hybrid_onppo_default_config = dict(
         n_evaluator_episode=evaluator_env_num,
         # (bool) Scale output action into legal range [-1, 1].
         act_scale=True,
-        # env_id='Moving-v0',
+        env_id='Moving-v0',
         # env_id='Sliding-v0',
-        env_id='HardMove-v0',
+        # env_id='HardMove-v0',
         num_actuators=num_actuators,  # only for 'HardMove-v0'
         # stop_value=2,
         stop_value=int(1e6),  # stop according to max env steps
@@ -62,8 +63,8 @@ gym_hybrid_onppo_default_config = dict(
         # target_network_soft_update=True,
 
         vqvae_embedding_dim=64,  # ved: D
-        # vqvae_hidden_dim=[256],  # vhd
-        vqvae_hidden_dim=[1024],  # vhd
+        vqvae_hidden_dim=[256],  # vhd
+        # vqvae_hidden_dim=[1024],  # vhd
 
         beta=0.25,
         vq_loss_weight=0.1,  # TODO
@@ -117,21 +118,21 @@ gym_hybrid_onppo_default_config = dict(
         priority_IS_weight_vqvae=False,  # NOTE: return priority
         priority_type_vqvae='return',
         priority_vqvae_min=0.,
-        # latent_action_shape=int(16),  # num of num_embeddings: K, i.e. shape of latent action
-        latent_action_shape=int(64),  # num of num_embeddings: K, i.e. shape of latent action
+        latent_action_shape=int(16),  # num of num_embeddings: K, i.e. shape of latent action
+        # latent_action_shape=int(64),  # num of num_embeddings: K, i.e. shape of latent action
         model=dict(
             action_space='discrete',
             obs_shape=10,  # related to the environment
             # for moving/sliding
-            # action_shape=int(16),  # num of num_embeddings: K
-            # encoder_hidden_size_list=[128, 128, 64],  # small net
-            # actor_head_hidden_size=64,
-            # critic_head_hidden_size=64,
+            action_shape=int(16),  # num of num_embeddings: K
+            encoder_hidden_size_list=[128, 128, 64],  # small net
+            actor_head_hidden_size=64,
+            critic_head_hidden_size=64,
             # for hardmove
-            action_shape=int(64),  # num of num_embeddings: K
-            encoder_hidden_size_list=[256, 256, 128],  # middle net
-            actor_head_hidden_size= 128,
-            critic_head_hidden_size=128,
+            # action_shape=int(64),  # num of num_embeddings: K
+            # encoder_hidden_size_list=[256, 256, 128],  # middle net
+            # actor_head_hidden_size= 128,
+            # critic_head_hidden_size=128,
         ),
         learn=dict(
             ignore_done=False,
@@ -139,6 +140,8 @@ gym_hybrid_onppo_default_config = dict(
             # ppo related
             value_weight=0.5,
             entropy_weight=0.001,
+            # entropy_weight=0.,
+
             clip_ratio=0.2,
             adv_norm=True,
             value_norm=True,
@@ -151,10 +154,12 @@ gym_hybrid_onppo_default_config = dict(
             update_per_collect_vae=1,
 
             epoch_per_collect_rl=10,
-            epoch_per_collect_vqvae=10,
+            epoch_per_collect_vqvae=1,
             
             rl_batch_size=256,
             vqvae_batch_size=256,
+            # rl_batch_size=512,
+            # vqvae_batch_size=512,
             learning_rate=3e-4,
             learning_rate_vae=3e-4,
             # Frequency of target network update.
@@ -226,8 +231,8 @@ create_config = gym_hybrid_onppo_create_config
 
 
 def train(args):
-    # main_config.exp_name = 'data_moving/onppo_noobs_epcr10_noema_smallnet_k16_beta0.25_vlw01' + '_seed' + f'{args.seed}'+'_3M'
-    main_config.exp_name = 'data_hardmove_n10/onppo_noobs_epcr10_noema_moddlenet_k64_vhd1024_beta0.25_vlw01' + '_seed' + f'{args.seed}'+'_3M'
+    main_config.exp_name = 'data_moving/onppo_noobs_epcr10_epcr1_ew0001_k16_smallnet_beta0.25_vlw01' + '_seed' + f'{args.seed}'+'_3M'
+    # main_config.exp_name = 'data_hardmove_n10/onppo_noobs_epcr10_noema_moddlenet_k64_vhd1024_beta0.25_vlw01' + '_seed' + f'{args.seed}'+'_3M'
     serial_pipeline_onppo_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=int(3e6))
 
 if __name__ == "__main__":

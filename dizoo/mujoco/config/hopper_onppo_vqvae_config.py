@@ -52,13 +52,17 @@ hopper_onppo_default_config = dict(
         recons_loss_cont_weight=1,
         # mask_pretanh=True,
         mask_pretanh=False,
+
+        # TODO
+        replay_buffer_vqvae=True,
         replay_buffer_size_vqvae=int(1e6),
+
         auxiliary_conservative_loss=False,
         augment_extreme_action=False,
 
         # obs_regularization=True,
         obs_regularization=False,
-        predict_loss_weight=1,  # TODO
+        predict_loss_weight=0,  # TODO
 
         # vqvae_pretrain_only=True,
         # NOTE: if only pretrain vqvae , i.e. vqvae_pretrain_only=True, should set this key to False
@@ -111,12 +115,14 @@ hopper_onppo_default_config = dict(
             actor_head_hidden_size= 128,
             critic_head_hidden_size=128,
         ),
+
         learn=dict(
             ignore_done=False,
 
             # ppo related
             value_weight=0.5,
-            entropy_weight=0.001,
+            # entropy_weight=0.001,
+            entropy_weight=0.,
             clip_ratio=0.2,
             adv_norm=True,
             value_norm=True,
@@ -128,11 +134,15 @@ hopper_onppo_default_config = dict(
             update_per_collect_rl=1,
             update_per_collect_vae=1,
 
-            epoch_per_collect_rl=10,
-            epoch_per_collect_vqvae=10,
+            epoch_per_collect_rl=5,  # 5*4~=20
+            epoch_per_collect_vqvae=1,
             
-            rl_batch_size=256,
+            rl_batch_size=256,  # 1000/256~=4
+            # rl_batch_size=64,  # 1000/64~=15
             vqvae_batch_size=256,
+            vqvae_total_batch_size=5120,  # 5120/256=20
+            # rl_batch_size=256,
+            # vqvae_batch_size=512,
             learning_rate=3e-4,
             learning_rate_vae=3e-4,
             # Frequency of target network update.
@@ -151,7 +161,7 @@ hopper_onppo_default_config = dict(
             # add noise in original continuous action
             # noise=False,  # NOTE: if vqvae_pretrain_only=True
             noise=True,  # NOTE: if vqvae_pretrain_only=False
-            noise_sigma=0.1,
+            noise_sigma=0.,
             noise_range=dict(
             min=-0.5,
             max=0.5,
@@ -203,7 +213,10 @@ create_config = hopper_onppo_create_config
 
 
 def train(args):
-    main_config.exp_name = 'data_hopper/onppo_noobs_epcr10_aaea_noema_middlenet_k64_beta0.25_vlw01' + '_seed' + f'{args.seed}'+'_3M'
+    main_config.exp_name = 'data_hopper/onppo_noobs_upcr20_upcv20_rbsv1e6_ew0_rbs256_vbs256_aaea_k64_middlenet_beta0.25_vlw01' + '_seed' + f'{args.seed}'+'_3M'
+
+    # main_config.exp_name = 'data_hopper/onppo_noobs_epc3_epcv1_ew0_rbs256_vbs256_aaea_k64_middlenet_beta0.25_vlw01' + '_seed' + f'{args.seed}'+'_3M'
+    # main_config.exp_name = 'data_hopper/onppo_noobs_epcr3_epcv1_ew0001_rbs256_vbs256_aaea_k64_middlenet_beta0.25_vlw01' + '_seed' + f'{args.seed}'+'_3M'
     serial_pipeline_onppo_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=int(3e6))
 
 if __name__ == "__main__":

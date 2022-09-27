@@ -151,7 +151,8 @@ def serial_pipeline_onppo_vqvae(
         for item in new_data:
             item['warm_up'] = False
         # replay_buffer.push(new_data, cur_collector_envstep=collector.envstep)
-        # replay_buffer_vqvae.push(copy.deepcopy(new_data), cur_collector_envstep=collector.envstep)
+        if cfg.policy.replay_buffer_vqvae:
+            replay_buffer_vqvae.push(copy.deepcopy(new_data), cur_collector_envstep=collector.envstep)
 
         # ====================
         # RL phase
@@ -183,11 +184,13 @@ def serial_pipeline_onppo_vqvae(
             if iter % cfg.policy.learn.rl_vae_update_circle in range(cfg.policy.learn.rl_vae_update_circle - 1,
                                                                      cfg.policy.learn.rl_vae_update_circle):
                 for i in range(cfg.policy.learn.update_per_collect_vae):
-                    # train_data_vqvae = replay_buffer_vqvae.sample(
-                    #     int(cfg.policy.learn.vqvae_batch_size), learner.train_iter
-                    # )
-                    # train_data = train_data_vqvae
-                    train_data = copy.deepcopy(new_data)
+                    if cfg.policy.replay_buffer_vqvae:
+                        train_data_vqvae = replay_buffer_vqvae.sample(
+                            int(cfg.policy.learn.vqvae_total_batch_size), learner.train_iter
+                        )
+                        train_data = train_data_vqvae
+                    else:
+                        train_data = copy.deepcopy(new_data)
                     if train_data is not None:
                         for item in train_data:
                             item['rl_phase'] = False

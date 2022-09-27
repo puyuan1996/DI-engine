@@ -55,7 +55,11 @@ lunarlander_dqn_default_config = dict(
 
         vqvae_embedding_dim=64,  # ved: D
         vqvae_hidden_dim=[256],  # vhd
-        target_network_soft_update=False,
+
+        target_network_soft_update=True,
+        # target_network_soft_update=False,
+
+
         beta=0.25,
         vq_loss_weight=0.1,
         recons_loss_cont_weight=1,
@@ -71,8 +75,8 @@ lunarlander_dqn_default_config = dict(
 
         # TODO
         # only if obs_regularization=True, this option take effect
-        # v_contrastive_regularization=False,
-        v_contrastive_regularization=True,
+        v_contrastive_regularization=False,
+        # v_contrastive_regularization=True,
         contrastive_regularization_loss_weight=1,
 
         # vqvae_pretrain_only=True,
@@ -210,7 +214,7 @@ create_config = lunarlander_dqn_create_config
 
 def train(args):
     # main_config.exp_name = 'data_lunarlander_visualize/noobs_k8_upc50'
-    main_config.exp_name = 'data_lunarlander/dqn_sbh_ensemble20_obs0_noema_smallnet_k4_upc50_crlw1' + '_seed' + f'{args.seed}' + '_3M'
+    main_config.exp_name = 'data_lunarlander/dqn_sbh_ensemble20_obs0_soft_noema_smallnet_k4_upc50' + '_seed' + f'{args.seed}' + '_3M'
     serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=int(3e6))
 
 if __name__ == "__main__":
