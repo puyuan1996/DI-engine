@@ -103,7 +103,7 @@ def serial_pipeline_onppo_vqvae(
         new_data = collector.collect(n_episode=cfg.policy.random_collect_size, train_iter=learner.train_iter, policy_kwargs=collect_kwargs)
         for item in new_data:
             item['warm_up'] = True
-        replay_buffer.push(new_data, cur_collector_envstep=0)
+        replay_buffer_vqvae.push(new_data, cur_collector_envstep=0)
         collector.reset_policy(policy.collect_mode)
 
         # ====================
@@ -112,7 +112,7 @@ def serial_pipeline_onppo_vqvae(
         # Learn policy from collected data
         for i in range(cfg.policy.warm_up_update):
             # Learner will train ``update_per_collect`` times in one iteration.
-            train_data = replay_buffer.sample(cfg.policy.learn.vqvae_batch_size, learner.train_iter)
+            train_data = replay_buffer_vqvae.sample(cfg.policy.learn.vqvae_batch_size, learner.train_iter)
             if train_data is None:
                 # It is possible that replay buffer's data count is too few to train ``update_per_collect`` times
                 logging.warning(
@@ -123,10 +123,10 @@ def serial_pipeline_onppo_vqvae(
             learner.train(train_data, collector.envstep)
 
             if learner.policy.get_attribute('priority'):
-                replay_buffer.update(learner.priority_info)
+                replay_buffer_vqvae.update(learner.priority_info)
             if learner.policy.get_attribute('warm_up_stop'):
                 break
-        replay_buffer.clear()  # TODO(pu): NOTE
+        # replay_buffer_vqvae.clear()  # TODO(pu): NOTE
 
     # NOTE: for the case collector_env_num>1, because after the random collect phase,  self._traj_buffer[env_id] may be not empty. Only
     # if the condition "timestep.done or len(self._traj_buffer[env_id]) == self._traj_len" is satisfied, the self._traj_buffer will be clear.
@@ -185,8 +185,11 @@ def serial_pipeline_onppo_vqvae(
                                                                      cfg.policy.learn.rl_vae_update_circle):
                 for i in range(cfg.policy.learn.update_per_collect_vae):
                     if cfg.policy.replay_buffer_vqvae:
+                        # train_data_vqvae = replay_buffer_vqvae.sample(
+                        #     int(cfg.policy.learn.vqvae_total_batch_size), learner.train_iter
+                        # )
                         train_data_vqvae = replay_buffer_vqvae.sample(
-                            int(cfg.policy.learn.vqvae_total_batch_size), learner.train_iter
+                            int(cfg.policy.learn.vqvae_batch_size), learner.train_iter
                         )
                         train_data = train_data_vqvae
                     else:

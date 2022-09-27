@@ -135,14 +135,11 @@ hopper_onppo_default_config = dict(
             update_per_collect_vae=1,
 
             epoch_per_collect_rl=5,  # 5*4~=20
-            epoch_per_collect_vqvae=1,
+            # epoch_per_collect_vqvae=1,
             
             rl_batch_size=256,  # 1000/256~=4
-            # rl_batch_size=64,  # 1000/64~=15
             vqvae_batch_size=256,
-            vqvae_total_batch_size=5120,  # 5120/256=20
-            # rl_batch_size=256,
-            # vqvae_batch_size=512,
+
             learning_rate=3e-4,
             learning_rate_vae=3e-4,
             # Frequency of target network update.
@@ -213,9 +210,9 @@ create_config = hopper_onppo_create_config
 
 
 def train(args):
-    main_config.exp_name = 'data_hopper/onppo_noobs_upcr20_upcv20_rbsv1e6_ew0_rbs256_vbs256_aaea_k64_middlenet_beta0.25_vlw01' + '_seed' + f'{args.seed}'+'_3M'
+    # main_config.exp_name = 'data_hopper/onppo_noobs_upcr20_upcv20_rbsv1e6_ew0_rbs256_vbs256_aaea_k64_middlenet_beta0.25_vlw01' + '_seed' + f'{args.seed}'+'_3M'
 
-    # main_config.exp_name = 'data_hopper/onppo_noobs_epc3_epcv1_ew0_rbs256_vbs256_aaea_k64_middlenet_beta0.25_vlw01' + '_seed' + f'{args.seed}'+'_3M'
+    main_config.exp_name = 'data_hopper/onppo_noobs_epcr5_ew0_rbs256_vbs256_aaea_k64_middlenet_beta0.25_vlw01' + '_seed' + f'{args.seed}'+'_3M'
     # main_config.exp_name = 'data_hopper/onppo_noobs_epcr3_epcv1_ew0001_rbs256_vbs256_aaea_k64_middlenet_beta0.25_vlw01' + '_seed' + f'{args.seed}'+'_3M'
     serial_pipeline_onppo_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=int(3e6))
 
