@@ -128,11 +128,13 @@ hopper_onppo_default_config = dict(
             update_per_collect_rl=1,
             update_per_collect_vae=1,
 
-            epoch_per_collect_rl=10,
+            epoch_per_collect_rl=1,
             epoch_per_collect_vqvae=10,
             
-            rl_batch_size=256,
-            vqvae_batch_size=256,
+            # rl_batch_size=256,
+            # vqvae_batch_size=256,
+            rl_batch_size=512,
+            vqvae_batch_size=512,
             learning_rate=3e-4,
             learning_rate_vae=3e-4,
             # Frequency of target network update.
@@ -203,7 +205,7 @@ create_config = hopper_onppo_create_config
 
 
 def train(args):
-    main_config.exp_name = 'data_hopper/onppo_noobs_epcr10_aaea_noema_middlenet_k64_beta0.25_vlw01' + '_seed' + f'{args.seed}'+'_3M'
+    main_config.exp_name = 'data_hopper/onppo_noobs_epcr1_aaea_noema_middlenet_k64_beta0.25_vlw01' + '_seed' + f'{args.seed}'+'_3M'
     serial_pipeline_onppo_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed, max_env_step=int(3e6))
 
 if __name__ == "__main__":
