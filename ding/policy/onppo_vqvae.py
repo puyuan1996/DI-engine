@@ -353,43 +353,45 @@ class ONPPOVQVAEPolicy(Policy):
             # train VQVAE
             # ====================
             if data['vae_phase'][0].item() is True:
-                for epoch in range(self._cfg.learn.epoch_per_collect_vqvae):
-                    for batch_data in split_data_generator(data, self._cfg.learn.vqvae_batch_size, shuffle=True):
-                        
-                        if self._cfg.obs_regularization:
-                            batch_data['true_residual'] = batch_data['next_obs'] - batch_data['obs']
-                            result = self._vqvae_model.train_with_obs(batch_data)
-                        else:
-                            result = self._vqvae_model.train(batch_data)
+                # for epoch in range(self._cfg.learn.epoch_per_collect_vqvae):
+                    # for batch_data in split_data_generator(data, self._cfg.learn.vqvae_batch_size, shuffle=True):
+                
+                batch_data = data
+                if self._cfg.obs_regularization:
+                    batch_data['true_residual'] = batch_data['next_obs'] - batch_data['obs']
+                    result = self._vqvae_model.train_with_obs(batch_data)
+                else:
+                    result = self._vqvae_model.train(batch_data)
 
-                        loss_dict['total_vqvae_loss'] = result['total_vqvae_loss'].item()
-                        loss_dict['reconstruction_loss'] = result['recons_loss'].item()
-                        loss_dict['vq_loss'] = result['vq_loss'].item()
-                        loss_dict['embedding_loss'] = result['embedding_loss'].item()
-                        loss_dict['commitment_loss'] = result['commitment_loss'].item()
+                loss_dict['total_vqvae_loss'] = result['total_vqvae_loss'].item()
+                loss_dict['reconstruction_loss'] = result['recons_loss'].item()
+                loss_dict['vq_loss'] = result['vq_loss'].item()
+                loss_dict['embedding_loss'] = result['embedding_loss'].item()
+                loss_dict['commitment_loss'] = result['commitment_loss'].item()
 
-                        # vae update
-                        self._optimizer_vqvae.zero_grad()
-                        result['total_vqvae_loss'].backward()
-                        total_grad_norm_vqvae = self._optimizer_vqvae.get_grad()
-                        self._optimizer_vqvae.step()
+                # vae update
+                self._optimizer_vqvae.zero_grad()
+                result['total_vqvae_loss'].backward()
+                total_grad_norm_vqvae = self._optimizer_vqvae.get_grad()
+                self._optimizer_vqvae.step()
 
-                        
-                        # NOTE:visualize_latent, now it's only for env hopper and gym_hybrid
-                        # quantized_index = self.visualize_latent(save_histogram=False)
-                        # cos_similarity = self.visualize_embedding_table(save_dis_map=False)
+                
+                # NOTE:visualize_latent, now it's only for env hopper and gym_hybrid
+                # quantized_index = self.visualize_latent(save_histogram=False)
+                # cos_similarity = self.visualize_embedding_table(save_dis_map=False)
 
-                        return_info= {
-                            # 'priority': return_normalization.tolist(), 
-                            'cur_lr': self._optimizer.defaults['lr'],
-                            # 'td_error': td_error_per_sample,
-                            **loss_dict,
-                            # **q_value_dict,
-                            'total_grad_norm_vqvae': total_grad_norm_vqvae,
-                            # '[histogram]latent_action': quantized_index,
-                            # '[histogram]cos_similarity': cos_similarity,
-                        }
-                        return_infos.append(return_info)
+                return_info= {
+                    # 'priority': return_normalization.tolist(), 
+                    'cur_lr': self._optimizer.defaults['lr'],
+                    # 'td_error': td_error_per_sample,
+                    **loss_dict,
+                    # **q_value_dict,
+                    'total_grad_norm_vqvae': total_grad_norm_vqvae,
+                    # '[histogram]latent_action': quantized_index,
+                    # '[histogram]cos_similarity': cos_similarity,
+                }
+                return_infos.append(return_info)
+
                 return return_infos
             # ====================
             # train RL
