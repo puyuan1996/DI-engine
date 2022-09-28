@@ -1,0 +1,82 @@
+v0.4.3-1-g64f5dda53
+
+commit 64f5dda5398063e81a632a1e3bbb1f3d1bc5bc7d
+Author: Weiyuhong-1998 <83390487+Weiyuhong-1998@users.noreply.github.com>
+Date:   Sun Sep 25 23:47:13 2022 +0800
+
+    feature(wyh): add pcgrad optimizer (#489)
+    
+    * alg(wyh):pcgrad optimizer
+    
+    * fix(wyh):Polish PCGrad
+    
+    * fix(wyh):Polish conflict
+    
+    * fix(wyh):Polish conflict
+    
+    * doc(wyh):polish pcgrad style
+    
+    * doc(wyh):polish pcgrad style
+    
+    * doc(wyh):polish pcgrad style
+    
+    * doc(wyh):rm multi_mnist
+
+ README.md                                |   1 +
+ ding/torch_utils/optimizer_helper.py     | 137 +++++++++++++++++++++++++++++++
+ ding/torch_utils/tests/test_optimizer.py |  20 ++++-
+ 3 files changed, 157 insertions(+), 1 deletion(-)
+
+commit f8a596f6ad4a79a733cc1fbd5974b3f23c915d97
+Author: niuyazhe <niuyazhe@sensetime.com>
+Date:   Thu Sep 22 23:57:18 2022 +0800
+
+    v0.4.3
+
+ CHANGELOG        | 14 ++++++++++++++
+ README.md        |  2 +-
+ conda/meta.yaml  |  2 +-
+ ding/__init__.py |  2 +-
+ 4 files changed, 17 insertions(+), 3 deletions(-)
+
+commit 4fbd11785bd38467f0b4e11b9c668bb55708e5e2
+Author: norman <74552232+norman26625@users.noreply.github.com>
+Date:   Thu Sep 22 17:34:26 2022 +0800
+
+    style(hus): update environment & algorithm tutorial link (#493)
+    
+    * update algorithm&environment tutorial link
+    
+    * add di-sheep %interfuser
+    
+    * fix format typo
+    
+    * fix gym_hybrid & gobigger link
+
+ README.md | 14 +++++++-------
+ 1 file changed, 7 insertions(+), 7 deletions(-)
+
+commit 0e4bd54f013f68a02f38771d42285e25d7a3e19c
+Author: norman <74552232+norman26625@users.noreply.github.com>
+Date:   Thu Sep 22 14:25:39 2022 +0800
+
+    style(hus): add readme tutorial link(environment & algorithm) (#490)
+    
+    * add env algo link
+    
+    * polish typo
+    
+    * label
+
+ README.md | 138 ++++++++++++++++++++++++++++++++------------------------------
+ 1 file changed, 71 insertions(+), 67 deletions(-)
+
+commit e8cbf4fdd502dc92eee8061a816a57c0a7f42198
+Author: niuyazhe <niuyazhe@sensetime.com>
+Date:   Thu Sep 22 13:56:23 2022 +0800
+
+    style(nyz): add DI-sheep link(ci skip)
+
+ README.md             | 3 ++-
+ ding/policy/collaq.py | 2 +-
+ 2 files changed, 3 insertions(+), 2 deletions(-)

@@ -31,7 +31,16 @@ def train(args):
     create_cfg.policy.type = create_cfg.policy.type + '_command'
     cfg = compile_config(cfg, seed=args.seed, auto=True, create_cfg=create_cfg)
 
-    for iter in [-1, 0, 60000, 120000, 180000]:
+    iter_noop_action_cnt_list  = []
+    iter_total_action_cnt_list = []
+    iter_total_fuel_cnt_list = []
+    iter_x_fuel_cnt_list = []
+    iter_y_fuel_cnt_list = []
+
+
+
+    # for iter in [-1, 0, 10000, 20000, 60000, 120000, 180000]:
+    for iter in [0, 10000, 20000, 60000, 120000, -1]:
     # for iter in [-1]:
         if iter == -1:
             visualize_path = f'/Users/puyuan/code/DI-engine/data_lunarlander_visualize/sac_seed0_3M/action_coverage/iter-best_action/'
@@ -40,9 +49,16 @@ def train(args):
 
         episode_actions = []
 
+        iter_noop_action_cnt = 0
+        iter_total_action_cnt = 0
+        iter_total_fuel_cnt = 0
+        iter_x_fuel_cnt = 0
+        iter_y_fuel_cnt = 0
+
+
         # for seed in range(10):
-        # for seed in range(10,20):
-        for seed in [8]:
+        for seed in range(0,20):
+        # for seed in [8]:
 
             print(f'iter: {iter}', f'seed: {seed}')
 
@@ -68,26 +84,84 @@ def train(args):
             print('episode_length:',episode0_actions_collect_in_seed0.shape[0])
             print('episode_return:',episode0_rewards_collect_in_seed0.sum())
 
+            iter_total_action_cnt += episode0_actions_collect_in_seed0.shape[0]
+
             x = episode0_actions_collect_in_seed0[:,0]
             y = episode0_actions_collect_in_seed0[:,1]
-            fig = plt.figure()
-            ax = fig.add_subplot(111)
+            # fig = plt.figure()
+            # ax = fig.add_subplot(111)
             # sc = ax.scatter(x, y, marker='o')
 
             position_mask = np.ma.masked_where((x < 0) & ((y<0.5) & (y>-0.5)), np.arange(episode0_actions_collect_in_seed0.shape[0]))
-            sc = ax.scatter(x, y, marker='o', c=position_mask.mask, cmap='coolwarm')
-            # sc = ax.scatter(x, y, marker='o', c=y, cmap='coolwarm')
-            ax.add_patch(Rectangle(xy=(-1, -0.5), width=1, height=1, linewidth=1,linestyle='dotted', color='red', fill=False))
 
-            plt.xlabel('Original Action Dim0')
-            plt.ylabel('Original Action Dim1')
-            ax.set_title('Action Coverage')
-            ##fig.colorbar(sc)
-            plt.savefig(f'{visualize_path}' + f'1eps_action_collect_in_seed{seed}_mask.png')
+            iter_noop_action_cnt += position_mask.mask.sum()
+
+
+            iter_x_fuel_cnt += (x * (x > 0)).sum()
+            # iter_y_fuel_cnt +=  (y*((y>0.5) | (y<-0.5))).sum()
+            iter_y_fuel_cnt += (y * (y > 0.5) ).sum() + (abs( y * (y < -0.5)) ).sum()
+
+            iter_total_fuel_cnt += (x*(x>0)).sum() + (y * (y > 0.5) ).sum() + (abs( y * (y < -0.5)) ).sum()
+
+            # sc = ax.scatter(x, y, marker='o', c=position_mask.mask, cmap='coolwarm')
+            # # sc = ax.scatter(x, y, marker='o', c=y, cmap='coolwarm')
+            # ax.add_patch(Rectangle(xy=(-1, -0.5), width=1, height=1, linewidth=1,linestyle='dotted', color='red', fill=False))
+            #
+            # plt.xlabel('Original Action Dim0')
+            # plt.ylabel('Original Action Dim1')
+            # ax.set_title('Action Coverage')
+            # ##fig.colorbar(sc)
+            # plt.savefig(f'{visualize_path}' + f'1eps_action_collect_in_seed{seed}_mask.png')
 
             # plt.show()
 
             episode_actions.append(episode0_actions_collect_in_seed0)
+
+        iter_total_action_cnt_list.append(iter_total_action_cnt)
+        iter_noop_action_cnt_list.append(iter_noop_action_cnt)
+
+        iter_total_fuel_cnt_list.append(iter_total_fuel_cnt)
+        iter_x_fuel_cnt_list.append(iter_x_fuel_cnt)
+        iter_y_fuel_cnt_list.append(iter_y_fuel_cnt)
+
+    # 3000000 menas iter_best
+    env_steps = [0, 100000, 200000, 500000, 1000000, 3000000]
+
+    iter_noop_action_ratio_list = []
+    for i in range(6):
+        iter_noop_action_ratio_list.append(iter_noop_action_cnt_list[i] / iter_total_action_cnt_list[i])
+
+    # 折线图
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    # ax = ax.twinx()
+    ax.plot(env_steps, iter_noop_action_ratio_list, 's-', color='b', label="Noop_Action_Ratio")  # s-:方形
+
+    ax.plot(env_steps, iter_total_action_cnt_list, '^-', color='b', label="Total_Action_Count")  # s-:方形
+    ax.plot(env_steps, iter_noop_action_cnt_list, 'v-', color='b', label="Noop_Action_Count")  # s-:方形
+
+    ax.plot(env_steps,  iter_total_fuel_cnt_list, 'o-', color='r', label="Total_Fuel_Count")  # o-:圆形
+    ax.plot(env_steps,  iter_x_fuel_cnt_list, '^-', color='r', label="Horizontal_Fuel_Count")  # o-:圆形
+    ax.plot(env_steps,  iter_y_fuel_cnt_list, 'v-', color='r', label="Vertical_Fuel_Count")  # o-:圆形
+
+
+    plt.xlabel("Env Steps")  # 横坐标名字
+    plt.ylabel("Statistics of Policy")  # 纵坐标名字
+    plt.legend(loc="best")  # 图例
+    plt.savefig(f'{visualize_path}' + f'20eps_statistics.png')
+
+    print('iter_noop_action_ratio_list',  iter_noop_action_ratio_list)
+    print('iter_total_action_cnt_list',  iter_total_action_cnt_list)
+    print('iter_noop_action_cnt_list',  iter_noop_action_ratio_list)
+    print('iter_total_fuel_cnt_list',  iter_total_fuel_cnt_list)
+    print('iter_x_fuel_cnt_list',  iter_x_fuel_cnt_list)
+    print('iter_y_fuel_cnt_list',  iter_y_fuel_cnt_list)
+
+
+
+    # plt.show()
+
+
 
         # episode_actions = torch.cat(episode_actions)
 

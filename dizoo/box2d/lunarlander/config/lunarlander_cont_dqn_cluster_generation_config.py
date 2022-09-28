@@ -8,9 +8,12 @@ lunarlander_dqn_config = dict(
         # Whether to use shared memory. Only effective if "env_manager_type" is 'subprocess'
         # Env number respectively for collector and evaluator.
         act_scale=True,
-        collector_env_num=8,
-        evaluator_env_num=8,
-        n_evaluator_episode=8,
+        # collector_env_num=8,
+        # evaluator_env_num=8,
+        # n_evaluator_episode=8,
+        collector_env_num=1,
+        evaluator_env_num=1,
+        n_evaluator_episode=1,
         # stop_value=200,
         stop_value=int(1e6),  # stop according to max env steps 
         # The path to save the game replay

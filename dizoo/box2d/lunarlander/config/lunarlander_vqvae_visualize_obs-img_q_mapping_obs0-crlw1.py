@@ -92,8 +92,9 @@ def train(args):
     #                                         visualize_path=visualize_path, number_of_frames=number_of_frames)
 
     serial_pipeline_dqn_vqvae_visualize([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=1,
-                                            max_env_step=int(3e6), obs=episode0_obs, name_suffix='lunarlander_obs0_crlw1_k8',
-                                            visualize_path=visualize_path, number_of_frames=number_of_frames)
+                                        max_env_step=int(3e6), obs=episode0_obs,
+                                        name_suffix='lunarlander_obs0_crlw1_k8',
+                                        visualize_path=visualize_path, number_of_frames=number_of_frames)
     for timestep, frame in enumerate(gif):
         # generate latent mapping img
         # process one frame once

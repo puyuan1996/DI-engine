@@ -12,33 +12,50 @@ def eval_ckpt(args):
     # eval(config, seed=args.seed, load_path=main_config.policy.model_path, replay_path='/Users/puyuan/code/DI-engine/data_lunarlander_visualize/')
 
 
+
 # TODO(pu): config
 #  model_path, replay_path, save_replay_gif=True,
 #  seed
 def generate(args):
     config = copy.deepcopy([main_config, create_config])
-    config.policy.model_path = '/Users/puyuan/code/DI-engine/data_lunarlander/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_upc50_crlw1_seed1_3M/ckpt/iteration_0.pth.tar'
-    config.env.replay_path = '/Users/puyuan/code/DI-engine/data_lunarlander_visualize/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_upc50_crlw1_seed1_3M/iter-190000_collect_in_seed2'
-    config.env.save_replay_gif = True
+    if args.iter == -1:
+        config[0].policy.model_path = '/Users/puyuan/code/DI-engine/data_lunarlander/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_upc50_seed0_3M/ckpt/ckpt_best.pth.tar'
+        config[0].env.replay_path = '/Users/puyuan/code/DI-engine/data_lunarlander_visualize/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_upc50_seed0_3M/iter-best_collect_in_' + f'seed{args.seed}'
+        config[0].env.save_replay_gif = True
+        expert_data_path = f'/Users/puyuan/code/DI-engine/data_lunarlander_visualize/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_upc50_seed0_3M/iter-best_collect_in_' + f'seed{args.seed}/data_iter-best_1eps.pkl'
+    else:
+        config[0].policy.model_path = f'/Users/puyuan/code/DI-engine/data_lunarlander/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_upc50_seed0_3M/ckpt/iteration_{args.iter}.pth.tar'
+        config[0].env.replay_path = f'/Users/puyuan/code/DI-engine/data_lunarlander_visualize/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_upc50_seed0_3M/iter-{args.iter}_collect_in_' + f'seed{args.seed}'
+        config[0].env.save_replay_gif = True
+        expert_data_path = f'/Users/puyuan/code/DI-engine/data_lunarlander_visualize/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_upc50_seed0_3M/iter-{args.iter}_collect_in_' + f'seed{args.seed}/data_iter-{args.iter}_1eps.pkl'
 
-    state_dict = torch.load(main_config.policy.model_path, map_location='cpu')
+    state_dict = torch.load(config[0].policy.model_path, map_location='cpu')
     collect_episodic_demo_data(
         config,
         collect_count=1,
         seed=args.seed,
-        expert_data_path='/Users/puyuan/code/DI-engine/data_lunarlander_visualize/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_upc50_crlw1_seed1_3M/iter-190000_collect_in_seed2/data_iter-190000_1eps.pkl',
-        # expert_data_path='/Users/puyuan/code/DI-engine/data_lunarlander_visualize/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_upc50_seed1_3M/data_iteration_best_1eps.pkl',
-        # expert_data_path='/Users/puyuan/code/DI-engine/data_lunarlander_visualize/dqn_sbh_ensemble20_noobs_noema_smallnet_k8_upc50_seed1_3M/data_iteration_best_1eps.pkl',
+        expert_data_path=expert_data_path,
         state_dict=state_dict
     )
-
 
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--seed', '-s', type=int, default=2)
-    args = parser.parse_args()
+    # for iter in [-1, 0, 40000, 80000, 190000, 380000]:
+    # for iter in [190000, 380000,80000]:
+    for iter in [20000]:
 
-    # eval_ckpt(args)
-    generate(args)
+        # for seed in [0, 1,2,3,4]:
+        # for seed in [5,6,7,8,9]:
+        for seed in range(0,20):
+
+
+            parser = argparse.ArgumentParser()
+            parser.add_argument('--seed', '-s', type=int, default=seed)
+            parser.add_argument('--iter', '-i', type=int, default=iter)
+
+            args = parser.parse_args()
+
+            # eval_ckpt(args)
+            print(f'iter: {iter}', f'seed: {seed}')
+            generate(args)
