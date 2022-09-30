@@ -31,12 +31,18 @@ def train(args):
     cfg = compile_config(cfg, seed=args.seed, auto=True, create_cfg=create_cfg)
 
     # TODO(pu)
-    cfg.policy.model_path = '/Users/puyuan/code/DI-engine/data_lunarlander/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_upc50_crlw1_seed1_3M/ckpt/iteration_190000.pth.tar',
-    cfg.policy.collect.data_path = '/Users/puyuan/code/DI-engine/data_lunarlander_visualize/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_upc50_crlw1_seed1_3M/iter-190000_collect_in_seed2/data_iter-190000_1eps.pkl'
-    visualize_path = '/Users/puyuan/code/DI-engine/data_lunarlander_visualize/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_upc50_crlw1_seed1_3M/iter-190000_collect_in_seed2/'
-    original_gif_path = '/Users/puyuan/code/DI-engine/data_lunarlander_visualize/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_upc50_crlw1_seed1_3M/iter-190000_collect_in_seed2/LunarLanderContinuous-v2_episode_0.gif'
-    processed_frames_path = '/Users/puyuan/code/DI-engine/data_lunarlander_visualize/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_upc50_crlw1_seed1_3M/iter-190000_collect_in_seed2/'
+    # cfg.policy.model_path = '/Users/puyuan/code/DI-engine/data_lunarlander/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_upc50_crlw1_seed1_3M/ckpt/iteration_190000.pth.tar',
+    # cfg.policy.collect.data_path = '/Users/puyuan/code/DI-engine/data_lunarlander_visualize/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_upc50_crlw1_seed1_3M/iter-190000_collect_in_seed2/data_iter-190000_1eps.pkl'
+    # visualize_path = '/Users/puyuan/code/DI-engine/data_lunarlander_visualize/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_upc50_crlw1_seed1_3M/iter-190000_collect_in_seed2/'
+    # original_gif_path = '/Users/puyuan/code/DI-engine/data_lunarlander_visualize/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_upc50_crlw1_seed1_3M/iter-190000_collect_in_seed2/LunarLanderContinuous-v2_episode_0.gif'
+    # processed_frames_path = '/Users/puyuan/code/DI-engine/data_lunarlander_visualize/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_upc50_crlw1_seed1_3M/iter-190000_collect_in_seed2/'
 
+    cfg.policy.model_path = '/Users/puyuan/code/DI-engine/data_lunarlander/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_upc50_crlw1_seed1_3M/ckpt/ckpt_best.pth.tar',
+    cfg.policy.collect.data_path = '/Users/puyuan/code/DI-engine/data_lunarlander_visualize/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_upc50_crlw1_seed1_3M/iter-best_collect_in_seed0/data_iteration_best_1eps.pkl'
+    visualize_path = '/Users/puyuan/code/DI-engine/data_lunarlander_visualize/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_upc50_crlw1_seed1_3M/iter-best_collect_in_seed0/'
+    original_gif_path = '/Users/puyuan/code/DI-engine/data_lunarlander_visualize/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_upc50_crlw1_seed1_3M/iter-best_collect_in_seed0/LunarLanderContinuous-v2_episode_0.gif'
+    processed_frames_path = '/Users/puyuan/code/DI-engine/data_lunarlander_visualize/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_upc50_crlw1_seed1_3M/iter-best_collect_in_seed0/'
+    
     # Dataset
     dataset = create_dataset(cfg)
     print('num_episodes: ', dataset.__len__())

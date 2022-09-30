@@ -121,24 +121,59 @@ def train(args):
             x = episode0_obss_collect_in_seed0[:,0]
             y = episode0_obss_collect_in_seed0[:,1]
 
+            # """
+            # return color v1
+            # - [, -100]
+            # - [ -100, 0]
+            # - [ 0,100]
+            # - [100,200]
+            # - [200,]
+            # """
+            # if episode0_rewards_collect_in_seed0.sum()<-100:
+            #     color = '#e2fdff'
+            # elif episode0_rewards_collect_in_seed0.sum()<0:
+            #     color = '#bfd7ff'
+            # elif episode0_rewards_collect_in_seed0.sum()<100:
+            #     color = '#9bb1ff'
+            # elif episode0_rewards_collect_in_seed0.sum()<200:
+            #     color = '#788bff'
+            # else:
+            #     color = '#5465ff'
+
             """
-            return color
+            return color v2
             - [, -100]
             - [ -100, 0]
-            - [ 0,100]
-            - [100,200]
+            - [ 0,200]
             - [200,]
             """
-            if episode0_rewards_collect_in_seed0.sum()<-100:
-                color = '#e2fdff'
-            elif episode0_rewards_collect_in_seed0.sum()<0:
-                color = '#bfd7ff'
-            elif episode0_rewards_collect_in_seed0.sum()<100:
-                color = '#9bb1ff'
-            elif episode0_rewards_collect_in_seed0.sum()<200:
-                color = '#788bff'
+            # if episode0_rewards_collect_in_seed0.sum() < -100:
+            #     color = '#264653'
+            # elif episode0_rewards_collect_in_seed0.sum() < 0:
+            #     color = '#2a9d8f'
+            # elif episode0_rewards_collect_in_seed0.sum() < 200:
+            #     color = '#e9c46a'
+            # else:
+            #     color = '#f4a261'
+
+            # if episode0_rewards_collect_in_seed0.sum() < -100:
+            #     color = '#f15bb5'
+            # elif episode0_rewards_collect_in_seed0.sum() < 0:
+            #     color = '#fee440'
+            # elif episode0_rewards_collect_in_seed0.sum() < 200:
+            #     color = '#00bbf9'
+            # else:
+            #     color = '#00f5d4'
+
+            if episode0_rewards_collect_in_seed0.sum() < -100:
+                color = '#9b5de5'
+            elif episode0_rewards_collect_in_seed0.sum() < 0:
+                color = '#00bbf9'
+            elif episode0_rewards_collect_in_seed0.sum() < 200:
+                color = '#00f5d4'
             else:
-                color = '#5465ff'
+                color = '#fee440'
+
 
             # sc = ax.scatter(x, y, marker='o', cmap='coolwarm')
             sc = ax.scatter(x, y, marker='.', color=color) #, alpha=0.1, s=0.1)
@@ -146,19 +181,21 @@ def train(args):
             plt.xlim(-1, 1)
             plt.ylim(0, 2)
 
-            plt.xlabel('Horizontal Coordinate x')
-            plt.ylabel('Vertical Coordinate y')
-            ax.set_title('Position Coverage')
-            ##fig.colorbar(sc)
-            plt.savefig(f'{visualize_path}' + f'1eps_position_collect_in_seed{seed}_1.png')
+            # plt.xlabel('Horizontal Coordinate x')
+            # plt.ylabel('Vertical Coordinate y')
+            # # ax.set_title('Position Coverage')
+            # ##fig.colorbar(sc)
+            # plt.savefig(f'{visualize_path}' + f'1eps_position_collect_in_seed{seed}_1.png')
 
             # plt.gca().xaxis.set_major_formatter(FuncFormatter(y_update_scale_value))
             # plt.tick_params(axis='both', labelsize=size2)
-            plt.legend(loc="best", fontsize=size4)  # 显示图例
-            plt.xlabel('Horizontal Coordinate x', fontsize=size1)
-            plt.ylabel('Vertical Coordinate y', fontsize=size1)
+            # plt.legend(loc="best", fontsize=size4)  # 显示图例
+            # plt.xlabel('Horizontal Coordinate x', fontsize=size1)
+            # plt.ylabel('Vertical Coordinate y', fontsize=size1)
+            plt.xlabel('x', fontsize=size1)
+            plt.ylabel('y', fontsize=size1)
             plt.tight_layout()
-            plt.savefig(f'{visualize_path}' + f'1eps_position_collect_in_seed{seed}_1.png')
+            plt.savefig(f'{visualize_path}' + f'iter-{iter}_1eps_position_collect_in_seed{seed}_notitle_v3.pdf')
 
             # episode_actions.append(episode0_actions_collect_in_seed0)
             episodes_obs.append(episode0_obss_collect_in_seed0)
@@ -183,16 +220,14 @@ def train(args):
 
         # plt.gca().xaxis.set_major_formatter(FuncFormatter(y_update_scale_value))
         # plt.tick_params(axis='both', labelsize=size2)
-        plt.legend(loc="best", fontsize=size4)  # 显示图例
-        plt.xlabel('Horizontal Coordinate x', fontsize=size1)
-        plt.ylabel('Vertical Coordinate y', fontsize=size1)
+        # plt.legend(loc="best", fontsize=size4)  # 显示图例
+        # plt.xlabel('Horizontal Coordinate x', fontsize=size1)
+        # plt.ylabel('Vertical Coordinate y', fontsize=size1)
+        plt.xlabel('x', fontsize=size1)
+        plt.ylabel('y', fontsize=size1)
         plt.tight_layout()
         # f.savefig('./Halfcheetah.pdf', bbox_inches='tight')
-        plt.savefig(f'{visualize_path}' + f'20eps_position_1.png')
-
-
-
-
+        plt.savefig(f'{visualize_path}' + f'iter-{iter}_20eps_position_notitle_v3.pdf')
 
 
 

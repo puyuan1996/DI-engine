@@ -38,7 +38,7 @@ def y_update_scale_value(temp, position):
         result = temp/1e+6
     return "{}M".format(result)
 
-sns.set()
+# sns.set()
 windowsize=10
 f = plt.figure(figsize=(7, 5.5))
 size1=23
@@ -83,8 +83,8 @@ def train(args):
 
 
         # for seed in range(10):
-        # for seed in range(0,20):
-        for seed in [8]:
+        for seed in range(0,20):
+        # for seed in [8]:
 
             print(f'iter: {iter}', f'seed: {seed}')
 
@@ -110,25 +110,25 @@ def train(args):
             print('episode_length:',episode0_actions_collect_in_seed0.shape[0])
             print('episode_return:',episode0_rewards_collect_in_seed0.sum())
 
-            iter_total_action_cnt += episode0_actions_collect_in_seed0.shape[0]
-
-            x = episode0_actions_collect_in_seed0[:,0]
-            y = episode0_actions_collect_in_seed0[:,1]
-            fig = plt.figure()
-            ax = fig.add_subplot(111)
-            # sc = ax.scatter(x, y, marker='o')
-
-            position_mask = np.ma.masked_where((x < 0) & ((y<0.5) & (y>-0.5)), np.arange(episode0_actions_collect_in_seed0.shape[0]))
-
-            iter_x_fuel_cnt += (x * (x > 0)).sum()
-            # iter_y_fuel_cnt +=  (y*((y>0.5) | (y<-0.5))).sum()
-            iter_y_fuel_cnt += (y * (y > 0.5) ).sum() + (abs( y * (y < -0.5)) ).sum()
-
-            iter_total_fuel_cnt += (x*(x>0)).sum() + (y * (y > 0.5) ).sum() + (abs( y * (y < -0.5)) ).sum()
-
-            sc = ax.scatter(x, y, marker='o', c=position_mask.mask, cmap='coolwarm')
-            # sc = ax.scatter(x, y, marker='o', c=y, cmap='coolwarm')
-            ax.add_patch(Rectangle(xy=(-1, -0.5), width=1, height=1, linewidth=1,linestyle='dotted', color='red', fill=False))
+            # iter_total_action_cnt += episode0_actions_collect_in_seed0.shape[0]
+            #
+            # x = episode0_actions_collect_in_seed0[:,0]
+            # y = episode0_actions_collect_in_seed0[:,1]
+            # fig = plt.figure()
+            # ax = fig.add_subplot(111)
+            # # sc = ax.scatter(x, y, marker='o')
+            #
+            # position_mask = np.ma.masked_where((x < 0) & ((y<0.5) & (y>-0.5)), np.arange(episode0_actions_collect_in_seed0.shape[0]))
+            #
+            # iter_x_fuel_cnt += (x * (x > 0)).sum()
+            # # iter_y_fuel_cnt +=  (y*((y>0.5) | (y<-0.5))).sum()
+            # iter_y_fuel_cnt += (y * (y > 0.5) ).sum() + (abs( y * (y < -0.5)) ).sum()
+            #
+            # iter_total_fuel_cnt += (x*(x>0)).sum() + (y * (y > 0.5) ).sum() + (abs( y * (y < -0.5)) ).sum()
+            #
+            # sc = ax.scatter(x, y, marker='o', c=position_mask.mask, cmap='coolwarm')
+            # # sc = ax.scatter(x, y, marker='o', c=y, cmap='coolwarm')
+            # ax.add_patch(Rectangle(xy=(-1, -0.5), width=1, height=1, linewidth=1,linestyle='dotted', color='red', fill=False))
 
             # plt.xlabel('Original Action Dim0')
             # plt.ylabel('Original Action Dim1')
@@ -137,20 +137,21 @@ def train(args):
             # plt.savefig(f'{visualize_path}' + f'1eps_action_collect_in_seed{seed}_mask.png')
 
             # plt.gca().xaxis.set_major_formatter(FuncFormatter(y_update_scale_value))
-            plt.tick_params(axis='both', labelsize=size2)
-            plt.legend(loc="best", fontsize=size4)  # 显示图例
-            plt.xlabel('Original Action Dim0', fontsize=size1)
-            plt.ylabel('Original Action Dim1', fontsize=size1)
-            plt.tight_layout()
-            # f.savefig('./Halfcheetah.pdf', bbox_inches='tight')
-            plt.savefig(f'{visualize_path}' + f'1eps_action_collect_in_seed{seed}_mask_1.png')
+            # plt.tick_params(axis='both', labelsize=size2)
+
+            # plt.legend(loc="best", fontsize=size4)  # 显示图例
+            # plt.xlabel('Original Action Dim0', fontsize=size1)
+            # plt.ylabel('Original Action Dim1', fontsize=size1)
+            # plt.tight_layout()
+            # # f.savefig('./Halfcheetah.pdf', bbox_inches='tight')
+            # plt.savefig(f'{visualize_path}' + f'1eps_action_collect_in_seed{seed}_mask_1.png')
+
+            episode_actions.append(episode0_actions_collect_in_seed0)
 
 
 
 
-
-
-        # episode_actions = torch.cat(episode_actions)
+        episode_actions = torch.cat(episode_actions)
 
         # # original action coverage
         # x = episode_actions[:,0]
@@ -167,24 +168,39 @@ def train(args):
         #
         #
         # # K-means action coverage
-        # for k in [3,4,8]:
-        #     estimator = KMeans(n_clusters=k)  # 构造聚类器
-        #     estimator.fit(episode_actions)  # 聚类
-        #     labels = estimator.labels_  # 获取聚类标签
-        #     cluster_centers = estimator.cluster_centers_  # 获取聚类中心点
-        #
-        #     x = episode_actions[:,0]
-        #     y = episode_actions[:,1]
-        #     fig = plt.figure()
-        #     ax = fig.add_subplot(111)
-        #     sc = ax.scatter(x, y,  c=labels, marker='o')
-        #     sc = ax.scatter(cluster_centers[:,0], cluster_centers[:,1],  c='red', marker='x')
-        #
-        #     plt.xlabel('Original Action Dim0')
-        #     plt.ylabel('Original Action Dim1')
-        #     ax.set_title('Action Coverage')
-        #     # fig.colorbar(sc)
-        #     plt.savefig(f'{visualize_path}' + f'10eps_action_kmeans_{k}.png')
+        for k in [16]:
+            estimator = KMeans(n_clusters=k)  # 构造聚类器
+            estimator.fit(episode_actions)  # 聚类
+            labels = estimator.labels_  # 获取聚类标签
+            cluster_centers = estimator.cluster_centers_  # 获取聚类中心点
+
+            x = episode_actions[:,0]
+            y = episode_actions[:,1]
+            fig = plt.figure()
+
+            ax = fig.add_subplot(111)
+            ax.set_aspect('equal', adjustable='box')
+            # ax.axis('square')
+
+            sc = ax.scatter(x, y,  c=labels, marker='o')
+            sc = ax.scatter(cluster_centers[:,0], cluster_centers[:,1],  c='red', marker='x')
+            # sc = ax.scatter(cluster_centers[:,0], cluster_centers[:,1], marker='x')
+
+            plt.scatter(x, y, c=labels, marker='o')
+            plt.scatter(cluster_centers[:, 0], cluster_centers[:, 1], c='red', marker='x')
+
+            plt.xlabel('Original Action Dim0')
+            plt.ylabel('Original Action Dim1')
+            ax.set_title('Action Coverage')
+
+            # fig.colorbar(sc)
+            plt.savefig(f'{visualize_path}' + f'20eps_action_kmeans_{k}_square.png')
+
+            # from collections import Counter
+            # for k,v in Counter(labels).items():
+            #     print(f'k: ', k, 'ratio: ', v / labels.shape[0])
+            # for i in np.unique(labels):
+            #     print(np.sum(labels == i))
 
 
 

@@ -131,7 +131,7 @@ def train(args):
         plt.subplot(2, 2, 3)
         plt.axis('off')
         img_mapping = plt.imread(
-            visualize_path + f'latent_mapping_lunarlander_obs0_k8_seed1_t{timestep}_best.png')
+            visualize_path + f'latent_mapping_lunarlander_obs0_k8_seed1_t{timestep}.png')
         plt.imshow(img_mapping)
 
         plt.subplot(2, 2, 4)
@@ -160,7 +160,7 @@ def train(args):
         #     break
 
     processed_frames_path = '/Users/puyuan/code/DI-engine/data_lunarlander_visualize/dqn_sbh_ensemble20_obs0_noema_smallnet_k8_upc50_seed1_3M/collect_in_seed1_mapping/'
-    path = os.path.join(processed_frames_path, 'lunarlander_episode_0_t-obs-rew_q-value_mapping_latent-decodeing.gif')
+    path = os.path.join(processed_frames_path, 'lunarlander_episode_0_t-obs-rew_q-value_mapping_latent-decoding.gif')
     display_frames_as_gif(processed_frames, path)
 
 

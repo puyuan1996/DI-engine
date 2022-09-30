@@ -30,7 +30,9 @@ gym_hybrid_dqn_default_config = dict(
     ),
     policy=dict(
         # TODO(pu)
-        model_path='/Users/puyuan/code/DI-engine/data_moving/dqn_sbh_ensem20_noobs_noema_smallenet_k16_vhd256_beta0.25_vlw1_seed0/ckpt/ckpt_best.pth.tar',
+        # model_path='/Users/puyuan/code/DI-engine/data_moving/dqn_sbh_ensem20_noobs_noema_smallenet_k16_vhd256_beta0.25_vlw1_seed0/ckpt/ckpt_best.pth.tar',
+        model_path='/Users/puyuan/code/DI-engine/data_moving/dqn_sbh_ensem20_noobs_noema_smallenet_k16_vhd256_beta0.25_vlw1_seed0/ckpt/iteration_70000.pth.tar',
+
         # model_path=None,
 
         # Whether to use cuda for network.
@@ -48,15 +50,15 @@ gym_hybrid_dqn_default_config = dict(
         is_ema=False,  # no use EMA
         # is_ema=True,  # use EMA TODO(pu): test ema
         # for 'Moving-v0', 'Sliding-v0'
-        # original_action_shape=dict(
-        #     action_type_shape=3,
-        #     action_args_shape=2,
-        # ),
-        # for 'HardMove-v0'
         original_action_shape=dict(
-            action_type_shape=int(2 ** num_actuators),  # 2**4=16, 2**6=64, 2**8=256, 2**10=1024
-            action_args_shape=int(num_actuators),  # 4,6,8,10
+            action_type_shape=3,
+            action_args_shape=2,
         ),
+        # for 'HardMove-v0'
+        # original_action_shape=dict(
+        #     action_type_shape=int(2 ** num_actuators),  # 2**4=16, 2**6=64, 2**8=256, 2**10=1024
+        #     action_args_shape=int(num_actuators),  # 4,6,8,10
+        # ),
         random_collect_size=int(5e4),
         warm_up_update=int(1e4),
         # debug
@@ -129,7 +131,7 @@ gym_hybrid_dqn_default_config = dict(
         # latent_action_shape=int(64),  # num of num_embeddings: K, i.e. shape of latent action
         latent_action_shape=int(16),  # num of num_embeddings: K, i.e. shape of latent action
         model=dict(
-            ensemble_num=5,  # TODO
+            ensemble_num=20,  # TODO
             obs_shape=10,
             action_shape=int(16),  # num of num_embeddings: K
             encoder_hidden_size_list=[128, 128, 64],  # small net
@@ -225,18 +227,23 @@ def train(args):
     # main_config.exp_name = 'data_hardmove_n4/dqn_sbh_ensem20_obs0_soft_noema_smallenet_k16_vhd256_beta0.25_vlw1' + '_seed' + f'{args.seed}'
 
     
-    main_config.exp_name = 'data_moving//dqn_sbh_ensem20_noobs_noema_smallenet_k16_vhd256_beta0.25_vlw1' + '_seed' + f'{args.seed}'
+    # main_config.exp_name = 'data_moving//dqn_sbh_ensem20_noobs_noema_smallenet_k16_vhd256_beta0.25_vlw1' + '_seed' + f'{args.seed}'
+    # serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,
+    #                           max_env_step=int(3e6))
 
+    visualize_path = '/Users/puyuan/code/DI-engine/data_moving/dqn_sbh_ensem20_noobs_noema_smallenet_k16_vhd256_beta0.25_vlw1_seed0/'
 
-
-    serial_pipeline_dqn_vqvae([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=args.seed,
-                              max_env_step=int(3e6))
+    # process one frame once
+    name_suffix = f'moving_k16_iter70000'
+    serial_pipeline_dqn_vqvae_visualize([copy.deepcopy(main_config), copy.deepcopy(create_config)], seed=1,
+                                        max_env_step=int(3e6), obs=None, name_suffix=name_suffix,
+                                        visualize_path=visualize_path)
 
 
 if __name__ == "__main__":
     import copy
     import argparse
-    from ding.entry import serial_pipeline_dqn_vqvae
+    from ding.entry import serial_pipeline_dqn_vqvae_visualize
 
     for seed in [0,1,2]:
         parser = argparse.ArgumentParser()

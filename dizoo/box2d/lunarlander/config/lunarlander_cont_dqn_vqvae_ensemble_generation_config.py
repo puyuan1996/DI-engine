@@ -76,8 +76,8 @@ lunarlander_dqn_default_config = dict(
 
         # TODO
         # only if obs_regularization=True, this option take effect
-        v_contrastive_regularization=False,
-        # v_contrastive_regularization=True,
+        # v_contrastive_regularization=False,
+        v_contrastive_regularization=True,
         contrastive_regularization_loss_weight=1,
 
         # vqvae_pretrain_only=True,

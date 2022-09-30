@@ -101,15 +101,15 @@ visualize_path =None,
     # visualize: analyze vqvae
     if number_of_frames is not None:
         # process <number_of_frames> frames once
-        for timestep in range( number_of_frames):
+        for timestep in range(number_of_frames):
             name_suffix_timestep = copy.deepcopy(name_suffix)
             name_suffix_timestep = name_suffix_timestep + f'_t{timestep}'
             policy.visualize_latent(save_histogram=False, save_mapping=False, save_decoding_mapping=True,
                                     obs=obs[timestep],
                                     name_suffix=name_suffix_timestep, granularity=0.01, k=8,
                                     visualize_path=visualize_path)
-            policy.visualize_latent(save_histogram=False, save_mapping=True, save_decoding_mapping=False, obs=obs[timestep],
-                                    name_suffix=name_suffix_timestep, granularity=0.01, k=8, visualize_path=visualize_path)
+            # policy.visualize_latent(save_histogram=False, save_mapping=True, save_decoding_mapping=False, obs=obs[timestep],
+            #                         name_suffix=name_suffix_timestep, granularity=0.01, k=8, visualize_path=visualize_path)
             from ding.torch_utils import Adam, to_device, to_tensor
             # if cfg.policy.cuda:
             #     obs = to_device(obs, 'cuda')
@@ -120,12 +120,17 @@ visualize_path =None,
     else:
         # process one frame once
         policy.visualize_latent(save_histogram=False, save_mapping=False, save_decoding_mapping=True, obs=obs, name_suffix= name_suffix, granularity=0.01, k=8, visualize_path =visualize_path )
-        policy.visualize_latent(save_histogram=False, save_mapping=True, save_decoding_mapping=False, obs=obs, name_suffix= name_suffix, granularity=0.01, k=8, visualize_path =visualize_path )
+        # policy.visualize_latent(save_histogram=False, save_mapping=True, save_decoding_mapping=False, obs=obs, name_suffix= name_suffix, granularity=0.01, k=8, visualize_path =visualize_path )
+
+        # for moving
+        # policy.visualize_latent(save_histogram=False, save_mapping=True, save_decoding_mapping=False, obs=obs, name_suffix= name_suffix, granularity=0.01, k=16, visualize_path =visualize_path )
+
 
         from ding.torch_utils import Adam, to_device, to_tensor
         # if cfg.policy.cuda:
         #     obs = to_device(obs, 'cuda')
-        policy._eval_model.eval()
-        with torch.no_grad():
-            output = policy._eval_model.forward(obs)
-        print('action:', output['action'])
+
+        # policy._eval_model.eval()
+        # with torch.no_grad():
+        #     output = policy._eval_model.forward(obs)
+        # print('action:', output['action'])

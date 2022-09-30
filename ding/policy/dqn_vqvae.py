@@ -946,116 +946,181 @@ class DQNVQVAEPolicy(Policy):
 
     def visualize_latent(self, save_histogram=False, save_mapping=False, save_decoding_mapping=False, obs=None,
                          name_suffix=0, granularity=0.01, k=8, visualize_path=None):
-        if save_histogram or save_mapping:
-            # i.e. to execute:
-            # action_embedding = self._get_action_embedding(data)
-            if self.cfg.action_space == 'continuous':
-                # continuous action, for lunarlander env: 2 dim cont
-                xx, yy = np.meshgrid(
-                    np.arange(-1, 1, granularity), np.arange(-1, 1, granularity)
-                )
-                cnt = int((2 / granularity)) ** 2
-                action_samples = np.array([xx.ravel(), yy.ravel()]).reshape(cnt, 2)
-
-                # continuous action, for hopper env: 3 dim cont
-                # xx, yy, zz = np.meshgrid(
-                #     np.arange(-1, 1, granularity), np.arange(-1, 1, granularity), np.arange(-1, 1, granularity)
-                # )
-                # cnt = int((2 / granularity)) ** 3
-                # action_samples = np.array([xx.ravel(), yy.ravel(), zz.ravel()]).reshape(cnt, 3)
-            elif self.cfg.action_space == 'hybrid':
-                # hybrid action, now only for gym_hybrid env: 3 dim discrete, 2 dim cont
-                xx, yy = np.meshgrid(np.arange(-1, 1, granularity), np.arange(-1, 1, granularity))
-                cnt = int((2 / granularity)) ** 2
-                action_samples = np.array([xx.ravel(), yy.ravel()]).reshape(cnt, 2)
-
-                action_samples_type1 = np.concatenate(
-                    [np.tile(np.array([1, 0, 0]), cnt).reshape(cnt, 3), action_samples], axis=-1
-                )
-                action_samples_type2 = np.concatenate(
-                    [np.tile(np.array([0, 1, 0]), cnt).reshape(cnt, 3), action_samples], axis=-1
-                )
-                action_samples_type3 = np.concatenate(
-                    [np.tile(np.array([0, 0, 1]), cnt).reshape(cnt, 3), action_samples], axis=-1
-                )
-                action_samples = np.concatenate([action_samples_type1, action_samples_type2, action_samples_type3])
-
-            quantized_index = self._vqvae_model.encode(
-                {'action': to_device(torch.Tensor(action_samples), self._device), 'obs': obs})
-
-        if save_histogram:
-            fig = plt.figure()
-
-            # Fixing bin edges
-            HIST_BINS = np.linspace(0, self._cfg.latent_action_shape - 1, self._cfg.latent_action_shape)
-
-            # the histogram of the data
-            n, bins, patches = plt.hist(
-                quantized_index.detach().cpu().numpy(), HIST_BINS, density=False, facecolor='g', alpha=0.75
-            )
-
-            plt.xlabel('Latent Action')
-            plt.ylabel('Count')
-            plt.title('Latent Action Histogram')
-            plt.grid(True)
-            # plt.show()
-
-            if isinstance(name_suffix, int):
-                plt.savefig(f'{visualize_path}'+ f'latent_histogram_{name_suffix}.png')
-                print(f'save latent_histogram_{name_suffix}.png')
-            elif isinstance(name_suffix, str):
-                plt.savefig(f'{visualize_path}'+'latent_histogram_' + name_suffix + '.png')
-                print('latent_histogram_' + name_suffix + '.png')
-        elif save_mapping:
+        if self.cfg.action_space == 'hybrid':
+            # hybrid action, now only for gym_hybrid env: 3 dim discrete, 2 dim cont
             xx, yy = np.meshgrid(np.arange(-1, 1, granularity), np.arange(-1, 1, granularity))
+            cnt = int((2 / granularity)) ** 2
+            # action_samples = np.array([xx.ravel(), yy.ravel()]).reshape(cnt, 2)
+            action_samples = np.rollaxis(np.array([xx.ravel(), yy.ravel()]),1,0)
 
-            x = xx.ravel()
-            y = yy.ravel()
-            c = quantized_index.detach().cpu().numpy()
-            fig = plt.figure()
-            ax = fig.add_subplot(111)
-            sc = ax.scatter(x, y, c=c, marker='o')
-            plt.xlabel('Original Action Dim0')
-            plt.ylabel('Original Action Dim1')
-            ax.set_title('Latent Action Mapping')
-            fig.colorbar(sc)
-            # plt.show()
-            plt.savefig(f'{visualize_path}' + f'latent_mapping_{name_suffix}.png')
+            if save_mapping:
+                for action_type in [0, 1, 2]:
+                    action_samples_ = copy.deepcopy(action_samples)
 
-        elif save_decoding_mapping:
-            # TODO: k
-            latents = to_device(torch.arange(k), self._device)
-            obs = obs.repeat(k, 1)
-            obs = to_device(obs, self._device)
-            recons_action = \
-            self._vqvae_model.decode({'quantized_index': latents, 'obs': obs, 'threshold_phase': False})[
-                'recons_action'].detach().cpu().numpy()
-            # print(recons_action.max(0), recons_action.min(0), recons_action.mean(0), recons_action.std(0))
+                    action_samples_ = {'action_type': (torch.ones(action_samples_.shape[0]) * action_type).long(),
+                                      'action_args': action_samples_}
 
-            c = latents.detach().cpu().numpy()
-            fig = plt.figure()
-            ax = fig.add_subplot(111)
 
-            sc = ax.scatter(recons_action[:, 0], recons_action[:, 1], c=c, marker='o')
+                    quantized_index = self._vqvae_model.encode({'action': to_tensor(action_samples_)})
 
-            # annotations
-            annotations = [f"{i}" for i in range(k)]
-            for i, label in enumerate(annotations):
-                plt.text(recons_action[:, 0][i], recons_action[:, 1][i], label)
+                    xx, yy = np.meshgrid(np.arange(-1, 1, granularity), np.arange(-1, 1, granularity))
 
-            plt.xlabel('Original Action Dim0')
-            plt.ylabel('Original Action Dim1')
-            ax.set_title('Latent Action Decoding')
-            fig.colorbar(sc)
-            # 设置坐标轴范围
-            plt.xlim((-1, 1))
-            plt.ylim((-1, 1))
-            plt.savefig(f'{visualize_path}' + f'latent_action_decoding_{name_suffix}.png')
-            # plt.show()
-            plt.clf()
-            plt.close('all')
+                    x = xx.ravel()
+                    y = yy.ravel()
+                    c = quantized_index.detach().cpu().numpy()
+                    fig = plt.figure()
+                    ax = fig.add_subplot(111)
+                    sc = ax.scatter(x, y, c=c, marker='o')
+                    plt.xlabel('Original Action Arguments Dim0')
+                    plt.ylabel('Original Action Arguments Dim1')
+                    ax.set_title('Latent Action Mapping')
+                    fig.colorbar(sc)
+                    # plt.show()
+                    plt.savefig(f'{visualize_path}' + f'latent_mapping_action-type{action_type}_{name_suffix}.png')
+            elif save_decoding_mapping:
+                # TODO: k
+                latents = to_device(torch.arange(k), self._device)
+                if obs is not None:
+                    obs = obs.repeat(k, 1)
+                    obs = to_device(obs, self._device)
+                    recons_action = \
+                        self._vqvae_model.decode({'quantized_index': latents, 'obs': obs, 'threshold_phase': False})[
+                            'recons_action'].detach().cpu().numpy()
+                    # print(recons_action.max(0), recons_action.min(0), recons_action.mean(0), recons_action.std(0))
+                else:
+                    recons_action = \
+                    self._vqvae_model.decode({'quantized_index': latents, 'obs': obs, 'threshold_phase': False})[
+                        'recons_action'].detach().cpu().numpy()
+
+                c = latents.detach().cpu().numpy()
+                fig = plt.figure()
+                ax = fig.add_subplot(111)
+
+                sc = ax.scatter(recons_action[:, 0], recons_action[:, 1], c=c, marker='o')
+
+                # annotations
+                annotations = [f"{i}" for i in range(k)]
+                for i, label in enumerate(annotations):
+                    plt.text(recons_action[:, 0][i], recons_action[:, 1][i], label)
+
+                plt.xlabel('Original Action Dim0')
+                plt.ylabel('Original Action Dim1')
+                ax.set_title('Latent Action Decoding')
+                fig.colorbar(sc)
+                # 设置坐标轴范围
+                plt.xlim((-1, 1))
+                plt.ylim((-1, 1))
+                plt.savefig(f'{visualize_path}' + f'latent_action_decoding_{name_suffix}.png')
+                # plt.show()
+                plt.clf()
+                plt.close('all')
+
+            return
+
         else:
-            return quantized_index.detach().cpu().numpy()
+            # continuous action, now only for lunarlander env: 2 dim cont and hopper env: 3 dim cont
+            if save_histogram or save_mapping:
+                # i.e. to execute:
+                # action_embedding = self._get_action_embedding(data)
+                if self.cfg.action_space == 'continuous':
+                    # continuous action, for lunarlander env: 2 dim cont
+                    xx, yy = np.meshgrid(
+                        np.arange(-1, 1, granularity), np.arange(-1, 1, granularity)
+                    )
+                    cnt = int((2 / granularity)) ** 2
+                    # action_samples = np.array([xx.ravel(), yy.ravel()]).reshape(cnt, 2)
+                    action_samples = np.rollaxis(np.array([xx.ravel(), yy.ravel()]), 1, 0)
+
+                    # continuous action, for hopper env: 3 dim cont
+                    # xx, yy, zz = np.meshgrid(
+                    #     np.arange(-1, 1, granularity), np.arange(-1, 1, granularity), np.arange(-1, 1, granularity)
+                    # )
+                    # cnt = int((2 / granularity)) ** 3
+                    # action_samples = np.array([xx.ravel(), yy.ravel(), zz.ravel()]).reshape(cnt, 3)
+
+                quantized_index = self._vqvae_model.encode(
+                    {'action': to_device(torch.Tensor(action_samples), self._device), 'obs': obs})
+
+
+
+            if save_histogram:
+                fig = plt.figure()
+
+                # Fixing bin edges
+                HIST_BINS = np.linspace(0, self._cfg.latent_action_shape - 1, self._cfg.latent_action_shape)
+
+                # the histogram of the data
+                n, bins, patches = plt.hist(
+                    quantized_index.detach().cpu().numpy(), HIST_BINS, density=False, facecolor='g', alpha=0.75
+                )
+
+                plt.xlabel('Latent Action')
+                plt.ylabel('Count')
+                plt.title('Latent Action Histogram')
+                plt.grid(True)
+                # plt.show()
+
+                if isinstance(name_suffix, int):
+                    plt.savefig(f'{visualize_path}'+ f'latent_histogram_{name_suffix}.png')
+                    print(f'save latent_histogram_{name_suffix}.png')
+                elif isinstance(name_suffix, str):
+                    plt.savefig(f'{visualize_path}'+'latent_histogram_' + name_suffix + '.png')
+                    print('latent_histogram_' + name_suffix + '.png')
+            elif save_mapping:
+                xx, yy = np.meshgrid(np.arange(-1, 1, granularity), np.arange(-1, 1, granularity))
+
+                x = xx.ravel()
+                y = yy.ravel()
+                c = quantized_index.detach().cpu().numpy()
+                fig = plt.figure()
+                ax = fig.add_subplot(111)
+                sc = ax.scatter(x, y, c=c, marker='o')
+                plt.xlabel('Original Action Dim0')
+                plt.ylabel('Original Action Dim1')
+                ax.set_title('Latent Action Mapping')
+                fig.colorbar(sc)
+                # plt.show()
+                plt.savefig(f'{visualize_path}' + f'latent_mapping_{name_suffix}.png')
+
+            elif save_decoding_mapping:
+                # TODO: k
+                latents = to_device(torch.arange(k), self._device)
+                if obs is not None:
+                    obs = obs.repeat(k, 1)
+                    obs = to_device(obs, self._device)
+                    recons_action = \
+                    self._vqvae_model.decode({'quantized_index': latents, 'obs': obs, 'threshold_phase': False})[
+                        'recons_action'].detach().cpu().numpy()
+                    # print(recons_action.max(0), recons_action.min(0), recons_action.mean(0), recons_action.std(0))
+                else:
+                    recons_action = self._vqvae_model.decode({'quantized_index': latents, 'obs': obs, 'threshold_phase': False})[
+                        'recons_action'].detach().cpu().numpy()
+
+
+                c = latents.detach().cpu().numpy()
+                fig = plt.figure()
+                ax = fig.add_subplot(111)
+
+                sc = ax.scatter(recons_action[:, 0], recons_action[:, 1], c=c, marker='o')
+
+                # annotations
+                annotations = [f"{i}" for i in range(k)]
+                for i, label in enumerate(annotations):
+                    plt.text(recons_action[:, 0][i], recons_action[:, 1][i], label)
+
+                plt.xlabel('Original Action Dim0')
+                plt.ylabel('Original Action Dim1')
+                ax.set_title('Latent Action Decoding')
+                fig.colorbar(sc)
+                # 设置坐标轴范围
+                plt.xlim((-1, 1))
+                plt.ylim((-1, 1))
+                plt.savefig(f'{visualize_path}' + f'latent_action_decoding_{name_suffix}.png')
+                # plt.show()
+                plt.clf()
+                plt.close('all')
+            else:
+                return quantized_index.detach().cpu().numpy()
 
     def visualize_embedding_table(self, save_dis_map=True, name=0):
         embedding_table = self._vqvae_model.vq_layer.embedding.weight.detach().cpu()
