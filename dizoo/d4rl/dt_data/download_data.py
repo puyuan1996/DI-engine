@@ -59,7 +59,8 @@ def download_d4rl_data():
             num_samples = np.sum([p['rewards'].shape[0] for p in paths])
             print(f'Number of samples collected: {num_samples}')
             print(
-                f'Trajectory returns: mean = {np.mean(returns)}, std = {np.std(returns)}, max = {np.max(returns)}, min = {np.min(returns)}')
+                f'Trajectory returns: mean = {np.mean(returns)}, std = {np.std(returns)}, max = {np.max(returns)}, min = {np.min(returns)}'
+            )
 
             with open(f'{pkl_file_path}.pkl', 'wb') as f:
                 pickle.dump(paths, f)

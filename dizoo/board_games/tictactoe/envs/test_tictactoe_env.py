@@ -24,7 +24,6 @@ class TestTicTacToeEnv:
                 else:
                     print('draw')
                 break
-
             """player 2"""
             action = env.expert_action()
             print('player 2 (computer player): ' + env.action_to_string(action))
