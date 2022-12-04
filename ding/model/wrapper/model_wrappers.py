@@ -688,6 +688,34 @@ class HybridReparamMultinomialSampleWrapper(IModelWrapper):
         return output
 
 
+class HybridReparamArgmaxSampleWrapper(IModelWrapper):
+    """
+    Overview:
+        Reparameterization sampler coupled with multinomial sample used in collector_model
+        to help balance exploration and exploitation.
+        In hybrid action space, i.e.{'action_type': discrete, 'action_args', continuous}
+    Interfaces:
+        forward
+    """
+
+    def forward(self, *args, **kwargs):
+        output = self._model.forward(*args, **kwargs)
+        assert isinstance(output, dict), "model output must be dict, but find {}".format(type(output))
+
+        logit = output['logit']  # logit: {'action_type': action_type_logit, 'action_args': action_args_logit}
+        # discrete part
+        action_type_logit = logit['action_type']
+        action_type = action_type_logit.argmax(dim=-1)
+
+        # continuous part
+        mu, sigma = logit['action_args']['mu'].gather(1, action_type.unsqueeze(-1)), logit['action_args']['sigma'].gather(1, action_type.unsqueeze(-1))
+        dist = Independent(Normal(mu, sigma), 1)
+        action_args = dist.sample()
+        action = {'action_type': action_type, 'action_args': action_args}
+        output['action'] = action
+        return output
+
+
 class HybridDeterministicArgmaxSampleWrapper(IModelWrapper):
     """
     Overview:
@@ -898,6 +926,7 @@ wrapper_name_map = {
     'hybrid_eps_greedy_sample': HybridEpsGreedySampleWrapper,
     'hybrid_eps_greedy_multinomial_sample': HybridEpsGreedyMultinomialSampleWrapper,
     'hybrid_reparam_multinomial_sample': HybridReparamMultinomialSampleWrapper,
+    'hybrid_reparam_argmax_sample': HybridReparamArgmaxSampleWrapper,
     'hybrid_deterministic_argmax_sample': HybridDeterministicArgmaxSampleWrapper,
     'multinomial_sample': MultinomialSampleWrapper,
     'action_noise': ActionNoiseWrapper,

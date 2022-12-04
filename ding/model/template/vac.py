@@ -1,12 +1,15 @@
+from copy import deepcopy
 from typing import Union, Dict, Optional
-from easydict import EasyDict
+
+import numpy as np
 import torch
 import torch.nn as nn
-from copy import deepcopy
+from easydict import EasyDict
+
 from ding.utils import SequenceType, squeeze, MODEL_REGISTRY
 from ..common import ReparameterizationHead, RegressionHead, DiscreteHead, MultiHead, \
     FCEncoder, ConvEncoder, IMPALAConvEncoder
-import numpy as np
+
 
 @MODEL_REGISTRY.register('vac')
 class VAC(nn.Module):
@@ -19,23 +22,23 @@ class VAC(nn.Module):
     mode = ['compute_actor', 'compute_critic', 'compute_actor_critic', 'temp_eval_ag_d2c', 'temp_eval_ag_c2d']
 
     def __init__(
-        self,
-        obs_shape: Union[int, SequenceType],
-        action_shape: Union[int, SequenceType, EasyDict],
-        action_space: str = 'discrete',
-        share_encoder: bool = True,
-        encoder_hidden_size_list: SequenceType = [128, 128, 64],
-        actor_head_hidden_size: int = 64,
-        actor_head_layer_num: int = 1,
-        critic_head_hidden_size: int = 64,
-        critic_head_layer_num: int = 1,
-        activation: Optional[nn.Module] = nn.ReLU(),
-        norm_type: Optional[str] = None,
-        sigma_type: Optional[str] = 'independent',
-        fixed_sigma_value: Optional[int] = 0.3,
-        bound_type: Optional[str] = None,
-        encoder: Optional[torch.nn.Module] = None,
-        impala_cnn_encoder: bool = False,
+            self,
+            obs_shape: Union[int, SequenceType],
+            action_shape: Union[int, SequenceType, EasyDict],
+            action_space: str = 'discrete',
+            share_encoder: bool = True,
+            encoder_hidden_size_list: SequenceType = [128, 128, 64],
+            actor_head_hidden_size: int = 64,
+            actor_head_layer_num: int = 1,
+            critic_head_hidden_size: int = 64,
+            critic_head_layer_num: int = 1,
+            activation: Optional[nn.Module] = nn.ReLU(),
+            norm_type: Optional[str] = None,
+            sigma_type: Optional[str] = 'independent',
+            fixed_sigma_value: Optional[int] = 0.3,
+            bound_type: Optional[str] = None,
+            encoder: Optional[torch.nn.Module] = None,
+            impala_cnn_encoder: bool = False,
     ) -> None:
         r"""
         Overview:
@@ -87,7 +90,7 @@ class VAC(nn.Module):
                 else:
                     raise RuntimeError(
                         "not support obs_shape for pre-defined encoder: {}, please customize your own encoder".
-                        format(obs_shape)
+                            format(obs_shape)
                     )
 
         if self.share_encoder:
@@ -315,25 +318,25 @@ class VAC(nn.Module):
             sigma = []
             for i, selected_action in enumerate(selected_actions):
                 if selected_action == 0:
-                    # choose 0-accl
+                    # choose 0: accelerate
                     temp_arg = self.actor_head[1](x[i])
-                    temp_mu = [temp_arg['mu'][0], torch.tensor(0, dtype=torch.float)]
-                    temp_sigma = [temp_arg['sigma'][0], torch.tensor(0, dtype=torch.float)]
+                    temp_mu = [temp_arg['mu'][0], torch.tensor(1e-9, dtype=torch.float), torch.tensor(1e-9, dtype=torch.float)]
+                    temp_sigma = [temp_arg['sigma'][0], torch.tensor(1e-9, dtype=torch.float),  torch.tensor(1e-9, dtype=torch.float)]
                 elif selected_action == 1:
-                    # choose 1-turn
+                    # choose 1: turn
                     temp_arg = self.actor_head[2](x[i])
-                    temp_mu = [torch.tensor(0, dtype=torch.float), temp_arg['mu'][0]]
-                    temp_sigma = [torch.tensor(0, dtype=torch.float), temp_arg['sigma'][0]]
+                    temp_mu = [torch.tensor(1e-9, dtype=torch.float), temp_arg['mu'][0],  torch.tensor(1e-9, dtype=torch.float)]
+                    temp_sigma = [torch.tensor(1e-9, dtype=torch.float), temp_arg['sigma'][0],  torch.tensor(1e-9, dtype=torch.float)]
                 else:
                     # choose break
-                    temp_mu = [torch.tensor(0, dtype=torch.float), torch.tensor(0, dtype=torch.float)]
-                    temp_sigma = [torch.tensor(0), torch.tensor(0, dtype=torch.float)]
+                    temp_mu = [torch.tensor(1e-9, dtype=torch.float), torch.tensor(1e-9, dtype=torch.float),  torch.tensor(1e-9, dtype=torch.float)]
+                    temp_sigma = [torch.tensor(1e-9), torch.tensor(1e-9, dtype=torch.float), torch.tensor(1e-9, dtype=torch.float)]
                     action_args = None
                 mus.append(temp_mu)
                 sigma.append(temp_sigma)
             action_args = {'mu': torch.Tensor(mus), 'sigma': torch.Tensor(sigma)}
             return {'logit': {'action_type': action_type['logit'], 'action_args': action_args}}
-        
+
     def temp_eval_ag_d2c(self, x: torch.Tensor):
         if self.share_encoder:
             x = self.encoder(x)
@@ -341,7 +344,7 @@ class VAC(nn.Module):
             x = self.actor_encoder(x)
         bs = x.shape[0]
         # action_type_logits = torch.Tensor(np.repeat([[0, 1, 0]], bs, axis=0))    # choose 'turn'
-        action_type_logits = torch.Tensor(np.repeat([[1, 0, 0]], bs, axis=0))    # choose 'accl'
+        action_type_logits = torch.Tensor(np.repeat([[1, 0, 0]], bs, axis=0))  # choose 'accl'
         action_type = {}
         action_type['logit'] = action_type_logits
         action_type_no_grad = action_type['logit'].detach()
@@ -452,10 +455,31 @@ class VAC(nn.Module):
             # m_actor_embedding = torch.cat([actor_embedding, action_type_no_grad, dim=1)
             # action_args = self.actor_head[1](m_actor_embedding)
 
-            action_args = self.actor_head[1](actor_embedding)
-            action_args_mu_no_grad = action_args['mu'].detach()
-            action_args_sigma_no_grad = action_args['sigma'].detach()
-            m_actor_embedding = torch.cat([actor_embedding, action_args_mu_no_grad, action_args_sigma_no_grad], dim=1)
-            action_type = self.actor_head[0](m_actor_embedding)
+            # for two head
+            action_type = self.actor_head[0](actor_embedding)
+            action_type_logit = action_type['logit']
+            selected_actions = action_type_logit.argmax(dim=-1)
+            mus = []
+            sigma = []
+            for i, selected_action in enumerate(selected_actions):
+                if selected_action == 0:
+                    # choose 0: accelerate
+                    temp_arg = self.actor_head[1](actor_embedding[i])
+                    temp_mu = [temp_arg['mu'][0], torch.tensor(1e-9, dtype=torch.float),  torch.tensor(1e-9, dtype=torch.float)]
+                    temp_sigma = [temp_arg['sigma'][0], torch.tensor(1e-9, dtype=torch.float),  torch.tensor(1e-9, dtype=torch.float)]
+                elif selected_action == 1:
+                    # choose 1: turn
+                    temp_arg = self.actor_head[2](actor_embedding[i])
+                    temp_mu = [torch.tensor(1e-9, dtype=torch.float),  temp_arg['mu'][0], torch.tensor(1e-9, dtype=torch.float)]
+                    temp_sigma = [torch.tensor(1e-9, dtype=torch.float),  temp_arg['sigma'][0],torch.tensor(1e-9, dtype=torch.float)]
+                else:
+                    # choose break
+                    temp_mu = [torch.tensor(1e-9, dtype=torch.float),  torch.tensor(1e-9, dtype=torch.float), torch.tensor(1e-9, dtype=torch.float)]
+                    temp_sigma = [torch.tensor(1e-9),  torch.tensor(1e-9, dtype=torch.float), torch.tensor(1e-9, dtype=torch.float)]
+                    action_args = None
+                mus.append(temp_mu)
+                sigma.append(temp_sigma)
+            action_args = {'mu': torch.Tensor(mus), 'sigma': torch.Tensor(sigma)}
+
 
             return {'logit': {'action_type': action_type['logit'], 'action_args': action_args}, 'value': value}

@@ -183,7 +183,10 @@ def ppo_error_continuous(
         dist_old = Independent(Normal(mu_sigma_old['mu'].unsqueeze(-1), mu_sigma_old['sigma'].unsqueeze(-1)), 1)
     else:
         dist_old = Independent(Normal(mu_sigma_old['mu'], mu_sigma_old['sigma']), 1)
-    logp_new = dist_new.log_prob(action)
+    try:
+        logp_new = dist_new.log_prob(action)
+    except:
+        print("here")
     logp_old = dist_old.log_prob(action)
     entropy_loss = (dist_new.entropy() * weight).mean()
     # policy_loss

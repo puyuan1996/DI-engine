@@ -3,7 +3,6 @@ import os
 from typing import Dict, Optional
 
 import gym
-import gym_hybrid
 import matplotlib.pyplot as plt
 import numpy as np
 from easydict import EasyDict
@@ -13,6 +12,7 @@ from ding.envs import BaseEnv, BaseEnvTimestep
 from ding.envs.common import affine_transform
 from ding.torch_utils import to_ndarray
 from ding.utils import ENV_REGISTRY
+import gym_hybrid
 
 
 @ENV_REGISTRY.register('gym_hybrid')
@@ -53,7 +53,7 @@ class GymHybridEnv(BaseEnv):
             self._observation_space = self._env.observation_space
             self._action_space = self._env.action_space
             self._reward_space = gym.spaces.Box(
-                low=self._env.reward_range[0], high=self._env.reward_range[1], shape=(1, ), dtype=np.float32
+                low=self._env.reward_range[0], high=self._env.reward_range[1], shape=(1,), dtype=np.float32
             )
             self._init_flag = True
         if hasattr(self, '_seed') and hasattr(self, '_dynamic_seed') and self._dynamic_seed:
@@ -83,11 +83,23 @@ class GymHybridEnv(BaseEnv):
                     action['action_type'], [affine_transform(i, min_val=-1, max_val=1) for i in action['action_args']]
                 ]
             else:
-                # acceleration_value.
-                action['action_args'][0] = affine_transform(action['action_args'][0], min_val=0, max_val=1)
-                # rotation_value. Following line can be omitted, because in the affine_transform function,
-                # we have already done the clip(-1,1) operation
-                action['action_args'][1] = affine_transform(action['action_args'][1], min_val=-1, max_val=1)
+                # print("action['action_args']:", action['action_args'])
+                if action['action_args'].shape[0] == 3:
+                    # acceleration_value.
+                    action['action_args'][0] = affine_transform(action['action_args'][0], min_val=0, max_val=1)
+                    # rotation_value. Following line can be omitted, because in the affine_transform function,
+                    # we have already done the clip(-1,1) operation
+                    action['action_args'][1] = affine_transform(action['action_args'][1], min_val=-1, max_val=1)
+                elif action['action_args'].shape[0] == 1 and action['action_type'] == 0:
+                    # acceleration_value.
+                    action['action_args'][0] = affine_transform(action['action_args'][0], min_val=0, max_val=1)
+                    action['action_args'] = np.array(list(action['action_args']) + [0, 0])  # pad null value
+                elif action['action_args'].shape[0] == 1 and action['action_type'] == 1:
+                    # rotation_value. Following line can be omitted, because in the affine_transform function,
+                    # we have already done the clip(-1,1) operation
+                    action['action_args'][0] = affine_transform(action['action_args'][0], min_val=-1, max_val=1)
+                    action['action_args'] = np.array([0] + list(action['action_args']) + [0])  # pad null value
+
                 action = [action['action_type'], action['action_args']]
         if self._save_replay_gif:
             self._frames.append(self._env.render(mode='rgb_array'))
@@ -110,13 +122,13 @@ class GymHybridEnv(BaseEnv):
                 if len(obs[i].shape) == 0:
                     obs[i] = np.array([obs[i]])
             obs = np.concatenate(obs)
-        assert isinstance(obs, np.ndarray) and obs.shape == (10, )
+        assert isinstance(obs, np.ndarray) and obs.shape == (10,)
         obs = obs.astype(np.float32)
 
         rew = to_ndarray([rew])  # wrapped to be transferred to a numpy array with shape (1,)
         if isinstance(rew, list):
             rew = rew[0]
-        assert isinstance(rew, np.ndarray) and rew.shape == (1, )
+        assert isinstance(rew, np.ndarray) and rew.shape == (1,)
         info['action_args_mask'] = np.array([[1, 0], [0, 1], [0, 0]])
         return BaseEnvTimestep(obs, rew, done, info)
 

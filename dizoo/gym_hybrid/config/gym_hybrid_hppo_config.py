@@ -58,6 +58,7 @@ gym_hybrid_hppo_create_config = dict(
         import_names=['dizoo.gym_hybrid.envs.gym_hybrid_env'],
     ),
     env_manager=dict(type='subprocess'),
+    # env_manager=dict(type='base'),
     policy=dict(type='ppo'),
 )
 gym_hybrid_hppo_create_config = EasyDict(gym_hybrid_hppo_create_config)
@@ -66,5 +67,6 @@ create_config = gym_hybrid_hppo_create_config
 if __name__ == "__main__":
     # or you can enter `ding -m serial -c gym_hybrid_hppo_config.py -s 0`
     from ding.entry import serial_pipeline_onpolicy
-    main_config.exp_name = "testfile/test_gym_hybrid_hppo_seed2_ag_c2d_ng"
-    serial_pipeline_onpolicy([main_config, create_config], seed=2, max_env_step=int(3e6))
+    # main_config.exp_name = "testfile/test_gym_hybrid_hppo_seed2_ag_c2d_ng"
+    main_config.exp_name = "dev/gym_hybrid_hppo_seed0_2head"
+    serial_pipeline_onpolicy([main_config, create_config], seed=0, max_env_step=int(3e6))
