@@ -5,10 +5,14 @@ gym_hybrid_hppo_config = dict(
     env=dict(
         collector_env_num=8,
         evaluator_env_num=5,
+        n_evaluator_episode=5,
+        # debug
+        # collector_env_num=2,
+        # evaluator_env_num=2,
+        # n_evaluator_episode=2,
         # (bool) Scale output action into legal range, usually [-1, 1].
         act_scale=True,
         env_id='Moving-v0',  # ['Sliding-v0', 'Moving-v0']
-        n_evaluator_episode=5,
         stop_value=1e6,
         save_replay_gif=False,
         replay_path_gif=None,
@@ -67,6 +71,5 @@ create_config = gym_hybrid_hppo_create_config
 if __name__ == "__main__":
     # or you can enter `ding -m serial -c gym_hybrid_hppo_config.py -s 0`
     from ding.entry import serial_pipeline_onpolicy
-    # main_config.exp_name = "testfile/test_gym_hybrid_hppo_seed2_ag_c2d_ng"
     main_config.exp_name = "dev/gym_hybrid_hppo_seed0_2head"
     serial_pipeline_onpolicy([main_config, create_config], seed=0, max_env_step=int(3e6))

@@ -683,12 +683,11 @@ class HybridReparamMultinomialSampleWrapper(IModelWrapper):
         mu, sigma = logit['action_args']['mu'], logit['action_args']['sigma']
         dist = Independent(Normal(mu, sigma), 1)
         action_args = dist.sample()
-        action = {'action_type': action_type, 'action_args': action_args}
-        output['action'] = action
+        output['action'] = {'action_type': action_type, 'action_args': action_args}
         return output
 
 
-class HybridReparamArgmaxSampleWrapper(IModelWrapper):
+class HybridReparamSampleWrapper(IModelWrapper):
     """
     Overview:
         Reparameterization sampler coupled with multinomial sample used in collector_model
@@ -705,14 +704,19 @@ class HybridReparamArgmaxSampleWrapper(IModelWrapper):
         logit = output['logit']  # logit: {'action_type': action_type_logit, 'action_args': action_args_logit}
         # discrete part
         action_type_logit = logit['action_type']
-        action_type = action_type_logit.argmax(dim=-1)
+        # action_type = action_type_logit.argmax(dim=-1)
+
+        prob = torch.softmax(action_type_logit, dim=-1)
+        action_type = torch.multinomial(prob, 1, replacement=False)
 
         # continuous part
-        mu, sigma = logit['action_args']['mu'].gather(1, action_type.unsqueeze(-1)), logit['action_args']['sigma'].gather(1, action_type.unsqueeze(-1))
+        # NOTE: if action_type = 2, means break, we don't have mu and sigma, so we give a fake mu and sigma of action_type = 0
+        fake_action_type = torch.where(action_type == 2, torch.zeros_like(action_type), action_type)
+
+        mu, sigma = logit['action_args']['mu'].gather(1, fake_action_type), logit['action_args']['sigma'].gather(1, fake_action_type)
         dist = Independent(Normal(mu, sigma), 1)
         action_args = dist.sample()
-        action = {'action_type': action_type, 'action_args': action_args}
-        output['action'] = action
+        output['action'] = {'action_type': action_type, 'action_args': action_args}
         return output
 
 
@@ -926,7 +930,7 @@ wrapper_name_map = {
     'hybrid_eps_greedy_sample': HybridEpsGreedySampleWrapper,
     'hybrid_eps_greedy_multinomial_sample': HybridEpsGreedyMultinomialSampleWrapper,
     'hybrid_reparam_multinomial_sample': HybridReparamMultinomialSampleWrapper,
-    'hybrid_reparam_argmax_sample': HybridReparamArgmaxSampleWrapper,
+    'hybrid_reparam_sample': HybridReparamSampleWrapper,
     'hybrid_deterministic_argmax_sample': HybridDeterministicArgmaxSampleWrapper,
     'multinomial_sample': MultinomialSampleWrapper,
     'action_noise': ActionNoiseWrapper,

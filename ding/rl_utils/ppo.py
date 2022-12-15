@@ -178,15 +178,32 @@ def ppo_error_continuous(
     if weight is None:
         weight = torch.ones_like(adv)
 
-    dist_new = Independent(Normal(mu_sigma_new['mu'], mu_sigma_new['sigma']), 1)
-    if len(mu_sigma_old['mu'].shape) == 1:
+    if len(mu_sigma_new['mu'].shape) == 1:
+        dist_new = Independent(Normal(mu_sigma_new['mu'].unsqueeze(-1), mu_sigma_new['sigma'].unsqueeze(-1)), 1)
+    else:
+        dist_new = Independent(Normal(mu_sigma_new['mu'], mu_sigma_new['sigma']), 1)
+    mask = None
+    if isinstance(action, dict):
+        # the action_type in data
+        action_type = action['action_type']
+
+        # continuous part
+        # NOTE: if action_type = 2, means break, we don't have mu and sigma, so we give a fake mu and sigma of action_type = 0
+        fake_action_type = torch.where(action_type == 2, torch.zeros_like(action_type), action_type)
+        # NOTE: we mask the action_type = 2 related loss
+        mask = torch.where(action_type == 2, torch.zeros_like(action_type), torch.ones_like(action_type))
+        weight = weight * mask
+
+        # the action_args in data
+        action = action['action_args']
+        mu_old, sigma_old = mu_sigma_old['mu'].gather(1, fake_action_type.unsqueeze(-1)), mu_sigma_old['sigma'].gather(1, fake_action_type.unsqueeze(-1))
+        dist_old = Independent(Normal(mu_old, sigma_old), 1)
+    elif len(mu_sigma_old['mu'].shape) == 1:
         dist_old = Independent(Normal(mu_sigma_old['mu'].unsqueeze(-1), mu_sigma_old['sigma'].unsqueeze(-1)), 1)
     else:
         dist_old = Independent(Normal(mu_sigma_old['mu'], mu_sigma_old['sigma']), 1)
-    try:
-        logp_new = dist_new.log_prob(action)
-    except:
-        print("here")
+
+    logp_new = dist_new.log_prob(action)
     logp_old = dist_old.log_prob(action)
     entropy_loss = (dist_new.entropy() * weight).mean()
     # policy_loss
@@ -198,9 +215,14 @@ def ppo_error_continuous(
     else:
         policy_loss = (-torch.min(surr1, surr2) * weight).mean()
     with torch.no_grad():
-        approx_kl = (logp_old - logp_new).mean().item()
-        clipped = ratio.gt(1 + clip_ratio) | ratio.lt(1 - clip_ratio)
-        clipfrac = torch.as_tensor(clipped).float().mean().item()
+        if mask is not None:
+            approx_kl = ((logp_old - logp_new) * mask).mean().item()
+            clipped = ratio.gt(1 + clip_ratio) | ratio.lt(1 - clip_ratio)
+            clipfrac = (torch.as_tensor(clipped).float() * mask).mean().item()
+        else:
+            approx_kl = (logp_old - logp_new).mean().item()
+            clipped = ratio.gt(1 + clip_ratio) | ratio.lt(1 - clip_ratio)
+            clipfrac = torch.as_tensor(clipped).float().mean().item()
     # value_loss
     if use_value_clip:
         value_clip = value_old + (value_new - value_old).clamp(-clip_ratio, clip_ratio)

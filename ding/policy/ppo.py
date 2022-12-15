@@ -167,8 +167,8 @@ class PPOPolicy(Policy):
         for epoch in range(self._cfg.learn.epoch_per_collect):
             if self._recompute_adv:  # calculate new value using the new updated value network
                 with torch.no_grad():
-                    value = self._learn_model.forward(data['obs'], mode='compute_critic')['value']
-                    next_value = self._learn_model.forward(data['next_obs'], mode='compute_critic')['value']
+                    value = self._learn_model.forward(data['obs'], select_mode='train', mode='compute_critic')['value']
+                    next_value = self._learn_model.forward(data['next_obs'], select_mode='train', mode='compute_critic')['value']
                     if self._value_norm:
                         value *= self._running_mean_std.std
                         next_value *= self._running_mean_std.std
@@ -196,7 +196,7 @@ class PPOPolicy(Policy):
                     data['return'] = data['adv'] + data['value']
 
             for batch in split_data_generator(data, self._cfg.learn.batch_size, shuffle=True):
-                output = self._learn_model.forward(batch['obs'], mode='compute_actor_critic')
+                output = self._learn_model.forward(batch['obs'], select_mode='train', action_types=batch['action']['action_type'], mode='compute_actor_critic')
                 adv = batch['adv']
                 if self._adv_norm:
                     # Normalize advantage in a train_batch
@@ -228,91 +228,29 @@ class PPOPolicy(Policy):
                     #     output['logit']['action_args'], batch['logit']['action_args'], batch['action']['action_args'],
                     #     output['value'], batch['value'], adv, batch['return'], batch['weight']
                     # )
-                    # ppo_continuous_loss, ppo_continuous_info = ppo_error_continuous(
-                    #     ppo_continuous_batch, self._clip_ratio
-                    # )
 
-                    output_action_type = output['logit']['action_type'].argmax(dim=-1)
-                    batch_action_type = batch['action']['action_type']
+                    # batch['action']['action_type']
 
-                    # find the index where have different action type between policy output and data
-                    different_action_type_index = (output_action_type != batch_action_type).nonzero(as_tuple=False)
-
-                    # find the index where the action=2, i.e. the break action, which don't have action arguments
-                    action_type_2_index = (batch['action']['action_type'] == 2).nonzero(as_tuple=False)
-
-                    def th_delete(tensor, indices):
-                        mask = torch.ones(tensor.numel(), dtype=torch.bool)
-                        try:
-                            mask[indices] = False
-                        except:
-                            pass
-                        return tensor[mask]
-
-                    valid_index = torch.arange(output['value'].shape[0])
-                    valid_index = th_delete(valid_index, action_type_2_index.squeeze(0))
-                    valid_index = th_delete(valid_index, different_action_type_index.squeeze(0)).unsqueeze(-1)
-
-                    #### obtain the corresponding action logits ###
-                    #  batch['action']['action_type']: (batch_size,)
-                    batch['logit']['action_args']['mu'] = batch['logit']['action_args']['mu'].gather(1, batch['action']['action_type'].unsqueeze(-1))
-                    batch['logit']['action_args']['sigma'] = batch['logit']['action_args']['sigma'].gather(1, batch['action']['action_type'].unsqueeze(-1))
-
-                    output['logit']['action_args']['mu'] = output['logit']['action_args']['mu'].gather(1, batch['action']['action_type'].unsqueeze(-1))
-                    output['logit']['action_args']['sigma'] = output['logit']['action_args']['sigma'].gather(1, batch['action']['action_type'].unsqueeze(-1))
-
-                    #### obtain the valid train data ###
-                    #  batch['action']['action_type']: (batch_size,)
-                    if valid_index.shape[0] > 0:
-                        batch['logit']['action_args']['mu'] = batch['logit']['action_args']['mu'].gather(0, valid_index)
-                        batch['logit']['action_args']['sigma'] = batch['logit']['action_args']['sigma'].gather(0, valid_index)
-
-                        output['logit']['action_args']['mu'] = output['logit']['action_args']['mu'].gather(0, valid_index)
-                        output['logit']['action_args']['sigma'] = output['logit']['action_args']['sigma'].gather(0, valid_index)
-
-                        batch['action']['action_args'] = batch['action']['action_args'].gather(0, valid_index.squeeze(-1))
-                        # output['value'] = output['value'].gather(0, valid_index.squeeze(-1))
-                        # batch['value'] = batch['value'].gather(0, valid_index.squeeze(-1))
-                        adv = adv.gather(0, valid_index.squeeze(-1))
-                        # batch['return'] = batch['return'].gather(0, valid_index.squeeze(-1))
-
-                    ppo_policy_continuous_batch = ppo_policy_data(
-                        output['logit']['action_args'], batch['logit']['action_args'], batch['action']['action_args'], adv, batch['weight'])
-
-                    value_data = ppo_value_data(output['value'], batch['value'], batch['return'], batch['weight'])
-                    value_loss = ppo_value_error(value_data, self._clip_ratio)
-
-                    if valid_index.shape[0] == 0:
-                        print('='*20)
-                        print('valid_index.shape[0] == 0')
-                        print('='*20)
-                        # sum discrete and continuous loss
-                        ppo_loss = namedtuple('ppo_loss', ['policy_loss', 'value_loss', 'entropy_loss'])(
-                            ppo_discrete_loss.policy_loss, value_loss,
-                            ppo_discrete_loss.entropy_loss
-                        )
-                        ppo_info = type(ppo_discrete_info)(
-                             ppo_discrete_info.approx_kl,
-                             ppo_discrete_info.clipfrac
-                        )
-                    else:
-                        ppo_continuous_loss, ppo_continuous_info = ppo_policy_error_continuous(
-                            ppo_policy_continuous_batch, self._clip_ratio
-
-                        )
-
-                        # sum discrete and continuous loss
-                        ppo_loss = namedtuple('ppo_loss', ['policy_loss', 'value_loss', 'entropy_loss'])(
-                            ppo_continuous_loss.policy_loss + ppo_discrete_loss.policy_loss, value_loss,
-                            ppo_continuous_loss.entropy_loss + ppo_discrete_loss.entropy_loss
-                        )
-                        ppo_info = type(ppo_discrete_info)(
-                            max(ppo_continuous_info.approx_kl, ppo_discrete_info.approx_kl),
-                            max(ppo_continuous_info.clipfrac, ppo_discrete_info.clipfrac)
-                        )
-
+                    ppo_continuous_batch = ppo_data(
+                        output['logit']['action_args'], batch['logit']['action_args'], {'action_args': batch['action']['action_args'], 'action_type': batch['action']['action_type']},
+                        output['value'], batch['value'], adv, batch['return'], batch['weight']
+                    )
+                    ppo_continuous_loss, ppo_continuous_info = ppo_error_continuous(
+                        ppo_continuous_batch, self._clip_ratio
+                    )
+                    # sum discrete and continuous loss
+                    ppo_loss = type(ppo_continuous_loss)(
+                        ppo_continuous_loss.policy_loss + ppo_discrete_loss.policy_loss, ppo_continuous_loss.value_loss,
+                        ppo_continuous_loss.entropy_loss + ppo_discrete_loss.entropy_loss
+                    )
+                    ppo_info = type(ppo_continuous_info)(
+                        max(ppo_continuous_info.approx_kl, ppo_discrete_info.approx_kl),
+                        max(ppo_continuous_info.clipfrac, ppo_discrete_info.clipfrac)
+                    )
                 wv, we = self._value_weight, self._entropy_weight
                 total_loss = ppo_loss.policy_loss + wv * ppo_loss.value_loss - we * ppo_loss.entropy_loss
+
+
 
                 self._optimizer.zero_grad()
                 total_loss.backward()
@@ -366,7 +304,7 @@ class PPOPolicy(Policy):
             self._collect_model = model_wrap(self._model, wrapper_name='multinomial_sample')
         elif self._action_space == 'hybrid':
             # self._collect_model = model_wrap(self._model, wrapper_name='hybrid_reparam_multinomial_sample')
-            self._collect_model = model_wrap(self._model, wrapper_name='hybrid_reparam_argmax_sample')
+            self._collect_model = model_wrap(self._model, wrapper_name='hybrid_reparam_sample')
 
         self._collect_model.reset()
         self._gamma = self._cfg.collect.discount_factor
@@ -391,7 +329,7 @@ class PPOPolicy(Policy):
             data = to_device(data, self._device)
         self._collect_model.eval()
         with torch.no_grad():
-            output = self._collect_model.forward(data, mode='compute_actor_critic')
+            output = self._collect_model.forward(data, select_mode='collect', mode='compute_actor_critic')
         if self._cuda:
             output = to_device(output, 'cpu')
         output = default_decollate(output)
@@ -500,9 +438,7 @@ class PPOPolicy(Policy):
             data = to_device(data, self._device)
         self._eval_model.eval()
         with torch.no_grad():
-            output = self._eval_model.forward(data, mode='compute_actor')
-            # output = self._eval_model.forward(data, mode='temp_eval_ag_d2c')
-            # output = self._eval_model.forward(data, mode='temp_eval_ag_c2d')
+            output = self._eval_model.forward(data, select_mode='eval', mode='compute_actor')
         if self._cuda:
             output = to_device(output, 'cpu')
         output = default_decollate(output)

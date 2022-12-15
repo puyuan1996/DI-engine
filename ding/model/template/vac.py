@@ -1,7 +1,6 @@
 from copy import deepcopy
 from typing import Union, Dict, Optional
 
-import numpy as np
 import torch
 import torch.nn as nn
 from easydict import EasyDict
@@ -214,7 +213,8 @@ class VAC(nn.Module):
         self.actor = nn.ModuleList(self.actor)
         self.critic = nn.ModuleList(self.critic)
 
-    def forward(self, inputs: Union[torch.Tensor, Dict], mode: str) -> Dict:
+    def forward(self, inputs: Union[torch.Tensor, Dict], select_mode='collect', action_types=None,
+                mode: str = 'compute_actor_critic') -> Dict:
         r"""
         Overview:
             Use encoded embedding tensor to predict output.
@@ -261,9 +261,9 @@ class VAC(nn.Module):
 
         """
         assert mode in self.mode, "not support forward mode: {}/{}".format(mode, self.mode)
-        return getattr(self, mode)(inputs)
+        return getattr(self, mode)(inputs, select_mode, action_types)
 
-    def compute_actor(self, x: torch.Tensor) -> Dict:
+    def compute_actor(self, x: torch.Tensor, select_mode='collect', action_types=None) -> Dict:
         r"""
         Overview:
             Execute parameter updates with ``'compute_actor'`` mode
@@ -288,89 +288,93 @@ class VAC(nn.Module):
             >>> assert actor_outputs['action'].shape == torch.Size([4, 64])
         """
         if self.share_encoder:
-            x = self.encoder(x)
+            actor_embedding = self.encoder(x)
         else:
-            x = self.actor_encoder(x)
+            actor_embedding = self.actor_encoder(x)
+
 
         if self.action_space == 'discrete':
-            return self.actor_head(x)
+            return self.actor_head(actor_embedding )
         elif self.action_space == 'continuous':
-            x = self.actor_head(x)  # mu, sigma
+            x = self.actor_head(actor_embedding )  # mu, sigma
             return {'logit': x}
         elif self.action_space == 'hybrid':
-            # action_type = self.actor_head[0](x)
-            # action_type_no_grad = action_type['logit'].detach()
-            # mx = torch.cat([x, action_type_no_grad], dim=1)
-            # action_args = self.actor_head[1](mx)
-
-            # c2d
-            # action_args = self.actor_head[1](x)
-            # action_args_mu_no_grad = action_args['mu'].detach()
-            # action_args_sigma_no_grad = action_args['sigma'].detach()
-            # mx = torch.cat([x, action_args_mu_no_grad, action_args_sigma_no_grad], dim=1)
-            # action_type = self.actor_head[0](mx)
-
             # for two head
-            action_type = self.actor_head[0](x)
+            action_type = self.actor_head[0](actor_embedding )
             action_type_logit = action_type['logit']
-            selected_actions = action_type_logit.argmax(dim=-1)
-            mus = []
-            sigma = []
-            for i, selected_action in enumerate(selected_actions):
-                if selected_action == 0:
-                    # choose 0: accelerate
-                    temp_arg = self.actor_head[1](x[i])
-                    temp_mu = [temp_arg['mu'][0], torch.tensor(1e-9, dtype=torch.float), torch.tensor(1e-9, dtype=torch.float)]
-                    temp_sigma = [temp_arg['sigma'][0], torch.tensor(1e-9, dtype=torch.float),  torch.tensor(1e-9, dtype=torch.float)]
-                elif selected_action == 1:
-                    # choose 1: turn
-                    temp_arg = self.actor_head[2](x[i])
-                    temp_mu = [torch.tensor(1e-9, dtype=torch.float), temp_arg['mu'][0],  torch.tensor(1e-9, dtype=torch.float)]
-                    temp_sigma = [torch.tensor(1e-9, dtype=torch.float), temp_arg['sigma'][0],  torch.tensor(1e-9, dtype=torch.float)]
-                else:
-                    # choose break
-                    temp_mu = [torch.tensor(1e-9, dtype=torch.float), torch.tensor(1e-9, dtype=torch.float),  torch.tensor(1e-9, dtype=torch.float)]
-                    temp_sigma = [torch.tensor(1e-9), torch.tensor(1e-9, dtype=torch.float), torch.tensor(1e-9, dtype=torch.float)]
-                    action_args = None
-                mus.append(temp_mu)
-                sigma.append(temp_sigma)
-            action_args = {'mu': torch.Tensor(mus), 'sigma': torch.Tensor(sigma)}
+
+            mu_list = []
+            sigma_list = []
+            if select_mode == 'collect':
+                # action_types = sample ~ disc_logits
+
+                # prob = torch.softmax(action_type_logit, dim=-1)
+                # selected_action_types = torch.multinomial(prob, 1, replacement=False)
+
+                # choose 0: accelerate
+                temp_arg_accelerate = self.actor_head[1](actor_embedding )
+                mu_list.append(temp_arg_accelerate['mu'])
+                sigma_list.append(temp_arg_accelerate['sigma'])
+
+                # choose 1: turn
+                temp_arg_turn = self.actor_head[2](actor_embedding )
+                mu_list.append(temp_arg_turn['mu'])
+                sigma_list.append(temp_arg_turn['sigma'])
+
+            elif select_mode == 'eval':
+                # action_types = argmax{disc_logits}
+                selected_action_types = action_type_logit.argmax(dim=-1)
+
+                for i, selected_action in enumerate(selected_action_types):
+                    if selected_action == 0:
+                        # choose 0: accelerate
+                        temp_arg = self.actor_head[1](actor_embedding [i])
+                        temp_mu = temp_arg['mu'][0]
+                        temp_sigma = temp_arg['sigma'][0]
+                    elif selected_action == 1:
+                        # choose 1: turn
+                        temp_arg = self.actor_head[2](actor_embedding [i])
+                        temp_mu = temp_arg['mu'][0]
+                        temp_sigma = temp_arg['sigma'][0]
+                    elif selected_action == 2:
+                        # choose 2: break: fake argumants
+                        temp_mu = torch.tensor([1e-9], dtype=torch.float)
+                        temp_sigma = torch.tensor([1e-9], dtype=torch.float)
+                    if len(temp_mu.shape) == 0:
+                        temp_mu = temp_mu.reshape(-1)
+                    if len(temp_sigma.shape) == 0:
+                        temp_sigma = temp_sigma.reshape(-1)
+                    mu_list.append(temp_mu)
+                    sigma_list.append(temp_sigma)
+            elif select_mode == 'train':
+                # action_types is passed in
+                for i, selected_action in enumerate(action_types):
+                    if selected_action == 0:
+                        # choose 0: accelerate
+                        temp_arg = self.actor_head[1](actor_embedding [i])
+                        temp_mu = temp_arg['mu'][0]
+                        temp_sigma = temp_arg['sigma'][0]
+                    elif selected_action == 1:
+                        # choose 1: turn
+                        temp_arg = self.actor_head[2](actor_embedding [i])
+                        temp_mu = temp_arg['mu'][0]
+                        temp_sigma = temp_arg['sigma'][0]
+                    elif selected_action == 2:
+                        # choose 2: break: fake argumants
+                        temp_mu = torch.tensor([1e-9], dtype=torch.float)
+                        temp_sigma = torch.tensor([1e-9], dtype=torch.float)
+                    if len(temp_mu.shape) == 0:
+                        temp_mu = temp_mu.reshape(-1)
+                    if len(temp_sigma.shape) == 0:
+                        temp_sigma = temp_sigma.reshape(-1)
+                    mu_list.append(temp_mu)
+                    sigma_list.append(temp_sigma)
+
+            action_args = {'mu': torch.cat(mu_list, dim=-1), 'sigma': torch.cat(sigma_list, dim=-1)}
+
             return {'logit': {'action_type': action_type['logit'], 'action_args': action_args}}
 
-    def temp_eval_ag_d2c(self, x: torch.Tensor):
-        if self.share_encoder:
-            x = self.encoder(x)
-        else:
-            x = self.actor_encoder(x)
-        bs = x.shape[0]
-        # action_type_logits = torch.Tensor(np.repeat([[0, 1, 0]], bs, axis=0))    # choose 'turn'
-        action_type_logits = torch.Tensor(np.repeat([[1, 0, 0]], bs, axis=0))  # choose 'accl'
-        action_type = {}
-        action_type['logit'] = action_type_logits
-        action_type_no_grad = action_type['logit'].detach()
-        mx = torch.cat([x, action_type_no_grad], dim=1)
-        action_args = self.actor_head[1](mx)
-
-        return {'logit': {'action_type': action_type['logit'], 'action_args': action_args}}
-
-    def temp_eval_ag_c2d(self, x: torch.Tensor):
-        if self.share_encoder:
-            x = self.encoder(x)
-        else:
-            x = self.actor_encoder(x)
-
-        action_args = self.actor_head[1](x)
-        action_args_mu_no_grad = action_args['mu'].detach()
-        mu_acc = np.linspace(0, 1.0, 50)
-        for i in range(50):
-            action_args['mu'][i][0] = mu_acc[i]
-        action_args_sigma_no_grad = action_args['sigma'].detach()
-        mx = torch.cat([x, action_args_mu_no_grad, action_args_sigma_no_grad], dim=1)
-        action_type = self.actor_head[0](mx)
-
-        return {'logit': {'action_type': action_type['logit'], 'action_args': action_args}}
-
-    def compute_critic(self, x: torch.Tensor) -> Dict:
+    def compute_critic(self, x: torch.Tensor, select_mode='train', action_types=None) -> Dict:
         r"""
         Overview:
             Execute parameter updates with ``'compute_critic'`` mode
@@ -402,7 +406,7 @@ class VAC(nn.Module):
         x = self.critic_head(x)
         return {'value': x['pred']}
 
-    def compute_actor_critic(self, x: torch.Tensor) -> Dict:
+    def compute_actor_critic(self, x: torch.Tensor, select_mode='collect', action_types=None) -> Dict:
         r"""
         Overview:
             Execute parameter updates with ``'compute_actor_critic'`` mode
@@ -458,28 +462,74 @@ class VAC(nn.Module):
             # for two head
             action_type = self.actor_head[0](actor_embedding)
             action_type_logit = action_type['logit']
-            selected_actions = action_type_logit.argmax(dim=-1)
-            mus = []
-            sigma = []
-            for i, selected_action in enumerate(selected_actions):
-                if selected_action == 0:
-                    # choose 0: accelerate
-                    temp_arg = self.actor_head[1](actor_embedding[i])
-                    temp_mu = [temp_arg['mu'][0], torch.tensor(1e-9, dtype=torch.float),  torch.tensor(1e-9, dtype=torch.float)]
-                    temp_sigma = [temp_arg['sigma'][0], torch.tensor(1e-9, dtype=torch.float),  torch.tensor(1e-9, dtype=torch.float)]
-                elif selected_action == 1:
-                    # choose 1: turn
-                    temp_arg = self.actor_head[2](actor_embedding[i])
-                    temp_mu = [torch.tensor(1e-9, dtype=torch.float),  temp_arg['mu'][0], torch.tensor(1e-9, dtype=torch.float)]
-                    temp_sigma = [torch.tensor(1e-9, dtype=torch.float),  temp_arg['sigma'][0],torch.tensor(1e-9, dtype=torch.float)]
-                else:
-                    # choose break
-                    temp_mu = [torch.tensor(1e-9, dtype=torch.float),  torch.tensor(1e-9, dtype=torch.float), torch.tensor(1e-9, dtype=torch.float)]
-                    temp_sigma = [torch.tensor(1e-9),  torch.tensor(1e-9, dtype=torch.float), torch.tensor(1e-9, dtype=torch.float)]
-                    action_args = None
-                mus.append(temp_mu)
-                sigma.append(temp_sigma)
-            action_args = {'mu': torch.Tensor(mus), 'sigma': torch.Tensor(sigma)}
+            mu_list = []
+            sigma_list = []
+            if select_mode == 'collect':
+                # action_types = sample ~ disc_logits
 
+                # prob = torch.softmax(action_type_logit, dim=-1)
+                # selected_action_types = torch.multinomial(prob, 1, replacement=False)
+
+                # choose 0: accelerate
+                temp_arg_accelerate = self.actor_head[1](actor_embedding)
+                mu_list.append(temp_arg_accelerate['mu'])
+                sigma_list.append(temp_arg_accelerate['sigma'])
+
+                # choose 1: turn
+                temp_arg_turn = self.actor_head[2](actor_embedding)
+                mu_list.append(temp_arg_turn['mu'])
+                sigma_list.append(temp_arg_turn['sigma'])
+
+            elif select_mode == 'eval':
+                # action_types = argmax{disc_logits}
+                selected_action_types = action_type_logit.argmax(dim=-1)
+
+                for i, selected_action in enumerate(selected_action_types):
+                    if selected_action == 0:
+                        # choose 0: accelerate
+                        temp_arg = self.actor_head[1](actor_embedding[i])
+                        temp_mu = temp_arg['mu'][0]
+                        temp_sigma = temp_arg['sigma'][0]
+                    elif selected_action == 1:
+                        # choose 1: turn
+                        temp_arg = self.actor_head[2](actor_embedding[i])
+                        temp_mu = temp_arg['mu'][0]
+                        temp_sigma = temp_arg['sigma'][0]
+                    elif selected_action == 2:
+                        # choose 2: break: fake argumants
+                        temp_mu = torch.tensor([1e-9], dtype=torch.float)
+                        temp_sigma = torch.tensor([1e-9], dtype=torch.float)
+                    if len(temp_mu.shape) == 0:
+                        temp_mu = temp_mu.reshape(-1)
+                    if len(temp_sigma.shape) == 0:
+                        temp_sigma = temp_sigma.reshape(-1)
+                    mu_list.append(temp_mu)
+                    sigma_list.append(temp_sigma)
+            elif select_mode == 'train':
+                # action_types is passed in
+                for i, selected_action in enumerate(action_types):
+                    if selected_action == 0:
+                        # choose 0: accelerate
+                        temp_arg = self.actor_head[1](actor_embedding[i])
+                        temp_mu = temp_arg['mu'][0]
+                        temp_sigma = temp_arg['sigma'][0]
+                    elif selected_action == 1:
+                        # choose 1: turn
+                        temp_arg = self.actor_head[2](actor_embedding[i])
+                        temp_mu = temp_arg['mu'][0]
+                        temp_sigma = temp_arg['sigma'][0]
+                    elif selected_action == 2:
+                        # choose 2: break: fake argumants
+                        temp_mu = torch.tensor([1e-9], dtype=torch.float)
+                        temp_sigma = torch.tensor([1e-9], dtype=torch.float)
+                    if len(temp_mu.shape) == 0:
+                        temp_mu = temp_mu.reshape(-1)
+                    if len(temp_sigma.shape) == 0:
+                        temp_sigma = temp_sigma.reshape(-1)
+
+                    mu_list.append(temp_mu)
+                    sigma_list.append(temp_sigma)
+
+            action_args = {'mu': torch.cat(mu_list, dim=-1), 'sigma': torch.cat(sigma_list, dim=-1)}
 
             return {'logit': {'action_type': action_type['logit'], 'action_args': action_args}, 'value': value}
