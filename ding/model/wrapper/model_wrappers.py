@@ -696,7 +696,7 @@ class HybridReparamSampleWrapper(IModelWrapper):
     Interfaces:
         forward
     """
-
+    # hppo collect
     def forward(self, *args, **kwargs):
         output = self._model.forward(*args, **kwargs)
         assert isinstance(output, dict), "model output must be dict, but find {}".format(type(output))
@@ -710,7 +710,7 @@ class HybridReparamSampleWrapper(IModelWrapper):
         action_type = torch.multinomial(prob, 1, replacement=False)
 
         # continuous part
-        # NOTE: if action_type = 2, means break, we don't have mu and sigma, so we give a fake mu and sigma of action_type = 0
+        # NOTE: if action_type = 2, means break, we don't have mu and sigma, so we give a fake action_args (mu and sigma of action_type = 0)
         fake_action_type = torch.where(action_type == 2, torch.zeros_like(action_type), action_type)
 
         mu, sigma = logit['action_args']['mu'].gather(1, fake_action_type), logit['action_args']['sigma'].gather(1, fake_action_type)
@@ -728,7 +728,7 @@ class HybridDeterministicArgmaxSampleWrapper(IModelWrapper):
     Interfaces:
         forward
     """
-
+    # hppo eval
     def forward(self, *args, **kwargs):
         output = self._model.forward(*args, **kwargs)
         assert isinstance(output, dict), "model output must be dict, but find {}".format(type(output))
