@@ -39,22 +39,18 @@ gym_hybrid_hppo_config = dict(
             bound_type='tanh',
         ),
         learn=dict(
-            # epoch_per_collect=10,
-            # batch_size=320,
-            epoch_per_collect=3,
-            batch_size=256,
-            # batch_size=64,
+            continuous_loss_weight=1,
+            discrete_loss_weight=0.5,
+            epoch_per_collect=10,
+            batch_size=320,
             learning_rate=3e-4,
             value_weight=0.5,
-            # entropy_weight=0.03,
-            entropy_weight=0.001,
+            entropy_weight=0.03,
             clip_ratio=0.2,
             adv_norm=True,
             value_norm=True,
             grad_clip_type='clip_norm',
-            # grad_clip_value=0.5,
-            grad_clip_value=0.05,
-
+            grad_clip_value=0.5,
         ),
         collect=dict(
             n_sample=int(3200),
@@ -83,5 +79,5 @@ create_config = gym_hybrid_hppo_create_config
 if __name__ == "__main__":
     # or you can enter `ding -m serial -c gym_hybrid_hppo_config.py -s 0`
     from ding.entry import serial_pipeline_onpolicy
-    main_config.exp_name = "dev/gym_hybrid_hppo_seed0_2head"
+    main_config.exp_name = "dev/gym_hybrid_hppo_seed0_2head_dlw05"
     serial_pipeline_onpolicy([main_config, create_config], seed=0, max_env_step=int(3e6))

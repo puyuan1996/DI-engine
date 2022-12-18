@@ -88,6 +88,8 @@ def ppo_policy_error(data: namedtuple,
     logit_new, logit_old, action, adv, weight = data
     if weight is None:
         weight = torch.ones_like(adv)
+    if torch.isnan(logit_new).int().sum() > 0:
+        print('torch.isnan(logit_new).int().sum() > 0')
     dist_new = torch.distributions.categorical.Categorical(logits=logit_new)
     dist_old = torch.distributions.categorical.Categorical(logits=logit_old)
     logp_new = dist_new.log_prob(action)
@@ -182,9 +184,10 @@ def ppo_error_continuous(
         dist_new = Independent(Normal(mu_sigma_new['mu'].unsqueeze(-1), mu_sigma_new['sigma'].unsqueeze(-1)), 1)
     else:
         dist_new = Independent(Normal(mu_sigma_new['mu'], mu_sigma_new['sigma']), 1)
+
     mask = None
     if isinstance(action, dict):
-        # the action_type in data
+        # the action_type in old data
         action_type = action['action_type']
 
         # continuous part
@@ -192,12 +195,14 @@ def ppo_error_continuous(
         fake_action_type = torch.where(action_type == 2, torch.zeros_like(action_type), action_type)
         # NOTE: we mask the action_type = 2 related loss
         mask = torch.where(action_type == 2, torch.zeros_like(action_type), torch.ones_like(action_type))
+        # mask = (1-(action_type == 2).float())
         weight = weight * mask
 
         # the action_args in data
         action = action['action_args']
         mu_old, sigma_old = mu_sigma_old['mu'].gather(1, fake_action_type.unsqueeze(-1)), mu_sigma_old['sigma'].gather(1, fake_action_type.unsqueeze(-1))
         dist_old = Independent(Normal(mu_old, sigma_old), 1)
+
     elif len(mu_sigma_old['mu'].shape) == 1:
         dist_old = Independent(Normal(mu_sigma_old['mu'].unsqueeze(-1), mu_sigma_old['sigma'].unsqueeze(-1)), 1)
     else:

@@ -1,16 +1,17 @@
-from typing import List, Dict, Any, Tuple, Union
-from collections import namedtuple
-import torch
 import copy
-import numpy as np
+from collections import namedtuple
+from typing import List, Dict, Any, Tuple, Union
 
-from ding.torch_utils import Adam, to_device, unsqueeze, ContrastiveLoss
-from ding.rl_utils import ppo_data, ppo_error, ppo_policy_error, ppo_policy_data, ppo_value_error, ppo_value_data, ppo_loss, get_gae_with_default_last_value, \
+import numpy as np
+import torch
+from ding.model import model_wrap
+from ding.rl_utils import ppo_data, ppo_error, ppo_policy_error, ppo_policy_data, get_gae_with_default_last_value, \
     v_nstep_td_data, v_nstep_td_error, get_nstep_return_data, get_train_sample, gae, gae_data, ppo_error_continuous, \
     get_gae, ppo_policy_error_continuous
-from ding.model import model_wrap
+from ding.torch_utils import Adam, to_device, unsqueeze, ContrastiveLoss
 from ding.utils import POLICY_REGISTRY, split_data_generator, RunningMeanStd
 from ding.utils.data import default_collate, default_decollate
+
 from .base_policy import Policy
 from .common_utils import default_preprocess_learn
 
@@ -196,7 +197,9 @@ class PPOPolicy(Policy):
                     data['return'] = data['adv'] + data['value']
 
             for batch in split_data_generator(data, self._cfg.learn.batch_size, shuffle=True):
-                output = self._learn_model.forward(batch['obs'], select_mode='train', action_types=batch['action']['action_type'], mode='compute_actor_critic')
+                output = self._learn_model.forward(batch['obs'], select_mode='train',
+                                                   selected_action_types=batch['action']['action_type'],
+                                                   mode='compute_actor_critic')
                 adv = batch['adv']
                 if self._adv_norm:
                     # Normalize advantage in a train_batch
@@ -221,6 +224,7 @@ class PPOPolicy(Policy):
                         output['logit']['action_type'], batch['logit']['action_type'], batch['action']['action_type'],
                         adv, batch['weight']
                     )
+                    # with torch.autograd.detect_anomaly():
                     ppo_discrete_loss, ppo_discrete_info = ppo_policy_error(ppo_discrete_batch, self._clip_ratio)
 
                     # continuous part (continuous policy loss and entropy loss, value loss)
@@ -230,17 +234,19 @@ class PPOPolicy(Policy):
                     # )
 
                     # batch['action']['action_type']
-
                     ppo_continuous_batch = ppo_data(
-                        output['logit']['action_args'], batch['logit']['action_args'], {'action_args': batch['action']['action_args'], 'action_type': batch['action']['action_type']},
+                        output['logit']['action_args'], batch['logit']['action_args'],
+                        {'action_args': batch['action']['action_args'], 'action_type': batch['action']['action_type']},
                         output['value'], batch['value'], adv, batch['return'], batch['weight']
                     )
+                    # with torch.autograd.detect_anomaly():
                     ppo_continuous_loss, ppo_continuous_info = ppo_error_continuous(
                         ppo_continuous_batch, self._clip_ratio
                     )
                     # sum discrete and continuous loss
                     ppo_loss = type(ppo_continuous_loss)(
-                        ppo_continuous_loss.policy_loss + ppo_discrete_loss.policy_loss, ppo_continuous_loss.value_loss,
+                        self._cfg.learn.continuous_loss_weight * ppo_continuous_loss.policy_loss + self._cfg.learn.discrete_loss_weight *  ppo_discrete_loss.policy_loss,
+                        ppo_continuous_loss.value_loss,
                         ppo_continuous_loss.entropy_loss + ppo_discrete_loss.entropy_loss
                     )
                     ppo_info = type(ppo_continuous_info)(
@@ -250,8 +256,6 @@ class PPOPolicy(Policy):
                 wv, we = self._value_weight, self._entropy_weight
                 total_loss = ppo_loss.policy_loss + wv * ppo_loss.value_loss - we * ppo_loss.entropy_loss
 
-
-
                 self._optimizer.zero_grad()
                 total_loss.backward()
                 self._optimizer.step()
@@ -260,14 +264,24 @@ class PPOPolicy(Policy):
                     'cur_lr': self._optimizer.defaults['lr'],
                     'total_loss': total_loss.item(),
                     'policy_loss': ppo_loss.policy_loss.item(),
+                    'policy_loss_cont': ppo_continuous_loss.policy_loss.item(),
+
+                    'policy_loss_disc': ppo_discrete_loss.policy_loss.item(),
+
                     'value_loss': ppo_loss.value_loss.item(),
                     'entropy_loss': ppo_loss.entropy_loss.item(),
+                    'entropy_loss_cont': ppo_continuous_loss.entropy_loss.item(),
+                    'entropy_loss_disc': ppo_discrete_loss.entropy_loss.item(),
                     'adv_max': adv.max().item(),
                     'adv_mean': adv.mean().item(),
                     'value_mean': output['value'].mean().item(),
                     'value_max': output['value'].max().item(),
                     'approx_kl': ppo_info.approx_kl,
                     'clipfrac': ppo_info.clipfrac,
+                    'approx_kl_cont': ppo_continuous_info.approx_kl,
+                    'clipfrac_cont': ppo_continuous_info.clipfrac,
+                    'approx_kl_disc': ppo_discrete_info.approx_kl,
+                    'clipfrac_disc':  ppo_discrete_info.clipfrac,
                 }
                 if self._action_space == 'continuous':
                     return_info.update(
@@ -453,12 +467,21 @@ class PPOPolicy(Policy):
     def _monitor_vars_learn(self) -> List[str]:
         variables = super()._monitor_vars_learn() + [
             'policy_loss',
+            'policy_loss_cont',
+            'policy_loss_disc',
             'value_loss',
             'entropy_loss',
+            'entropy_loss_cont',
+            'entropy_loss_disc',
+
             'adv_max',
             'adv_mean',
             'approx_kl',
             'clipfrac',
+            'approx_kl_cont',
+            'clipfrac_cont',
+            'approx_kl_disc',
+            'clipfrac_disc',
             'value_max',
             'value_mean',
         ]
@@ -1210,8 +1233,8 @@ class PPOSTDIMPolicy(PPOPolicy):
                 aux_loss_eval = self._aux_model.forward(x, y) * self._aux_loss_weight
 
                 wv, we = self._value_weight, self._entropy_weight
-                total_loss = ppo_loss.policy_loss + wv * ppo_loss.value_loss - we * ppo_loss.entropy_loss\
-                    + aux_loss_eval
+                total_loss = ppo_loss.policy_loss + wv * ppo_loss.value_loss - we * ppo_loss.entropy_loss \
+                             + aux_loss_eval
 
                 self._optimizer.zero_grad()
                 total_loss.backward()

@@ -3,9 +3,9 @@ from typing import Union, Dict, Optional
 
 import torch
 import torch.nn as nn
+from ding.utils import SequenceType, squeeze, MODEL_REGISTRY
 from easydict import EasyDict
 
-from ding.utils import SequenceType, squeeze, MODEL_REGISTRY
 from ..common import ReparameterizationHead, RegressionHead, DiscreteHead, MultiHead, \
     FCEncoder, ConvEncoder, IMPALAConvEncoder
 
@@ -213,7 +213,7 @@ class VAC(nn.Module):
         self.actor = nn.ModuleList(self.actor)
         self.critic = nn.ModuleList(self.critic)
 
-    def forward(self, inputs: Union[torch.Tensor, Dict], select_mode='collect', action_types=None,
+    def forward(self, inputs: Union[torch.Tensor, Dict], select_mode='collect', selected_action_types=None,
                 mode: str = 'compute_actor_critic') -> Dict:
         r"""
         Overview:
@@ -261,9 +261,9 @@ class VAC(nn.Module):
 
         """
         assert mode in self.mode, "not support forward mode: {}/{}".format(mode, self.mode)
-        return getattr(self, mode)(inputs, select_mode, action_types)
+        return getattr(self, mode)(inputs, select_mode, selected_action_types)
 
-    def compute_actor(self, x: torch.Tensor, select_mode='collect', action_types=None) -> Dict:
+    def compute_actor(self, x: torch.Tensor, select_mode='collect', selected_action_types=None) -> Dict:
         r"""
         Overview:
             Execute parameter updates with ``'compute_actor'`` mode
@@ -292,15 +292,14 @@ class VAC(nn.Module):
         else:
             actor_embedding = self.actor_encoder(x)
 
-
         if self.action_space == 'discrete':
-            return self.actor_head(actor_embedding )
+            return self.actor_head(actor_embedding)
         elif self.action_space == 'continuous':
-            x = self.actor_head(actor_embedding )  # mu, sigma
+            x = self.actor_head(actor_embedding)  # mu, sigma
             return {'logit': x}
         elif self.action_space == 'hybrid':
             # for two head
-            action_type = self.actor_head[0](actor_embedding )
+            action_type = self.actor_head[0](actor_embedding)
             action_type_logit = action_type['logit']
 
             mu_list = []
@@ -312,12 +311,12 @@ class VAC(nn.Module):
                 # selected_action_types = torch.multinomial(prob, 1, replacement=False)
 
                 # choose 0: accelerate
-                temp_arg_accelerate = self.actor_head[1](actor_embedding )
+                temp_arg_accelerate = self.actor_head[1](actor_embedding)
                 mu_list.append(temp_arg_accelerate['mu'])
                 sigma_list.append(temp_arg_accelerate['sigma'])
 
                 # choose 1: turn
-                temp_arg_turn = self.actor_head[2](actor_embedding )
+                temp_arg_turn = self.actor_head[2](actor_embedding)
                 mu_list.append(temp_arg_turn['mu'])
                 sigma_list.append(temp_arg_turn['sigma'])
 
@@ -328,16 +327,16 @@ class VAC(nn.Module):
                 for i, selected_action in enumerate(selected_action_types):
                     if selected_action == 0:
                         # choose 0: accelerate
-                        temp_arg = self.actor_head[1](actor_embedding [i])
+                        temp_arg = self.actor_head[1](actor_embedding[i])
                         temp_mu = temp_arg['mu'][0]
                         temp_sigma = temp_arg['sigma'][0]
                     elif selected_action == 1:
                         # choose 1: turn
-                        temp_arg = self.actor_head[2](actor_embedding [i])
+                        temp_arg = self.actor_head[2](actor_embedding[i])
                         temp_mu = temp_arg['mu'][0]
                         temp_sigma = temp_arg['sigma'][0]
                     elif selected_action == 2:
-                        # choose 2: break: fake argumants
+                        # choose 2: break: fake arguments
                         temp_mu = torch.tensor([1e-9], dtype=torch.float)
                         temp_sigma = torch.tensor([1e-9], dtype=torch.float)
                     if len(temp_mu.shape) == 0:
@@ -348,19 +347,19 @@ class VAC(nn.Module):
                     sigma_list.append(temp_sigma)
             elif select_mode == 'train':
                 # action_types is passed in
-                for i, selected_action in enumerate(action_types):
+                for i, selected_action in enumerate(selected_action_types):
                     if selected_action == 0:
                         # choose 0: accelerate
-                        temp_arg = self.actor_head[1](actor_embedding [i])
+                        temp_arg = self.actor_head[1](actor_embedding[i])
                         temp_mu = temp_arg['mu'][0]
                         temp_sigma = temp_arg['sigma'][0]
                     elif selected_action == 1:
                         # choose 1: turn
-                        temp_arg = self.actor_head[2](actor_embedding [i])
+                        temp_arg = self.actor_head[2](actor_embedding[i])
                         temp_mu = temp_arg['mu'][0]
                         temp_sigma = temp_arg['sigma'][0]
                     elif selected_action == 2:
-                        # choose 2: break: fake argumants
+                        # choose 2: break: fake arguments
                         temp_mu = torch.tensor([1e-9], dtype=torch.float)
                         temp_sigma = torch.tensor([1e-9], dtype=torch.float)
                     if len(temp_mu.shape) == 0:
@@ -374,7 +373,7 @@ class VAC(nn.Module):
 
             return {'logit': {'action_type': action_type['logit'], 'action_args': action_args}}
 
-    def compute_critic(self, x: torch.Tensor, select_mode='train', action_types=None) -> Dict:
+    def compute_critic(self, x: torch.Tensor, select_mode='train', selected_action_types=None) -> Dict:
         r"""
         Overview:
             Execute parameter updates with ``'compute_critic'`` mode
@@ -406,7 +405,7 @@ class VAC(nn.Module):
         x = self.critic_head(x)
         return {'value': x['pred']}
 
-    def compute_actor_critic(self, x: torch.Tensor, select_mode='collect', action_types=None) -> Dict:
+    def compute_actor_critic(self, x: torch.Tensor, select_mode='collect', selected_action_types=None) -> Dict:
         r"""
         Overview:
             Execute parameter updates with ``'compute_actor_critic'`` mode
@@ -496,7 +495,7 @@ class VAC(nn.Module):
                         temp_mu = temp_arg['mu'][0]
                         temp_sigma = temp_arg['sigma'][0]
                     elif selected_action == 2:
-                        # choose 2: break: fake argumants
+                        # choose 2: break: fake arguments
                         temp_mu = torch.tensor([1e-9], dtype=torch.float)
                         temp_sigma = torch.tensor([1e-9], dtype=torch.float)
                     if len(temp_mu.shape) == 0:
@@ -507,7 +506,7 @@ class VAC(nn.Module):
                     sigma_list.append(temp_sigma)
             elif select_mode == 'train':
                 # action_types is passed in
-                for i, selected_action in enumerate(action_types):
+                for i, selected_action in enumerate(selected_action_types):
                     if selected_action == 0:
                         # choose 0: accelerate
                         temp_arg = self.actor_head[1](actor_embedding[i])
@@ -519,7 +518,7 @@ class VAC(nn.Module):
                         temp_mu = temp_arg['mu'][0]
                         temp_sigma = temp_arg['sigma'][0]
                     elif selected_action == 2:
-                        # choose 2: break: fake argumants
+                        # choose 2: break: fake arguments
                         temp_mu = torch.tensor([1e-9], dtype=torch.float)
                         temp_sigma = torch.tensor([1e-9], dtype=torch.float)
                     if len(temp_mu.shape) == 0:
