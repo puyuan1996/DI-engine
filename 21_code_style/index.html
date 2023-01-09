@@ -36,7 +36,7 @@
   <link rel="index" title="Index" href="../genindex.html" />
   <link rel="search" title="Search" href="../search.html" />
   <link rel="next" title="Unit Test Guide" href="../22_test/index.html" />
-  <link rel="prev" title="Middleware specification" href="../20_spec/middleware.html" />
+  <link rel="prev" title="Specifications of DI-engine Config" href="../20_spec/config_spec.html" />
     <link href="../_static/css/style.css" rel="stylesheet" type="text/css">
 
 
@@ -127,9 +127,29 @@
                   <p>Tree Nested PyTorch Tensor Lib</p>
                 </a>
                 <a class="doc-dropdown-option nav-dropdown-item"
+                  href="https://github.com/opendilab/DI-sheep" target="_blank">
+                  <span class="dropdown-title">DI-sheep </span>
+                  <p>Deep Reinforcement Learning + 3 Tiles Game</p>
+                </a>
+                <a class="doc-dropdown-option nav-dropdown-item"
                   href="https://github.com/opendilab/awesome-model-based-RL" target="_blank">
                   <span class="dropdown-title">awesome-model-based-RL </span>
                   <p>A curated list of awesome model based RL resources (continually updated)</p>
+                </a>
+                <a class="doc-dropdown-option nav-dropdown-item"
+                  href="https://github.com/opendilab/awesome-decision-transformer" target="_blank">
+                  <span class="dropdown-title">awesome-decision-transformer </span>
+                  <p>A curated list of Decision Transformer resources (continually updated)</p>
+                </a>
+                <a class="doc-dropdown-option nav-dropdown-item"
+                  href="https://github.com/opendilab/awesome-exploration-rl" target="_blank">
+                  <span class="dropdown-title">awesome-exploration-rl </span>
+                  <p>A curated list of awesome exploration RL resources (continually updated)</p>
+                </a>
+                <a class="doc-dropdown-option nav-dropdown-item"
+                  href="https://github.com/opendilab/awesome-multi-modal-reinforcement-learning" target="_blank">
+                  <span class="dropdown-title">awesome-multi-modal-reinforcement-learning </span>
+                  <p>A curated list of Multi-Modal Reinforcement Learning resources (continually updated)</p>
                 </a>
               </div>
           </li>
@@ -294,11 +314,11 @@
 <section id="yapf">
 <h2>yapf<a class="headerlink" href="#yapf" title="Permalink to this headline">¶</a></h2>
 <p>For <a class="reference external" href="https://github.com/google/yapf">yapf</a>, we can use existing <a class="reference external" href="https://github.com/opendilab/DI-engine/blob/main/Makefile">Makefile</a> for one-click fix</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>make format
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>make<span class="w"> </span>format
 </pre></div>
 </div>
 <p>Considering the large scale of the whole project and the large number of files, you can use the following commands to check the code design of the source code files in a specific path</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>make format <span class="nv">RANGE_DIR</span><span class="o">=</span>./ding/xxx
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>make<span class="w"> </span>format<span class="w"> </span><span class="nv">RANGE_DIR</span><span class="o">=</span>./ding/xxx
 </pre></div>
 </div>
 <p>In this project, we use the <a class="reference external" href="https://github.com/opendilab/DI-engine/blob/main/.style.yapf">yapf config</a> code specification configuration based on PEP8. For details about the configuration, you can refer to <a class="reference external" href="https://github.com/google/yapf#knobs">the description on the Github homepage</a>. <a class="reference external" href="https://peps.python.org/pep-0008/">PEP8</a> is the code style configuration officially recommended by Python. Paying attention to code style can improve the readability of the code and minimize unintended behavior.</p>
@@ -310,14 +330,31 @@
 <section id="flake8">
 <h2>flake8<a class="headerlink" href="#flake8" title="Permalink to this headline">¶</a></h2>
 <p>For <a class="reference external" href="https://github.com/PyCQA/flake8">flake8</a>, we can use the existing <a class="reference external" href="https://github.com/opendilab/DI-engine/blob/main/Makefile">Makefile</a> to check the code design</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>make flake_check
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>make<span class="w"> </span>flake_check
 </pre></div>
 </div>
 <p>Considering the large scale of the whole project and the large number of files, you can use the following commands to check the code design of the source code files in a specific path</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>make flake_check <span class="nv">RANGE_DIR</span><span class="o">=</span>./ding/xxx
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>make<span class="w"> </span>flake_check<span class="w"> </span><span class="nv">RANGE_DIR</span><span class="o">=</span>./ding/xxx
 </pre></div>
 </div>
 <p>In this project, we use <a class="reference external" href="https://github.com/opendilab/DI-engine/blob/main/.flake8">flake8 code design specification configuration</a> based on pep8. For details of configuration, please refer to <a class="reference external" href="https://flake8.pycqa.org/en/latest/user/configuration.html">the description of flake8 official documents</a>. <a class="reference external" href="https://peps.python.org/pep-0008/">PEP8</a> is the code style configuration officially recommended by python. Paying attention to the code style can improve the readability of the code and minimize the behavior that does not meet the expectations.</p>
+</section>
+<section id="reasonable-import-order">
+<h2>Reasonable Import Order<a class="headerlink" href="#reasonable-import-order" title="Permalink to this headline">¶</a></h2>
+<p>Considering the <a class="reference external" href="https://peps.python.org/pep-0008/">PEP8</a>  standard and usage habits, we recommend that users use the following import order:</p>
+<ul class="simple">
+<li><p>Standard library imports</p></li>
+<li><p>Related third party imports</p></li>
+<li><p>Local application/library specific imports</p></li>
+<li><p>Relative imports</p></li>
+</ul>
+<p>e.g.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">xx</span> <span class="kn">import</span> <span class="n">xx</span>
+<span class="kn">import</span> <span class="nn">xx</span>
+<span class="kn">import</span> <span class="nn">ding.xx</span>
+<span class="kn">from</span> <span class="nn">.xx</span>
+</pre></div>
+</div>
 </section>
 </section>
 
@@ -334,7 +371,7 @@
         class="next-page"></a>
     
     
-    <a href="../20_spec/middleware.html" class="btn btn-neutral" title="Middleware specification" accesskey="p"
+    <a href="../20_spec/config_spec.html" class="btn btn-neutral" title="Specifications of DI-engine Config" accesskey="p"
       rel="prev"><img src="../_static/images/chevron-right-blue.svg" class="previous-page"> Previous</a>
     
   </div>
@@ -368,6 +405,7 @@
 <li><a class="reference internal" href="#basic-code-style-rules">Basic Code Style Rules</a></li>
 <li><a class="reference internal" href="#yapf">yapf</a></li>
 <li><a class="reference internal" href="#flake8">flake8</a></li>
+<li><a class="reference internal" href="#reasonable-import-order">Reasonable Import Order</a></li>
 </ul>
 </li>
 </ul>

@@ -127,9 +127,29 @@
                   <p>Tree Nested PyTorch Tensor Lib</p>
                 </a>
                 <a class="doc-dropdown-option nav-dropdown-item"
+                  href="https://github.com/opendilab/DI-sheep" target="_blank">
+                  <span class="dropdown-title">DI-sheep </span>
+                  <p>Deep Reinforcement Learning + 3 Tiles Game</p>
+                </a>
+                <a class="doc-dropdown-option nav-dropdown-item"
                   href="https://github.com/opendilab/awesome-model-based-RL" target="_blank">
                   <span class="dropdown-title">awesome-model-based-RL </span>
                   <p>A curated list of awesome model based RL resources (continually updated)</p>
+                </a>
+                <a class="doc-dropdown-option nav-dropdown-item"
+                  href="https://github.com/opendilab/awesome-decision-transformer" target="_blank">
+                  <span class="dropdown-title">awesome-decision-transformer </span>
+                  <p>A curated list of Decision Transformer resources (continually updated)</p>
+                </a>
+                <a class="doc-dropdown-option nav-dropdown-item"
+                  href="https://github.com/opendilab/awesome-exploration-rl" target="_blank">
+                  <span class="dropdown-title">awesome-exploration-rl </span>
+                  <p>A curated list of awesome exploration RL resources (continually updated)</p>
+                </a>
+                <a class="doc-dropdown-option nav-dropdown-item"
+                  href="https://github.com/opendilab/awesome-multi-modal-reinforcement-learning" target="_blank">
+                  <span class="dropdown-title">awesome-multi-modal-reinforcement-learning </span>
+                  <p>A curated list of Multi-Modal Reinforcement Learning resources (continually updated)</p>
                 </a>
               </div>
           </li>
@@ -285,11 +305,11 @@
 <section id="prerequisites">
 <h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this headline">¶</a></h2>
 <p>Operation system version: Linux, macOS, Windows</p>
-<p>Python version: 3.6-3.8</p>
+<p>Python version: 3.7-3.9</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>If there is a GPU in your setting, you can refer to <a class="reference external" href="https://developer.nvidia.com/cuda-downloads/">Nvidia CUDA Toolkit Installation</a></p>
-<p>After CUDA being installed, you will get a correct Nvidia CUDA version of Pytorch automaticly when installing DI-engine.</p>
+<p>If there is a GPU in your setting, you can refer to <a class="reference external" href="https://developer.nvidia.com/cuda-downloads/">NVIDIA CUDA Toolkit Installation</a></p>
+<p>After CUDA being installed, you will get a correct NVIDIA CUDA version of deep learning framework (e.g., Pytorch) automaticly when installing DI-engine.</p>
 <p>If you want to install Pytorch manually, you can refer to <a class="reference external" href="https://pytorch.org/get-started/locally/">PyTorch Installation</a>.</p>
 <p>If your OS is Windows, please do confirm that SWIG is installed and available through the OS environment variable PATH, you can refer to <a class="reference external" href="https://www.swig.org/download.html">SWIG installation</a>.</p>
 </div>
@@ -298,83 +318,84 @@
 <h2>Stable Release Version<a class="headerlink" href="#stable-release-version" title="Permalink to this headline">¶</a></h2>
 <p>You can simply install stable release DI-engine with the following command:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Current stable release of DI-engine</span>
-pip install DI-engine
+pip<span class="w"> </span>install<span class="w"> </span>DI-engine
 </pre></div>
 </div>
 <div class="admonition tip">
 <p class="admonition-title">Tip</p>
 <p>If you need to upgrade pip, you can use the following commands:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Windows</span>
-&gt; python -m pip install --upgrade pip
+&gt;<span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>--upgrade<span class="w"> </span>pip
 <span class="c1"># Linux</span>
-$ pip install --upgrade pip
+$<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>--upgrade<span class="w"> </span>pip
 <span class="c1"># MacOS</span>
-$ pip install --upgrade pip
+$<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>--upgrade<span class="w"> </span>pip
 </pre></div>
 </div>
 </div>
 <div class="admonition tip">
 <p class="admonition-title">Tip</p>
 <p>If you encounter timeout in downloading packages, you can try to request from other site.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install requests -i https://mirrors.aliyun.com/pypi/simple/ DI-engine
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>requests<span class="w"> </span>-i<span class="w"> </span>https://mirrors.aliyun.com/pypi/simple/<span class="w"> </span>DI-engine
 </pre></div>
 </div>
 </div>
 <p>And if you prefer to use Anaconda or Miniconda, the following command is suggested:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda install -c opendilab di-engine
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>install<span class="w"> </span>-c<span class="w"> </span>opendilab<span class="w"> </span>di-engine
 </pre></div>
 </div>
 </section>
 <section id="development-version">
 <h2>Development Version<a class="headerlink" href="#development-version" title="Permalink to this headline">¶</a></h2>
 <p>If you need to install latest DI-engine in development from the Github source codes:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git clone https://github.com/opendilab/DI-engine.git
-<span class="nb">cd</span> DI-engine
-pip install .
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/opendilab/DI-engine.git
+<span class="nb">cd</span><span class="w"> </span>DI-engine
+pip<span class="w"> </span>install<span class="w"> </span>.
 </pre></div>
 </div>
 <div class="admonition tip">
 <p class="admonition-title">Tip</p>
 <p>If you hope to install DI-engine into local user directories, you can do as the following:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install . --user
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>.<span class="w"> </span>--user
 </pre></div>
 </div>
-<p>Be careful that if you are using virtual python environment created by softwares, such as virtualenv, then the option “–user” may not work. Please ignore this tip.</p>
+<p>Be careful that if you are using virtual python environment created by softwares, such as virtualenv, then the option <code class="docutils literal notranslate"><span class="pre">--user</span></code> may not work. Please ignore this tip.</p>
 </div>
 </section>
 <section id="special-version">
 <h2>Special Version<a class="headerlink" href="#special-version" title="Permalink to this headline">¶</a></h2>
 <p>If you want to enable special version of DI-engine and install the extra packages that are required, you can use the following command:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># install atari and box-2d related packages</span>
-pip install DI-engine<span class="o">[</span>common_env<span class="o">]</span>
+pip<span class="w"> </span>install<span class="w"> </span>DI-engine<span class="o">[</span>common_env<span class="o">]</span>
 <span class="c1"># install unittest(pytest) related packages</span>
-pip install DI-engine<span class="o">[</span>test<span class="o">]</span>
+pip<span class="w"> </span>install<span class="w"> </span>DI-engine<span class="o">[</span>test<span class="o">]</span>
 <span class="c1"># enable numba acceleration</span>
-pip install DI-engine<span class="o">[</span>fast<span class="o">]</span>
+pip<span class="w"> </span>install<span class="w"> </span>DI-engine<span class="o">[</span>fast<span class="o">]</span>
 <span class="c1"># install multi extra packages</span>
-pip install DI-engine<span class="o">[</span>common_env,test,fast<span class="o">]</span>
+pip<span class="w"> </span>install<span class="w"> </span>DI-engine<span class="o">[</span>common_env,test,fast<span class="o">]</span>
 </pre></div>
 </div>
 <div class="admonition tip">
 <p class="admonition-title">Tip</p>
-<p>Some certain shells require quotation marks around package names as the folloing:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install <span class="s1">&#39;DI-engine[common_env,test,fast]&#39;</span>
+<p>Some certain shells require quotation marks around package names as the following:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">&#39;DI-engine[common_env,test,fast]&#39;</span>
 </pre></div>
 </div>
 </div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>The whole installation procedure often lasts about 30 seconds, which depends on the the size of packages as well as download speed.
-If some packages installation failed, you can refer to the file “setup.py” and install the specific package manually.</p>
+If some packages installation failed, you can refer to the file “setup.py” and install the specific package manually.
+If meet some tough installation questions, you can ask to DI-engine’s <a class="reference external" href="https://github.com/opendilab/DI-engine/issues">ISSUE</a> for help.</p>
 </div>
 </section>
 <section id="run-in-docker">
 <h2>Run in Docker<a class="headerlink" href="#run-in-docker" title="Permalink to this headline">¶</a></h2>
 <p>DI-engine docker images are available in <a class="reference external" href="https://hub.docker.com/r/opendilab/ding">DockerHub</a>. You can use the following commands to pull the image:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Download Stable release DI-engine Docker image</span>
-docker pull opendilab/ding:nightly
+docker<span class="w"> </span>pull<span class="w"> </span>opendilab/ding:nightly
 <span class="c1"># Run Docker image</span>
-docker run -it opendilab/ding:nightly /bin/bash
+docker<span class="w"> </span>run<span class="w"> </span>-it<span class="w"> </span>opendilab/ding:nightly<span class="w"> </span>/bin/bash
 </pre></div>
 </div>
 </section>
@@ -386,7 +407,7 @@ docker run -it opendilab/ding:nightly /bin/bash
 </pre></div>
 </div>
 <p>You can also try the command line tool of DI-engine as the folloing:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ding -v
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ding<span class="w"> </span>-v
 </pre></div>
 </div>
 </section>

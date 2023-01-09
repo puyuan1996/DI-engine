@@ -124,9 +124,29 @@
                   <p>Tree Nested PyTorch Tensor Lib</p>
                 </a>
                 <a class="doc-dropdown-option nav-dropdown-item"
+                  href="https://github.com/opendilab/DI-sheep" target="_blank">
+                  <span class="dropdown-title">DI-sheep </span>
+                  <p>Deep Reinforcement Learning + 3 Tiles Game</p>
+                </a>
+                <a class="doc-dropdown-option nav-dropdown-item"
                   href="https://github.com/opendilab/awesome-model-based-RL" target="_blank">
                   <span class="dropdown-title">awesome-model-based-RL </span>
                   <p>A curated list of awesome model based RL resources (continually updated)</p>
+                </a>
+                <a class="doc-dropdown-option nav-dropdown-item"
+                  href="https://github.com/opendilab/awesome-decision-transformer" target="_blank">
+                  <span class="dropdown-title">awesome-decision-transformer </span>
+                  <p>A curated list of Decision Transformer resources (continually updated)</p>
+                </a>
+                <a class="doc-dropdown-option nav-dropdown-item"
+                  href="https://github.com/opendilab/awesome-exploration-rl" target="_blank">
+                  <span class="dropdown-title">awesome-exploration-rl </span>
+                  <p>A curated list of awesome exploration RL resources (continually updated)</p>
+                </a>
+                <a class="doc-dropdown-option nav-dropdown-item"
+                  href="https://github.com/opendilab/awesome-multi-modal-reinforcement-learning" target="_blank">
+                  <span class="dropdown-title">awesome-multi-modal-reinforcement-learning </span>
+                  <p>A curated list of Multi-Modal Reinforcement Learning resources (continually updated)</p>
                 </a>
               </div>
           </li>
@@ -455,7 +475,7 @@
 
 
 <span class="k">def</span> <span class="nf">shape_fn_dntd</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Overview:</span>
 <span class="sd">        Return dntd shape for hpc</span>
 <span class="sd">    Returns:</span>
@@ -485,7 +505,7 @@
         <span class="n">nstep</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
         <span class="n">value_gamma</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Overview:</span>
 <span class="sd">        Multistep (1 step or n step) td_error for distributed q-learning based algorithm, support single\</span>
 <span class="sd">            agent case and multi agent case.</span>
@@ -614,7 +634,7 @@
         <span class="n">nstep</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
         <span class="n">criterion</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">modules</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">MSELoss</span><span class="p">(</span><span class="n">reduction</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">)</span>  <span class="c1"># noqa</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Overview:</span>
 <span class="sd">        Multistep (n step) td_error for distributed value based algorithm</span>
 <span class="sd">    Arguments:</span>
@@ -655,7 +675,7 @@
 
 
 <span class="k">def</span> <span class="nf">shape_fn_qntd</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Overview:</span>
 <span class="sd">        Return qntd shape for hpc</span>
 <span class="sd">    Returns:</span>
@@ -679,7 +699,7 @@
         <span class="n">value_gamma</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">criterion</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">modules</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">MSELoss</span><span class="p">(</span><span class="n">reduction</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">),</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Overview:</span>
 <span class="sd">        Multistep (1 step or n step) td_error for q-learning based algorithm</span>
 <span class="sd">    Arguments:</span>
@@ -727,8 +747,71 @@
     <span class="k">return</span> <span class="p">(</span><span class="n">td_error_per_sample</span> <span class="o">*</span> <span class="n">weight</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(),</span> <span class="n">td_error_per_sample</span>
 
 
+<span class="k">def</span> <span class="nf">bdq_nstep_td_error</span><span class="p">(</span>
+        <span class="n">data</span><span class="p">:</span> <span class="n">namedtuple</span><span class="p">,</span>
+        <span class="n">gamma</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">list</span><span class="p">],</span>
+        <span class="n">nstep</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">cum_reward</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">value_gamma</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">criterion</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">modules</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">MSELoss</span><span class="p">(</span><span class="n">reduction</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">),</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Overview:</span>
+<span class="sd">        Multistep (1 step or n step) td_error for BDQ algorithm, \</span>
+<span class="sd">            referenced paper Action Branching Architectures for Deep Reinforcement Learning \</span>
+<span class="sd">            &lt;https://arxiv.org/pdf/1711.08946&gt;</span>
+<span class="sd">        In fact, the original paper only provides the 1-step TD-error calculation method, \</span>
+<span class="sd">            and here we extend the calculation method of n-step.</span>
+<span class="sd">                TD-error:</span>
+<span class="sd">                    y_d = \sigma_{t=0}^{nstep} \gamma^t * r_t + \gamma^{nstep} * Q_d&#39;(s&#39;, argmax Q_d(s&#39;, a_d))</span>
+<span class="sd">                    TD-error = \frac{1}{D} * (y_d - Q_d(s, a_d))^2</span>
+<span class="sd">                    Loss = mean(TD-error)</span>
+<span class="sd">    Arguments:</span>
+<span class="sd">        - data (:obj:`q_nstep_td_data`): the input data, q_nstep_td_data to calculate loss</span>
+<span class="sd">        - gamma (:obj:`float`): discount factor</span>
+<span class="sd">        - cum_reward (:obj:`bool`): whether to use cumulative nstep reward, which is figured out when collecting data</span>
+<span class="sd">        - value_gamma (:obj:`torch.Tensor`): gamma discount value for target q_value</span>
+<span class="sd">        - criterion (:obj:`torch.nn.modules`): loss function criterion</span>
+<span class="sd">        - nstep (:obj:`int`): nstep num, default set to 1</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        - loss (:obj:`torch.Tensor`): nstep td error, 0-dim tensor</span>
+<span class="sd">        - td_error_per_sample (:obj:`torch.Tensor`): nstep td error, 1-dim tensor</span>
+<span class="sd">    Shapes:</span>
+<span class="sd">        - data (:obj:`q_nstep_td_data`): the q_nstep_td_data containing\</span>
+<span class="sd">            [&#39;q&#39;, &#39;next_n_q&#39;, &#39;action&#39;, &#39;reward&#39;, &#39;done&#39;]</span>
+<span class="sd">        - q (:obj:`torch.FloatTensor`): :math:`(B, D, N)` i.e. [batch_size, branch_num, action_bins_per_branch]</span>
+<span class="sd">        - next_n_q (:obj:`torch.FloatTensor`): :math:`(B, D, N)`</span>
+<span class="sd">        - action (:obj:`torch.LongTensor`): :math:`(B, D)`</span>
+<span class="sd">        - next_n_action (:obj:`torch.LongTensor`): :math:`(B, D)`</span>
+<span class="sd">        - reward (:obj:`torch.FloatTensor`): :math:`(T, B)`, where T is timestep(nstep)</span>
+<span class="sd">        - done (:obj:`torch.BoolTensor`) :math:`(B, )`, whether done in last timestep</span>
+<span class="sd">        - td_error_per_sample (:obj:`torch.FloatTensor`): :math:`(B, )`</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">q</span><span class="p">,</span> <span class="n">next_n_q</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="n">next_n_action</span><span class="p">,</span> <span class="n">reward</span><span class="p">,</span> <span class="n">done</span><span class="p">,</span> <span class="n">weight</span> <span class="o">=</span> <span class="n">data</span>
+    <span class="k">if</span> <span class="n">weight</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">weight</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">reward</span><span class="p">)</span>
+    <span class="n">reward</span> <span class="o">=</span> <span class="n">reward</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">done</span> <span class="o">=</span> <span class="n">done</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">value_gamma</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">value_gamma</span> <span class="o">=</span> <span class="n">value_gamma</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="n">q_s_a</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">action</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">target_q_s_a</span> <span class="o">=</span> <span class="n">next_n_q</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">next_n_action</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">cum_reward</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">value_gamma</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">target_q_s_a</span> <span class="o">=</span> <span class="n">reward</span> <span class="o">+</span> <span class="p">(</span><span class="n">gamma</span> <span class="o">**</span> <span class="n">nstep</span><span class="p">)</span> <span class="o">*</span> <span class="n">target_q_s_a</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">done</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">target_q_s_a</span> <span class="o">=</span> <span class="n">reward</span> <span class="o">+</span> <span class="n">value_gamma</span> <span class="o">*</span> <span class="n">target_q_s_a</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">done</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">target_q_s_a</span> <span class="o">=</span> <span class="n">nstep_return</span><span class="p">(</span><span class="n">nstep_return_data</span><span class="p">(</span><span class="n">reward</span><span class="p">,</span> <span class="n">target_q_s_a</span><span class="p">,</span> <span class="n">done</span><span class="p">),</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">nstep</span><span class="p">,</span> <span class="n">value_gamma</span><span class="p">)</span>
+    <span class="n">td_error_per_sample</span> <span class="o">=</span> <span class="n">criterion</span><span class="p">(</span><span class="n">q_s_a</span><span class="p">,</span> <span class="n">target_q_s_a</span><span class="o">.</span><span class="n">detach</span><span class="p">())</span>
+    <span class="n">td_error_per_sample</span> <span class="o">=</span> <span class="n">td_error_per_sample</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">td_error_per_sample</span> <span class="o">*</span> <span class="n">weight</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(),</span> <span class="n">td_error_per_sample</span>
+
+
 <span class="k">def</span> <span class="nf">shape_fn_qntd_rescale</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Overview:</span>
 <span class="sd">        Return qntd_rescale shape for hpc</span>
 <span class="sd">    Returns:</span>
@@ -755,7 +838,7 @@
     <span class="n">trans_fn</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">value_transform</span><span class="p">,</span>
     <span class="n">inv_trans_fn</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">value_inv_transform</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Overview:</span>
 <span class="sd">        Multistep (1 step or n step) td_error with value rescaling</span>
 <span class="sd">    Arguments:</span>
@@ -808,7 +891,7 @@
         <span class="n">value_gamma</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">criterion</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">modules</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">MSELoss</span><span class="p">(</span><span class="n">reduction</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">),</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Overview:</span>
 <span class="sd">        Multistep n step td_error + 1 step td_error + supervised margin loss or dqfd</span>
 <span class="sd">    Arguments:</span>
@@ -906,7 +989,7 @@
     <span class="n">trans_fn</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">value_transform</span><span class="p">,</span>
     <span class="n">inv_trans_fn</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">value_inv_transform</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Overview:</span>
 <span class="sd">        Multistep n step td_error + 1 step td_error + supervised margin loss or dqfd</span>
 <span class="sd">    Arguments:</span>
@@ -1010,7 +1093,7 @@
         <span class="n">nstep</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
         <span class="n">value_gamma</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Overview:</span>
 <span class="sd">        Multistep (1 step or n step) td_error with in QRDQN</span>
 <span class="sd">    Arguments:</span>
@@ -1080,7 +1163,7 @@
         <span class="n">value_gamma</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">criterion</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">modules</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">MSELoss</span><span class="p">(</span><span class="n">reduction</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">),</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Overview:</span>
 <span class="sd">        Multistep (1 step or n step) td_error for q-learning based algorithm</span>
 <span class="sd">    Arguments:</span>
@@ -1146,7 +1229,7 @@
         <span class="n">kappa</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
         <span class="n">value_gamma</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Overview:</span>
 <span class="sd">        Multistep (1 step or n step) td_error with in IQN, \</span>
 <span class="sd">            referenced paper Implicit Quantile Networks for Distributional Reinforcement Learning \</span>
@@ -1241,7 +1324,7 @@
         <span class="n">kappa</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
         <span class="n">value_gamma</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Overview:</span>
 <span class="sd">        Multistep (1 step or n step) td_error with in FQF, \</span>
 <span class="sd">            referenced paper Fully Parameterized Quantile Function for Distributional Reinforcement Learning \</span>
@@ -1331,7 +1414,7 @@
 
 
 <span class="k">def</span> <span class="nf">fqf_calculate_fraction_loss</span><span class="p">(</span><span class="n">q_tau_i</span><span class="p">,</span> <span class="n">q_value</span><span class="p">,</span> <span class="n">quantiles</span><span class="p">,</span> <span class="n">actions</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Shapes:</span>
 <span class="sd">       - q_tau_i (:obj:`torch.FloatTensor`) :math:`(batch_size, num_quantiles-1, action_dim)`</span>
 <span class="sd">       - q_value (:obj:`torch.FloatTensor`) :math:`(batch_size, num_quantiles, action_dim)`</span>
@@ -1378,7 +1461,7 @@
 
 
 <span class="k">def</span> <span class="nf">shape_fn_td_lambda</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Overview:</span>
 <span class="sd">        Return td_lambda shape for hpc</span>
 <span class="sd">    Returns:</span>
@@ -1398,7 +1481,7 @@
     <span class="n">include_kwargs</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">,</span> <span class="s1">&#39;gamma&#39;</span><span class="p">,</span> <span class="s1">&#39;lambda_&#39;</span><span class="p">]</span>
 <span class="p">)</span>
 <span class="k">def</span> <span class="nf">td_lambda_error</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">namedtuple</span><span class="p">,</span> <span class="n">gamma</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.9</span><span class="p">,</span> <span class="n">lambda_</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.8</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Overview:</span>
 <span class="sd">        Computing TD(lambda) loss given constant gamma and lambda.</span>
 <span class="sd">        There is no special handling for terminal state value,</span>
@@ -1434,7 +1517,7 @@
         <span class="n">lambda_</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="n">done</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Overview:</span>
 <span class="sd">        Functional equivalent to trfl.value_ops.generalized_lambda_returns</span>
 <span class="sd">        https://github.com/deepmind/trfl/blob/2c07ac22512a16715cc759f0072be43a5d12ae45/trfl/value_ops.py#L74</span>
@@ -1468,7 +1551,7 @@
         <span class="n">lambda_</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="n">done</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
-    <span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Overview:</span>
 <span class="sd">        Same as trfl.sequence_ops.multistep_forward_view</span>
 <span class="sd">        Implementing (12.18) in Sutton &amp; Barto</span>

@@ -124,9 +124,29 @@
                   <p>Tree Nested PyTorch Tensor Lib</p>
                 </a>
                 <a class="doc-dropdown-option nav-dropdown-item"
+                  href="https://github.com/opendilab/DI-sheep" target="_blank">
+                  <span class="dropdown-title">DI-sheep </span>
+                  <p>Deep Reinforcement Learning + 3 Tiles Game</p>
+                </a>
+                <a class="doc-dropdown-option nav-dropdown-item"
                   href="https://github.com/opendilab/awesome-model-based-RL" target="_blank">
                   <span class="dropdown-title">awesome-model-based-RL </span>
                   <p>A curated list of awesome model based RL resources (continually updated)</p>
+                </a>
+                <a class="doc-dropdown-option nav-dropdown-item"
+                  href="https://github.com/opendilab/awesome-decision-transformer" target="_blank">
+                  <span class="dropdown-title">awesome-decision-transformer </span>
+                  <p>A curated list of Decision Transformer resources (continually updated)</p>
+                </a>
+                <a class="doc-dropdown-option nav-dropdown-item"
+                  href="https://github.com/opendilab/awesome-exploration-rl" target="_blank">
+                  <span class="dropdown-title">awesome-exploration-rl </span>
+                  <p>A curated list of awesome exploration RL resources (continually updated)</p>
+                </a>
+                <a class="doc-dropdown-option nav-dropdown-item"
+                  href="https://github.com/opendilab/awesome-multi-modal-reinforcement-learning" target="_blank">
+                  <span class="dropdown-title">awesome-multi-modal-reinforcement-learning </span>
+                  <p>A curated list of Multi-Modal Reinforcement Learning resources (continually updated)</p>
                 </a>
               </div>
           </li>
@@ -286,7 +306,7 @@
 
 
 <div class="viewcode-block" id="ISerialCollector"><a class="viewcode-back" href="../../../../05_api_doc/worker/collector/base_serial_collector.html#ding.worker.collector.base_serial_collector.ISerialCollector">[docs]</a><span class="k">class</span> <span class="nc">ISerialCollector</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Overview:</span>
 <span class="sd">        Abstract baseclass for serial collector.</span>
 <span class="sd">    Interfaces:</span>
@@ -297,7 +317,7 @@
 
 <div class="viewcode-block" id="ISerialCollector.default_config"><a class="viewcode-back" href="../../../../05_api_doc/worker/collector/base_serial_collector.html#ding.worker.collector.base_serial_collector.ISerialCollector.default_config">[docs]</a>    <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">default_config</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EasyDict</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Overview:</span>
 <span class="sd">            Get collector&#39;s default config. We merge collector&#39;s default config with other default configs\</span>
 <span class="sd">                and user&#39;s config to get the final config.</span>
@@ -310,7 +330,7 @@
 
 <div class="viewcode-block" id="ISerialCollector.reset_env"><a class="viewcode-back" href="../../../../05_api_doc/worker/collector/base_serial_collector.html#ding.worker.collector.base_serial_collector.ISerialCollector.reset_env">[docs]</a>    <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">reset_env</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_env</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">BaseEnvManager</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Overview:</span>
 <span class="sd">            Reset collector&#39;s environment. In some case, we need collector use the same policy to collect \</span>
 <span class="sd">                data in different environments. We can use reset_env to reset the environment.</span>
@@ -319,7 +339,7 @@
 
 <div class="viewcode-block" id="ISerialCollector.reset_policy"><a class="viewcode-back" href="../../../../05_api_doc/worker/collector/base_serial_collector.html#ding.worker.collector.base_serial_collector.ISerialCollector.reset_policy">[docs]</a>    <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">reset_policy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_policy</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">namedtuple</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Overview:</span>
 <span class="sd">            Reset collector&#39;s policy. In some case, we need collector work in this same environment but use\</span>
 <span class="sd">                different policy to collect data. We can use reset_policy to reset the policy.</span>
@@ -328,7 +348,7 @@
 
 <div class="viewcode-block" id="ISerialCollector.reset"><a class="viewcode-back" href="../../../../05_api_doc/worker/collector/base_serial_collector.html#ding.worker.collector.base_serial_collector.ISerialCollector.reset">[docs]</a>    <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_policy</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">namedtuple</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">_env</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">BaseEnvManager</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Overview:</span>
 <span class="sd">            Reset collector&#39;s policy and environment. Use new policy and environment to collect data.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -336,7 +356,7 @@
 
 <div class="viewcode-block" id="ISerialCollector.collect"><a class="viewcode-back" href="../../../../05_api_doc/worker/collector/base_serial_collector.html#ding.worker.collector.base_serial_collector.ISerialCollector.collect">[docs]</a>    <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">collect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">per_collect_target</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Overview:</span>
 <span class="sd">            Collect the corresponding data according to the specified target and return. \</span>
 <span class="sd">                There are different definitions in episode and sample mode.</span>
@@ -345,7 +365,7 @@
 
     <span class="nd">@abstractproperty</span>
     <span class="k">def</span> <span class="nf">envstep</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Overview:</span>
 <span class="sd">            Get the total envstep num.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -353,7 +373,7 @@
 
 
 <span class="k">def</span> <span class="nf">create_serial_collector</span><span class="p">(</span><span class="n">cfg</span><span class="p">:</span> <span class="n">EasyDict</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ISerialCollector</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Overview:</span>
 <span class="sd">        Create a specific collector instance based on the config.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -362,7 +382,7 @@
 
 
 <span class="k">def</span> <span class="nf">get_serial_collector_cls</span><span class="p">(</span><span class="n">cfg</span><span class="p">:</span> <span class="n">EasyDict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Overview:</span>
 <span class="sd">        Get the specific collector class according to the config.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -372,7 +392,7 @@
 
 
 <div class="viewcode-block" id="CachePool"><a class="viewcode-back" href="../../../../05_api_doc/worker/collector/base_serial_collector.html#ding.worker.collector.base_serial_collector.CachePool">[docs]</a><span class="k">class</span> <span class="nc">CachePool</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Overview:</span>
 <span class="sd">       CachePool is the repository of cache items.</span>
 <span class="sd">    Interfaces:</span>
@@ -380,7 +400,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="CachePool.__init__"><a class="viewcode-back" href="../../../../05_api_doc/worker/collector/base_serial_collector.html#ding.worker.collector.base_serial_collector.CachePool.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">env_num</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">deepcopy</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Overview:</span>
 <span class="sd">            Initialization method.</span>
 <span class="sd">        Arguments:</span>
@@ -393,7 +413,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_deepcopy</span> <span class="o">=</span> <span class="n">deepcopy</span></div>
 
 <div class="viewcode-block" id="CachePool.update"><a class="viewcode-back" href="../../../../05_api_doc/worker/collector/base_serial_collector.html#ding.worker.collector.base_serial_collector.CachePool.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="nb">list</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Overview:</span>
 <span class="sd">            Update elements in cache pool.</span>
 <span class="sd">        Arguments:</span>
@@ -415,7 +435,7 @@
                     <span class="bp">self</span><span class="o">.</span><span class="n">_pool</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">copy_d</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="CachePool.__getitem__"><a class="viewcode-back" href="../../../../05_api_doc/worker/collector/base_serial_collector.html#ding.worker.collector.base_serial_collector.CachePool.__getitem__">[docs]</a>    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Overview:</span>
 <span class="sd">            Get item in cache pool.</span>
 <span class="sd">        Arguments:</span>
@@ -429,7 +449,7 @@
         <span class="k">return</span> <span class="n">data</span></div>
 
 <div class="viewcode-block" id="CachePool.reset"><a class="viewcode-back" href="../../../../05_api_doc/worker/collector/base_serial_collector.html#ding.worker.collector.base_serial_collector.CachePool.reset">[docs]</a>    <span class="k">def</span> <span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Overview:</span>
 <span class="sd">            Reset the cache pool.</span>
 <span class="sd">        Arguments:</span>
@@ -439,36 +459,40 @@
 
 
 <div class="viewcode-block" id="TrajBuffer"><a class="viewcode-back" href="../../../../05_api_doc/worker/collector/base_serial_collector.html#ding.worker.collector.base_serial_collector.TrajBuffer">[docs]</a><span class="k">class</span> <span class="nc">TrajBuffer</span><span class="p">(</span><span class="nb">list</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Overview:</span>
 <span class="sd">       TrajBuffer is used to store traj_len pieces of transitions.</span>
 <span class="sd">    Interfaces:</span>
 <span class="sd">        __init__, append</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="TrajBuffer.__init__"><a class="viewcode-back" href="../../../../05_api_doc/worker/collector/base_serial_collector.html#ding.worker.collector.base_serial_collector.TrajBuffer.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">maxlen</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="TrajBuffer.__init__"><a class="viewcode-back" href="../../../../05_api_doc/worker/collector/base_serial_collector.html#ding.worker.collector.base_serial_collector.TrajBuffer.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">maxlen</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">deepcopy</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Overview:</span>
 <span class="sd">            Initialization trajBuffer.</span>
 <span class="sd">        Arguments:</span>
 <span class="sd">            - maxlen (:obj:`int`): The maximum length of trajectory buffer.</span>
+<span class="sd">            - deepcopy (:obj:`bool`): Whether to deepcopy data when do operation.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_maxlen</span> <span class="o">=</span> <span class="n">maxlen</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_deepcopy</span> <span class="o">=</span> <span class="n">deepcopy</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="TrajBuffer.append"><a class="viewcode-back" href="../../../../05_api_doc/worker/collector/base_serial_collector.html#ding.worker.collector.base_serial_collector.TrajBuffer.append">[docs]</a>    <span class="k">def</span> <span class="nf">append</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Overview:</span>
 <span class="sd">            Append data to trajBuffer.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_maxlen</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_maxlen</span><span class="p">:</span>
                 <span class="k">del</span> <span class="bp">self</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_deepcopy</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></div></div>
 
 
 <span class="k">def</span> <span class="nf">to_tensor_transitions</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Overview:</span>
 <span class="sd">        transitions collected data to tensor.</span>
 <span class="sd">    Argument:</span>
@@ -485,7 +509,8 @@
     <span class="k">if</span> <span class="s1">&#39;next_obs&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
         <span class="k">return</span> <span class="n">to_tensor</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">transform_scalar</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="c1"># for save memory</span>
+        <span class="c1"># for save memory of next_obs</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">to_tensor</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">transform_scalar</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
         <span class="n">data</span> <span class="o">=</span> <span class="n">to_tensor</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">ignore_keys</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;next_obs&#39;</span><span class="p">],</span> <span class="n">transform_scalar</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
             <span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s1">&#39;next_obs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">][</span><span class="s1">&#39;obs&#39;</span><span class="p">]</span>

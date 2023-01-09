@@ -127,9 +127,29 @@
                   <p>Tree Nested PyTorch Tensor Lib</p>
                 </a>
                 <a class="doc-dropdown-option nav-dropdown-item"
+                  href="https://github.com/opendilab/DI-sheep" target="_blank">
+                  <span class="dropdown-title">DI-sheep </span>
+                  <p>Deep Reinforcement Learning + 3 Tiles Game</p>
+                </a>
+                <a class="doc-dropdown-option nav-dropdown-item"
                   href="https://github.com/opendilab/awesome-model-based-RL" target="_blank">
                   <span class="dropdown-title">awesome-model-based-RL </span>
                   <p>A curated list of awesome model based RL resources (continually updated)</p>
+                </a>
+                <a class="doc-dropdown-option nav-dropdown-item"
+                  href="https://github.com/opendilab/awesome-decision-transformer" target="_blank">
+                  <span class="dropdown-title">awesome-decision-transformer </span>
+                  <p>A curated list of Decision Transformer resources (continually updated)</p>
+                </a>
+                <a class="doc-dropdown-option nav-dropdown-item"
+                  href="https://github.com/opendilab/awesome-exploration-rl" target="_blank">
+                  <span class="dropdown-title">awesome-exploration-rl </span>
+                  <p>A curated list of awesome exploration RL resources (continually updated)</p>
+                </a>
+                <a class="doc-dropdown-option nav-dropdown-item"
+                  href="https://github.com/opendilab/awesome-multi-modal-reinforcement-learning" target="_blank">
+                  <span class="dropdown-title">awesome-multi-modal-reinforcement-learning </span>
+                  <p>A curated list of Multi-Modal Reinforcement Learning resources (continually updated)</p>
                 </a>
               </div>
           </li>
@@ -289,17 +309,17 @@
 <h2>Install<a class="headerlink" href="#install" title="Permalink to this headline">¶</a></h2>
 <section id="installation-method">
 <h3>Installation Method<a class="headerlink" href="#installation-method" title="Permalink to this headline">¶</a></h3>
-<p>The Pendulum environment is built into the gym, and you can install the gym directly. Its environment id is <code class="docutils literal notranslate"><span class="pre">Pendulum-v0</span></code> .</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>pip install gym
+<p>The Pendulum environment is built into the gym, and you can install the gym directly. Its environment id is <code class="docutils literal notranslate"><span class="pre">Pendulum-v1</span></code> .</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>gym
 </pre></div>
 </div>
 </section>
 <section id="verify-installation">
 <h3>Verify Installation<a class="headerlink" href="#verify-installation" title="Permalink to this headline">¶</a></h3>
 <p>Run the following Python program, if no error is reported, the installation is successful.</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>import gym
-<span class="nv">env</span> <span class="o">=</span> gym.make<span class="o">(</span><span class="s1">&#39;Pendulum-v0&#39;</span><span class="o">)</span>
-<span class="nv">obs</span> <span class="o">=</span> env.reset<span class="o">()</span>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>import<span class="w"> </span>gym
+<span class="nv">env</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>gym.make<span class="o">(</span><span class="s1">&#39;Pendulum-v1&#39;</span><span class="o">)</span>
+<span class="nv">obs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>env.reset<span class="o">()</span>
 print<span class="o">(</span>obs<span class="o">)</span>
 </pre></div>
 </div>
@@ -327,8 +347,8 @@ print<span class="o">(</span>obs<span class="o">)</span>
 <li><p><code class="docutils literal notranslate"><span class="pre">thetadot</span></code> : Angular angle of the pendulum, in the range <code class="docutils literal notranslate"><span class="pre">[-8,</span> <span class="pre">8]</span></code> .</p></li>
 </ul>
 </section>
-<section id="bonus-space">
-<h3>Bonus Space<a class="headerlink" href="#bonus-space" title="Permalink to this headline">¶</a></h3>
+<section id="reward-space">
+<h3>Reward Space<a class="headerlink" href="#reward-space" title="Permalink to this headline">¶</a></h3>
 <p>First calculate <code class="docutils literal notranslate"><span class="pre">cost</span></code> , including three terms:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">angle_normalize(th)**2</span></code> : Penalty for the angle difference between the current pendulum and the target position</p></li>
@@ -489,7 +509,7 @@ print<span class="o">(</span>obs<span class="o">)</span>
 <li><a class="reference internal" href="#environment-introduction">Environment Introduction</a><ul>
 <li><a class="reference internal" href="#action-space">Action Space</a></li>
 <li><a class="reference internal" href="#state-space">State Space</a></li>
-<li><a class="reference internal" href="#bonus-space">Bonus Space</a></li>
+<li><a class="reference internal" href="#reward-space">Reward Space</a></li>
 <li><a class="reference internal" href="#termination-condition">Termination Condition</a></li>
 </ul>
 </li>

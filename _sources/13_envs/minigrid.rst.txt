@@ -113,7 +113,7 @@ Action Space
 
    - 'enter': done/noop
 
-Bonus Space
+Reward Space
 ------------
 
 - Game score, different minigrid sub-environments have a small difference in the reward range, the maximum value is 1, which is generally a \ ``float``\ value. Because it is a sparse reward environment, it can only be reached when the agent (displayed as a red point) reaches goal(displayed as green dots), there is a reward greater than zero. The specific value is determined by different environments and the total number of steps used to reach the goal. The reward before reaching the goal is all 0.
@@ -148,7 +148,7 @@ Action Space
 
 - Basically no transformation, it is still a discrete action space of size N=7, generally a one-dimensional np array, the size is \ ``(1, )``\ , and the data type is \ ``np.int64``
 
-Bonus Space
+Reward Space
 ------------
 
 - Transform content: basically no transform
@@ -167,7 +167,7 @@ The above space can be expressed as:
 Other
 --------
 
-- The \ ``info``\ returned by the environment \ ``step``\ method must contain the \ ``final_eval_reward``\ key-value pair, which represents the evaluation index of the entire episode, and is the cumulative sum of the rewards of the entire episode in minigrid
+- The \ ``info``\ returned by the environment \ ``step``\ method must contain the \ ``eval_episode_return``\ key-value pair, which represents the evaluation index of the entire episode, and is the cumulative sum of the rewards of the entire episode in minigrid
 
 Other
 ======
@@ -190,7 +190,7 @@ The difference between training and testing environments
 Store Video
 --------------
 
-After the environment is created, but before reset, call the \ ``enable_save_replay``\ method to specify the path to save the game recording. The environment will automatically save the local video files after each episode ends. (The default call \ ``gym.wrapper.Monitor``\ implementation, depends on \ ``ffmpeg``\), the code shown below will run an environment episode and save the result of this episode in the form \ ``./video/xxx.mp4``\ in a file like this:
+After the environment is created, but before reset, call the \ ``enable_save_replay``\ method to specify the path to save the game recording. The environment will automatically save the local video files after each episode ends. (The default call \ ``gym.wrappers.RecordVideo``\ implementation), the code shown below will run an environment episode and save the result of this episode in a folder \ ``./video/``\ :
 
 .. code:: python
 
@@ -208,7 +208,7 @@ After the environment is created, but before reset, call the \ ``enable_save_rep
       random_action = np.random.randint(min_val, max_val, size=(1,))
       timestep = env.step(random_action)
       if timestep.done:
-          print('Episode is over, final eval reward is: {}'.format(timestep.info['final_eval_reward']))
+          print('Episode is over, eval episode return is: {}'.format(timestep.info['eval_episode_return']))
           break
 
 DI-zoo Runnable Code Example

@@ -127,9 +127,29 @@
                   <p>Tree Nested PyTorch Tensor Lib</p>
                 </a>
                 <a class="doc-dropdown-option nav-dropdown-item"
+                  href="https://github.com/opendilab/DI-sheep" target="_blank">
+                  <span class="dropdown-title">DI-sheep </span>
+                  <p>Deep Reinforcement Learning + 3 Tiles Game</p>
+                </a>
+                <a class="doc-dropdown-option nav-dropdown-item"
                   href="https://github.com/opendilab/awesome-model-based-RL" target="_blank">
                   <span class="dropdown-title">awesome-model-based-RL </span>
                   <p>A curated list of awesome model based RL resources (continually updated)</p>
+                </a>
+                <a class="doc-dropdown-option nav-dropdown-item"
+                  href="https://github.com/opendilab/awesome-decision-transformer" target="_blank">
+                  <span class="dropdown-title">awesome-decision-transformer </span>
+                  <p>A curated list of Decision Transformer resources (continually updated)</p>
+                </a>
+                <a class="doc-dropdown-option nav-dropdown-item"
+                  href="https://github.com/opendilab/awesome-exploration-rl" target="_blank">
+                  <span class="dropdown-title">awesome-exploration-rl </span>
+                  <p>A curated list of awesome exploration RL resources (continually updated)</p>
+                </a>
+                <a class="doc-dropdown-option nav-dropdown-item"
+                  href="https://github.com/opendilab/awesome-multi-modal-reinforcement-learning" target="_blank">
+                  <span class="dropdown-title">awesome-multi-modal-reinforcement-learning </span>
+                  <p>A curated list of Multi-Modal Reinforcement Learning resources (continually updated)</p>
                 </a>
               </div>
           </li>
@@ -291,7 +311,7 @@
 <h3>Installation Methods<a class="headerlink" href="#installation-methods" title="Permalink to this headline">¶</a></h3>
 <p>Install <code class="docutils literal notranslate"><span class="pre">slimevolleygym</span></code>. You can install by command <code class="docutils literal notranslate"><span class="pre">pip</span></code> or through <strong>DI-engine</strong>.</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># Method1: Install Directly</span>
-pip install slimevolleygym
+pip<span class="w"> </span>install<span class="w"> </span>slimevolleygym
 </pre></div>
 </div>
 </section>
@@ -417,7 +437,7 @@ i.e. <code class="docutils literal notranslate"><span class="pre">(1,</span> <sp
 <section id="id4">
 <h3>Other<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
-<li><p>The<cite>info`</cite>returned form the environment<code class="docutils literal notranslate"><span class="pre">step</span></code>must contain the<code class="docutils literal notranslate"><span class="pre">final_eval_reward</span></code>key-value pair, which represents the evaluation metrics for the entire episode, containing the rewards for the episode (life value difference between two players).</p></li>
+<li><p>The<cite>info`</cite>returned form the environment<code class="docutils literal notranslate"><span class="pre">step</span></code>must contain the<code class="docutils literal notranslate"><span class="pre">eval_episode_return</span></code>key-value pair, which represents the evaluation metrics for the entire episode, containing the rewards for the episode (life value difference between two players).</p></li>
 <li><p>The above spatial definitions are all descriptions of single intelligences. The multi-intelligence space splices the corresponding obs/action/reward information.</p></li>
 </ul>
 <p>i.e. The observation space changes from <code class="docutils literal notranslate"><span class="pre">(12,</span> <span class="pre">)</span></code> to <code class="docutils literal notranslate"><span class="pre">(2,</span> <span class="pre">12)</span></code>, thar represents the observation information of both sides.</p>
@@ -447,7 +467,7 @@ i.e. <code class="docutils literal notranslate"><span class="pre">(1,</span> <sp
 </section>
 <section id="save-the-replay-video">
 <h3>Save the replay video<a class="headerlink" href="#save-the-replay-video" title="Permalink to this headline">¶</a></h3>
-<p>After env is initiated, and before it is reset, call <code class="docutils literal notranslate"><span class="pre">enable_save_replay</span></code> method to set where the replay video will be saved. Environment will automatically save the replay video after each episode is completed. (The default call is <code class="docutils literal notranslate"><span class="pre">gym.wrapper.Monitor</span></code>, depending on <code class="docutils literal notranslate"><span class="pre">ffmpeg</span></code>). The code shown below will run an environment episode and save the replay viedo in a file like <code class="docutils literal notranslate"><span class="pre">./video/xxx.mp4</span></code>.</p>
+<p>After env is initiated, and before it is reset, call <code class="docutils literal notranslate"><span class="pre">enable_save_replay</span></code> method to set where the replay video will be saved. Environment will automatically save the replay video after each episode is completed. (The default call is <code class="docutils literal notranslate"><span class="pre">gym.wrappers.RecordVideo</span></code>). The code shown below will run an environment episode and save the replay viedo in a folder <code class="docutils literal notranslate"><span class="pre">./video/</span></code>.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">easydict</span> <span class="kn">import</span> <span class="n">EasyDict</span>
 <span class="kn">from</span> <span class="nn">dizoo.slime_volley.envs.slime_volley_env</span> <span class="kn">import</span> <span class="n">SlimeVolleyEnv</span>
 
@@ -459,7 +479,7 @@ i.e. <code class="docutils literal notranslate"><span class="pre">(1,</span> <sp
     <span class="n">action</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">random_action</span><span class="p">()</span>
     <span class="n">timestep</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">action</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">timestep</span><span class="o">.</span><span class="n">done</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Episode is over, final eval reward is: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">timestep</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;final_eval_reward&#39;</span><span class="p">]))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Episode is over, eval episode return is: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">timestep</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;eval_episode_return&#39;</span><span class="p">]))</span>
         <span class="k">break</span>
 </pre></div>
 </div>

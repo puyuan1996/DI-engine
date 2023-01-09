@@ -124,9 +124,29 @@
                   <p>Tree Nested PyTorch Tensor Lib</p>
                 </a>
                 <a class="doc-dropdown-option nav-dropdown-item"
+                  href="https://github.com/opendilab/DI-sheep" target="_blank">
+                  <span class="dropdown-title">DI-sheep </span>
+                  <p>Deep Reinforcement Learning + 3 Tiles Game</p>
+                </a>
+                <a class="doc-dropdown-option nav-dropdown-item"
                   href="https://github.com/opendilab/awesome-model-based-RL" target="_blank">
                   <span class="dropdown-title">awesome-model-based-RL </span>
                   <p>A curated list of awesome model based RL resources (continually updated)</p>
+                </a>
+                <a class="doc-dropdown-option nav-dropdown-item"
+                  href="https://github.com/opendilab/awesome-decision-transformer" target="_blank">
+                  <span class="dropdown-title">awesome-decision-transformer </span>
+                  <p>A curated list of Decision Transformer resources (continually updated)</p>
+                </a>
+                <a class="doc-dropdown-option nav-dropdown-item"
+                  href="https://github.com/opendilab/awesome-exploration-rl" target="_blank">
+                  <span class="dropdown-title">awesome-exploration-rl </span>
+                  <p>A curated list of awesome exploration RL resources (continually updated)</p>
+                </a>
+                <a class="doc-dropdown-option nav-dropdown-item"
+                  href="https://github.com/opendilab/awesome-multi-modal-reinforcement-learning" target="_blank">
+                  <span class="dropdown-title">awesome-multi-modal-reinforcement-learning </span>
+                  <p>A curated list of Multi-Modal Reinforcement Learning resources (continually updated)</p>
                 </a>
               </div>
           </li>
@@ -283,7 +303,7 @@
 
 <div class="viewcode-block" id="SoloCommander"><a class="viewcode-back" href="../../../../05_api_doc/worker/coordinator/commander.html#ding.worker.coordinator.solo_parallel_commander.SoloCommander">[docs]</a><span class="nd">@COMMANDER_REGISTRY</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s1">&#39;solo&#39;</span><span class="p">)</span>
 <span class="k">class</span> <span class="nc">SoloCommander</span><span class="p">(</span><span class="n">BaseCommander</span><span class="p">):</span>
-    <span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Overview:</span>
 <span class="sd">        Parallel commander for solo games.</span>
 <span class="sd">    Interface:</span>
@@ -297,7 +317,7 @@
     <span class="p">)</span>
 
 <div class="viewcode-block" id="SoloCommander.__init__"><a class="viewcode-back" href="../../../../05_api_doc/worker/coordinator/commander.html#ding.worker.coordinator.solo_parallel_commander.SoloCommander.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cfg</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Overview:</span>
 <span class="sd">            Init the solo commander according to config.</span>
 <span class="sd">        Arguments:</span>
@@ -346,7 +366,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_end_flag</span> <span class="o">=</span> <span class="kc">False</span></div>
 
 <div class="viewcode-block" id="SoloCommander.get_collector_task"><a class="viewcode-back" href="../../../../05_api_doc/worker/coordinator/commander.html#ding.worker.coordinator.solo_parallel_commander.SoloCommander.get_collector_task">[docs]</a>    <span class="k">def</span> <span class="nf">get_collector_task</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
-        <span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Overview:</span>
 <span class="sd">            Return the new collector task when there is residual task space; Otherwise return None.</span>
 <span class="sd">        Return:</span>
@@ -386,7 +406,7 @@
             <span class="k">return</span> <span class="kc">None</span></div>
 
 <div class="viewcode-block" id="SoloCommander.get_learner_task"><a class="viewcode-back" href="../../../../05_api_doc/worker/coordinator/commander.html#ding.worker.coordinator.solo_parallel_commander.SoloCommander.get_learner_task">[docs]</a>    <span class="k">def</span> <span class="nf">get_learner_task</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
-        <span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Overview:</span>
 <span class="sd">            Return the new learner task when there is residual task space; Otherwise return None.</span>
 <span class="sd">        Return:</span>
@@ -409,7 +429,7 @@
             <span class="k">return</span> <span class="kc">None</span></div>
 
 <div class="viewcode-block" id="SoloCommander.finish_collector_task"><a class="viewcode-back" href="../../../../05_api_doc/worker/coordinator/commander.html#ding.worker.coordinator.solo_parallel_commander.SoloCommander.finish_collector_task">[docs]</a>    <span class="k">def</span> <span class="nf">finish_collector_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">finished_task</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Overview:</span>
 <span class="sd">            Get collector&#39;s finish_task_info and release collector_task_space.</span>
 <span class="sd">            If collector&#39;s task is evaluation, judge the convergence and return it.</span>
@@ -448,7 +468,7 @@
             <span class="n">eval_stop_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cfg</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">stop_value</span>
             <span class="k">if</span> <span class="n">eval_stop_value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">finished_task</span><span class="p">[</span><span class="s1">&#39;reward_mean&#39;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">eval_stop_value</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-                    <span class="s2">&quot;[DI-engine parallel pipeline] current eval_reward: </span><span class="si">{}</span><span class="s2"> is greater than the stop_value: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span>
+                    <span class="s2">&quot;[DI-engine parallel pipeline] current episode_return: </span><span class="si">{}</span><span class="s2"> is greater than the stop_value: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span>
                     <span class="nb">format</span><span class="p">(</span><span class="n">finished_task</span><span class="p">[</span><span class="s1">&#39;reward_mean&#39;</span><span class="p">],</span> <span class="n">eval_stop_value</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;, so the total training program is over.&quot;</span>
                 <span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_end_flag</span> <span class="o">=</span> <span class="kc">True</span>
@@ -459,7 +479,7 @@
         <span class="k">return</span> <span class="kc">False</span></div>
 
 <div class="viewcode-block" id="SoloCommander.finish_learner_task"><a class="viewcode-back" href="../../../../05_api_doc/worker/coordinator/commander.html#ding.worker.coordinator.solo_parallel_commander.SoloCommander.finish_learner_task">[docs]</a>    <span class="k">def</span> <span class="nf">finish_learner_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">finished_task</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Overview:</span>
 <span class="sd">            Get learner&#39;s finish_task_info, release learner_task_space, reset corresponding variables.</span>
 <span class="sd">        Arguments:</span>
@@ -478,21 +498,21 @@
         <span class="k">return</span> <span class="n">buffer_id</span></div>
 
 <div class="viewcode-block" id="SoloCommander.notify_fail_collector_task"><a class="viewcode-back" href="../../../../05_api_doc/worker/coordinator/commander.html#ding.worker.coordinator.solo_parallel_commander.SoloCommander.notify_fail_collector_task">[docs]</a>    <span class="k">def</span> <span class="nf">notify_fail_collector_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Overview:</span>
 <span class="sd">            Release task space when collector task fails.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_collector_task_space</span><span class="o">.</span><span class="n">release_space</span><span class="p">()</span></div>
 
 <div class="viewcode-block" id="SoloCommander.notify_fail_learner_task"><a class="viewcode-back" href="../../../../05_api_doc/worker/coordinator/commander.html#ding.worker.coordinator.solo_parallel_commander.SoloCommander.notify_fail_learner_task">[docs]</a>    <span class="k">def</span> <span class="nf">notify_fail_learner_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Overview:</span>
 <span class="sd">            Release task space when learner task fails.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_learner_task_space</span><span class="o">.</span><span class="n">release_space</span><span class="p">()</span></div>
 
     <span class="k">def</span> <span class="nf">update_learner_info</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">info</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Overview:</span>
 <span class="sd">            Append the info to learner_info:</span>
 <span class="sd">        Arguments:</span>
@@ -502,7 +522,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_learner_info</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">info</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_init_policy_id</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Overview:</span>
 <span class="sd">            Init the policy id and return it.</span>
 <span class="sd">        Returns:</span>
@@ -513,7 +533,7 @@
         <span class="k">return</span> <span class="n">policy_id</span>
 
     <span class="k">def</span> <span class="nf">_init_buffer_id</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Overview:</span>
 <span class="sd">            Init the buffer id and return it.</span>
 <span class="sd">        Returns:</span>
@@ -524,14 +544,14 @@
         <span class="k">return</span> <span class="n">buffer_id</span>
 
     <span class="k">def</span> <span class="nf">increase_collector_task_space</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sa">r</span><span class="sd">&quot;&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;&quot;</span>
 <span class="sd">        Overview:</span>
 <span class="sd">        Increase task space when a new collector has added dynamically.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_collector_task_space</span><span class="o">.</span><span class="n">increase_space</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">decrease_collector_task_space</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sa">r</span><span class="sd">&quot;&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;&quot;</span>
 <span class="sd">        Overview:</span>
 <span class="sd">        Decrease task space when a new collector has removed dynamically.</span>
 <span class="sd">        &quot;&quot;&quot;</span>

@@ -127,9 +127,29 @@
                   <p>Tree Nested PyTorch Tensor Lib</p>
                 </a>
                 <a class="doc-dropdown-option nav-dropdown-item"
+                  href="https://github.com/opendilab/DI-sheep" target="_blank">
+                  <span class="dropdown-title">DI-sheep </span>
+                  <p>Deep Reinforcement Learning + 3 Tiles Game</p>
+                </a>
+                <a class="doc-dropdown-option nav-dropdown-item"
                   href="https://github.com/opendilab/awesome-model-based-RL" target="_blank">
                   <span class="dropdown-title">awesome-model-based-RL </span>
                   <p>A curated list of awesome model based RL resources (continually updated)</p>
+                </a>
+                <a class="doc-dropdown-option nav-dropdown-item"
+                  href="https://github.com/opendilab/awesome-decision-transformer" target="_blank">
+                  <span class="dropdown-title">awesome-decision-transformer </span>
+                  <p>A curated list of Decision Transformer resources (continually updated)</p>
+                </a>
+                <a class="doc-dropdown-option nav-dropdown-item"
+                  href="https://github.com/opendilab/awesome-exploration-rl" target="_blank">
+                  <span class="dropdown-title">awesome-exploration-rl </span>
+                  <p>A curated list of awesome exploration RL resources (continually updated)</p>
+                </a>
+                <a class="doc-dropdown-option nav-dropdown-item"
+                  href="https://github.com/opendilab/awesome-multi-modal-reinforcement-learning" target="_blank">
+                  <span class="dropdown-title">awesome-multi-modal-reinforcement-learning </span>
+                  <p>A curated list of Multi-Modal Reinforcement Learning resources (continually updated)</p>
                 </a>
               </div>
           </li>
@@ -292,8 +312,8 @@
 <p>Just install the gym and Box2d libraries. Users can choose to install them with one click through pip</p>
 <p>Note: If the user does not have root privileges, please add –user after the install command</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># Install Directly</span>
-pip install gym
-pip install Box2D
+pip<span class="w"> </span>install<span class="w"> </span>gym
+pip<span class="w"> </span>install<span class="w"> </span>Box2D
 </pre></div>
 </div>
 </section>
@@ -343,8 +363,8 @@ hub</a> for more images</p>
 <li><p>3: Fire left engine</p></li>
 </ul>
 </section>
-<section id="bonus-space">
-<h3>Bonus Space<a class="headerlink" href="#bonus-space" title="Permalink to this headline">¶</a></h3>
+<section id="reward-space">
+<h3>Reward Space<a class="headerlink" href="#reward-space" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>a <code class="docutils literal notranslate"><span class="pre">int</span></code>value</p></li>
 <li><p>The reward for moving from the top of the screen to the landing point and going to zero speed is about 100…140 points. If the lander travels in a direction away from the landing pad, it loses the reward. If the lander falls or stops, the episode ends, earning an extra -100 or +100 points. Ground contact for each leg is a +10 bonus. The launch main engine is -0.3 bonus per frame. A successful landing to the landing site is 200 points. Landing outside the landing gear is possible. Fuel is unlimited.</p></li>
@@ -378,7 +398,7 @@ hub</a> for more images</p>
 </ul>
 </section>
 <section id="id3">
-<h3>Bonus Space<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<h3>Reward Space<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Transformation content: data structure transformation</p></li>
 <li><p>Transformation result: it becomes an np array, the size is <code class="docutils literal notranslate"><span class="pre">(1,</span> <span class="pre">)</span></code>, and the data type is <code class="docutils literal notranslate"><span class="pre">np.float64</span></code></p></li>
@@ -393,7 +413,7 @@ hub</a> for more images</p>
 <section id="id4">
 <h3>Other<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
-<li><p>The <code class="docutils literal notranslate"><span class="pre">info</span></code>returned by the environment <code class="docutils literal notranslate"><span class="pre">step</span></code>method must contain the <code class="docutils literal notranslate"><span class="pre">final_eval_reward</span></code>key-value pair, which represents the evaluation index of the entire episode, and is the cumulative sum of the rewards of the entire episode in lunarlander</p></li>
+<li><p>The <code class="docutils literal notranslate"><span class="pre">info</span></code>returned by the environment <code class="docutils literal notranslate"><span class="pre">step</span></code>method must contain the <code class="docutils literal notranslate"><span class="pre">eval_episode_return</span></code>key-value pair, which represents the evaluation index of the entire episode, and is the cumulative sum of the rewards of the entire episode in lunarlander</p></li>
 </ul>
 </section>
 </section>
@@ -421,7 +441,7 @@ np_seed = 100 * np.random.randint(1, 1000).</p></li>
 </section>
 <section id="store-video">
 <h3>Store Video<a class="headerlink" href="#store-video" title="Permalink to this headline">¶</a></h3>
-<p>After the environment is created, but before reset, call the <code class="docutils literal notranslate"><span class="pre">enable_save_replay</span></code>method to specify the path to save the game recording. The environment will automatically save the local video files after each episode ends. (The default call <code class="docutils literal notranslate"><span class="pre">gym.wrapper.Monitor</span></code>implementation, depends on <code class="docutils literal notranslate"><span class="pre">ffmpeg</span></code>), the code shown below will run an environment episode and save the result of this episode in the form <code class="docutils literal notranslate"><span class="pre">./video/xxx.mp4</span></code>in a file like this:</p>
+<p>After the environment is created, but before reset, call the <code class="docutils literal notranslate"><span class="pre">enable_save_replay</span></code>method to specify the path to save the game recording. The environment will automatically save the local video files after each episode ends. (The default call <code class="docutils literal notranslate"><span class="pre">gym.wrappers.RecordVideo</span></code>implementation), the code shown below will run an environment episode and save the result of this episode in a folder <code class="docutils literal notranslate"><span class="pre">./video/</span></code>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">easydict</span> <span class="kn">import</span> <span class="n">EasyDict</span>
 <span class="kn">from</span> <span class="nn">dizoo.box2d.lunarlander.envs</span> <span class="kn">import</span> <span class="n">LunarLanderEnv</span>
 
@@ -433,7 +453,7 @@ np_seed = 100 * np.random.randint(1, 1000).</p></li>
     <span class="n">action</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">random_action</span><span class="p">()</span>
     <span class="n">timestep</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">action</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">timestep</span><span class="o">.</span><span class="n">done</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Episode is over, final eval reward is: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">timestep</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;final_eval_reward&#39;</span><span class="p">]))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Episode is over, eval episode return is: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">timestep</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;eval_episode_return&#39;</span><span class="p">]))</span>
         <span class="k">break</span>
 </pre></div>
 </div>
@@ -588,7 +608,7 @@ Inside, for specific configuration files, such as <code class="docutils literal 
 <li><a class="reference internal" href="#space-before-transformation-original-environment">Space before Transformation (Original Environment)</a><ul>
 <li><a class="reference internal" href="#observation-space">Observation Space</a></li>
 <li><a class="reference internal" href="#action-space">Action Space</a></li>
-<li><a class="reference internal" href="#bonus-space">Bonus Space</a></li>
+<li><a class="reference internal" href="#reward-space">Reward Space</a></li>
 <li><a class="reference internal" href="#other">Other</a></li>
 </ul>
 </li>
@@ -596,7 +616,7 @@ Inside, for specific configuration files, such as <code class="docutils literal 
 <li><a class="reference internal" href="#transformed-space-rl-environment">Transformed Space (RL Environment)</a><ul>
 <li><a class="reference internal" href="#id1">Observation Space</a></li>
 <li><a class="reference internal" href="#id2">Action Space</a></li>
-<li><a class="reference internal" href="#id3">Bonus Space</a></li>
+<li><a class="reference internal" href="#id3">Reward Space</a></li>
 <li><a class="reference internal" href="#id4">Other</a></li>
 </ul>
 </li>

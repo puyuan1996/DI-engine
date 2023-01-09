@@ -127,9 +127,29 @@
                   <p>Tree Nested PyTorch Tensor Lib</p>
                 </a>
                 <a class="doc-dropdown-option nav-dropdown-item"
+                  href="https://github.com/opendilab/DI-sheep" target="_blank">
+                  <span class="dropdown-title">DI-sheep </span>
+                  <p>Deep Reinforcement Learning + 3 Tiles Game</p>
+                </a>
+                <a class="doc-dropdown-option nav-dropdown-item"
                   href="https://github.com/opendilab/awesome-model-based-RL" target="_blank">
                   <span class="dropdown-title">awesome-model-based-RL </span>
                   <p>A curated list of awesome model based RL resources (continually updated)</p>
+                </a>
+                <a class="doc-dropdown-option nav-dropdown-item"
+                  href="https://github.com/opendilab/awesome-decision-transformer" target="_blank">
+                  <span class="dropdown-title">awesome-decision-transformer </span>
+                  <p>A curated list of Decision Transformer resources (continually updated)</p>
+                </a>
+                <a class="doc-dropdown-option nav-dropdown-item"
+                  href="https://github.com/opendilab/awesome-exploration-rl" target="_blank">
+                  <span class="dropdown-title">awesome-exploration-rl </span>
+                  <p>A curated list of awesome exploration RL resources (continually updated)</p>
+                </a>
+                <a class="doc-dropdown-option nav-dropdown-item"
+                  href="https://github.com/opendilab/awesome-multi-modal-reinforcement-learning" target="_blank">
+                  <span class="dropdown-title">awesome-multi-modal-reinforcement-learning </span>
+                  <p>A curated list of Multi-Modal Reinforcement Learning resources (continually updated)</p>
                 </a>
               </div>
           </li>
@@ -397,23 +417,12 @@ For example, memory queue, sum-tree, redis, or di-store.</p>
 <dd><dl>
 <dt>Overview:</dt><dd><p>Use algorithm middleware to modify the behavior of the buffer.
 Every middleware should be a callable function, it will receive three argument parts, including:
-1. The buffer instance, you can use this instance to visit every thing of the buffer,</p>
-<blockquote>
-<div><p>including the storage.</p>
-</div></blockquote>
-<ol class="arabic simple" start="2">
-<li><p>The functions called by the user, there are three methods named <cite>push</cite>, <cite>sample</cite> and <cite>clear</cite>,
-so you can use these function name to decide which action to choose.</p></li>
-<li><p>The remaining arguments passed by the user to the original function, will be passed in <a href="#id2"><span class="problematic" id="id3">*</span></a>args.</p></li>
-</ol>
+1. The buffer instance, you can use this instance to visit every thing of the buffer, including the storage.
+2. The functions called by the user, there are three methods named <cite>push</cite> , <cite>sample</cite> and <cite>clear</cite> ,                so you can use these function name to decide which action to choose.
+3. The remaining arguments passed by the user to the original function, will be passed in <cite>*args</cite> .</p>
 <p>Each middleware handler should return two parts of the value, including:
-1. The first value is <cite>done</cite> (True or False), if done==True, the middleware chain will stop immediately,</p>
-<blockquote>
-<div><p>no more middleware will be executed during this execution</p>
-</div></blockquote>
-<ol class="arabic simple" start="2">
-<li><p>The remaining values, will be passed to the next middleware or the default function in the buffer.</p></li>
-</ol>
+1. The first value is <cite>done</cite> (True or False), if done==True, the middleware chain will stop immediately,                no more middleware will be executed during this execution
+2. The remaining values, will be passed to the next middleware or the default function in the buffer.</p>
 </dd>
 <dt>Arguments:</dt><dd><ul class="simple">
 <li><p>func (<code class="xref py py-obj docutils literal notranslate"><span class="pre">Callable</span></code>): The middleware handler</p></li>

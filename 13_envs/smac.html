@@ -35,7 +35,7 @@
   <link rel="stylesheet" href="../_static/css/style.css" type="text/css" />
   <link rel="index" title="Index" href="../genindex.html" />
   <link rel="search" title="Search" href="../search.html" />
-  <link rel="next" title="Overcooked" href="overcooked.html" />
+  <link rel="next" title="D4RL (Mujoco)" href="d4rl.html" />
   <link rel="prev" title="Procgen" href="procgen.html" />
     <link href="../_static/css/style.css" rel="stylesheet" type="text/css">
 
@@ -127,9 +127,29 @@
                   <p>Tree Nested PyTorch Tensor Lib</p>
                 </a>
                 <a class="doc-dropdown-option nav-dropdown-item"
+                  href="https://github.com/opendilab/DI-sheep" target="_blank">
+                  <span class="dropdown-title">DI-sheep </span>
+                  <p>Deep Reinforcement Learning + 3 Tiles Game</p>
+                </a>
+                <a class="doc-dropdown-option nav-dropdown-item"
                   href="https://github.com/opendilab/awesome-model-based-RL" target="_blank">
                   <span class="dropdown-title">awesome-model-based-RL </span>
                   <p>A curated list of awesome model based RL resources (continually updated)</p>
+                </a>
+                <a class="doc-dropdown-option nav-dropdown-item"
+                  href="https://github.com/opendilab/awesome-decision-transformer" target="_blank">
+                  <span class="dropdown-title">awesome-decision-transformer </span>
+                  <p>A curated list of Decision Transformer resources (continually updated)</p>
+                </a>
+                <a class="doc-dropdown-option nav-dropdown-item"
+                  href="https://github.com/opendilab/awesome-exploration-rl" target="_blank">
+                  <span class="dropdown-title">awesome-exploration-rl </span>
+                  <p>A curated list of awesome exploration RL resources (continually updated)</p>
+                </a>
+                <a class="doc-dropdown-option nav-dropdown-item"
+                  href="https://github.com/opendilab/awesome-multi-modal-reinforcement-learning" target="_blank">
+                  <span class="dropdown-title">awesome-multi-modal-reinforcement-learning </span>
+                  <p>A curated list of Multi-Modal Reinforcement Learning resources (continually updated)</p>
                 </a>
               </div>
           </li>
@@ -298,9 +318,9 @@ For Windows system users, please refer to <a class="reference external" href="ht
 <ol class="arabic simple" start="2">
 <li><p>Install PySC2 compatible with DI-engine</p></li>
 </ol>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>git clone https://github.com/opendilab/DI-star.git
-<span class="nb">cd</span> DI-star
-pip install -e .
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/opendilab/DI-star.git
+<span class="nb">cd</span><span class="w"> </span>DI-star
+pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.
 </pre></div>
 </div>
 </section>
@@ -341,8 +361,8 @@ hub</a>for more mirror</p>
 </li>
 </ul>
 </section>
-<section id="bonus-space">
-<h3>Bonus Space<a class="headerlink" href="#bonus-space" title="Permalink to this headline">¶</a></h3>
+<section id="reward-space">
+<h3>Reward Space<a class="headerlink" href="#reward-space" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>The game wins or loses, the victory is 1, and the defeat is 0, which is generally an <code class="docutils literal notranslate"><span class="pre">int</span></code>value.</p></li>
 </ul>
@@ -378,7 +398,7 @@ hub</a>for more mirror</p>
 </ul>
 </section>
 <section id="id3">
-<h3>Bonus Space<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<h3>Reward Space<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Transformation content: Set fake_reward, so that the agent can get rewards after making some actions. We set the fake_reward of each step to ‘killed enemy’s blood - lost one’s blood’, and destroying an enemy will reward 20 points, Get 200 points for a global victory</p></li>
 <li><p>Transformation result: a one-dimensional Tensor that contains only one float32 type of data</p></li>
@@ -389,7 +409,7 @@ hub</a>for more mirror</p>
 <ul class="simple">
 <li><p>Turn on <code class="docutils literal notranslate"><span class="pre">special_global_state</span></code>and the returned global_state is the information spliced ​​into each global information + each agent’s special information. If it is not turned on, only the global information will be returned</p></li>
 <li><p>Turn on <code class="docutils literal notranslate"><span class="pre">special_global_state</span></code>and turn on <code class="docutils literal notranslate"><span class="pre">death_mask</span></code>, if an agent dies, the returned global_state only contains its own ID information, and all other information is masked</p></li>
-<li><p>The <code class="docutils literal notranslate"><span class="pre">info</span></code>returned by the environment <code class="docutils literal notranslate"><span class="pre">step</span></code>method must contain the <code class="docutils literal notranslate"><span class="pre">final_eval_reward</span></code>key-value pair, which represents the evaluation index of the entire episode, and is the cumulative sum of the fake_reward of the entire episode in SMAC</p></li>
+<li><p>The <code class="docutils literal notranslate"><span class="pre">info</span></code>returned by the environment <code class="docutils literal notranslate"><span class="pre">step</span></code>method must contain the <code class="docutils literal notranslate"><span class="pre">eval_episode_return</span></code>key-value pair, which represents the evaluation index of the entire episode, and is the cumulative sum of the fake_reward of the entire episode in SMAC</p></li>
 <li><p>The final <code class="docutils literal notranslate"><span class="pre">reward</span></code>returned by the environment <code class="docutils literal notranslate"><span class="pre">step</span></code>method is victory or not</p></li>
 </ul>
 </section>
@@ -453,20 +473,20 @@ hub</a>for more mirror</p>
     <span class="n">policy</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">state_dict</span><span class="p">)</span>
 
     <span class="n">obs</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
-    <span class="n">eval_reward</span> <span class="o">=</span> <span class="mf">0.</span>
+    <span class="n">episode_return</span> <span class="o">=</span> <span class="mf">0.</span>
     <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
         <span class="n">policy_output</span> <span class="o">=</span> <span class="n">policy</span><span class="o">.</span><span class="n">forward</span><span class="p">({</span><span class="mi">0</span><span class="p">:</span><span class="n">obs</span><span class="p">})</span>
         <span class="n">action</span> <span class="o">=</span> <span class="n">policy_output</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;action&#39;</span><span class="p">]</span>
         <span class="nb">print</span><span class="p">(</span><span class="n">action</span><span class="p">)</span>
         <span class="n">timestep</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">action</span><span class="p">)</span>
-        <span class="n">eval_reward</span> <span class="o">+=</span> <span class="n">timestep</span><span class="o">.</span><span class="n">reward</span>
+        <span class="n">episode_return</span> <span class="o">+=</span> <span class="n">timestep</span><span class="o">.</span><span class="n">reward</span>
         <span class="n">obs</span> <span class="o">=</span> <span class="n">timestep</span><span class="o">.</span><span class="n">obs</span>
         <span class="k">if</span> <span class="n">timestep</span><span class="o">.</span><span class="n">done</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="n">timestep</span><span class="o">.</span><span class="n">info</span><span class="p">)</span>
             <span class="k">break</span>
 
     <span class="n">env</span><span class="o">.</span><span class="n">save_replay</span><span class="p">(</span><span class="n">replay_dir</span><span class="o">=</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="n">env</span><span class="o">.</span><span class="n">_map_name</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Eval is over! The performance of your RL policy is </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">eval_reward</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Eval is over! The performance of your RL policy is </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">episode_return</span><span class="p">))</span>
 
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
@@ -629,7 +649,7 @@ Inside, for specific configuration files, such as <code class="docutils literal 
   
   <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
     
-    <a href="overcooked.html" class="btn btn-neutral float-right" title="Overcooked" accesskey="n"
+    <a href="d4rl.html" class="btn btn-neutral float-right" title="D4RL (Mujoco)" accesskey="n"
       rel="next">Next <img src="../_static/images/chevron-right-blue.svg"
         class="next-page"></a>
     
@@ -675,7 +695,7 @@ Inside, for specific configuration files, such as <code class="docutils literal 
 <li><a class="reference internal" href="#space-before-transformation-original-environment">Space before Transformation (Original Environment)</a><ul>
 <li><a class="reference internal" href="#observation-space">Observation Space</a></li>
 <li><a class="reference internal" href="#action-space">Action Space</a></li>
-<li><a class="reference internal" href="#bonus-space">Bonus Space</a></li>
+<li><a class="reference internal" href="#reward-space">Reward Space</a></li>
 <li><a class="reference internal" href="#other">Other</a></li>
 </ul>
 </li>
@@ -683,7 +703,7 @@ Inside, for specific configuration files, such as <code class="docutils literal 
 <li><a class="reference internal" href="#transformed-space-rl-environment">Transformed Space (RL Environment)</a><ul>
 <li><a class="reference internal" href="#id1">Observation Space</a></li>
 <li><a class="reference internal" href="#id2">Action Space</a></li>
-<li><a class="reference internal" href="#id3">Bonus Space</a></li>
+<li><a class="reference internal" href="#id3">Reward Space</a></li>
 <li><a class="reference internal" href="#id4">Other</a></li>
 </ul>
 </li>

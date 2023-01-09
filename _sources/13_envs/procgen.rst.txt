@@ -77,7 +77,7 @@ Action Space
    -  4：DOWN
 
 
-Bonus Space
+Reward Space
 ------------
 
 - The game score will vary according to the specific game content. Generally, it is a \ ``float`` \ value. For example, in the Coinrun environment, if you eat coins, you will be rewarded 10.0 points, and there are no other rewards.
@@ -114,7 +114,7 @@ Action Space
 
 -  Basically no transformation, it is still a discrete action space of size N, but generally a one-dimensional np array, the size is \ ``(1, )`` \ , the data type is \ ``np.int64``
 
-Bonus Space
+Reward Space
 ------------
 
 -  Basically no transformation
@@ -131,7 +131,7 @@ The above space can be expressed as:
 Other
 ------
 
-\ ``info``\returned by the method \ ``step``\ must contain\ ``final_eval_reward``\ key - value pair, representing the evaluation metrics of the entire episode, and the cumulative sum of the rewards for the entire episode in Procgen
+\ ``info``\returned by the method \ ``step``\ must contain\ ``eval_episode_return``\ key - value pair, representing the evaluation metrics of the entire episode, and the cumulative sum of the rewards for the entire episode in Procgen
 
 
 Other
@@ -161,7 +161,7 @@ The Difference between Training and Testing Environments
 Store Video
 ------------
 
-After the environment is created, but before reset, call the \ ``enable_save_replay`` \ method, specifying the path to save the game replay. The environment will automatically save the local video files after each episode ends. (The default call \ ``gym.wrapper.Monitor`` \ implementation, depends on \ ``ffmpeg`` \ ), the code shown below will run an environment episode and save the result of this episode in the form\ ``./video/xxx.mp4``\ in a file like this:
+After the environment is created, but before reset, call the \ ``enable_save_replay`` \ method, specifying the path to save the game replay. The environment will automatically save the local video files after each episode ends. (The default call \ ``gym.wrappers.RecordVideo`` \ implementation ), the code shown below will run an environment episode and save the result of this episode in a folder\ ``./video/``\ :
 
 .. code:: python
 
@@ -174,7 +174,7 @@ After the environment is created, but before reset, call the \ ``enable_save_rep
        action = env.random_action()
        timestep = env.step(action)
        if timestep.done:
-           print('Episode is over, final eval reward is: {}'.format(timestep.info['final_eval_reward']))
+           print('Episode is over, eval episode return is: {}'.format(timestep.info['eval_episode_return']))
            break
 
 DI-zoo Runnable Code Example
