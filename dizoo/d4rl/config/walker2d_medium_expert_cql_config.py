@@ -15,8 +15,8 @@ main_config = dict(
     policy=dict(
         cuda=True,
         model=dict(
-            obs_shape=11,
-            action_shape=3,
+            obs_shape=17,
+            action_shape=6,
         ),
         learn=dict(
             data_path=None,
