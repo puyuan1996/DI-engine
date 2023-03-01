@@ -1,3 +1,7 @@
+import os
+os.environ['MUJOCO_GL']="glfw"
+os.environ['DISABLE_MUJOCO_RENDERING'] = '1'
+
 import gym
 from ditk import logging
 from ding.model import Q_ensemble
@@ -10,10 +14,11 @@ from ding.framework.context import OfflineRLContext
 from ding.framework.middleware import interaction_evaluator, trainer, CkptSaver, offline_data_fetcher, offline_logger
 from ding.utils import set_pkg_seed
 from dizoo.d4rl.envs import D4RLEnv
-# from dizoo.d4rl.config.halfcheetah_medium_edac_config import main_config,create_config
-from dizoo.d4rl.config.halfcheetah_medium_expert_edac_config import main_config,create_config
-# from dizoo.d4rl.config.hopper_medium_expert_edac_config import main_config,create_config
+from dizoo.d4rl.config.halfcheetah_medium_edac_config import main_config,create_config
+# from dizoo.d4rl.config.halfcheetah_medium_expert_edac_config import main_config,create_config
 # from dizoo.d4rl.config.hopper_medium_edac_config import main_config,create_config
+# from dizoo.d4rl.config.hopper_medium_expert_edac_config import main_config,create_config
+
 
 
 def main():

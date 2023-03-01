@@ -139,20 +139,39 @@ class HDF5Dataset(Dataset):
     def __len__(self) -> int:
         return len(self._data['obs'])
 
+    # def __len__(self) -> int:
+    #     return len(self._data['observations'])
+
     def __getitem__(self, idx: int) -> Dict[str, torch.Tensor]:
         return {k: self._data[k][idx] for k in self._data.keys()}
 
     def _load_data(self, dataset: Dict[str, np.ndarray]) -> None:
         self._data = {}
+        # for k in dataset.keys():
+        #     logging.info(f'Load {k} data.')
+        #     self._data[k] = dataset[k][:]
         for k in dataset.keys():
             logging.info(f'Load {k} data.')
-            self._data[k] = dataset[k][:]
+            if k=="actions":
+                self._data['action'] = dataset[k][:]
+            elif k=="observations":
+                self._data['obs'] = dataset[k][:]
+            elif k=="next_observations":
+                self._data['next_obs'] = dataset[k][:]
+            elif k=="rewards":
+                self._data['reward'] = dataset[k][:]
+            elif k=="terminals":
+                self._data['done'] = dataset[k][:]
 
     def _cal_statistics(self, eps=1e-3):
         self._mean = self._data['obs'].mean(0)
         self._std = self._data['obs'].std(0) + eps
         action_max = self._data['action'].max(0)
         action_min = self._data['action'].min(0)
+        # self._mean = self._data['observations'].mean(0)
+        # self._std = self._data['observations'].std(0) + eps
+        # action_max = self._data['actions'].max(0)
+        # action_min = self._data['actions'].min(0)
         buffer = 0.05 * (action_max - action_min)
         action_max = action_max.astype(float) + buffer
         action_min = action_max.astype(float) - buffer
@@ -160,7 +179,9 @@ class HDF5Dataset(Dataset):
 
     def _normalize_states(self):
         self._data['obs'] = (self._data['obs'] - self._mean) / self._std
-        self._data['next_obs'] = (self._data['next_obs'] - self._mean) / self._std
+        # self._data['next_obs'] = (self._data['next_obs'] - self._mean) / self._std
+        # self._data['observations'] = (self._data['observations'] - self._mean) / self._std
+        # self._data['next_obs'] = (self._data['next_obs'] - self._mean) / self._std
 
     @property
     def mean(self):

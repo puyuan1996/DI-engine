@@ -4,6 +4,7 @@ main_config = dict(
     exp_name="halfcheetah_medium_edac_seed0",
     env=dict(
         env_id='halfcheetah-medium-v2',
+        # env_id='halfcheetah-medium',
         collector_env_num=1,
         evaluator_env_num=8,
         use_act_scale=True,
@@ -34,7 +35,8 @@ main_config = dict(
             with_q_entropy=False,
             learner=dict(hook=dict(save_ckpt_after_iter=100000, )),
         ),
-        collect=dict(data_type='d4rl', ),
+        # collect=dict(data_type='d4rl', ),
+        collect=dict(data_type='hdf5', data_path="/mnt/lustre/puyuan/DI-engine/dataset/d4rl/halfcheetah_medium-v2.hdf5",),
         eval=dict(evaluator=dict(eval_freq=500, )),
         other=dict(replay_buffer=dict(replay_buffer_size=2000000, ), ),
     ),
