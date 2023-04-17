@@ -1,0 +1,316 @@
+diff --git a/ding/model/common/__init__.py b/ding/model/common/__init__.py
+index edb22523c..08e6126d4 100644
+--- a/ding/model/common/__init__.py
++++ b/ding/model/common/__init__.py
+@@ -1,5 +1,5 @@
+ from .head import DiscreteHead, DuelingHead, DistributionHead, RainbowHead, QRDQNHead, \
+     QuantileHead, FQFHead, RegressionHead, ReparameterizationHead, MultiHead, BranchingHead, head_cls_map, \
+     independent_normal_dist, AttentionPolicyHead
+-from .encoder import ConvEncoder, FCEncoder, IMPALAConvEncoder
++from .encoder import ConvEncoder, FCEncoder, IMPALAConvEncoder, ConvEncoder2048
+ from .utils import create_model
+diff --git a/ding/model/common/encoder.py b/ding/model/common/encoder.py
+index 3c1cbd673..af2b3bc68 100644
+--- a/ding/model/common/encoder.py
++++ b/ding/model/common/encoder.py
+@@ -19,6 +19,91 @@ def prod(iterable):
+     return reduce(operator.mul, iterable, 1)
+ 
+ 
++class ConvEncoder2048(nn.Module):
++    """
++    Overview:
++        The ``Convolution Encoder`` used to encode raw 2-dim observations.
++    Interfaces:
++        ``__init__``, ``_get_flatten_size``, ``forward``.
++    """
++
++    def __init__(
++            self,
++            obs_shape: SequenceType,
++            hidden_size_list: SequenceType = [64, 64, 64, 128],
++            activation: Optional[nn.Module] = nn.ReLU(),
++            norm_type: Optional[str] = None
++    ) -> None:
++        """
++        Overview:
++            Init the ``Convolution Encoder`` according to the provided arguments.
++        Arguments:
++            - obs_shape (:obj:`SequenceType`): Sequence of ``in_channel``, plus one or more ``input size``.
++            - hidden_size_list (:obj:`SequenceType`): Sequence of ``hidden_size`` of subsequent conv layers \
++                and the final dense layer.
++            - activation (:obj:`nn.Module`): Type of activation to use in the conv ``layers`` and ``ResBlock``. \
++                Default is ``nn.ReLU()``.
++            - norm_type (:obj:`str`): Type of normalization to use. See ``ding.torch_utils.network.ResBlock`` \
++                for more details. Default is ``None``.
++        """
++        super(ConvEncoder2048, self).__init__()
++        self.obs_shape = obs_shape
++        self.act = activation
++        self.hidden_size_list = hidden_size_list
++        layers = []
++        input_size = obs_shape[0]  # in_channel
++        padding = [1]
++        kernel_size = [3]
++        stride = [1]
++
++        # conv layers
++        for i in range(len(kernel_size)):
++            layers.append(nn.Conv2d(input_size, hidden_size_list[i], kernel_size[i], stride[i], padding[i]))
++            layers.append(self.act)
++            input_size = hidden_size_list[i]
++
++        # ResBlock
++        for i in range(1, len(self.hidden_size_list)-1):
++            layers.append(ResBlock(self.hidden_size_list[i], activation=self.act, norm_type=norm_type))
++
++        layers.append(nn.AdaptiveAvgPool2d((1, 1)))
++        layers.append(Flatten())
++
++        self.main = nn.Sequential(*layers)
++        flatten_size = self._get_flatten_size()
++        self.output_size = hidden_size_list[-1]
++        self.mid = nn.Linear(flatten_size, hidden_size_list[-1])
++
++    def _get_flatten_size(self) -> int:
++        """
++        Overview:
++            Get the encoding size after ``self.main`` to get the number of ``in-features`` to feed to ``nn.Linear``.
++        Returns:
++            - outputs (:obj:`torch.Tensor`): Size ``int`` Tensor representing the number of ``in-features``.
++        Shapes:
++            - outputs: :math:`(1,)`.
++        """
++        test_data = torch.randn(1, *self.obs_shape)
++        with torch.no_grad():
++            output = self.main(test_data)
++        return output.shape[1]
++
++    def forward(self, x: torch.Tensor) -> torch.Tensor:
++        """
++        Overview:
++            Return output embedding tensor of the env observation.
++        Arguments:
++            - x (:obj:`torch.Tensor`): Env raw observation.
++        Returns:
++            - outputs (:obj:`torch.Tensor`): Output embedding tensor.
++        Shapes:
++            - outputs: :math:`(B, N)`, where ``N = hidden_size_list[-1]``.
++        """
++        x = self.main(x)
++        x = self.mid(x)
++        return x
++
++
+ class ConvEncoder(nn.Module):
+     """
+     Overview:
+diff --git a/ding/model/template/q_learning.py b/ding/model/template/q_learning.py
+index 544b9d10f..f1f0b0c9d 100644
+--- a/ding/model/template/q_learning.py
++++ b/ding/model/template/q_learning.py
+@@ -4,7 +4,7 @@ import torch.nn as nn
+ 
+ from ding.torch_utils import get_lstm
+ from ding.utils import MODEL_REGISTRY, SequenceType, squeeze
+-from ..common import FCEncoder, ConvEncoder, DiscreteHead, DuelingHead, MultiHead, RainbowHead, \
++from ..common import FCEncoder, ConvEncoder, ConvEncoder2048, DiscreteHead, DuelingHead, MultiHead, RainbowHead, \
+     QuantileHead, FQFHead, QRDQNHead, DistributionHead, BranchingHead
+ from ding.torch_utils.network.gtrxl import GTrXL
+ 
+@@ -21,7 +21,8 @@ class DQN(nn.Module):
+             head_hidden_size: Optional[int] = None,
+             head_layer_num: int = 1,
+             activation: Optional[nn.Module] = nn.ReLU(),
+-            norm_type: Optional[str] = None
++            norm_type: Optional[str] = None,
++            env_name: str = '2048',
+     ) -> None:
+         """
+         Overview:
+@@ -49,11 +50,15 @@ class DQN(nn.Module):
+             self.encoder = FCEncoder(obs_shape, encoder_hidden_size_list, activation=activation, norm_type=norm_type)
+         # Conv Encoder
+         elif len(obs_shape) == 3:
+-            self.encoder = ConvEncoder(obs_shape, encoder_hidden_size_list, activation=activation, norm_type=norm_type)
++            if env_name == '2048':
++                self.encoder = ConvEncoder2048(obs_shape, encoder_hidden_size_list, activation=activation, norm_type=norm_type)
++            else:
++                self.encoder = ConvEncoder(obs_shape, encoder_hidden_size_list, activation=activation, norm_type=norm_type)
+         else:
+             raise RuntimeError(
+                 "not support obs_shape for pre-defined encoder: {}, please customize your own DQN".format(obs_shape)
+             )
++
+         # Head Type
+         if dueling:
+             head_cls = DuelingHead
+diff --git a/dizoo/classic_control/pendulum/config/pendulum_bdq_config.py b/dizoo/classic_control/pendulum/config/pendulum_bdq_config.py
+index 59bffb05b..5dc449886 100644
+--- a/dizoo/classic_control/pendulum/config/pendulum_bdq_config.py
++++ b/dizoo/classic_control/pendulum/config/pendulum_bdq_config.py
+@@ -46,7 +46,7 @@ pendulum_bdq_config = EasyDict(pendulum_bdq_config)
+ main_config = pendulum_bdq_config
+ pendulum_bdq_create_config = dict(
+     env=dict(
+-        type='pendulum',
++        type='pendulum_lightzero',
+         import_names=['dizoo.classic_control.pendulum.envs.pendulum_env'],
+     ),
+     env_manager=dict(type='base'),
+diff --git a/dizoo/classic_control/pendulum/config/pendulum_cql_config.py b/dizoo/classic_control/pendulum/config/pendulum_cql_config.py
+index 4d9efa7b1..8794c86cd 100644
+--- a/dizoo/classic_control/pendulum/config/pendulum_cql_config.py
++++ b/dizoo/classic_control/pendulum/config/pendulum_cql_config.py
+@@ -47,7 +47,7 @@ main_config = pendulum_cql_config
+ 
+ pendulum_cql_create_config = dict(
+     env=dict(
+-        type='pendulum',
++        type='pendulum_lightzero',
+         import_names=['dizoo.classic_control.pendulum.envs.pendulum_env'],
+     ),
+     env_manager=dict(type='base'),
+diff --git a/dizoo/classic_control/pendulum/config/pendulum_d4pg_config.py b/dizoo/classic_control/pendulum/config/pendulum_d4pg_config.py
+index 82ef19e21..bca08e71a 100644
+--- a/dizoo/classic_control/pendulum/config/pendulum_d4pg_config.py
++++ b/dizoo/classic_control/pendulum/config/pendulum_d4pg_config.py
+@@ -50,7 +50,7 @@ main_config = pendulum_d4pg_config
+ 
+ pendulum_d4pg_create_config = dict(
+     env=dict(
+-        type='pendulum',
++        type='pendulum_lightzero',
+         import_names=['dizoo.classic_control.pendulum.envs.pendulum_env'],
+     ),
+     env_manager=dict(type='base'),
+diff --git a/dizoo/classic_control/pendulum/config/pendulum_ddpg_config.py b/dizoo/classic_control/pendulum/config/pendulum_ddpg_config.py
+index 883e9a501..6b07ada0e 100644
+--- a/dizoo/classic_control/pendulum/config/pendulum_ddpg_config.py
++++ b/dizoo/classic_control/pendulum/config/pendulum_ddpg_config.py
+@@ -46,7 +46,7 @@ main_config = pendulum_ddpg_config
+ 
+ pendulum_ddpg_create_config = dict(
+     env=dict(
+-        type='pendulum',
++        type='pendulum_lightzero',
+         import_names=['dizoo.classic_control.pendulum.envs.pendulum_env'],
+     ),
+     env_manager=dict(type='base'),
+diff --git a/dizoo/classic_control/pendulum/config/pendulum_dqn_config.py b/dizoo/classic_control/pendulum/config/pendulum_dqn_config.py
+index d4f5f3536..536807f30 100644
+--- a/dizoo/classic_control/pendulum/config/pendulum_dqn_config.py
++++ b/dizoo/classic_control/pendulum/config/pendulum_dqn_config.py
+@@ -45,7 +45,7 @@ pendulum_dqn_config = EasyDict(pendulum_dqn_config)
+ main_config = pendulum_dqn_config
+ pendulum_dqn_create_config = dict(
+     env=dict(
+-        type='pendulum',
++        type='pendulum_lightzero',
+         import_names=['dizoo.classic_control.pendulum.envs.pendulum_env'],
+     ),
+     env_manager=dict(type='base'),
+diff --git a/dizoo/classic_control/pendulum/config/pendulum_ibc_config.py b/dizoo/classic_control/pendulum/config/pendulum_ibc_config.py
+index 247fdad04..8c4e76e51 100644
+--- a/dizoo/classic_control/pendulum/config/pendulum_ibc_config.py
++++ b/dizoo/classic_control/pendulum/config/pendulum_ibc_config.py
+@@ -38,7 +38,7 @@ main_config = pendulum_ibc_config
+ 
+ pendulum_ibc_create_config = dict(
+     env=dict(
+-        type='pendulum',
++        type='pendulum_lightzero',
+         import_names=['dizoo.classic_control.pendulum.envs.pendulum_env'],
+     ),
+     env_manager=dict(type='base'),
+diff --git a/dizoo/classic_control/pendulum/config/pendulum_ppo_config.py b/dizoo/classic_control/pendulum/config/pendulum_ppo_config.py
+index 2431a5aa2..4b97e434c 100644
+--- a/dizoo/classic_control/pendulum/config/pendulum_ppo_config.py
++++ b/dizoo/classic_control/pendulum/config/pendulum_ppo_config.py
+@@ -47,7 +47,7 @@ pendulum_ppo_config = EasyDict(pendulum_ppo_config)
+ main_config = pendulum_ppo_config
+ pendulum_ppo_create_config = dict(
+     env=dict(
+-        type='pendulum',
++        type='pendulum_lightzero',
+         import_names=['dizoo.classic_control.pendulum.envs.pendulum_env'],
+     ),
+     env_manager=dict(type='base'),
+diff --git a/dizoo/classic_control/pendulum/config/pendulum_sac_config.py b/dizoo/classic_control/pendulum/config/pendulum_sac_config.py
+index fc95db33f..87350a779 100644
+--- a/dizoo/classic_control/pendulum/config/pendulum_sac_config.py
++++ b/dizoo/classic_control/pendulum/config/pendulum_sac_config.py
+@@ -43,7 +43,7 @@ main_config = pendulum_sac_config
+ 
+ pendulum_sac_create_config = dict(
+     env=dict(
+-        type='pendulum',
++        type='pendulum_lightzero',
+         import_names=['dizoo.classic_control.pendulum.envs.pendulum_env'],
+     ),
+     env_manager=dict(type='base'),
+diff --git a/dizoo/classic_control/pendulum/config/pendulum_sac_data_generation_config.py b/dizoo/classic_control/pendulum/config/pendulum_sac_data_generation_config.py
+index ff5fdd242..b15f2f413 100644
+--- a/dizoo/classic_control/pendulum/config/pendulum_sac_data_generation_config.py
++++ b/dizoo/classic_control/pendulum/config/pendulum_sac_data_generation_config.py
+@@ -30,7 +30,7 @@ main_config = pendulum_sac_data_genearation_config
+ 
+ pendulum_sac_data_genearation_create_config = dict(
+     env=dict(
+-        type='pendulum',
++        type='pendulum_lightzero',
+         import_names=['dizoo.classic_control.pendulum.envs.pendulum_env'],
+     ),
+     env_manager=dict(type='base'),
+diff --git a/dizoo/classic_control/pendulum/config/pendulum_sqil_sac_config.py b/dizoo/classic_control/pendulum/config/pendulum_sqil_sac_config.py
+index f80b85235..900b4db23 100644
+--- a/dizoo/classic_control/pendulum/config/pendulum_sqil_sac_config.py
++++ b/dizoo/classic_control/pendulum/config/pendulum_sqil_sac_config.py
+@@ -53,7 +53,7 @@ main_config = pendulum_sqil_sac_config
+ 
+ pendulum_sqil_sac_create_config = dict(
+     env=dict(
+-        type='pendulum',
++        type='pendulum_lightzero',
+         import_names=['dizoo.classic_control.pendulum.envs.pendulum_env'],
+     ),
+     env_manager=dict(type='base'),
+diff --git a/dizoo/classic_control/pendulum/config/pendulum_td3_bc_config.py b/dizoo/classic_control/pendulum/config/pendulum_td3_bc_config.py
+index 82a44f034..d872c8005 100644
+--- a/dizoo/classic_control/pendulum/config/pendulum_td3_bc_config.py
++++ b/dizoo/classic_control/pendulum/config/pendulum_td3_bc_config.py
+@@ -57,7 +57,7 @@ main_config = pendulum_td3_bc_config
+ 
+ pendulum_td3_bc_create_config = dict(
+     env=dict(
+-        type='pendulum',
++        type='pendulum_lightzero',
+         import_names=['dizoo.classic_control.pendulum.envs.pendulum_env'],
+     ),
+     env_manager=dict(type='base'),
+diff --git a/dizoo/classic_control/pendulum/config/pendulum_td3_config.py b/dizoo/classic_control/pendulum/config/pendulum_td3_config.py
+index 5ff06425d..533fc1719 100644
+--- a/dizoo/classic_control/pendulum/config/pendulum_td3_config.py
++++ b/dizoo/classic_control/pendulum/config/pendulum_td3_config.py
+@@ -48,7 +48,7 @@ main_config = pendulum_td3_config
+ 
+ pendulum_td3_create_config = dict(
+     env=dict(
+-        type='pendulum',
++        type='pendulum_lightzero',
+         import_names=['dizoo.classic_control.pendulum.envs.pendulum_env'],
+     ),
+     env_manager=dict(type='base'),
+diff --git a/dizoo/classic_control/pendulum/config/pendulum_td3_data_generation_config.py b/dizoo/classic_control/pendulum/config/pendulum_td3_data_generation_config.py
+index 19f46cb6e..49e7403ab 100644
+--- a/dizoo/classic_control/pendulum/config/pendulum_td3_data_generation_config.py
++++ b/dizoo/classic_control/pendulum/config/pendulum_td3_data_generation_config.py
+@@ -57,7 +57,7 @@ main_config = pendulum_td3_generation_config
+ 
+ pendulum_td3_generation_create_config = dict(
+     env=dict(
+-        type='pendulum',
++        type='pendulum_lightzero',
+         import_names=['dizoo.classic_control.pendulum.envs.pendulum_env'],
+     ),
+     env_manager=dict(type='base'),

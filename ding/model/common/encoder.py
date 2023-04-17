@@ -19,6 +19,91 @@ def prod(iterable):
     return reduce(operator.mul, iterable, 1)
 
 
+class ConvEncoder2048(nn.Module):
+    """
+    Overview:
+        The ``Convolution Encoder`` used to encode raw 2-dim observations.
+    Interfaces:
+        ``__init__``, ``_get_flatten_size``, ``forward``.
+    """
+
+    def __init__(
+            self,
+            obs_shape: SequenceType,
+            hidden_size_list: SequenceType = [64, 64, 64, 128],
+            activation: Optional[nn.Module] = nn.ReLU(),
+            norm_type: Optional[str] = None
+    ) -> None:
+        """
+        Overview:
+            Init the ``Convolution Encoder`` according to the provided arguments.
+        Arguments:
+            - obs_shape (:obj:`SequenceType`): Sequence of ``in_channel``, plus one or more ``input size``.
+            - hidden_size_list (:obj:`SequenceType`): Sequence of ``hidden_size`` of subsequent conv layers \
+                and the final dense layer.
+            - activation (:obj:`nn.Module`): Type of activation to use in the conv ``layers`` and ``ResBlock``. \
+                Default is ``nn.ReLU()``.
+            - norm_type (:obj:`str`): Type of normalization to use. See ``ding.torch_utils.network.ResBlock`` \
+                for more details. Default is ``None``.
+        """
+        super(ConvEncoder2048, self).__init__()
+        self.obs_shape = obs_shape
+        self.act = activation
+        self.hidden_size_list = hidden_size_list
+        layers = []
+        input_size = obs_shape[0]  # in_channel
+        padding = [1]
+        kernel_size = [3]
+        stride = [1]
+
+        # conv layers
+        for i in range(len(kernel_size)):
+            layers.append(nn.Conv2d(input_size, hidden_size_list[i], kernel_size[i], stride[i], padding[i]))
+            layers.append(self.act)
+            input_size = hidden_size_list[i]
+
+        # ResBlock
+        for i in range(1, len(self.hidden_size_list)-1):
+            layers.append(ResBlock(self.hidden_size_list[i], activation=self.act, norm_type=norm_type))
+
+        layers.append(nn.AdaptiveAvgPool2d((1, 1)))
+        layers.append(Flatten())
+
+        self.main = nn.Sequential(*layers)
+        flatten_size = self._get_flatten_size()
+        self.output_size = hidden_size_list[-1]
+        self.mid = nn.Linear(flatten_size, hidden_size_list[-1])
+
+    def _get_flatten_size(self) -> int:
+        """
+        Overview:
+            Get the encoding size after ``self.main`` to get the number of ``in-features`` to feed to ``nn.Linear``.
+        Returns:
+            - outputs (:obj:`torch.Tensor`): Size ``int`` Tensor representing the number of ``in-features``.
+        Shapes:
+            - outputs: :math:`(1,)`.
+        """
+        test_data = torch.randn(1, *self.obs_shape)
+        with torch.no_grad():
+            output = self.main(test_data)
+        return output.shape[1]
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        Overview:
+            Return output embedding tensor of the env observation.
+        Arguments:
+            - x (:obj:`torch.Tensor`): Env raw observation.
+        Returns:
+            - outputs (:obj:`torch.Tensor`): Output embedding tensor.
+        Shapes:
+            - outputs: :math:`(B, N)`, where ``N = hidden_size_list[-1]``.
+        """
+        x = self.main(x)
+        x = self.mid(x)
+        return x
+
+
 class ConvEncoder(nn.Module):
     """
     Overview:

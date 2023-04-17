@@ -4,7 +4,7 @@ import torch.nn as nn
 
 from ding.torch_utils import get_lstm
 from ding.utils import MODEL_REGISTRY, SequenceType, squeeze
-from ..common import FCEncoder, ConvEncoder, DiscreteHead, DuelingHead, MultiHead, RainbowHead, \
+from ..common import FCEncoder, ConvEncoder, ConvEncoder2048, DiscreteHead, DuelingHead, MultiHead, RainbowHead, \
     QuantileHead, FQFHead, QRDQNHead, DistributionHead, BranchingHead
 from ding.torch_utils.network.gtrxl import GTrXL
 
@@ -21,7 +21,8 @@ class DQN(nn.Module):
             head_hidden_size: Optional[int] = None,
             head_layer_num: int = 1,
             activation: Optional[nn.Module] = nn.ReLU(),
-            norm_type: Optional[str] = None
+            norm_type: Optional[str] = None,
+            env_name: str = '2048',
     ) -> None:
         """
         Overview:
@@ -49,11 +50,15 @@ class DQN(nn.Module):
             self.encoder = FCEncoder(obs_shape, encoder_hidden_size_list, activation=activation, norm_type=norm_type)
         # Conv Encoder
         elif len(obs_shape) == 3:
-            self.encoder = ConvEncoder(obs_shape, encoder_hidden_size_list, activation=activation, norm_type=norm_type)
+            if env_name == '2048':
+                self.encoder = ConvEncoder2048(obs_shape, encoder_hidden_size_list, activation=activation, norm_type=norm_type)
+            else:
+                self.encoder = ConvEncoder(obs_shape, encoder_hidden_size_list, activation=activation, norm_type=norm_type)
         else:
             raise RuntimeError(
                 "not support obs_shape for pre-defined encoder: {}, please customize your own DQN".format(obs_shape)
             )
+
         # Head Type
         if dueling:
             head_cls = DuelingHead
