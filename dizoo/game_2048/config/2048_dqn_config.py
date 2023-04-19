@@ -8,6 +8,7 @@ game2048_dqn_config = dict(
         n_evaluator_episode=8,
         obs_shape=(16, 4, 4),
         stop_value=int(1e6),
+        channel_last=False,
     ),
     policy=dict(
         cuda=True,
@@ -43,7 +44,7 @@ main_config = game2048_dqn_config
 game2048_dqn_create_config = dict(
     env=dict(
         type='game_2048',
-        import_names=['dizoo.game2048.envs.game_2048'],
+        import_names=['dizoo.game_2048.envs.game_2048_env'],
     ),
     env_manager=dict(type='base'),
     policy=dict(type='dqn'),
