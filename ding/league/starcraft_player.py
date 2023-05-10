@@ -30,7 +30,13 @@ class MainPlayer(ActivePlayer):
         """
         historical = self._get_players(lambda p: isinstance(p, HistoricalPlayer))
         win_rates = self._payoff[self, historical]
-        p = pfsp(win_rates, weighting='squared')
+        # TODO(pu): pass in the weighting function as a parameter
+
+        # When our winning rate against the opponent is 0, the probability of choosing them is maximized. On the contrary, when our winning rate against the opponent is 1, the probability of choosing them is minimized.
+        # p = pfsp(win_rates, weighting='squared')
+
+        # When our winning rate against the opponent is 0.5, the probability of choosing them is maximized.
+        p = pfsp(win_rates, weighting='variance')
         return self._get_opponent(historical, p)
 
     def _sp_branch(self):

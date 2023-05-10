@@ -50,6 +50,10 @@ class BaseLeague:
         # Otherwise, "pretrain_checkpoint_path" should list paths of all player categories.
         use_pretrain_init_historical=False,
         pretrain_checkpoint_path=dict(default='default_cate_pretrain.pth', ),
+
+        # "use_bot" means whether to use bot as an init historical player
+        use_bot_init_historical=False,
+
         # ---payoff---
         payoff=dict(
             # Supports ['battle']
@@ -124,6 +128,27 @@ class BaseLeague:
                     name,
                     0,
                     self.metric_env.create_rating(),
+                    parent_id=parent_name
+                )
+                self.historical_players.append(hp)
+                self.payoff.add_player(hp)
+
+        # Add bot as the initial HistoricalPlayer for each player category.
+        if self.cfg.use_bot_init_historical:
+            for cate in self.cfg.player_category:
+                main_player_name = [k for k in self.cfg.keys() if 'main_player' in k]
+                assert len(main_player_name) == 1, main_player_name
+                main_player_name = main_player_name[0]
+                name = '{}_{}_bot_historical'.format(main_player_name, cate)
+                parent_name = '{}_{}_0'.format(main_player_name, cate)
+                hp = HistoricalPlayer(
+                    self.cfg.get(main_player_name),
+                    cate,
+                    self.payoff,
+                    self.path_policy,
+                    name,
+                    0,
+                    self.metric_env.create_rating(mu=100),  # TODO
                     parent_id=parent_name
                 )
                 self.historical_players.append(hp)
@@ -233,7 +258,7 @@ class BaseLeague:
         """
         raise NotImplementedError
 
-    def finish_job(self, job_info: dict) -> None:
+    def finish_job(self, job_info: dict,  count) -> None:
         """
         Overview:
             Finish current job. Update shared payoff to record the game results.
@@ -241,19 +266,25 @@ class BaseLeague:
             - job_info (:obj:`dict`): A dict containing job result information.
         """
         # TODO(nyz) more fine-grained job info
-        self.payoff.update(job_info)
+        self.payoff.update(job_info, count)
         if 'eval_flag' in job_info and job_info['eval_flag']:
             home_id, away_id = job_info['player_id']
             home_player, away_player = self.get_player_by_id(home_id), self.get_player_by_id(away_id)
             job_info_result = job_info['result']
             if isinstance(job_info_result[0], list):
                 job_info_result = sum(job_info_result, [])
-            home_player.rating, away_player.rating = self.metric_env.rate_1vs1(
-                home_player.rating, away_player.rating, result=job_info_result
-            )
+
+            if 'bot' in away_id:
+                home_player.rating = self.metric_env.rate_1vsC(
+                    home_player.rating, self.metric_env.create_rating(mu=100, sigma=1e-8), result=job_info_result
+                )
+            else:
+                home_player.rating, away_player.rating = self.metric_env.rate_1vs1(
+                    home_player.rating, away_player.rating, result=job_info_result
+                )
 
     def get_player_by_id(self, player_id: str) -> 'Player':  # noqa
-        if 'historical' in player_id:
+        if 'historical' in player_id or 'bot' in player_id:
             return [p for p in self.historical_players if p.player_id == player_id][0]
         else:
             return [p for p in self.active_players if p.player_id == player_id][0]
