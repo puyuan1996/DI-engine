@@ -149,7 +149,17 @@ class HDF5Dataset(Dataset):
         self._data = {}
         for k in dataset.keys():
             logging.info(f'Load {k} data.')
-            self._data[k] = dataset[k][:]
+            # self._data[k] = dataset[k][:]
+            if k == "actions":
+                self._data['action'] = dataset[k][:]
+            elif k == "observations":
+                self._data['obs'] = dataset[k][:]
+            elif k == "next_observations":
+                self._data['next_obs'] = dataset[k][:]
+            elif k == "rewards":
+                self._data['reward'] = dataset[k][:]
+            elif k == "terminals":
+                self._data['done'] = dataset[k][:]
 
     def _cal_statistics(self, eps=1e-3):
         self._mean = self._data['obs'].mean(0)
