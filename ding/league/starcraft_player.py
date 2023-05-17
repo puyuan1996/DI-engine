@@ -33,10 +33,10 @@ class MainPlayer(ActivePlayer):
         # TODO(pu): pass in the weighting function as a parameter
 
         # When our winning rate against the opponent is 0, the probability of choosing them is maximized. On the contrary, when our winning rate against the opponent is 1, the probability of choosing them is minimized.
-        # p = pfsp(win_rates, weighting='squared')
+        p = pfsp(win_rates, weighting='squared')
 
         # When our winning rate against the opponent is 0.5, the probability of choosing them is maximized.
-        p = pfsp(win_rates, weighting='variance')
+        # p = pfsp(win_rates, weighting='variance')
         return self._get_opponent(historical, p)
 
     def _sp_branch(self):

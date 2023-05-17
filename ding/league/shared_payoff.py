@@ -17,7 +17,7 @@ class BattleRecordDict(dict):
     Interfaces:
         __mul__
     """
-    data_keys = ['wins', 'draws', 'losses', 'games', 'undayed_games']
+    data_keys = ['wins', 'draws', 'losses', 'games', 'undecayed_games']
 
     def __init__(self) -> None:
         """
@@ -39,7 +39,7 @@ class BattleRecordDict(dict):
         """
         obj = copy.deepcopy(self)
         for k in obj.keys():
-            if k != 'undayed_games':
+            if k != 'undecayed_games':
                 obj[k] *= decay
         return obj
 
@@ -79,7 +79,7 @@ class BattleSharedPayoff:
         self._lock = LockContext(type_=LockContextType.THREAD_LOCK)
 
     def __repr__(self) -> str:
-        headers = ["Home Player", "Away Player", "Wins", "Draws", "Losses", "Naive Win Rate", "Undecayed Games"]
+        headers = ["Home Player", "Away Player", "Wins", "Draws", "Losses", "Naive Win Rate", "Games", "Undecayed Games"]
         data = []
         for k, v in self._data.items():
             k1 = k.split('-')
@@ -87,10 +87,10 @@ class BattleSharedPayoff:
             if 'historical' in k1[0]:
                 # reverse representation
                 naive_win_rate = (v['losses'] + v['draws'] / 2) / (v['wins'] + v['losses'] + v['draws'] + 1e-8)
-                data.append([k1[1], k1[0], v['losses'], v['draws'], v['wins'], naive_win_rate, v['undayed_games']])
+                data.append([k1[1], k1[0], v['losses'], v['draws'], v['wins'], naive_win_rate, v['games'], v['undecayed_games']])
             else:
                 naive_win_rate = (v['wins'] + v['draws'] / 2) / (v['wins'] + v['losses'] + v['draws'] + 1e-8)
-                data.append([k1[0], k1[1], v['wins'], v['draws'], v['losses'], naive_win_rate, v['undayed_games']])
+                data.append([k1[0], k1[1], v['wins'], v['draws'], v['losses'], naive_win_rate, v['games'], v['undecayed_games']])
         data = sorted(data, key=lambda x: x[0])
         s = tabulate(data, headers=headers, tablefmt='pipe')
         return s
@@ -208,13 +208,13 @@ class BattleSharedPayoff:
             #     for k, v in self._data.items():
             #         if v['wins'] + 0.5 * v['draws'] == 0:
             #             self._data[k] *= 0
-            #             self._data[k]['undayed_games'] = 0
+            #             self._data[k]['undecayed_games'] = 0
 
             if home_id == away_id:  # self-play
                 key, reverse = self.get_key(home_id, away_id)
                 self._data[key]['draws'] += 1  # self-play defaults to draws
                 self._data[key]['games'] += 1
-                self._data[key]['undayed_games'] += 1
+                self._data[key]['undecayed_games'] += 1
             else:
                 key, reverse = self.get_key(home_id, away_id)
                 # Update with decay
@@ -225,7 +225,7 @@ class BattleSharedPayoff:
                         # All categories should decay
                         self._data[key] *= self._decay
                         self._data[key]['games'] += 1
-                        self._data[key]['undayed_games'] += 1
+                        self._data[key]['undecayed_games'] += 1
                         result = _win_loss_reverse(one_episode_result_per_env, reverse)
                         self._data[key][result] += 1
             return True
