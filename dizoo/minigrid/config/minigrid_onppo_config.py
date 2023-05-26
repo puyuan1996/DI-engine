@@ -2,7 +2,9 @@ from easydict import EasyDict
 
 collector_env_num = 8
 minigrid_ppo_config = dict(
-    exp_name="minigrid_empty8_onppo_seed0",
+    # exp_name="minigrid_empty8_onppo_seed0",
+    exp_name="minigrid_fourrooms_onppo_seed0",
+
     env=dict(
         collector_env_num=8,
         evaluator_env_num=5,
@@ -10,7 +12,8 @@ minigrid_ppo_config = dict(
         # typical MiniGrid env id:
         # {'MiniGrid-Empty-8x8-v0', 'MiniGrid-FourRooms-v0', 'MiniGrid-DoorKey-8x8-v0','MiniGrid-DoorKey-16x16-v0'},
         # please refer to https://github.com/Farama-Foundation/MiniGrid for details.
-        env_id='MiniGrid-Empty-8x8-v0',
+        # env_id='MiniGrid-Empty-8x8-v0',
+        env_id='MiniGrid-FourRooms-v0',
         max_step=300,
         stop_value=0.96,
     ),

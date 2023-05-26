@@ -13,6 +13,7 @@ def download_d4rl_data():
 
     data_dir = '/mnt/lustre/wangzilin/d4rl_data'
 
+
     print(data_dir)
 
     if not os.path.exists(data_dir):

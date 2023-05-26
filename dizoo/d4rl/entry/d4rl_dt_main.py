@@ -5,13 +5,17 @@ from copy import deepcopy
 
 
 def train(args):
-    config_dir = '/mnt/lustre/wangzilin/research/dt/DI-engine/dizoo/d4rl/config'
+    # config_dir = '/mnt/lustre/wangzilin/research/dt/DI-engine/dizoo/d4rl/config'
+    config_dir = '/mnt/nfs/puyuan/DI-engine/dizoo/d4rl/config'
+
     if config_dir in args.config:
         main_config, create_config = read_config(args.config)
     else:
         main_config, create_config = read_config(os.path.join(config_dir, args.config))
 
-    result_root = '/mnt/lustre/wangzilin/research/dt/dt/v2'
+    # result_root = '/mnt/lustre/wangzilin/research/dt/dt/v2'
+    result_root = '/mnt/nfs/puyuan/DI-engine/dizoo/d4rl/config'
+
 
     itms = args.config.split('_')
     env = itms[0]
