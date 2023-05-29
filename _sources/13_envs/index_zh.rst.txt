@@ -25,6 +25,7 @@
    
    cartpole_zh
    pendulum_zh
+   acrobot_zh
    bitflip_zh
    
    lunarlander_zh
@@ -49,4 +50,5 @@
 
    image_cls_zh
    sokoban_zh
-   Evogym_zh.rst
+   evogym_zh.rst
+   metadrive_zh
