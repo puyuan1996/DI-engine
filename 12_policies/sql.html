@@ -306,8 +306,8 @@
 The energy based model is used in Soft Q-Learning, where the optimal policy expressed via a Boltzmann distribution is learned through maximizing the expectation of the cumulative reward added by an entropy term.
 In this way, the resulting policies gain the advantages to try to learn all of the ways of performing the task, instead of only learning the best way to perform the task as the other traditional RL algorithms do.
 The amortized Stein variational gradient descent (SVGD) has been utilized to learn
-a stochastic sampling network that approximates
-samples from this distribution. The features of
+a stochastic sampling network that produces unbiased
+samples from the policy energy-based model. The features of
 the algorithm include improved exploration via the maximum entropy formulation
 and compositionality that allows transferring
 skills between tasks.</p>
@@ -377,11 +377,11 @@ KL divergence.</p>
 <p>SQL can be combined with:</p>
 <blockquote>
 <div><ul class="simple">
-<li><p>Exploration techniques such as epsilon-greedy or OU Noise (implemented in the original paper; Please refer to <a class="reference external" href="https://arxiv.org/abs/1509.02971">Continuous control with deep reinforcement learning</a> and <a class="reference external" href="https://link.aps.org/pdf/10.1103/PhysRev.36.823?casa_token=yFMSHBrxJoMAAAAA:5nFSMwUrqcdlUoobFDYOP0Y58r5jmNogkpHqFgMhzv0Md-4EcIkofMHHCkgsjEJFO10yqsmrhmNk_4dL">On the theory of the Brownian motion</a>) to enchance explorations.</p></li>
-<li><p>Some analysts draw connection between Soft Q-learning and Policy
+<li><p><strong>Exploration Techniques</strong>. Techniques such as epsilon-greedy or OU Noise (implemented in the original paper; Please refer to <a class="reference external" href="https://arxiv.org/abs/1509.02971">Continuous control with deep reinforcement learning</a> and <a class="reference external" href="https://link.aps.org/pdf/10.1103/PhysRev.36.823?casa_token=yFMSHBrxJoMAAAAA:5nFSMwUrqcdlUoobFDYOP0Y58r5jmNogkpHqFgMhzv0Md-4EcIkofMHHCkgsjEJFO10yqsmrhmNk_4dL">On the theory of the Brownian motion</a>) to enchance explorations.</p></li>
+<li><p><strong>Policy Gradient algorithms</strong>. Some analysts draw connection between Soft Q-learning and Policy
 Gradient algorithms such as <a class="reference external" href="https://arxiv.org/abs/1704.06440">Equivalence Between Policy Gradients and
 Soft Q-Learning</a>.</p></li>
-<li><p>SQL can be combined with demonstration data to propose an imitation learning algorithm: SQIL proposed in <a class="reference external" href="https://arxiv.org/abs/1905.11108">SQIL: Imitation Learning via Reinforcement Learning with Sparse Rewards</a>.  Please also refer to <cite>SQIL code &lt;https://github.com/opendilab/DI-engine/blob/main/ding/policy/sql.py&gt;</cite> for a DI-engine implementation.</p></li>
+<li><p><strong>Imitation learning</strong>. SQL can be combined with demonstration data to propose an imitation learning algorithm: SQIL proposed in <a class="reference external" href="https://arxiv.org/abs/1905.11108">SQIL: Imitation Learning via Reinforcement Learning with Sparse Rewards</a>.  Please also refer to <a class="reference external" href="https://github.com/opendilab/DI-engine/blob/main/ding/policy/sql.py">SQIL code</a> for a DI-engine implementation.</p></li>
 </ul>
 </div></blockquote>
 </section>
@@ -438,9 +438,7 @@ Soft Q-Learning</a>.</p></li>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <ul class="simple">
-<li><p>The stopping values for Lunarlander and Pong are 200 and 20 respectively.</p></li>
-<li><p>both on：cuda = True； base env manger = subprocess</p></li>
-<li><p>both off：cuda = False； base env manager = base</p></li>
+<li><p>The stopping values for Lunarlander and Pong are 200 and 20 respectively. Training stops when the average of the evaluation values exceeds the stopping values.</p></li>
 </ul>
 </div>
 </section>
