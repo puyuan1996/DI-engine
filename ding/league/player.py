@@ -315,7 +315,9 @@ class NaiveSpPlayer(ActivePlayer):
         # Normal self-play if no historical players
         if win_rates.shape == (0, ):
             return self
-        p = pfsp(win_rates, weighting='squared')
+        # p = pfsp(win_rates, weighting='squared')
+        p = pfsp(win_rates, weighting='variance')
+
         return self._get_opponent(historical, p)
 
     def _sp_branch(self) -> ActivePlayer:
