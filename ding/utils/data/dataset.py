@@ -120,6 +120,7 @@ class D4RLDataset(Dataset):
         return DatasetStatistics(mean=self.mean, std=self.std, action_bounds=self.action_bounds)
 
 
+
 @DATASET_REGISTRY.register('hdf5')
 class HDF5Dataset(Dataset):
 
@@ -190,6 +191,133 @@ class HDF5Dataset(Dataset):
     @property
     def statistics(self) -> dict:
         return DatasetStatistics(mean=self.mean, std=self.std, action_bounds=self.action_bounds)
+
+
+@DATASET_REGISTRY.register('toy')
+class ToyDataset(HDF5Dataset):
+
+    def _load_data(self, dataset: Dict[str, np.ndarray]) -> None:
+        self._data = {}
+        for i in range(1, 5):
+            grp = dataset[f's{i}']
+            for k in grp.keys():
+                if k == "actions":
+                    self._data.setdefault('action', []).extend(grp[k][:])
+                elif k == "observations":
+                    self._data.setdefault('obs', []).extend(grp[k][:])
+                elif k == "next_observations":
+                    self._data.setdefault('next_obs', []).extend(grp[k][:])
+                elif k == "rewards":
+                    self._data.setdefault('reward', []).extend(grp[k][:])
+                elif k == "dones":
+                    self._data.setdefault('done', []).extend(grp[k][:])
+
+        for k in self._data.keys():
+            if k != 'done':  # done is a boolean, no need to convert
+                self._data[k] = np.stack(self._data[k]).astype(np.float32)  # convert to float32
+            else:
+                self._data[k] = np.stack(self._data[k])
+
+@DATASET_REGISTRY.register('toy_s1')
+class ToyDataset(HDF5Dataset):
+
+    def _load_data(self, dataset: Dict[str, np.ndarray]) -> None:
+        self._data = {}
+        for i in [1]:
+            grp = dataset[f's{i}']
+            for k in grp.keys():
+                if k == "actions":
+                    self._data.setdefault('action', []).extend(grp[k][:])
+                elif k == "observations":
+                    self._data.setdefault('obs', []).extend(grp[k][:])
+                elif k == "next_observations":
+                    self._data.setdefault('next_obs', []).extend(grp[k][:])
+                elif k == "rewards":
+                    self._data.setdefault('reward', []).extend(grp[k][:])
+                elif k == "dones":
+                    self._data.setdefault('done', []).extend(grp[k][:])
+
+        for k in self._data.keys():
+            if k != 'done':  # done is a boolean, no need to convert
+                self._data[k] = np.stack(self._data[k]).astype(np.float32)  # convert to float32
+            else:
+                self._data[k] = np.stack(self._data[k])
+
+@DATASET_REGISTRY.register('toy_s2')
+class ToyDataset(HDF5Dataset):
+
+    def _load_data(self, dataset: Dict[str, np.ndarray]) -> None:
+        self._data = {}
+        for i in [2]:
+            grp = dataset[f's{i}']
+            for k in grp.keys():
+                if k == "actions":
+                    self._data.setdefault('action', []).extend(grp[k][:])
+                elif k == "observations":
+                    self._data.setdefault('obs', []).extend(grp[k][:])
+                elif k == "next_observations":
+                    self._data.setdefault('next_obs', []).extend(grp[k][:])
+                elif k == "rewards":
+                    self._data.setdefault('reward', []).extend(grp[k][:])
+                elif k == "dones":
+                    self._data.setdefault('done', []).extend(grp[k][:])
+
+        for k in self._data.keys():
+            if k != 'done':  # done is a boolean, no need to convert
+                self._data[k] = np.stack(self._data[k]).astype(np.float32)  # convert to float32
+            else:
+                self._data[k] = np.stack(self._data[k])
+
+
+@DATASET_REGISTRY.register('toy_s3')
+class ToyDataset(HDF5Dataset):
+
+    def _load_data(self, dataset: Dict[str, np.ndarray]) -> None:
+        self._data = {}
+        for i in [3]:
+            grp = dataset[f's{i}']
+            for k in grp.keys():
+                if k == "actions":
+                    self._data.setdefault('action', []).extend(grp[k][:])
+                elif k == "observations":
+                    self._data.setdefault('obs', []).extend(grp[k][:])
+                elif k == "next_observations":
+                    self._data.setdefault('next_obs', []).extend(grp[k][:])
+                elif k == "rewards":
+                    self._data.setdefault('reward', []).extend(grp[k][:])
+                elif k == "dones":
+                    self._data.setdefault('done', []).extend(grp[k][:])
+
+        for k in self._data.keys():
+            if k != 'done':  # done is a boolean, no need to convert
+                self._data[k] = np.stack(self._data[k]).astype(np.float32)  # convert to float32
+            else:
+                self._data[k] = np.stack(self._data[k])
+
+@DATASET_REGISTRY.register('toy_s4')
+class ToyDataset(HDF5Dataset):
+
+    def _load_data(self, dataset: Dict[str, np.ndarray]) -> None:
+        self._data = {}
+        for i in [4]:
+            grp = dataset[f's{i}']
+            for k in grp.keys():
+                if k == "actions":
+                    self._data.setdefault('action', []).extend(grp[k][:])
+                elif k == "observations":
+                    self._data.setdefault('obs', []).extend(grp[k][:])
+                elif k == "next_observations":
+                    self._data.setdefault('next_obs', []).extend(grp[k][:])
+                elif k == "rewards":
+                    self._data.setdefault('reward', []).extend(grp[k][:])
+                elif k == "dones":
+                    self._data.setdefault('done', []).extend(grp[k][:])
+
+        for k in self._data.keys():
+            if k != 'done':  # done is a boolean, no need to convert
+                self._data[k] = np.stack(self._data[k]).astype(np.float32)  # convert to float32
+            else:
+                self._data[k] = np.stack(self._data[k])
 
 
 @DATASET_REGISTRY.register('d4rl_trajectory')
