@@ -8,7 +8,7 @@ spaceinvaders_qrdqn_config = dict(
         evaluator_env_num=8,
         n_evaluator_episode=8,
         stop_value=10000000000,
-        env_id='SpaceInvaders-v4',
+        env_id='SpaceInvadersNoFrameskip-v4',
         #'ALE/SpaceInvaders-v5' is available. But special setting is needed after gym make.
         frame_stack=4,
         manager=dict(shared_memory=False, )
@@ -59,4 +59,4 @@ create_config = spaceinvaders_qrdqn_create_config
 if __name__ == '__main__':
     # or you can enter ding -m serial -c spaceinvaders_qrdqn_config.py -s 0
     from ding.entry import serial_pipeline
-    serial_pipeline((main_config, create_config), seed=0)
+    serial_pipeline((main_config, create_config), seed=0, max_env_step=int(1e7))

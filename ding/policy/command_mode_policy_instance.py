@@ -26,6 +26,7 @@ from .td3_vae import TD3VAEPolicy
 from .td3_bc import TD3BCPolicy
 from .sac import SACPolicy, SACDiscretePolicy
 from .mbpolicy.mbsac import MBSACPolicy, STEVESACPolicy
+from .mbpolicy.dreamer import DREAMERPolicy
 from .qmix import QMIXPolicy
 from .wqmix import WQMIXPolicy
 from .collaq import CollaQPolicy
@@ -42,12 +43,14 @@ from .r2d3 import R2D3Policy
 
 from .d4pg import D4PGPolicy
 from .cql import CQLPolicy, CQLDiscretePolicy
-from .decision_transformer import DTPolicy
+from .dt import DTPolicy
 from .pdqn import PDQNPolicy
 from .sac import SQILSACPolicy
 from .madqn import MADQNPolicy
 from .bdq import BDQPolicy
+from .bcq import BCQPolicy
 from .edac import EDACPolicy
+from .prompt_pg import PromptPGPolicy
 
 
 class EpsCommandModePolicy(CommandModePolicy):
@@ -302,6 +305,11 @@ class STEVESACCommandModePolicy(STEVESACPolicy, DummyCommandModePolicy):
     pass
 
 
+@POLICY_REGISTRY.register('dreamer_command')
+class DREAMERCommandModePolicy(DREAMERPolicy, DummyCommandModePolicy):
+    pass
+
+
 @POLICY_REGISTRY.register('cql_command')
 class CQLCommandModePolicy(CQLPolicy, DummyCommandModePolicy):
     pass
@@ -382,6 +390,11 @@ class IBCCommandModePolicy(IBCPolicy, DummyCommandModePolicy):
     pass
 
 
+@POLICY_REGISTRY.register('bcq_command')
+class BCQCommandModelPolicy(BCQPolicy, DummyCommandModePolicy):
+    pass
+
+
 @POLICY_REGISTRY.register('edac_command')
 class EDACCommandModelPolicy(EDACPolicy, DummyCommandModePolicy):
     pass
@@ -426,3 +439,8 @@ class BCCommandModePolicy(BehaviourCloningPolicy, DummyCommandModePolicy):
 
     def _get_setting_eval(self, command_info: dict) -> dict:
         return {}
+
+
+@POLICY_REGISTRY.register('prompt_pg_command')
+class PromptPGCommandModePolicy(PromptPGPolicy, DummyCommandModePolicy):
+    pass

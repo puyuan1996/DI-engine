@@ -13,7 +13,7 @@ from typing import Optional, Tuple
 from easydict import EasyDict
 from copy import deepcopy
 
-from ding.utils import deep_merge_dicts
+from ding.utils import deep_merge_dicts, get_rank
 from ding.envs import get_env_cls, get_env_manager_cls, BaseEnvManager
 from ding.policy import get_policy_cls
 from ding.worker import BaseLearner, InteractionSerialEvaluator, BaseSerialCommander, Coordinator, \
@@ -306,7 +306,7 @@ policy_config_template = dict(
     other=dict(replay_buffer=dict()),
 )
 policy_config_template = EasyDict(policy_config_template)
-env_config_template = dict(manager=dict(), stop_value=int(1e10))
+env_config_template = dict(manager=dict(), stop_value=int(1e10), n_evaluator_episode=4)
 env_config_template = EasyDict(env_config_template)
 
 
@@ -451,17 +451,15 @@ def compile_config(
         default_config['reward_model'] = reward_model_config
     if len(world_model_config) > 0:
         default_config['world_model'] = world_model_config
-    stop_value_flag = 'stop_value' in cfg.env
     cfg = deep_merge_dicts(default_config, cfg)
     cfg.seed = seed
     # check important key in config
     if evaluator in [InteractionSerialEvaluator, BattleInteractionSerialEvaluator]:  # env interaction evaluation
-        if stop_value_flag:  # data generation task doesn't need these fields
-            cfg.policy.eval.evaluator.n_episode = cfg.env.n_evaluator_episode
-            cfg.policy.eval.evaluator.stop_value = cfg.env.stop_value
+        cfg.policy.eval.evaluator.stop_value = cfg.env.stop_value
+        cfg.policy.eval.evaluator.n_episode = cfg.env.n_evaluator_episode
     if 'exp_name' not in cfg:
         cfg.exp_name = 'default_experiment'
-    if save_cfg:
+    if save_cfg and get_rank() == 0:
         if os.path.exists(cfg.exp_name) and renew_dir:
             cfg.exp_name += datetime.datetime.now().strftime("_%y%m%d_%H%M%S")
         try:

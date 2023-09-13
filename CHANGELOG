@@ -1,3 +1,53 @@
+2023.08.23(v0.4.9)
+- env: add cliffwalking env (#677)
+- env: add lunarlander ppo config and example
+- algo: add BCQ offline RL algorithm (#640)
+- algo: add Dreamerv3 model-based RL algorithm (#652)
+- algo: add tensor stream merge network tools (#673)
+- algo: add scatter connection model (#680)
+- algo: refactor Decision Transformer in new pipeline and support img input and discrete output (#693)
+- algo: add three variants of Bilinear classes and a FiLM class (#703)
+- feature: polish offpolicy RL multi-gpu DDP training (#679)
+- feature: add middleware for Ape-X distributed pipeline (#696)
+- feature: add example for evaluating trained DQN (#706)
+- fix: to_ndarray fails to assign dtype for scalars (#708)
+- fix: evaluator return episode_info compatibility bug
+- fix: cql example entry wrong config bug
+- fix: enable_save_figure env interface
+- fix: redundant env info bug in evaluator
+- fix: to_item unittest bug
+- style: polish and simplify requirements (#672)
+- style: add Hugging Face Model Zoo badge (#674)
+- style: add openxlab Model Zoo badge (#675)
+- style: fix py37 macos ci bug and update default pytorch from 1.7.1 to 1.12.1 (#678)
+- style: fix mujoco-py compatibility issue for cython<3 (#711)
+- style: fix type spell error (#704)
+- style: fix pypi release actions ubuntu 18.04 bug
+- style: update contact information (e.g. wechat)
+- style: polish algorithm doc tables
+
+2023.05.25(v0.4.8)
+- env: fix gym hybrid reward dtype bug (#664)
+- env: fix atari env id noframeskip bug (#655)
+- env: fix typo in gym any_trading env (#654)
+- env: update td3bc d4rl config (#659)
+- env: polish bipedalwalker config
+- algo: add EDAC offline RL algorithm (#639)
+- algo: add LN and GN norm_type support in ResBlock (#660)
+- algo: add normal value norm baseline for PPOF (#658)
+- algo: polish last layer init/norm in MLP (#650)
+- algo: polish TD3 monitor variable
+- feature: add MAPPO/MASAC task example (#661)
+- feature: add PPO example for complex env observation (#644)
+- feature: add barrier middleware (#570)
+- fix: abnormal collector log and add record_random_collect option (#662)
+- fix: to_item compatibility bug (#646)
+- fix: trainer dtype transform compatibility bug
+- fix: pettingzoo 1.23.0 compatibility bug
+- fix: ensemble head unittest bug
+- style: fix incompatible gym version bug in Dockerfile.env (#653)
+- style: add more algorithm docs
+
 2023.04.11(v0.4.7)
 - env: add dmc2gym env support and baseline (#451)
 - env: update pettingzoo to the latest version (#597)

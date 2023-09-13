@@ -14,7 +14,8 @@ from torch import float32
 
 from ding.torch_utils import to_ndarray
 from ding.utils import ENV_WRAPPER_REGISTRY, import_module
-'''
+"""
+
 Env Wrapper List:
     - NoopResetWrapper: Sample initial states by taking random number of no-ops on reset.
     - MaxAndSkipWrapper: Max pooling across time steps
@@ -29,10 +30,13 @@ Env Wrapper List:
     - RamWrapper: Wrap ram env into image-like env
     - EpisodicLifeWrapper: Make end-of-life == end-of-episode, but only reset on true game over.
     - FireResetWrapper: Take fire action at environment reset.
-    - GymHybridDictActionWrapper: Transform Gym-Hybrid's original ``gym.spaces.Tuple`` action space
-        to ``gym.spaces.Dict``.
+    - GymHybridDictActionWrapper: Transform the original ``gym.spaces.Tuple`` action space to ``gym.spaces.Dict``.
     - FlatObsWrapper: Flatten image and language observation into a vector.
-'''
+    - StaticObsNormWrapper
+    - EvalEpisodeReturnWrapper
+    - GymToGymnasiumWrapper
+    - AllinObsWrapper
+"""
 
 
 @ENV_WRAPPER_REGISTRY.register('noop_reset')
@@ -182,8 +186,16 @@ class WarpFrameWrapper(gym.ObservationWrapper):
             import sys
             logging.warning("Please install opencv-python first.")
             sys.exit(1)
-        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
-        return cv2.resize(frame, (self.size, self.size), interpolation=cv2.INTER_AREA)
+        # deal with channel_first case
+        if frame.shape[0] < 10:
+            frame = frame.transpose(1, 2, 0)
+            frame = cv2.resize(frame, (self.size, self.size), interpolation=cv2.INTER_AREA)
+            frame = frame.transpose(2, 0, 1)
+        else:
+            frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
+            frame = cv2.resize(frame, (self.size, self.size), interpolation=cv2.INTER_AREA)
+
+        return frame
 
 
 @ENV_WRAPPER_REGISTRY.register('scaled_float_frame')
@@ -257,6 +269,39 @@ class ClipRewardWrapper(gym.RewardWrapper):
         return np.sign(reward)
 
 
+@ENV_WRAPPER_REGISTRY.register('action_repeat')
+class ActionRepeatWrapper(gym.Wrapper):
+    """
+    Overview:
+        Repeat the action to step with env.
+    Interface:
+        ``__init__``, ``step``
+    Properties:
+        - env (:obj:`gym.Env`): the environment to wrap.
+        - ``action_repeat``
+
+    """
+
+    def __init__(self, env, action_repeat=1):
+        """
+        Overview:
+            Initialize ``self.`` See ``help(type(self))`` for accurate signature; setup the properties.
+        Arguments:
+            - env (:obj:`gym.Env`): the environment to wrap.
+        """
+        super().__init__(env)
+        self.action_repeat = action_repeat
+
+    def step(self, action):
+        reward = 0
+        for _ in range(self.action_repeat):
+            obs, rew, done, info = self.env.step(action)
+            reward += rew or 0
+            if done:
+                break
+        return obs, reward, done, info
+
+
 @ENV_WRAPPER_REGISTRY.register('delay_reward')
 class DelayRewardWrapper(gym.Wrapper):
     """
@@ -299,7 +344,7 @@ class DelayRewardWrapper(gym.Wrapper):
 
 
 @ENV_WRAPPER_REGISTRY.register('eval_episode_return')
-class EvalEpisodeReturnEnv(gym.Wrapper):
+class EvalEpisodeReturnWrapper(gym.Wrapper):
     """
     Overview:
         Accumulate rewards at every timestep, and return at the end of the episode in `info`.
@@ -962,19 +1007,6 @@ class GymHybridDictActionWrapper(gym.ActionWrapper):
         action_type, action_mask, action_args = action['type'], action['mask'], action['args']
         return self.env.step((action_type, action_args))
 
-    # @staticmethod
-    # def new_shape(obs_shape, act_shape, rew_shape, size=84):
-    #     """
-    #     Overview:
-    #         Get new shape of observation, acton, and reward; in this case only  \
-    #             observation space wrapped to (4, 84, 84); others unchanged.
-    #     Arguments:
-    #         obs_shape (:obj:`Any`), act_shape (:obj:`Any`), rew_shape (:obj:`Any`)
-    #     Returns:
-    #         obs_shape (:obj:`Any`), act_shape (:obj:`Any`), rew_shape (:obj:`Any`)
-    #     """
-    #     return (size, size), act_shape, rew_shape
-
 
 @ENV_WRAPPER_REGISTRY.register('obs_plus_prev_action_reward')
 class ObsPlusPrevActRewWrapper(gym.Wrapper):
@@ -1174,6 +1206,43 @@ class GymToGymnasiumWrapper(gym.Wrapper):
             return self.env.reset()
 
 
+@ENV_WRAPPER_REGISTRY.register('reward_in_obs')
+class AllinObsWrapper(gym.Wrapper):
+    """
+    Overview:
+       This wrapper is used in policy DT.
+       Set a dict {'obs': obs, 'reward': reward}
+       as the new wrapped observation,
+       which including the current obs, previous reward.
+    Interface:
+        ``__init__``, ``reset``, ``step``, ``seed``
+    Properties:
+        - env (:obj:`gym.Env`): the environment to wrap.
+    """
+
+    def __init__(self, env):
+        super().__init__(env)
+
+    def reset(self):
+        ret = {'obs': self.env.reset(), 'reward': np.array([0])}
+        self._observation_space = gym.spaces.Dict(
+            {
+                'obs': self.env.observation_space,
+                'reward': gym.spaces.Box(low=-np.inf, high=np.inf, dtype=np.float32)
+            }
+        )
+        return ret
+
+    def step(self, action):
+        obs, reward, done, info = self.env.step(action)
+        obs = {'obs': obs, 'reward': reward}
+        from ding.envs import BaseEnvTimestep
+        return BaseEnvTimestep(obs, reward, done, info)
+
+    def seed(self, seed: int, dynamic_seed: bool = True) -> None:
+        self.env.seed(seed, dynamic_seed)
+
+
 def update_shape(obs_shape, act_shape, rew_shape, wrapper_names):
     """
     Overview:
@@ -1193,7 +1262,7 @@ def update_shape(obs_shape, act_shape, rew_shape, wrapper_names):
 
 
 def create_env_wrapper(env: gym.Env, env_wrapper_cfg: dict) -> gym.Wrapper:
-    r"""
+    """
     Overview:
         Create an env wrapper according to env_wrapper_cfg and env instance.
     Arguments:
@@ -1208,16 +1277,3 @@ def create_env_wrapper(env: gym.Env, env_wrapper_cfg: dict) -> gym.Wrapper:
         import_module(env_wrapper_cfg.pop('import_names'))
     env_wrapper_type = env_wrapper_cfg.pop('type')
     return ENV_WRAPPER_REGISTRY.build(env_wrapper_type, env, **env_wrapper_cfg.get('kwargs', {}))
-
-
-def get_env_wrapper_cls(cfg: EasyDict) -> type:
-    r"""
-    Overview:
-        Get an env wrapper class according to cfg.
-    Arguments:
-        - cfg (:obj:`EasyDict`): Env wrapper config.
-    ArgumentsKeys:
-        - necessary: `type`
-    """
-    import_module(cfg.get('import_names', []))
-    return ENV_WRAPPER_REGISTRY.get(cfg.type)
