@@ -16,6 +16,7 @@ def create_model(cfg: EasyDict) -> torch.nn.Module:
     .. tip::
         This method will not modify the ``cfg`` , it will deepcopy the ``cfg`` and then modify it.
     """
+    import copy
     cfg = copy.deepcopy(cfg)
     import_module(cfg.pop('import_names', []))
     # here we must use the pop opeartion to ensure compatibility
