@@ -19,6 +19,7 @@ class D4RLEnv(BaseEnv):
         self._cfg = cfg
         self._use_act_scale = cfg.use_act_scale
         self._init_flag = False
+        self.latent_action_shape = cfg.latent_action_shape 
 
     def reset(self) -> np.ndarray:
         if not self._init_flag:
@@ -38,6 +39,10 @@ class D4RLEnv(BaseEnv):
         obs = self._env.reset()
         obs = to_ndarray(obs).astype('float32')
         self._eval_episode_return = 0.
+
+        action_mask = np.ones(self.latent_action_shape, 'int8')
+        obs = {'observation': obs, 'action_mask': action_mask, 'to_play': -1}
+
         return obs
 
     def close(self) -> None:
@@ -61,6 +66,10 @@ class D4RLEnv(BaseEnv):
         rew = to_ndarray([rew])  # wrapped to be transfered to a array with shape (1,)
         if done:
             info['eval_episode_return'] = self._eval_episode_return
+
+        action_mask = np.ones(self.latent_action_shape, 'int8')
+        obs = {'observation': obs, 'action_mask': action_mask, 'to_play': -1}
+
         return BaseEnvTimestep(obs, rew, done, info)
 
     def _make_env(self, only_info=False):

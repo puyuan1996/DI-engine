@@ -1,3 +1,4 @@
+from .normalizer_helper import DatasetNormalizer
 import ding
 from .collection_helper import iter_mapping
 from .compression_helper import get_data_compressor, get_data_decompressor, CloudPickleWrapper
