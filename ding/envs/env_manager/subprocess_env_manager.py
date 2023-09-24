@@ -21,6 +21,9 @@ from ding.utils import PropagatingThread, LockContextType, LockContext, ENV_MANA
     remove_illegal_item, CloudPickleWrapper
 from .base_env_manager import BaseEnvManager, EnvState, timeout_wrapper
 
+import multiprocessing
+multiprocessing.set_start_method('spawn', force=True)
+
 
 def is_abnormal_timestep(timestep: namedtuple) -> bool:
     if isinstance(timestep.info, dict):
@@ -52,7 +55,8 @@ class AsyncSubprocessEnvManager(BaseEnvManager):
         # subprocess specified args
         shared_memory=True,
         copy_on_get=True,
-        context='spawn' if platform.system().lower() == 'windows' else 'fork',
+        # context='spawn' if platform.system().lower() == 'windows' else 'fork',
+        context='spawn',
         wait_num=2,
         step_wait_timeout=0.01,
         connect_timeout=60,
@@ -80,6 +84,9 @@ class AsyncSubprocessEnvManager(BaseEnvManager):
         self._shared_memory = self._cfg.shared_memory
         self._copy_on_get = self._cfg.copy_on_get
         self._context = self._cfg.context
+        # print('self._context = self._cfg.context', self._cfg.context)
+        self._context = 'spawn'
+
         self._wait_num = self._cfg.wait_num
         self._step_wait_timeout = self._cfg.step_wait_timeout
 
@@ -130,6 +137,7 @@ class AsyncSubprocessEnvManager(BaseEnvManager):
     def _create_env_subprocess(self, env_id):
         # start a new one
         ctx = get_context(self._context)
+        # print(ctx , self._context)
         self._pipe_parents[env_id], self._pipe_children[env_id] = ctx.Pipe()
         self._subprocesses[env_id] = ctx.Process(
             # target=self.worker_fn,

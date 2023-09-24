@@ -288,4 +288,8 @@ def save_frames_as_gif(frames: list, path: str) -> None:
         import sys
         logging.warning("Please install imageio first.")
         sys.exit(1)
-    imageio.mimsave(path, frames, fps=20)
+    # imageio.mimsave(path, frames, fps=20)
+    imageio.mimsave(path, frames, 'GIF')
+
+
+

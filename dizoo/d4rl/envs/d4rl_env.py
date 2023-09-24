@@ -1,3 +1,4 @@
+import os
 from typing import Any, Union, List
 import copy
 import numpy as np
@@ -10,6 +11,7 @@ from ding.envs.common.common_function import affine_transform
 from ding.torch_utils import to_ndarray, to_list
 from .d4rl_wrappers import wrap_d4rl
 from ding.utils import ENV_REGISTRY
+from ding.envs.common import save_frames_as_gif
 
 
 @ENV_REGISTRY.register('d4rl')
@@ -19,7 +21,11 @@ class D4RLEnv(BaseEnv):
         self._cfg = cfg
         self._use_act_scale = cfg.use_act_scale
         self._init_flag = False
-        self.latent_action_shape = cfg.latent_action_shape 
+        # TODO(pu): for lightzero
+        # self.latent_action_shape = cfg.latent_action_shape
+        self._replay_path = None
+        self._replay_path_gif = cfg.replay_path_gif
+        self._save_replay_gif = cfg.save_replay_gif
 
     def reset(self) -> np.ndarray:
         if not self._init_flag:
@@ -39,9 +45,12 @@ class D4RLEnv(BaseEnv):
         obs = self._env.reset()
         obs = to_ndarray(obs).astype('float32')
         self._eval_episode_return = 0.
+        self._frames = []
+        self._save_replay_count = 0
 
-        action_mask = np.ones(self.latent_action_shape, 'int8')
-        obs = {'observation': obs, 'action_mask': action_mask, 'to_play': -1}
+        # TODO(pu): for lightzero
+        # action_mask = np.ones(self.latent_action_shape, 'int8')
+        # obs = {'observation': obs, 'action_mask': action_mask, 'to_play': -1}
 
         return obs
 
@@ -60,15 +69,27 @@ class D4RLEnv(BaseEnv):
         if self._use_act_scale:
             action_range = {'min': self.action_space.low[0], 'max': self.action_space.high[0], 'dtype': np.float32}
             action = affine_transform(action, min_val=action_range['min'], max_val=action_range['max'])
+        if self._save_replay_gif:
+            self._frames.append(self._env.render(mode='rgb_array'))
         obs, rew, done, info = self._env.step(action)
         self._eval_episode_return += rew
         obs = to_ndarray(obs).astype('float32')
-        rew = to_ndarray([rew])  # wrapped to be transfered to a array with shape (1,)
+        rew = to_ndarray([rew])  # wrapped to be transferred to an array with shape (1,)
         if done:
+            if self._save_replay_gif:
+                path = os.path.join(
+                    self._replay_path_gif, '{}_episode_{}.gif'.format(self._cfg.env_id, self._save_replay_count)
+                )
+                save_frames_as_gif(self._frames, path)
+                print('save gif to {}'.format(path))
+                self._save_replay_count += 1
+                self._frames = []
+
             info['eval_episode_return'] = self._eval_episode_return
 
-        action_mask = np.ones(self.latent_action_shape, 'int8')
-        obs = {'observation': obs, 'action_mask': action_mask, 'to_play': -1}
+        # TODO(pu): for lightzero
+        # action_mask = np.ones(self.latent_action_shape, 'int8')
+        # obs = {'observation': obs, 'action_mask': action_mask, 'to_play': -1}
 
         return BaseEnvTimestep(obs, rew, done, info)
 

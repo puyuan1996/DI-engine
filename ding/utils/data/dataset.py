@@ -372,9 +372,8 @@ class D4RLTrajectoryLZDataset(Dataset):
             dataset = h5py.File(dataset_path, 'r')
 
             N = dataset['rewards'].shape[0]
-
-            # TODO: test
-            # N = 10000
+            # TODO: GADM test
+            # N = 1000
             data_ = collections.defaultdict(list)
 
             use_timeouts = False
@@ -383,6 +382,7 @@ class D4RLTrajectoryLZDataset(Dataset):
 
             episode_step = 0
             paths = []
+            print('d4rl_trajectory_lightzero process begin!')
             for i in range(N):
                 done_bool = bool(dataset['terminals'][i])
                 if use_timeouts:
@@ -392,6 +392,7 @@ class D4RLTrajectoryLZDataset(Dataset):
                 for k in ['observations', 'actions', 'rewards', 'terminals']:
                     data_[k].append(dataset[k][i])
                 if done_bool or final_timestep:
+                    # print(f'process episode {len(paths)} done!')
                     episode_step = 0
                     episode_data = {}
                     for k in data_:
