@@ -1,4 +1,7 @@
 from easydict import EasyDict
+import os
+os.environ["LD_LIBRARY_PATH"] = "$LD_LIBRARY_PATH:/mnt/afs/niuyazhe/code/.mujoco/mujoco210/bin:/usr/local/nvidia/lib64"
+os.environ["MUJOCO_PY_MUJOCO_PATH"] = "/mnt/afs/niuyazhe/code/.mujoco/mujoco210"
 
 main_config = dict(
     exp_name="hopper_medium_expert_pd_seed0",
@@ -24,7 +27,7 @@ main_config = dict(
         model=dict(
             diffuser_model='GaussianDiffusion',
             diffuser_model_cfg=dict(
-                model='TemporalUnet',
+                model='DiffusionUNet1d',
                 model_cfg=dict(
                     transition_dim=14,
                     dim=32,
@@ -74,7 +77,8 @@ main_config = dict(
             plan_batch_size=64,
             learner=dict(hook=dict(save_ckpt_after_iter=1000000000, )),
         ),
-        collect=dict(data_type='diffuser_traj', ),
+        # collect=dict(data_type='diffuser_traj', ),
+        collect=dict(data_type='diffuser_traj', data_path='/mnt/afs/niuyazhe/code/dataset/d4rl/hopper_medium_expert-v2.hdf5', ),
         eval=dict(
             evaluator=dict(eval_freq=500, ),
             test_ret=0.9,

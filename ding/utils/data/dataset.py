@@ -1086,15 +1086,28 @@ class SequenceDataset(torch.utils.data.Dataset):
             if self.normed:
                 returns = self.normalize_value(returns)
             returns = np.array([returns / self.returns_scale], dtype=np.float32)
+
+            actions = self.fields['normed_actions'][path_ind, start:]
             batch = {
                 'trajectories': trajectories,
                 'returns': returns,
                 'done': done,
+                # TODO:
+                # 'action':actions,
+                # 'reward':rewards,
+                'action':done,
+                'reward':done,
+
             }
         else:
+            # rewards = self.fields['rewards'][path_ind, start:]
+            # actions = self.fields['normed_actions'][path_ind, start:]
+
             batch = {
                 'trajectories': trajectories,
                 'done': done,
+                'action':actions,
+                # 'reward':rewards,
             }
 
         batch.update(self.get_conditions(observations))

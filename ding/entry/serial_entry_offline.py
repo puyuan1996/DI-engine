@@ -98,6 +98,8 @@ def serial_pipeline_offline(
     learner.call_hook('before_run')
     stop = False
 
+    stop, reward = evaluator.eval(learner.save_checkpoint, learner.train_iter)
+
     for epoch in range(cfg.policy.learn.train_epoch):
         if get_world_size() > 1:
             dataloader.sampler.set_epoch(epoch)
