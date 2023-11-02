@@ -1,3 +1,7 @@
+import os
+os.environ["LD_LIBRARY_PATH"] = "$LD_LIBRARY_PATH:/mnt/afs/niuyazhe/code/.mujoco/mujoco210/bin:/usr/local/nvidia/lib64"
+os.environ["MUJOCO_PY_MUJOCO_PATH"] = "/mnt/afs/niuyazhe/code/.mujoco/mujoco210"
+os.environ["D4RL_DATASET_DIR"] = "/mnt/afs/niuyazhe/code/dataset/d4rl"
 from ding.entry import serial_pipeline_offline
 from ding.config import read_config
 from pathlib import Path

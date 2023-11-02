@@ -1,7 +1,4 @@
 from easydict import EasyDict
-import os
-os.environ["LD_LIBRARY_PATH"] = "$LD_LIBRARY_PATH:/mnt/afs/niuyazhe/code/.mujoco/mujoco210/bin:/usr/local/nvidia/lib64"
-os.environ["MUJOCO_PY_MUJOCO_PATH"] = "/mnt/afs/niuyazhe/code/.mujoco/mujoco210"
 
 main_config = dict(
     exp_name="hopper_medium_expert_pd_seed0",
