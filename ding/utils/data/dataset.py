@@ -168,6 +168,9 @@ class HDF5Dataset(Dataset):
 
     def _load_data(self, dataset: Dict[str, np.ndarray]) -> None:
         self._data = {}
+        if "next_observations" not in dataset.keys():
+            get_next_obs_from_obs = True
+            # dataset["next_observations"] = dataset["observations"][1:]
         for k in dataset.keys():
             logging.info(f'Load {k} data.')
             # self._data[k] = dataset[k][:]
@@ -175,6 +178,9 @@ class HDF5Dataset(Dataset):
                 self._data['action'] = dataset[k][:]
             elif k == "observations":
                 self._data['obs'] = dataset[k][:]
+                if get_next_obs_from_obs:
+                    # import pdb; pdb.set_trace()
+                    self._data['next_obs'] = np.concatenate([dataset[k][1:], np.expand_dims(dataset[k][0], 0)], axis=0)
             elif k == "next_observations":
                 self._data['next_obs'] = dataset[k][:]
             elif k == "rewards":
