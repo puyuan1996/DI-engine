@@ -35,7 +35,7 @@
   <link rel="stylesheet" href="../_static/css/style.css" type="text/css" />
   <link rel="index" title="Index" href="../genindex.html" />
   <link rel="search" title="Search" href="../search.html" />
-  <link rel="next" title="DDPG" href="ddpg_zh.html" />
+  <link rel="next" title="PPG" href="ppg_zh.html" />
   <link rel="prev" title="SQL" href="sql_zh.html" />
     <link href="../_static/css/style.css" rel="stylesheet" type="text/css">
 
@@ -343,10 +343,10 @@
 <p>MDQNPolicy 的默认配置如下：</p>
 <dl class="py class">
 <dt class="sig sig-object py">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">ding.policy.mdqn.</span></span><span class="sig-name descname"><span class="pre">MDQNPolicy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cfg</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">type</span><span class="p"><span class="pre">,</span> </span><span class="pre">torch.nn.modules.module.Module</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enable_field</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ding/policy/mdqn.html#MDQNPolicy"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">ding.policy.mdqn.</span></span><span class="sig-name descname"><span class="pre">MDQNPolicy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cfg</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">easydict.EasyDict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">torch.nn.modules.module.Module</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enable_field</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ding/policy/mdqn.html#MDQNPolicy"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><dl>
 <dt>Overview:</dt><dd><p>Policy class of Munchausen DQN algorithm, extended by auxiliary objectives.
-Paper link: <a class="reference external" href="https://arxiv.org/abs/2007.14430">https://arxiv.org/abs/2007.14430</a></p>
+Paper link: <a class="reference external" href="https://arxiv.org/abs/2007.14430">https://arxiv.org/abs/2007.14430</a>.</p>
 </dd>
 <dt>Config:</dt><dd><table class="docutils align-default">
 <colgroup>
@@ -698,12 +698,12 @@ Paper link: <a class="reference external" href="https://arxiv.org/abs/2007.14430
 <p>MDQN 使用的 TD error 接口定义如下：</p>
 <dl class="py function">
 <dt class="sig sig-object py">
-<span class="sig-prename descclassname"><span class="pre">ding.rl_utils.td.</span></span><span class="sig-name descname"><span class="pre">m_q_1step_td_error</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">data:</span> <span class="pre">collections.namedtuple</span></em>, <em class="sig-param"><span class="pre">gamma:</span> <span class="pre">float</span></em>, <em class="sig-param"><span class="pre">tau:</span> <span class="pre">float</span></em>, <em class="sig-param"><span class="pre">alpha:</span> <span class="pre">float</span></em>, <em class="sig-param"><span class="pre">criterion:</span> <span class="pre">&lt;module</span> <span class="pre">'torch.nn.modules'</span> <span class="pre">from</span> <span class="pre">'/opt/hostedtoolcache/Python/3.8.17/x64/lib/python3.8/site-packages/torch/nn/modules/__init__.py'&gt;</span> <span class="pre">=</span> <span class="pre">MSELoss()</span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">torch.Tensor</span></span></span><a class="reference internal" href="../_modules/ding/rl_utils/td.html#m_q_1step_td_error"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><dl class="simple">
+<span class="sig-prename descclassname"><span class="pre">ding.rl_utils.td.</span></span><span class="sig-name descname"><span class="pre">m_q_1step_td_error</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">data:</span> <span class="pre">collections.namedtuple</span></em>, <em class="sig-param"><span class="pre">gamma:</span> <span class="pre">float</span></em>, <em class="sig-param"><span class="pre">tau:</span> <span class="pre">float</span></em>, <em class="sig-param"><span class="pre">alpha:</span> <span class="pre">float</span></em>, <em class="sig-param"><span class="pre">criterion:</span> <span class="pre">&lt;module</span> <span class="pre">'torch.nn.modules'</span> <span class="pre">from</span> <span class="pre">'/opt/hostedtoolcache/Python/3.8.18/x64/lib/python3.8/site-packages/torch/nn/modules/__init__.py'&gt;</span> <span class="pre">=</span> <span class="pre">MSELoss()</span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">torch.Tensor</span></span></span><a class="reference internal" href="../_modules/ding/rl_utils/td.html#m_q_1step_td_error"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><dl>
 <dt>Overview:</dt><dd><p>Munchausen td_error for DQN algorithm, support 1 step td error.</p>
 </dd>
 <dt>Arguments:</dt><dd><ul class="simple">
-<li><p>data (<code class="xref py py-obj docutils literal notranslate"><span class="pre">m_q_1step_td_data</span></code>): The input data, m_q_1step_td_data to calculate loss</p></li>
+<li><p>data (<a class="reference internal" href="../05_api_doc/rl_utils.html#ding.rl_utils.td.m_q_1step_td_data" title="ding.rl_utils.td.m_q_1step_td_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">m_q_1step_td_data</span></code></a>): The input data, m_q_1step_td_data to calculate loss</p></li>
 <li><p>gamma (<code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code>): Discount factor</p></li>
 <li><p>tau (<code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code>): Entropy factor for Munchausen DQN</p></li>
 <li><p>alpha (<code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code>): Discount factor for Munchausen term</p></li>
@@ -715,7 +715,7 @@ Paper link: <a class="reference external" href="https://arxiv.org/abs/2007.14430
 </ul>
 </dd>
 <dt>Shapes:</dt><dd><ul class="simple">
-<li><p>data (<code class="xref py py-obj docutils literal notranslate"><span class="pre">m_q_1step_td_data</span></code>): the m_q_1step_td_data containing             [‘q’, ‘target_q’, ‘next_q’, ‘act’, ‘reward’, ‘done’, ‘weight’]</p></li>
+<li><p>data (<a class="reference internal" href="../05_api_doc/rl_utils.html#ding.rl_utils.td.m_q_1step_td_data" title="ding.rl_utils.td.m_q_1step_td_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">m_q_1step_td_data</span></code></a>): the m_q_1step_td_data containing             [‘q’, ‘target_q’, ‘next_q’, ‘act’, ‘reward’, ‘done’, ‘weight’]</p></li>
 <li><p>q (<code class="xref py py-obj docutils literal notranslate"><span class="pre">torch.FloatTensor</span></code>): <span class="math notranslate nohighlight">\((B, N)\)</span> i.e. [batch_size, action_dim]</p></li>
 <li><p>target_q (<code class="xref py py-obj docutils literal notranslate"><span class="pre">torch.FloatTensor</span></code>): <span class="math notranslate nohighlight">\((B, N)\)</span> i.e. [batch_size, action_dim]</p></li>
 <li><p>next_q (<code class="xref py py-obj docutils literal notranslate"><span class="pre">torch.FloatTensor</span></code>): <span class="math notranslate nohighlight">\((B, N)\)</span> i.e. [batch_size, action_dim]</p></li>
@@ -724,6 +724,20 @@ Paper link: <a class="reference external" href="https://arxiv.org/abs/2007.14430
 <li><p>done (<code class="xref py py-obj docutils literal notranslate"><span class="pre">torch.BoolTensor</span></code>) <span class="math notranslate nohighlight">\((B, )\)</span>, whether done in last timestep</p></li>
 <li><p>weight (<code class="xref py py-obj docutils literal notranslate"><span class="pre">torch.FloatTensor</span></code> or None): <span class="math notranslate nohighlight">\((B, )\)</span>, the training sample weight</p></li>
 </ul>
+</dd>
+<dt>Examples:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">action_dim</span> <span class="o">=</span> <span class="mi">4</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">data</span> <span class="o">=</span> <span class="n">m_q_1step_td_data</span><span class="p">(</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">q</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">action_dim</span><span class="p">),</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">target_q</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">action_dim</span><span class="p">),</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">next_q</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">action_dim</span><span class="p">),</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">act</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">action_dim</span><span class="p">,</span> <span class="p">(</span><span class="mi">3</span><span class="p">,)),</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">reward</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">done</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="p">(</span><span class="mi">3</span><span class="p">,)),</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">weight</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">loss</span> <span class="o">=</span> <span class="n">m_q_1step_td_error</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="mf">0.99</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">)</span>
+</pre></div>
+</div>
 </dd>
 </dl>
 </dd></dl>
@@ -821,7 +835,7 @@ Paper link: <a class="reference external" href="https://arxiv.org/abs/2007.14430
   
   <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
     
-    <a href="ddpg_zh.html" class="btn btn-neutral float-right" title="DDPG" accesskey="n"
+    <a href="ppg_zh.html" class="btn btn-neutral float-right" title="PPG" accesskey="n"
       rel="next">Next <img src="../_static/images/chevron-right-blue.svg"
         class="next-page"></a>
     
