@@ -306,15 +306,23 @@
 
 
 <span class="k">def</span> <span class="nf">compute_grad_norm</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
-    <span class="c1"># compute grad norm of a network&#39;s parameters</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Overview:</span>
+<span class="sd">        Compute grad norm of a network&#39;s parameters.</span>
+<span class="sd">    Arguments:</span>
+<span class="sd">        - model (:obj:`nn.Module`): The network to compute grad norm.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        - grad_norm (:obj:`torch.Tensor`): The grad norm of the network&#39;s parameters.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">torch</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">grad</span><span class="o">.</span><span class="n">detach</span><span class="p">(),</span> <span class="mf">2.0</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">()]),</span> <span class="mf">2.0</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="FQFPolicy"><a class="viewcode-back" href="../../../12_policies/fqf_zh.html#ding.policy.fqf.FQFPolicy">[docs]</a><span class="nd">@POLICY_REGISTRY</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s1">&#39;fqf&#39;</span><span class="p">)</span>
 <span class="k">class</span> <span class="nc">FQFPolicy</span><span class="p">(</span><span class="n">DQNPolicy</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Overview:</span>
-<span class="sd">        Policy class of FQF (Fully Parameterized Quantile Function) algorithm, proposed in https://arxiv.org/pdf/1911.02140.pdf.</span>
+<span class="sd">        Policy class of FQF (Fully Parameterized Quantile Function) algorithm, proposed in</span>
+<span class="sd">        https://arxiv.org/pdf/1911.02140.pdf.</span>
 
 <span class="sd">    Config:</span>
 <span class="sd">        == ==================== ======== ============== ======================================== =======================</span>
