@@ -408,17 +408,17 @@
             <span class="c1"># (int) Frequency of target network update.</span>
             <span class="c1"># Only one of [target_update_freq, target_theta] should be set.</span>
             <span class="n">target_update_freq</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
-            <span class="c1"># (float): Used for soft update of the target network.</span>
+            <span class="c1"># (float) Used for soft update of the target network.</span>
             <span class="c1"># aka. Interpolation factor in EMA update for target network.</span>
             <span class="c1"># Only one of [target_update_freq, target_theta] should be set.</span>
             <span class="n">target_theta</span><span class="o">=</span><span class="mf">0.005</span><span class="p">,</span>
-            <span class="c1"># (bool) Whether ignore done(usually for max step termination env).</span>
-            <span class="c1"># Note: Gym wraps the MuJoCo envs by default with TimeLimit environment wrappers.</span>
-            <span class="c1"># These limit HalfCheetah, and several other MuJoCo envs, to max length of 1000.</span>
-            <span class="c1"># However, interaction with HalfCheetah always gets done with done is False,</span>
-            <span class="c1"># Since we inplace done==True with done==False to keep</span>
-            <span class="c1"># TD-error accurate computation(``gamma * (1 - done) * next_v + reward``),</span>
-            <span class="c1"># when the episode step is greater than max episode step.</span>
+            <span class="c1"># (bool) If set to True, the &#39;done&#39; signals that indicate the end of an episode due to environment time</span>
+            <span class="c1"># limits are disregarded. By default, this is set to False. This setting is particularly useful for tasks</span>
+            <span class="c1"># that have a predetermined episode length, such as HalfCheetah and various other MuJoCo environments,</span>
+            <span class="c1"># where the maximum length is capped at 1000 steps. When enabled, any &#39;done&#39; signal triggered by reaching</span>
+            <span class="c1"># the maximum episode steps will be overridden to &#39;False&#39;. This ensures the accurate calculation of the</span>
+            <span class="c1"># Temporal Difference (TD) error, using the formula `gamma * (1 - done) * next_v + reward`,</span>
+            <span class="c1"># even when the episode surpasses the predefined step limit.</span>
             <span class="n">ignore_done</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
         <span class="p">),</span>
         <span class="c1"># collect_mode config</span>

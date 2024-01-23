@@ -334,7 +334,7 @@
             <span class="n">batch_size</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span>
             <span class="c1"># (float) Learning rate for optimizer.</span>
             <span class="n">learning_rate</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span>
-            <span class="c1"># (tuple[float, float]) Coefficients used for computing running averages of gradient and its square.</span>
+            <span class="c1"># (Tuple[float, float]) Coefficients used for computing running averages of gradient and its square.</span>
             <span class="n">betas</span><span class="o">=</span><span class="p">(</span><span class="mf">0.9</span><span class="p">,</span> <span class="mf">0.999</span><span class="p">),</span>
             <span class="c1"># (float) Term added to the denominator to improve numerical stability in optimizer.</span>
             <span class="n">eps</span><span class="o">=</span><span class="mf">1e-8</span><span class="p">,</span>
@@ -346,8 +346,13 @@
             <span class="n">entropy_weight</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span>
             <span class="c1"># (bool) Flag to enable normalization of advantages.</span>
             <span class="n">adv_norm</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-            <span class="c1"># (bool) Whether or not to consider &quot;done&quot; flags for episode termination.</span>
-            <span class="c1"># When False, episodes are processed as if they are not done.</span>
+            <span class="c1"># (bool) If set to True, the &#39;done&#39; signals that indicate the end of an episode due to environment time</span>
+            <span class="c1"># limits are disregarded. By default, this is set to False. This setting is particularly useful for tasks</span>
+            <span class="c1"># that have a predetermined episode length, such as HalfCheetah and various other MuJoCo environments,</span>
+            <span class="c1"># where the maximum length is capped at 1000 steps. When enabled, any &#39;done&#39; signal triggered by reaching</span>
+            <span class="c1"># the maximum episode steps will be overridden to &#39;False&#39;. This ensures the accurate calculation of the</span>
+            <span class="c1"># Temporal Difference (TD) error, using the formula `gamma * (1 - done) * next_v + reward`,</span>
+            <span class="c1"># even when the episode surpasses the predefined step limit.</span>
             <span class="n">ignore_done</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
         <span class="p">),</span>
         <span class="c1"># collect_mode configuration</span>

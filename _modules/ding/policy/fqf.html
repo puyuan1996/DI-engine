@@ -382,7 +382,13 @@
             <span class="n">kappa</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
             <span class="c1"># (float) Coefficient for the entropy loss term.</span>
             <span class="n">ent_coef</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-            <span class="c1"># (bool) Whether to ignore the &#39;done&#39; signal (useful in environments with max step termination).</span>
+            <span class="c1"># (bool) If set to True, the &#39;done&#39; signals that indicate the end of an episode due to environment time</span>
+            <span class="c1"># limits are disregarded. By default, this is set to False. This setting is particularly useful for tasks</span>
+            <span class="c1"># that have a predetermined episode length, such as HalfCheetah and various other MuJoCo environments,</span>
+            <span class="c1"># where the maximum length is capped at 1000 steps. When enabled, any &#39;done&#39; signal triggered by reaching</span>
+            <span class="c1"># the maximum episode steps will be overridden to &#39;False&#39;. This ensures the accurate calculation of the</span>
+            <span class="c1"># Temporal Difference (TD) error, using the formula `gamma * (1 - done) * next_v + reward`,</span>
+            <span class="c1"># even when the episode surpasses the predefined step limit.</span>
             <span class="n">ignore_done</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
         <span class="p">),</span>
         <span class="n">collect</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
@@ -414,7 +420,7 @@
     <span class="k">def</span> <span class="nf">default_model</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Overview:</span>
-<span class="sd">            Returns the default model configuration used by the A2C algorithm. ``__init__`` method will \</span>
+<span class="sd">            Returns the default model configuration used by the FQF algorithm. ``__init__`` method will \</span>
 <span class="sd">            automatically call this method to get the default model setting and create model.</span>
 
 <span class="sd">        Returns:</span>
