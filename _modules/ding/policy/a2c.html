@@ -428,11 +428,11 @@
 <span class="sd">            result, including various training information such as policy_loss, value_loss, entropy_loss.</span>
 <span class="sd">        Arguments:</span>
 <span class="sd">            - data (:obj:`List[Dict[int, Any]]`): The input data used for policy forward, including a batch of \</span>
-<span class="sd">                training samples. For each element in list, the key of the dict is the name of data items and the \</span>
+<span class="sd">                training samples. For each element in the list, the key of the dict is the name of data items and the \</span>
 <span class="sd">                value is the corresponding data. Usually, the value is torch.Tensor or np.ndarray or there dict/list \</span>
 <span class="sd">                combinations. In the ``_forward_learn`` method, data often need to first be stacked in the batch \</span>
 <span class="sd">                dimension by some utility functions such as ``default_preprocess_learn``. \</span>
-<span class="sd">                For A2C, each element in list is a dict containing at least the following keys: \</span>
+<span class="sd">                For A2C, each element in the list is a dict containing at least the following keys: \</span>
 <span class="sd">                [&#39;obs&#39;, &#39;action&#39;, &#39;adv&#39;, &#39;value&#39;, &#39;weight&#39;].</span>
 <span class="sd">        Returns:</span>
 <span class="sd">            - info_dict (:obj:`Dict[str, Any]`): The information dict that indicated training result, which will be \</span>
@@ -441,9 +441,9 @@
 
 <span class="sd">        .. note::</span>
 <span class="sd">            The input value can be torch.Tensor or dict/list combinations and current policy supports all of them. \</span>
-<span class="sd">            For the data type that not supported, the main reason is that the corresponding model does not support it. \</span>
-<span class="sd">            You can implement your own model rather than use the default model. For more information, please raise an \</span>
-<span class="sd">            issue in GitHub repo and we will continue to follow up.</span>
+<span class="sd">            For the data type that is not supported, the main reason is that the corresponding model does not support \</span>
+<span class="sd">             it. You can implement your own model rather than use the default model. For more information, please \</span>
+<span class="sd">             raise an issue in GitHub repo, and we will continue to follow up.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Data preprocessing operations, such as stack data, cpu to cuda device</span>
         <span class="n">data</span> <span class="o">=</span> <span class="n">default_preprocess_learn</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">ignore_done</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_cfg</span><span class="o">.</span><span class="n">learn</span><span class="o">.</span><span class="n">ignore_done</span><span class="p">,</span> <span class="n">use_nstep</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
