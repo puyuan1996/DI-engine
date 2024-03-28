@@ -692,8 +692,10 @@ def q_nstep_td_error(
         action = action.unsqueeze(-1)
     elif len(action.shape) > 1:  # MARL case
         action = action.unsqueeze(-1)  # NOTE
-        reward = reward.unsqueeze(-1)
-        weight = weight.unsqueeze(-1)
+        if len(reward) == 2:
+            reward = reward.unsqueeze(-1)
+        if len(weight) == 2:
+            weight = weight.unsqueeze(-1)
         done = done.unsqueeze(-1)
         if value_gamma is not None:
             value_gamma = value_gamma.unsqueeze(-1)

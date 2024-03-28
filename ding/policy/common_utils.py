@@ -61,10 +61,13 @@ def default_preprocess_learn(
         reward = data['reward']
         if len(reward.shape) == 1:
             reward = reward.unsqueeze(1)
-        # reward: (batch_size, nstep) -> (nstep, batch_size)
-        # reversed_shape = [i for i in range(len(reward.shape))][::-1]
-        # data['reward'] = reward.permute(reversed_shape).contiguous()
-        data['reward'] = reward.transpose(0, -1).contiguous()
+        if len(reward.shape) == 2:
+            # reward: (batch_size, nstep) -> (nstep, batch_size)
+            data['reward'] = reward.permute(1, 0).contiguous()
+        elif len(reward.shape) == 3:
+            # for MARL case
+            # reward: (batch_size, agent_num, n_step)-> (nstep, batch_size, agent_num)
+            data['reward'] = reward.permute(2, 0, 1).contiguous()
     else:
         if data['reward'].dim() == 2 and data['reward'].shape[1] == 1:
             data['reward'] = data['reward'].squeeze(-1)
