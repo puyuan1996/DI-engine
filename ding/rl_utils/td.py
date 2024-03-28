@@ -691,6 +691,7 @@ def q_nstep_td_error(
     if len(action.shape) == 1:  # single agent case
         action = action.unsqueeze(-1)
     elif len(action.shape) > 1:  # MARL case
+        action = action.unsqueeze(-1)  # NOTE
         reward = reward.unsqueeze(-1)
         weight = weight.unsqueeze(-1)
         done = done.unsqueeze(-1)
