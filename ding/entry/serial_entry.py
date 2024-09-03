@@ -20,6 +20,7 @@ def serial_pipeline(
         seed: int = 0,
         env_setting: Optional[List[Any]] = None,
         model: Optional[torch.nn.Module] = None,
+        model_path: Optional[str] = None,
         max_train_iter: Optional[int] = int(1e10),
         max_env_step: Optional[int] = int(1e10),
         dynamic_seed: Optional[bool] = True,
@@ -60,6 +61,12 @@ def serial_pipeline(
     set_pkg_seed(cfg.seed, use_cuda=cfg.policy.cuda)
     policy = create_policy(cfg.policy, model=model, enable_field=['learn', 'collect', 'eval', 'command'])
 
+    # Load pretrained model if specified
+    if model_path is not None:
+        logging.info(f'Loading model from {model_path} begin...')
+        policy.learn_mode.load_state_dict(torch.load(model_path, map_location=cfg.policy.device))
+        logging.info(f'Loading model from {model_path} end!')
+
     # Create worker components: learner, collector, evaluator, replay buffer, commander.
     tb_logger = SummaryWriter(os.path.join('./{}/log/'.format(cfg.exp_name), 'serial')) if get_rank() == 0 else None
     learner = BaseLearner(cfg.policy.learn.learner, policy.learn_mode, tb_logger, exp_name=cfg.exp_name)
@@ -86,6 +93,10 @@ def serial_pipeline(
     # ==========
     # Learner's before_run hook.
     learner.call_hook('before_run')
+
+    # TODO: for visualize
+    stop, reward = evaluator.eval(learner.save_checkpoint, learner.train_iter, collector.envstep)
+    sys.exit(0)
 
     # Accumulate plenty of data at the beginning of training.
     if cfg.policy.get('random_collect_size', 0) > 0:

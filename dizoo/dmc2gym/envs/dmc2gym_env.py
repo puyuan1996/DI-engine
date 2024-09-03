@@ -1,13 +1,36 @@
+import copy
+import os
+import os
+from datetime import datetime
+from typing import Callable, Union, Dict
+from typing import Optional
 from typing import Optional, Callable
+
+import dmc2gym
+import dmc2gym
 import gym
-from gym.spaces import Box
+import gym
+import gymnasium as gym
+import imageio
+import matplotlib.pyplot as plt
+import numpy as np
 import numpy as np
 from ding.envs import BaseEnv, BaseEnvTimestep
+from ding.envs import BaseEnv, BaseEnvTimestep
+from ding.envs import WarpFrameWrapper, ScaledFloatFrameWrapper, ClipRewardWrapper, ActionRepeatWrapper, \
+    FrameStackWrapper
+from ding.envs import WarpFrameWrapper, ScaledFloatFrameWrapper, ClipRewardWrapper, ActionRepeatWrapper, \
+    FrameStackWrapper
+from ding.envs.common.common_function import affine_transform
 from ding.envs.common.common_function import affine_transform
 from ding.torch_utils import to_ndarray
+from ding.torch_utils import to_ndarray
 from ding.utils import ENV_REGISTRY
-import dmc2gym
-from ding.envs import WarpFrameWrapper, ScaledFloatFrameWrapper, ClipRewardWrapper, ActionRepeatWrapper, FrameStackWrapper
+from ding.utils import ENV_REGISTRY
+from easydict import EasyDict
+from gym.spaces import Box
+from gym.spaces import Box
+from matplotlib import animation
 
 
 def dmc2gym_observation_space(dim, minimum=-np.inf, maximum=np.inf, dtype=np.float32) -> Callable:
@@ -142,6 +165,10 @@ class DMC2GymEnv(BaseEnv):
         self._action_space = dmc2gym_env_info[cfg.domain_name][cfg.task_name]["action_space"]
         self._reward_space = dmc2gym_env_info[cfg.domain_name][cfg.task_name]["reward_space"](self._cfg["frame_skip"])
 
+        self._save_replay_gif = cfg.save_replay_gif
+        self._replay_path_gif = cfg.replay_path_gif
+        self._save_replay_count = 0
+
     def reset(self) -> np.ndarray:
         if not self._init_flag:
 
@@ -155,6 +182,7 @@ class DMC2GymEnv(BaseEnv):
                 width=self._cfg["width"],
                 frame_skip=self._cfg["frame_skip"],
                 channels_first=self._cfg["channels_first"],
+                render_image=self._cfg["render_image"]
             )
 
             # optional env wrapper
@@ -197,7 +225,12 @@ class DMC2GymEnv(BaseEnv):
         self._eval_episode_return = 0
         obs = self._env.reset()
 
+        obs = obs['state']
         obs = to_ndarray(obs).astype(np.float32)
+
+        self._current_step = 0
+        if self._save_replay_gif:
+            self._frames = []
 
         return obs
 
@@ -215,14 +248,56 @@ class DMC2GymEnv(BaseEnv):
         action = action.astype('float32')
         action = affine_transform(action, min_val=self._env.action_space.low, max_val=self._env.action_space.high)
         obs, rew, done, info = self._env.step(action)
+        self._current_step += 1
+
+        # print(f'action: {action}, obs: {obs}, rew: {rew}, done: {done}, info: {info}')
+        print(f'step {self._current_step}: action: {action}, rew: {rew}, done: {done}')
+
         self._eval_episode_return += rew
+
+        if self._cfg["from_pixels"]:
+            obs = obs
+        else:
+            info['image_obs'] = info['image_obs'].copy()
+            image_obs = info['image_obs']
+
+        if self._save_replay_gif:
+            self._frames.append(image_obs)
+
         if done:
             info['eval_episode_return'] = self._eval_episode_return
+
+            if not os.path.exists(self._replay_path_gif):
+                os.makedirs(self._replay_path_gif)
+            timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+            path = os.path.join(
+                self._replay_path_gif,
+                '{}_episode_{}_seed{}_{}.gif'.format(f'{self._cfg["domain_name"]}_{self._cfg["task_name"]}',
+                                                     self._save_replay_count, self._seed, timestamp)
+            )
+            self.display_frames_as_gif(self._frames, path)
+            print(f'save episode {self._save_replay_count} in {self._replay_path_gif}!')
+            self._save_replay_count += 1
 
         obs = to_ndarray(obs).astype(np.float32)
         rew = to_ndarray([rew]).astype(np.float32)  # wrapped to be transferred to a array with shape (1,)
 
+
         return BaseEnvTimestep(obs, rew, done, info)
+
+    @staticmethod
+    def display_frames_as_gif(frames: list, path: str) -> None:
+        # 调整每一帧的维度
+        # frames = [np.transpose(frame, (1, 2, 0)) for frame in frames]
+
+        patch = plt.imshow(frames[0])
+        plt.axis('off')
+
+        def animate(i):
+            patch.set_data(frames[i])
+
+        anim = animation.FuncAnimation(plt.gcf(), animate, frames=len(frames), interval=5)
+        anim.save(path, writer='pillow', fps=20)
 
     def enable_save_replay(self, replay_path: Optional[str] = None) -> None:
         if replay_path is None:
