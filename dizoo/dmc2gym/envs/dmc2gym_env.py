@@ -232,6 +232,10 @@ class DMC2GymEnv(BaseEnv):
         if self._save_replay_gif:
             self._frames = []
 
+        # 新增：用于存储每一局的动作和奖励
+        self._episode_actions = []
+        self._episode_rewards = []
+
         return obs
 
     def close(self) -> None:
@@ -254,6 +258,10 @@ class DMC2GymEnv(BaseEnv):
         print(f'step {self._current_step}: action: {action}, rew: {rew}, done: {done}')
 
         self._eval_episode_return += rew
+
+        # 记录动作和奖励
+        self._episode_actions.append(action)
+        self._episode_rewards.append(rew)
 
         if self._cfg["from_pixels"]:
             obs = obs
@@ -279,11 +287,51 @@ class DMC2GymEnv(BaseEnv):
             print(f'save episode {self._save_replay_count} in {self._replay_path_gif}!')
             self._save_replay_count += 1
 
+            # 绘制并保存动作分布和奖励变化图
+            self.plot_action_distribution_and_rewards()
+
+            # 清空记录以便下一局使用
+            self._episode_actions = []
+            self._episode_rewards = []
+
         obs = to_ndarray(obs).astype(np.float32)
         rew = to_ndarray([rew]).astype(np.float32)  # wrapped to be transferred to a array with shape (1,)
 
 
         return BaseEnvTimestep(obs, rew, done, info)
+
+    def plot_action_distribution_and_rewards(self):
+        # 将动作转换为NumPy数组以便更好地进行处理
+        actions = np.array(self._episode_actions)
+        rewards = np.array(self._episode_rewards)
+
+        # 绘制动作分布图
+        fig, axs = plt.subplots(2, 1, figsize=(12, 8))
+
+        for action_dim in range(actions.shape[1]):
+            axs[0].hist(actions[:, action_dim], bins=50, alpha=0.5, label=f'Action Dimension {action_dim+1}')
+
+        axs[0].set_title('Action Distribution')
+        axs[0].set_xlabel('Action Value')
+        axs[0].set_ylabel('Frequency')
+        axs[0].legend()
+
+        # 绘制奖励变化图
+        axs[1].plot(rewards, label="Reward", color='blue')
+        axs[1].set_title('Reward Over Time')
+        axs[1].set_xlabel('Step')
+        axs[1].set_ylabel('Reward')
+        axs[1].legend()
+
+        # 保存图表
+        if not os.path.exists(self._replay_path_gif):
+            os.makedirs(self._replay_path_gif)
+        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+        plot_path = os.path.join(self._replay_path_gif, f'episode_{self._save_replay_count}_{timestamp}.png')
+        plt.savefig(plot_path)
+        plt.close(fig)
+
+        print(f'Action distribution and reward plot saved at {plot_path}')
 
     @staticmethod
     def display_frames_as_gif(frames: list, path: str) -> None:
