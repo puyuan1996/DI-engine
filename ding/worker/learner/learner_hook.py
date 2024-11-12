@@ -201,11 +201,12 @@ class LogShowHook(LearnerHook):
         Arguments:
             - engine (:obj:`BaseLearner`): the BaseLearner
         """
+        # ========== TODO: unizero_multitask ddp_v2 ========
         # Only show log for rank 0 learner
-        # if engine.rank != 0:
-        #     for k in engine.log_buffer:
-        #         engine.log_buffer[k].clear()
-        #     return
+        if engine.rank != 0:
+            for k in engine.log_buffer:
+                engine.log_buffer[k].clear()
+            return
 
         # For 'scalar' type variables: log_buffer -> tick_monitor -> monitor_time.step
         for k, v in engine.log_buffer['scalar'].items():

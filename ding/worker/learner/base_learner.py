@@ -107,9 +107,9 @@ class BaseLearner(object):
             self._logger, _ = build_logger(
                 './{}/log/{}'.format(self._exp_name, self._instance_name), self._instance_name, need_tb=False
             )
-            # self._tb_logger = None
+            self._tb_logger = None
             # ========== TODO: unizero_multitask ddp_v2 ========
-            self._tb_logger = tb_logger
+            # self._tb_logger = tb_logger
 
 
         self._log_buffer = {
@@ -436,10 +436,10 @@ class BaseLearner(object):
             Policy variable monitor is set alongside with policy, because variables are determined by specific policy.
         """
         self._policy = _policy
-        # if self._rank == 0:
-        #     self._monitor = get_simple_monitor_type(self._policy.monitor_vars())(TickTime(), expire=10)
-        
-        self._monitor = get_simple_monitor_type(self._policy.monitor_vars())(TickTime(), expire=10)
+        if self._rank == 0:
+            self._monitor = get_simple_monitor_type(self._policy.monitor_vars())(TickTime(), expire=10)
+        # ========== TODO: unizero_multitask ddp_v2 ========
+        # self._monitor = get_simple_monitor_type(self._policy.monitor_vars())(TickTime(), expire=10)
 
         if self._cfg.log_policy:
             self.info(self._policy.info())
