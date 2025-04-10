@@ -7,7 +7,7 @@ import copy
 import torch
 
 from ding.model import create_model
-from ding.utils import import_module, allreduce, broadcast, get_rank, allreduce_async, synchronize, deep_merge_dicts, \
+from ding.utils import import_module, allreduce, allreduce_with_indicator, broadcast, get_rank, allreduce_async, synchronize, deep_merge_dicts, \
     POLICY_REGISTRY
 
 
@@ -421,6 +421,49 @@ class Policy(ABC):
             gradients allreduce and optimizer updates.
         """
 
+        if self._bp_update_sync:
+            for name, param in model.named_parameters():
+                if param.requires_grad:
+                    # Create an indicator tensor on the same device as the parameter (or its gradient)
+                    if param.grad is not None:
+                        # If the gradient exists, extract its data and set indicator to 1.
+                        grad_tensor = param.grad.data
+                        indicator = torch.tensor(1.0, device=grad_tensor.device)
+                    else:
+                        # If the parameter did not participate in the computation (grad is None),
+                        # create a zero tensor for the gradient and set the indicator to 0.
+                        grad_tensor = torch.zeros_like(param.data)
+                        indicator = torch.tensor(0.0, device=grad_tensor.device)
+
+                        # Assign the zero gradient to param.grad to ensure that all GPUs
+                        # participate in the subsequent allreduce call (avoiding deadlock).
+                        param.grad = grad_tensor
+
+                    # Use the custom allreduce function to reduce the gradient using the indicator.
+                    allreduce_with_indicator(param.grad, indicator)
+                # else:
+                #     # 对于不需要梯度的参数，也需要参与集体通信以确保所有进程的调用顺序一致
+                #     dummy_tensor = torch.tensor(0.0, device=param.data.device)
+                #     dummy_indicator = torch.tensor(0.0, device=param.data.device)
+                #     allreduce_with_indicator(dummy_tensor, dummy_indicator)
+        else:
+            synchronize()
+
+
+
+        # if self._bp_update_sync:
+        #     for name, param in model.named_parameters():
+        #         if param.requires_grad:
+        #             if param.grad is not None:
+        #                 allreduce(param.grad.data)
+        #             else:
+        #                 # 如果梯度为 None，则创建一个与 param.grad_size 相同的零张量，并执行 allreduce
+        #                 zero_grad = torch.zeros_like(param.data)
+        #                 allreduce(zero_grad)
+        # else:
+        #     synchronize()
+
+                    
         # if self._bp_update_sync:
         #     for name, param in model.named_parameters():
         #         if param.requires_grad:
@@ -428,17 +471,6 @@ class Policy(ABC):
         #                 allreduce(param.grad.data)
         # else:
         #     synchronize()
-        if self._bp_update_sync:
-            for name, param in model.named_parameters():
-                if param.requires_grad:
-                    if param.grad is not None:
-                        allreduce(param.grad.data)
-                    else:
-                        # 如果梯度为 None，则创建一个与 param.grad_size 相同的零张量，并执行 allreduce
-                        zero_grad = torch.zeros_like(param.data)
-                        allreduce(zero_grad)
-        else:
-            synchronize()
 
     # don't need to implement default_model method by force
     def default_model(self) -> Tuple[str, List[str]]:
