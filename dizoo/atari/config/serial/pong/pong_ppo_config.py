@@ -1,6 +1,7 @@
 from easydict import EasyDict
 
-pong_onppo_config = dict(
+pong_ppo_config = dict(
+    exp_name='pong_ppo_seed0',
     env=dict(
         collector_env_num=8,
         evaluator_env_num=8,
@@ -39,6 +40,12 @@ pong_onppo_config = dict(
             ignore_done=False,
             grad_clip_type='clip_norm',
             grad_clip_value=0.5,
+            # KL divergence regularization between current policy and pretrained policy.
+            # Supported KL divergence estimators: ['k1', 'k2', 'k3'].
+            # KL divergence loss will be calculated only when pretrained_model_path is provided.
+            kl_beta=0.01,
+            kl_type='k1',
+            pretrained_model_path=None,
         ),
         collect=dict(
             n_sample=3200,
@@ -49,9 +56,9 @@ pong_onppo_config = dict(
         eval=dict(evaluator=dict(eval_freq=5000, )),
     ),
 )
-main_config = EasyDict(pong_onppo_config)
+main_config = EasyDict(pong_ppo_config)
 
-pong_onppo_create_config = dict(
+pong_ppo_create_config = dict(
     env=dict(
         type='atari',
         import_names=['dizoo.atari.envs.atari_env'],
@@ -59,9 +66,9 @@ pong_onppo_create_config = dict(
     env_manager=dict(type='subprocess'),
     policy=dict(type='ppo'),
 )
-create_config = EasyDict(pong_onppo_create_config)
+create_config = EasyDict(pong_ppo_create_config)
 
 if __name__ == "__main__":
-    # or you can enter `ding -m serial_onpolicy -c pong_onppo_config.py -s 0`
+    # or you can enter `ding -m serial_onpolicy -c pong_ppo_config.py -s 0`
     from ding.entry import serial_pipeline_onpolicy
     serial_pipeline_onpolicy((main_config, create_config), seed=0)

@@ -12,7 +12,7 @@ from ding.worker import BaseLearner, InteractionSerialEvaluator, BaseSerialComma
 from ding.config import read_config, compile_config
 from ding.policy import create_policy, PolicyFactory
 from ding.reward_model import create_reward_model
-from ding.utils import set_pkg_seed
+from ding.utils import set_pkg_seed, get_rank
 
 
 def serial_pipeline_onpolicy(
@@ -45,7 +45,16 @@ def serial_pipeline_onpolicy(
         cfg, create_cfg = deepcopy(input_cfg)
     create_cfg.policy.type = create_cfg.policy.type + '_command'
     env_fn = None if env_setting is None else env_setting[0]
-    cfg = compile_config(cfg, seed=seed, env=env_fn, auto=True, create_cfg=create_cfg, save_cfg=True)
+    cfg = compile_config(
+        cfg,
+        seed=seed,
+        env=env_fn,
+        auto=True,
+        create_cfg=create_cfg,
+        save_cfg=True,
+        renew_dir=not cfg.policy.learn.get('resume_training', False)
+    )
+
     # Create main components: env, policy
     if env_setting is None:
         env_fn, collector_env_cfg, evaluator_env_cfg = get_vec_env_setting(cfg.env)
@@ -59,7 +68,7 @@ def serial_pipeline_onpolicy(
     policy = create_policy(cfg.policy, model=model, enable_field=['learn', 'collect', 'eval', 'command'])
 
     # Create worker components: learner, collector, evaluator, replay buffer, commander.
-    tb_logger = SummaryWriter(os.path.join('./{}/log/'.format(cfg.exp_name), 'serial'))
+    tb_logger = SummaryWriter(os.path.join('./{}/log/'.format(cfg.exp_name), 'serial')) if get_rank() == 0 else None
     learner = BaseLearner(cfg.policy.learn.learner, policy.learn_mode, tb_logger, exp_name=cfg.exp_name)
     collector = create_serial_collector(
         cfg.policy.collect.collector,
@@ -80,6 +89,8 @@ def serial_pipeline_onpolicy(
     # ==========
     # Learner's before_run hook.
     learner.call_hook('before_run')
+    if cfg.policy.learn.get('resume_training', False):
+        collector.envstep = learner.collector_envstep
 
     while True:
         collect_kwargs = commander.step()

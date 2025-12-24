@@ -1,4 +1,5 @@
 import gym
+import torch
 from ditk import logging
 from ding.data.model_loader import FileModelLoader
 from ding.data.storage_loader import FileStorageLoader
@@ -20,6 +21,7 @@ def main():
     logging.getLogger().setLevel(logging.INFO)
     cfg = compile_config(main_config, create_cfg=create_config, auto=True, save_cfg=task.router.node_id == 0)
     ding_init(cfg)
+
     with task.start(async_mode=False, ctx=OnlineRLContext()):
         collector_env = SubprocessEnvManagerV2(
             env_fn=[lambda: DingEnvWrapper(gym.make("LunarLander-v2")) for _ in range(cfg.env.collector_env_num)],
@@ -32,8 +34,13 @@ def main():
 
         set_pkg_seed(cfg.seed, use_cuda=cfg.policy.cuda)
 
-        model = DQN(**cfg.policy.model)
+        # Migrating models to the GPU
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        model = DQN(**cfg.policy.model).to(device)
+
         buffer_ = DequeBuffer(size=cfg.policy.other.replay_buffer.replay_buffer_size)
+
+        # Pass the model into Policy
         policy = DQNPolicy(cfg.policy, model=model)
 
         # Consider the case with multiple processes

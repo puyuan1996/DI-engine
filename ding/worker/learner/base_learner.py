@@ -35,6 +35,8 @@ class BaseLearner(object):
         train_iterations=int(1e9),
         dataloader=dict(num_workers=0, ),
         log_policy=True,
+        is_multitask_pipeline=False,
+        only_monitor_rank0=True,
         # --- Hooks ---
         hook=dict(
             load_ckpt_before_run='',
@@ -59,7 +61,9 @@ class BaseLearner(object):
         Overview:
             Initialization method, build common learner components according to cfg, such as hook, wrapper and so on.
         Arguments:
-            - cfg (:obj:`EasyDict`): Learner config, you can refer cls.config for details.
+            - cfg (:obj:`EasyDict`): Learner config, you can refer cls.config for details. It should include \
+                `is_multitask_pipeline` to indicate if the pipeline is multitask, default is False, \
+                and `only_monitor_rank0` to control whether only rank 0 needs monitor and tb_logger, default is True.
             - policy (:obj:`namedtuple`): A collection of policy function of learn mode. And policy can also be \
                 initialized when runtime.
             - tb_logger (:obj:`SummaryWriter`): Tensorboard summary writer.
@@ -78,6 +82,12 @@ class BaseLearner(object):
         self._instance_name = instance_name
         self._ckpt_name = None
         self._timer = EasyTimer()
+        self._is_multitask_pipeline = self._cfg.is_multitask_pipeline
+        self.only_monitor_rank0 = self._cfg.only_monitor_rank0
+
+        # Adjust only_monitor_rank0 based on is_multitask_pipeline
+        if self._is_multitask_pipeline:
+            self.only_monitor_rank0 = False
 
         # These 2 attributes are only used in parallel mode.
         self._end_flag = False
@@ -92,8 +102,10 @@ class BaseLearner(object):
             self._cfg.hook.log_reduce_after_iter = True
 
         # Logger (Monitor will be initialized in policy setter)
-        # Only rank == 0 learner needs monitor and tb_logger, others only need text_logger to display terminal output.
-        if self._rank == 0:
+        # In the multitask pipeline, each rank needs its own tb_logger.
+        # Otherwise, only rank == 0 learner needs monitor and tb_logger,
+        # others only need text_logger to display terminal output.
+        if self._rank == 0 or not self.only_monitor_rank0:
             if tb_logger is not None:
                 self._logger, _ = build_logger(
                     './{}/log/{}'.format(self._exp_name, self._instance_name), self._instance_name, need_tb=False
@@ -107,8 +119,6 @@ class BaseLearner(object):
             self._logger, _ = build_logger(
                 './{}/log/{}'.format(self._exp_name, self._instance_name), self._instance_name, need_tb=False
             )
-            # self._tb_logger = None
-            # ========== TODO: unizero_multitask ddp_v2 ========
             self._tb_logger = tb_logger
 
 
@@ -126,6 +136,8 @@ class BaseLearner(object):
         self._hooks = {'before_run': [], 'before_iter': [], 'after_iter': [], 'after_run': []}
         # Last iteration. Used to record current iter.
         self._last_iter = CountVar(init_val=0)
+        # Collector envstep. Used to record current envstep.
+        self._collector_envstep = 0
 
         # Setup time wrapper and hook.
         self._setup_wrapper()
@@ -180,6 +192,26 @@ class BaseLearner(object):
             - hook (:obj:`LearnerHook`): The hook to be addedr.
         """
         add_learner_hook(self._hooks, hook)
+
+    @property
+    def collector_envstep(self) -> int:
+        """
+        Overview:
+            Get current collector envstep.
+        Returns:
+            - collector_envstep (:obj:`int`): Current collector envstep.
+        """
+        return self._collector_envstep
+
+    @collector_envstep.setter
+    def collector_envstep(self, value: int) -> None:
+        """
+        Overview:
+            Set current collector envstep.
+        Arguments:
+            - value (:obj:`int`): Current collector envstep.
+        """
+        self._collector_envstep = value
 
     def train(self, data: dict, envstep: int = -1, policy_kwargs: Optional[dict] = None) -> None:
         """
@@ -436,11 +468,8 @@ class BaseLearner(object):
             Policy variable monitor is set alongside with policy, because variables are determined by specific policy.
         """
         self._policy = _policy
-        # if self._rank == 0:
-        #     self._monitor = get_simple_monitor_type(self._policy.monitor_vars())(TickTime(), expire=10)
-        
-        self._monitor = get_simple_monitor_type(self._policy.monitor_vars())(TickTime(), expire=10)
-
+        if self._rank == 0 or not self.only_monitor_rank0:
+            self._monitor = get_simple_monitor_type(self._policy.monitor_vars())(TickTime(), expire=10)
         if self._cfg.log_policy:
             self.info(self._policy.info())
 

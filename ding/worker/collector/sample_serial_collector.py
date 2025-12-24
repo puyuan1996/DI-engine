@@ -7,7 +7,7 @@ import torch
 
 from ding.envs import BaseEnvManager
 from ding.utils import build_logger, EasyTimer, SERIAL_COLLECTOR_REGISTRY, one_time_warning, get_rank, get_world_size, \
-    broadcast_object_list, allreduce_data
+    allreduce_data
 from ding.torch_utils import to_tensor, to_ndarray
 from .base_serial_collector import ISerialCollector, CachePool, TrajBuffer, INF, to_tensor_transitions
 
@@ -185,9 +185,19 @@ class SampleSerialCollector(ISerialCollector):
         Overview:
             Print the total envstep count.
         Return:
-            - envstep (:obj:`int`): the total envstep count
+            - envstep (:obj:`int`): The total envstep count.
         """
         return self._total_envstep_count
+
+    @envstep.setter
+    def envstep(self, value: int) -> None:
+        """
+        Overview:
+            Set the total envstep count.
+        Arguments:
+            - value (:obj:`int`): The total envstep count.
+        """
+        self._total_envstep_count = value
 
     def close(self) -> None:
         """

@@ -42,7 +42,7 @@
 </div>
 <br>
 
-Updated on 2024.06.27 DI-engine-v0.5.2
+Updated on 2024.12.23 DI-engine-v0.5.3
 
 ## Introduction to DI-engine
 
@@ -148,12 +148,6 @@ You can simply install DI-engine from PyPI with the following command:
 
 ```bash
 pip install DI-engine
-```
-
-If you use Anaconda or Miniconda, you can install DI-engine from conda-forge through the following command:
-
-```bash
-conda install -c opendilab di-engine
 ```
 
 For more information about installation, you can refer to [installation](https://di-engine-docs.readthedocs.io/en/latest/01_quickstart/installation.html).
@@ -294,7 +288,7 @@ P.S: The `.py` file in `Runnable Demo` can be found in `dizoo`
 
 | No |                                          Environment                                          |                                                                                                                   Label                                                                                                                   |                                             Visualization                                             |                                                                                                                                     Code and Doc Links                                                                                                                                     |
 | :-: | :--------------------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: | :----------------------------------------------------------------------------------------------------: | :-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
-| 1 |               [Atari](https://github.com/openai/gym/tree/master/gym/envs/atari)               |                                                                                      ![discrete](https://img.shields.io/badge/-discrete-brightgreen)                                                                                      |                                  ![original](./dizoo/atari/atari.gif)                                  |               [dizoo link](https://github.com/opendilab/DI-engine/tree/main/dizoo/atari/envs) <br>[env tutorial](https://di-engine-docs.readthedocs.io/en/latest/13_envs/atari.html)<br>[环境指南](https://di-engine-docs.readthedocs.io/zh_CN/latest/13_envs/atari_zh.html)               |
+| 1 |               [Atari](https://ale.farama.org)               |                                                                                      ![discrete](https://img.shields.io/badge/-discrete-brightgreen)                                                                                      |                                  ![original](./dizoo/atari/atari.gif)                                  |               [dizoo link](https://github.com/opendilab/DI-engine/tree/main/dizoo/atari/envs) <br>[env tutorial](https://di-engine-docs.readthedocs.io/en/latest/13_envs/atari.html)<br>[环境指南](https://di-engine-docs.readthedocs.io/zh_CN/latest/13_envs/atari_zh.html)               |
 | 2 |        [box2d/bipedalwalker](https://github.com/openai/gym/tree/master/gym/envs/box2d)        |                                                                                       ![continuous](https://img.shields.io/badge/-continous-green)                                                                                       |                         ![original](./dizoo/box2d/bipedalwalker/original.gif)                         | [dizoo link](https://github.com/opendilab/DI-engine/tree/main/dizoo/box2d/bipedalwalker/envs)<br>[env tutorial](https://di-engine-docs.readthedocs.io/en/latest/13_envs/bipedalwalker.html)<br>[环境指南](https://di-engine-docs.readthedocs.io/zh_CN/latest/13_envs/bipedalwalker_zh.html) |
 | 3 |         [box2d/lunarlander](https://github.com/openai/gym/tree/master/gym/envs/box2d)         |                                                                                      ![discrete](https://img.shields.io/badge/-discrete-brightgreen)                                                                                      |                         ![original](./dizoo/box2d/lunarlander/lunarlander.gif)                         |    [dizoo link](https://github.com/opendilab/DI-engine/tree/main/dizoo/box2d/lunarlander/envs)<br>[env tutorial](https://di-engine-docs.readthedocs.io/en/latest/13_envs/lunarlander.html)<br>[环境指南](https://di-engine-docs.readthedocs.io/zh_CN/latest/13_envs/lunarlander_zh.html)    |
 | 4 | [classic_control/cartpole](https://github.com/openai/gym/tree/master/gym/envs/classic_control) |                                                                                      ![discrete](https://img.shields.io/badge/-discrete-brightgreen)                                                                                      |                       ![original](./dizoo/classic_control/cartpole/cartpole.gif)                       |   [dizoo link](https://github.com/opendilab/DI-engine/tree/main/dizoo/classic_control/cartpole/envs)<br>[env tutorial](https://di-engine-docs.readthedocs.io/en/latest/13_envs/cartpole.html)<br>[环境指南](https://di-engine-docs.readthedocs.io/zh_CN/latest/13_envs/cartpole_zh.html)   |

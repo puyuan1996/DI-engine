@@ -6,7 +6,7 @@ import torch
 from easydict import EasyDict
 
 import ding
-from ding.utils import allreduce, read_file, save_file, get_rank
+from ding.utils import allreduce, read_file, save_file
 
 
 class Hook(ABC):
@@ -117,6 +117,9 @@ class LoadCkptHook(LearnerHook):
         if 'last_iter' in state_dict:
             last_iter = state_dict.pop('last_iter')
             engine.last_iter.update(last_iter)
+        if 'last_step' in state_dict:
+            last_step = state_dict.pop('last_step')
+            engine._collector_envstep = last_step
         engine.policy.load_state_dict(state_dict)
         engine.info('{} load ckpt in {}'.format(engine.instance_name, path))
 
@@ -166,6 +169,7 @@ class SaveCkptHook(LearnerHook):
             path = os.path.join(dirname, ckpt_name)
             state_dict = engine.policy.state_dict()
             state_dict.update({'last_iter': engine.last_iter.val})
+            state_dict.update({'last_step': engine.collector_envstep})
             save_file(path, state_dict)
             engine.info('{} save ckpt in {}'.format(engine.instance_name, path))
 
@@ -183,29 +187,32 @@ class LogShowHook(LearnerHook):
     def __init__(self, *args, ext_args: EasyDict = EasyDict(), **kwargs) -> None:
         """
         Overview:
-            init LogShowHook
+            Init LogShowHook.
         Arguments:
-            - ext_args (:obj:`EasyDict`): extended_args, use ext_args.freq to set freq
+            - ext_args (:obj:`EasyDict`): Extended arguments, use ext_args.freq to set frequency and \
+                ext_args.only_monitor_rank0 to control if only rank 0 should monitor, default is True.
         """
         super().__init__(*args, **kwargs)
         if ext_args == {}:
             self._freq = 1
         else:
             self._freq = ext_args.freq
+        self._only_monitor_rank0 = None
 
     def __call__(self, engine: 'BaseLearner') -> None:  # noqa
         """
         Overview:
             Show log, update record and tb_logger if rank is 0 and at interval iterations,
-            clear the log buffer for all learners regardless of rank
+            clear the log buffer for all learners regardless of rank.
         Arguments:
-            - engine (:obj:`BaseLearner`): the BaseLearner
+            - engine (:obj:`BaseLearner`): The BaseLearner.
         """
-        # Only show log for rank 0 learner
-        # if engine.rank != 0:
-        #     for k in engine.log_buffer:
-        #         engine.log_buffer[k].clear()
-        #     return
+        self._only_monitor_rank0 = engine.only_monitor_rank0
+        # Only show log for rank 0 learner if _only_monitor_rank0 is True
+        if engine.rank != 0 and self._only_monitor_rank0:
+            for k in engine.log_buffer:
+                engine.log_buffer[k].clear()
+            return
 
         # For 'scalar' type variables: log_buffer -> tick_monitor -> monitor_time.step
         for k, v in engine.log_buffer['scalar'].items():
@@ -240,7 +247,7 @@ class LogShowHook(LearnerHook):
 class LogReduceHook(LearnerHook):
     """
     Overview:
-        Hook to reduce the distributed(multi-gpu) logs
+        Hook to reduce the distributed (multi-gpu) logs.
     Interfaces:
         __init__, __call__
     Property:
@@ -250,44 +257,46 @@ class LogReduceHook(LearnerHook):
     def __init__(self, *args, ext_args: EasyDict = EasyDict(), **kwargs) -> None:
         """
         Overview:
-            init LogReduceHook
+            Initialize LogReduceHook.
         Arguments:
-            - ext_args (:obj:`EasyDict`): extended_args, use ext_args.freq to set log_reduce_freq
+            - ext_args (:obj:`EasyDict`): Extended arguments, use ext_args.freq to set log_reduce_freq.
         """
         super().__init__(*args, **kwargs)
 
     def __call__(self, engine: 'BaseLearner') -> None:  # noqa
         """
         Overview:
-            reduce the logs from distributed(multi-gpu) learners
+            Reduce the logs from distributed (multi-gpu) learners.
         Arguments:
-            - engine (:obj:`BaseLearner`): the BaseLearner
+            - engine (:obj:`BaseLearner`): The BaseLearner.
         """
 
         def aggregate(data):
             r"""
             Overview:
-                aggregate the information from all ranks(usually use sync allreduce)
+                Aggregate the information from all ranks (usually using sync allreduce).
             Arguments:
                 - data (:obj:`dict`): Data that needs to be reduced. \
-                    Could be dict, torch.Tensor, numbers.Integral or numbers.Real.
+                    Could be dict, torch.Tensor, numbers.Integral, or numbers.Real.
             Returns:
-                - new_data (:obj:`dict`): data after reduce
+                - new_data (:obj:`dict`): Data after reduction.
             """
-            # if isinstance(data, dict):
-            #     new_data = {k: aggregate(v) for k, v in data.items()}
-            
+
             def should_reduce(key):
-                # 检查 key 是否以 "noreduce_" 前缀开头
+                # Check if the key starts with the "noreduce_" prefix.
+                # The "noreduce_" prefix is used in the unizero_multitask ddp pipeline
+                # to indicate data that should not be reduced.
                 return not key.startswith("noreduce_")
+
+            cuda_device = torch.cuda.current_device()
 
             if isinstance(data, dict):
                 new_data = {}
                 for k, v in data.items():
                     if should_reduce(k):
-                        new_data[k] = aggregate(v)  # 对需要 reduce 的数据执行 allreduce
+                        new_data[k] = aggregate(v)  # Perform allreduce on data that needs reduction.
                     else:
-                        new_data[k] = v  # 不需要 reduce 的数据直接保留
+                        new_data[k] = v  # Retain data that does not need reduction.
 
             elif isinstance(data, list) or isinstance(data, tuple):
                 new_data = [aggregate(t) for t in data]
@@ -296,7 +305,7 @@ class LogReduceHook(LearnerHook):
                 if ding.enable_linklink:
                     allreduce(new_data)
                 else:
-                    new_data = new_data.to(get_rank())
+                    new_data = new_data.to(cuda_device)
                     allreduce(new_data)
                     new_data = new_data.cpu()
             elif isinstance(data, numbers.Integral) or isinstance(data, numbers.Real):
@@ -304,12 +313,12 @@ class LogReduceHook(LearnerHook):
                 if ding.enable_linklink:
                     allreduce(new_data)
                 else:
-                    new_data = new_data.to(get_rank())
+                    new_data = new_data.to(cuda_device)
                     allreduce(new_data)
                     new_data = new_data.cpu()
                 new_data = new_data.item()
             else:
-                raise TypeError("invalid type in reduce: {}".format(type(data)))
+                raise TypeError("Invalid type in reduce: {}".format(type(data)))
             return new_data
 
         engine.log_buffer = aggregate(engine.log_buffer)

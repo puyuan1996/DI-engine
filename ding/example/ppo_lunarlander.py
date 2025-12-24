@@ -3,7 +3,6 @@ from ditk import logging
 from ding.model import VAC
 from ding.policy import PPOPolicy
 from ding.envs import DingEnvWrapper, BaseEnvManagerV2
-from ding.data import DequeBuffer
 from ding.config import compile_config
 from ding.framework import task, ding_init
 from ding.framework.context import OnlineRLContext
