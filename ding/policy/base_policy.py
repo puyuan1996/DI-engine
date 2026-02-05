@@ -162,7 +162,8 @@ class Policy(ABC):
             self._device_type, self._use_accelerator, self._device = auto_device_init(cfg_device, self._rank)
 
             # Keep backward compatibility with _cuda attribute
-            self._cuda = self._use_accelerator and self._device_type == 'cuda'
+            # Set _cuda=True for ANY accelerator (GPU or NPU) to ensure data transfer logic works
+            self._cuda = self._use_accelerator
 
             # Move model to the detected/configured device
             if self._use_accelerator:
