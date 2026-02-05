@@ -169,6 +169,19 @@ class Policy(ABC):
             if self._use_accelerator:
                 move_to_device(model, self._device_type, self._rank)
 
+            # Print final device configuration summary
+            print(f"\n{'='*70}")
+            print(f"🎉 [DI-engine Policy] Device Setup Complete")
+            print(f"{'='*70}")
+            print(f"  Policy Type: {self.__class__.__name__}")
+            print(f"  Device Type: {self._device_type.upper()}")
+            print(f"  Device String: {self._device}")
+            print(f"  Using Accelerator: {self._use_accelerator}")
+            print(f"  Rank: {self._rank}")
+            print(f"  Multi-GPU: {self._cfg.multi_gpu if hasattr(self._cfg, 'multi_gpu') else False}")
+            print(f"  Legacy _cuda flag: {self._cuda}")
+            print(f"{'='*70}\n")
+
             # Multi-GPU initialization
             if len(set(self._enable_field).intersection(set(['learn']))) > 0:
                 multi_gpu = self._cfg.multi_gpu

@@ -31,20 +31,42 @@ def get_available_device() -> Tuple[str, bool]:
         >>> device_type, is_accelerator = get_available_device()
         >>> print(f"Using device: {device_type}")
     """
+    print("\n" + "="*70)
+    print("🔍 [DI-engine] Device Detection")
+    print("="*70)
+
     # Check for NPU first (Huawei Ascend)
-    if TORCH_NPU_AVAILABLE and torch.npu.is_available():
-        npu_count = torch.npu.device_count()
-        logger.info(f"Detected {npu_count} NPU device(s), using NPU")
-        return 'npu', True
+    if TORCH_NPU_AVAILABLE:
+        print("✓ torch_npu module is installed")
+        if torch.npu.is_available():
+            npu_count = torch.npu.device_count()
+            print(f"✓ NPU is available: {npu_count} device(s) detected")
+            print(f"✓ NPU device names: {[torch.npu.get_device_name(i) for i in range(npu_count)]}")
+            print(f"🎯 Selected device: NPU")
+            print("="*70 + "\n")
+            logger.info(f"[Device] Using NPU with {npu_count} device(s)")
+            return 'npu', True
+        else:
+            print("✗ NPU is not available")
+    else:
+        print("✗ torch_npu module is not installed")
 
     # Check for CUDA GPU
     if torch.cuda.is_available():
         gpu_count = torch.cuda.device_count()
-        logger.info(f"Detected {gpu_count} CUDA GPU device(s), using GPU")
+        print(f"✓ CUDA is available: {gpu_count} device(s) detected")
+        print(f"✓ GPU device names: {[torch.cuda.get_device_name(i) for i in range(gpu_count)]}")
+        print(f"🎯 Selected device: CUDA GPU")
+        print("="*70 + "\n")
+        logger.info(f"[Device] Using CUDA GPU with {gpu_count} device(s)")
         return 'cuda', True
+    else:
+        print("✗ CUDA is not available")
 
     # Fallback to CPU
-    logger.info("No NPU or GPU detected, using CPU")
+    print("🎯 Selected device: CPU (no accelerator detected)")
+    print("="*70 + "\n")
+    logger.info("[Device] Using CPU (no accelerator available)")
     return 'cpu', False
 
 
@@ -80,13 +102,18 @@ def move_to_device(model: torch.nn.Module, device_type: str, rank: int = 0) -> t
     if device_type == 'npu' and TORCH_NPU_AVAILABLE:
         device_count = torch.npu.device_count()
         device_id = rank % device_count if device_count > 0 else 0
+        print(f"📦 [DI-engine] Moving model to NPU device {device_id} (rank={rank})")
         model.npu(device_id)
-        logger.debug(f"Moved model to NPU device {device_id}")
+        logger.info(f"[Device] Model moved to NPU device {device_id}")
     elif device_type == 'cuda':
         device_count = torch.cuda.device_count()
         device_id = rank % device_count if device_count > 0 else 0
+        print(f"📦 [DI-engine] Moving model to CUDA device {device_id} (rank={rank})")
         model.cuda(device_id)
-        logger.debug(f"Moved model to CUDA device {device_id}")
+        logger.info(f"[Device] Model moved to CUDA device {device_id}")
+    else:
+        print(f"📦 [DI-engine] Model will stay on CPU")
+        logger.info("[Device] Model stays on CPU")
     # CPU case: no need to move
     return model
 
@@ -128,37 +155,51 @@ def auto_device_init(cfg_device: Optional[str], rank: int = 0) -> Tuple[str, boo
         >>> # Returns ('cuda', True, 'cuda:0') if GPU available
         >>> # Returns ('cpu', False, 'cpu') otherwise
     """
+    print(f"\n⚙️  [DI-engine] Device Configuration: cfg_device='{cfg_device}', rank={rank}")
+
     # Default to auto detection if not specified
     if cfg_device is None or cfg_device == 'auto':
+        print(f"🔧 [DI-engine] Using auto-detection mode")
         device_type, use_accelerator = get_available_device()
     else:
         # Explicit device type specified
         device_type = cfg_device.lower()
+        print(f"🔧 [DI-engine] Explicit device type requested: '{device_type}'")
 
         # Validate the device type is available
         if device_type == 'npu':
             if TORCH_NPU_AVAILABLE and torch.npu.is_available():
                 use_accelerator = True
-                logger.info("Using NPU as explicitly configured")
+                npu_count = torch.npu.device_count()
+                print(f"✓ NPU requested and available: {npu_count} device(s)")
+                logger.info(f"[Device] Using NPU as explicitly configured ({npu_count} device(s))")
             else:
-                logger.warning("NPU requested but not available, falling back to CPU")
+                print(f"⚠️  NPU requested but not available, falling back to CPU")
+                logger.warning("[Device] NPU requested but not available, falling back to CPU")
                 device_type = 'cpu'
                 use_accelerator = False
         elif device_type == 'cuda':
             if torch.cuda.is_available():
                 use_accelerator = True
-                logger.info("Using CUDA GPU as explicitly configured")
+                gpu_count = torch.cuda.device_count()
+                print(f"✓ CUDA requested and available: {gpu_count} device(s)")
+                logger.info(f"[Device] Using CUDA GPU as explicitly configured ({gpu_count} device(s))")
             else:
-                logger.warning("CUDA requested but not available, falling back to CPU")
+                print(f"⚠️  CUDA requested but not available, falling back to CPU")
+                logger.warning("[Device] CUDA requested but not available, falling back to CPU")
                 device_type = 'cpu'
                 use_accelerator = False
         else:
             # CPU or any other value
             device_type = 'cpu'
             use_accelerator = False
-            logger.info("Using CPU as configured")
+            print(f"✓ Using CPU as configured")
+            logger.info("[Device] Using CPU as configured")
 
     device_str = get_device_string(device_type, rank)
+
+    print(f"✅ [DI-engine] Device initialized: type={device_type}, accelerator={use_accelerator}, device_string='{device_str}'")
+    print("="*70 + "\n")
 
     return device_type, use_accelerator, device_str
 

@@ -438,18 +438,23 @@ def set_pkg_seed(seed: int, use_cuda: bool = True) -> None:
         >>> ...
 
     """
+    print(f"\n🌱 [DI-engine] Setting random seed: {seed}")
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
+    print(f"  ✓ Set seed for: random, numpy, torch")
 
     # Set seed for accelerators (GPU or NPU)
     if use_cuda:
         # Set CUDA seed if available
         if torch.cuda.is_available():
             torch.cuda.manual_seed(seed)
+            print(f"  ✓ Set CUDA seed: {seed}")
         # Set NPU seed if available
         if TORCH_NPU_AVAILABLE and torch.npu.is_available():
             torch.npu.manual_seed(seed)
+            print(f"  ✓ Set NPU seed: {seed}")
+    print()
 
 
 @lru_cache()
